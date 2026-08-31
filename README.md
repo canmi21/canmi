@@ -1,7 +1,5 @@
 # Nested Workspace
 
-My development workspace, versioned around the projects rather than through them.
-
 This repository contains the shared configuration, tooling, documentation, and conventions used across my projects.
 
 The projects themselves live under `repos/`, but they are not Git submodules and are not tracked by this repository. `repos/` is simply a filesystem boundary: each project inside it remains an independent repository with its own history and version control.
