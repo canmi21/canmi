@@ -131,6 +131,13 @@ the logic lives once. A name that is not in the registry is an error that lists 
 are, because the alternative -- doing nothing quietly, or doing everything -- are both worse than
 saying so.
 
+**This workspace is one of the repositories they act on**, under the name `workspace`. It has a
+remote, a working copy and files to format like any project, and the first version of these
+commands left it out: `push` reported nothing to push while this repository was a commit ahead
+of its origin, which is the worst possible way for a push command to be wrong. A command that
+means "all of them" has to mean all of them, and the one holding the others is the easiest to
+forget.
+
 `check` dispatches to each repository's own `verify` rather than reimplementing it: what a
 project has to pass is the project's to decide, and this only decides where to look. `fmt` is
 `jj fix` with the formatters `jj.toml` names, which is why formatting is identical everywhere

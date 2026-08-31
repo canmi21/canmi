@@ -55,17 +55,29 @@ def registry() -> dict[str, tuple[str, str]]:
 
 
 def selected(name: str | None) -> list[pathlib.Path]:
-	"""The directories a command applies to: one when named, every cloned one otherwise."""
+	"""The repositories a command applies to: one when named, all of them otherwise.
+
+	**This workspace is one of them.** It has a remote, a working copy and files to format like
+	any project, and leaving it out meant `push` reporting nothing to push while this very
+	repository was a commit ahead. `workspace` is the name for it, matching what the tools task
+	already accepted.
+	"""
 	listed = registry()
+	if name == "workspace":
+		return [ROOT]
 	if name:
 		if name not in listed:
-			known = ", ".join(listed) or "nothing"
-			raise fail(f"{REGISTRY.name} does not list {name}; it lists {known}")
+			known = ", ".join(["workspace", *listed])
+			raise fail(f"{REGISTRY.name} does not list {name}; the names are {known}")
 		target = REPOS / name
 		if not target.is_dir():
 			raise fail(f"repos/{name} is listed but not cloned -- `mise run repos clone` first")
 		return [target]
-	return [REPOS / d for d in listed if (REPOS / d).is_dir()]
+	return [ROOT] + [REPOS / d for d in listed if (REPOS / d).is_dir()]
+
+
+def label(where: pathlib.Path) -> str:
+	return "workspace" if where == ROOT else where.name
 
 
 def is_repository(path: pathlib.Path) -> bool:
@@ -119,11 +131,11 @@ def command_clone(name: str | None) -> int:
 def command_pull(name: str | None) -> int:
 	for repo in selected(name):
 		if not is_repository(repo):
-			print(f"{repo.name}: not a repository, skipped")
+			print(f"{label(repo)}: not a repository, skipped")
 			continue
 		result = jj("git", "fetch", cwd=repo, check=False)
 		if result.returncode != 0:
-			print(f"{repo.name}: fetch failed")
+			print(f"{label(repo)}: fetch failed")
 			sys.stderr.write(result.stderr)
 			continue
 		behind = jj(
@@ -131,7 +143,7 @@ def command_pull(name: str | None) -> int:
 			"-T", 'commit_id.short() ++ " " ++ description.first_line() ++ "\\n"',
 			cwd=repo, check=False,
 		).stdout.strip()
-		print(f"{repo.name}: {'up to date' if not behind else 'behind by'}")
+		print(f"{label(repo)}: {'up to date' if not behind else 'behind by'}")
 		for line in behind.splitlines():
 			print(f"    {line}")
 	return 0
@@ -146,9 +158,9 @@ def command_push(name: str | None) -> int:
 			"-T", 'commit_id.short() ++ "\\n"', cwd=repo, check=False,
 		).stdout.strip()
 		if not ahead:
-			print(f"{repo.name}: nothing to push")
+			print(f"{label(repo)}: nothing to push")
 			continue
-		print(f"{repo.name}: pushing {len(ahead.splitlines())} commit(s)")
+		print(f"{label(repo)}: pushing {len(ahead.splitlines())} commit(s)")
 		subprocess.run(["jj", "git", "push", "--bookmark", "main"], cwd=repo, check=True)
 	return 0
 
@@ -159,7 +171,7 @@ def command_fmt(name: str | None) -> int:
 		if not is_repository(repo):
 			continue
 		result = jj("fix", "--source", "@", cwd=repo, check=False)
-		print(f"{repo.name}: {result.stdout.strip().splitlines()[0] if result.stdout.strip() else 'nothing to fix'}")
+		print(f"{label(repo)}: {result.stdout.strip().splitlines()[0] if result.stdout.strip() else 'nothing to fix'}")
 		if result.returncode != 0:
 			sys.stderr.write(result.stderr)
 	return 0
@@ -169,10 +181,10 @@ def command_verify(name: str | None) -> int:
 	"""Each repository's own verify, by its namespaced task path."""
 	failed = []
 	for repo in selected(name):
-		task = f"//repos/{repo.name}:verify"
+		task = "//:verify" if repo == ROOT else f"//repos/{repo.name}:verify"
 		print(f"\n=== {task} ===")
 		if subprocess.run(["mise", "run", task], cwd=ROOT).returncode != 0:
-			failed.append(repo.name)
+			failed.append(label(repo))
 	if failed:
 		print(f"\nfailed: {', '.join(failed)}")
 	return 1 if failed else 0
