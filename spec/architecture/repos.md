@@ -37,6 +37,19 @@ A project cloned on its own therefore has no formatter configuration and no hook
 accepted rather than worked around: the way to get a complete environment is to clone this
 repository and the one project you want, nested. Two clones, not all of them.
 
+**Sharing the rules is not the same as sharing the tool that applies them.** `jj fix` is
+configured once, in `jj.toml`, and `JJ_CONFIG` is set here so every repository below inherits
+it -- but the formatter it invokes is whichever one that repository's `PATH` provides. This has
+already gone wrong: a globally installed oxfmt formatted this repository at 0.28 while a project
+formatted at 0.65, one rule set through two formatters. So the version is pinned here in
+`package.json` as well, matching the projects, and that pin is the second copy to keep an eye on.
+
+**A project may carry configuration only it can use.** `.mcp.json` is the case: one project needs
+a Tauri MCP server and the others have no use for it, so it stays with that project rather than
+becoming everyone's. It resolves relative to where an agent starts, so it reaches that server
+when the agent starts in that project and not otherwise, which is the right shape for a tool one
+project owns.
+
 ## Why not a submodule
 
 jj has no submodule support, and the failure is quiet. Colocating over a repository that has one

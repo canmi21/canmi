@@ -10,6 +10,20 @@ monorepo_root = true
 [monorepo]
 config_roots = ["repos/press", "repos/still"]
 
+# jj's own repo config lives outside the working copy and cannot be version controlled.
+# JJ_CONFIG merges a colon-separated list left to right, so this keeps the user's personal
+# settings and layers the shared rules on top. Set here rather than per project: `jj fix`
+# applies the formatters, and those rules are the same everywhere. See jj.toml.
+[env]
+# oxfmt is what `jj fix` runs over markdown and JSON here, and it is pinned in package.json
+# rather than [tools] for the reason the projects pin it that way: a mise-installed binary
+# cannot reach `svelte/compiler` through node's module graph. Sharing the rules is not enough
+# on its own -- a globally installed oxfmt formatted this repository at 0.28 while a project
+# used 0.65, which is one rule set and two formatters.
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
+
 # The toolchain every project here is built with. A repository states a version of its own only
 # where it needs one this list does not carry.
 [tools]
