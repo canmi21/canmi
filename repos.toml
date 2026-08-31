@@ -1,0 +1,12 @@
+# The repositories this workspace is made of.
+#
+# `user:repo` on GitHub, cloned to `repos/<repo>`. The user half is carried so an organisation's
+# repository is one entry like any other, rather than a second mechanism.
+#
+# This is the list `repos clone` restores a machine from. mise needs the same set as task roots
+# and cannot read it from here, so `[monorepo].config_roots` in mise.toml states it a second
+# time and `repos check` fails when the two disagree.
+repos = [
+	"canmi21:press",
+	"canmi21:still",
+]

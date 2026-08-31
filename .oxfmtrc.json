@@ -1,0 +1,8 @@
+{
+	"$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxfmt/configuration_schema.json",
+	"singleQuote": true,
+	"trailingComma": "all",
+	"printWidth": 100,
+	"svelte": true,
+	"ignorePatterns": ["**/data/", "**/.claude/", "**/contents/", "**/node_modules/", "**/target/"]
+}

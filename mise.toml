@@ -1,0 +1,31 @@
+# This directory is the root of a mise monorepo: each repository under repos/ carries its own
+# mise.toml, and its tasks are reached from here as `//repos/<name>:<task>`. Namespacing by path
+# is what keeps two projects' `check` from being one task.
+monorepo_root = true
+
+# Stated rather than discovered. Automatic discovery is deprecated, and it also defaults to
+# respecting .gitignore -- which would hide every repository here, since that is exactly what
+# .gitignore says about them. A missing entry is a warning and nothing more, so a machine that
+# has cloned only one project still runs that project's tasks. See spec/architecture/repos.md.
+[monorepo]
+config_roots = ["repos/press", "repos/still"]
+
+# The toolchain every project here is built with. A repository states a version of its own only
+# where it needs one this list does not carry.
+[tools]
+node = "latest"
+rust = "stable"
+pnpm = "latest"
+jj = "latest"
+
+[tasks.check-repos]
+description = "Check that the repository list and the task roots still agree"
+run = ".mise/tasks/repos check"
+
+[tasks.check-hooks]
+description = "Exercise the shared agent-hook entrypoint with macOS system Python"
+run = "/usr/bin/python3 -m unittest discover -s hooks -p 'test_*.py'"
+
+[tasks.verify]
+description = "Everything a change to this repository has to pass"
+depends = ["check-repos", "check-hooks"]

@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+#MISE description="Work with the repositories under repos/: `repos list|clone|pull|push|check`"
+"""The repositories this workspace is made of. See spec/architecture/repos.md.
+
+repos.toml lists them as `user:repo`; each is cloned to repos/<repo> and is its own jj
+repository, ignored here. Nothing is a submodule and nothing is pinned: this workspace holds no
+opinion about which revision of a project is current, because it builds nothing from them.
+
+  list    what the list holds and what is on disk
+  clone   clone whatever is listed and missing
+  pull    fetch every cloned repository and say what moved
+  push    push every cloned repository's main
+  check   the list, the task roots and the directories still agree
+
+push exists for the user to run. An agent does not run it and does not offer to -- see
+spec/commits.md.
+"""
+
+import pathlib
+import re
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+# Subprocesses write straight to the same descriptor, so block-buffered prints would surface
+# after output they were meant to introduce.
+sys.stdout.reconfigure(line_buffering=True)
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+REPOS = ROOT / "repos"
+REGISTRY = ROOT / "repos.toml"
+CONFIG = ROOT / "mise.toml"
+
+# `user:repo`, one per line inside the array. Read by pattern rather than with a TOML parser:
+# the file is one list, and which parser is available depends on the python mise happens to
+# resolve, which is not a dependency worth taking for a line of this shape.
+ENTRY = re.compile(r'^\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*,?\s*$', re.MULTILINE)
+
+
+def fail(message: str) -> "SystemExit":
+	return SystemExit(f"error: {message}")
+
+
+def listed() -> list[tuple[str, str]]:
+	"""(user, repo) for every entry, in the order the file gives them."""
+	if not REGISTRY.is_file():
+		raise fail(f"{REGISTRY.name} does not exist")
+	return ENTRY.findall(REGISTRY.read_text())
+
+
+def task_roots() -> list[str]:
+	"""What mise loads tasks from. Stated separately because mise cannot read the list above."""
+	block = re.search(r"^config_roots\s*=\s*\[(.*?)\]", CONFIG.read_text(), re.MULTILINE | re.DOTALL)
+	return re.findall(r'"([^"]+)"', block.group(1)) if block else []
+
+
+def is_repository(path: pathlib.Path) -> bool:
+	return (path / ".git").exists() or (path / ".jj").exists()
+
+
+def jj(*args: str, cwd: pathlib.Path, check: bool = True) -> subprocess.CompletedProcess:
+	result = subprocess.run(["jj", *args], cwd=cwd, capture_output=True, text=True)
+	if check and result.returncode != 0:
+		sys.stderr.write(result.stderr)
+		raise fail(f"jj {' '.join(args)} failed in {cwd.name}")
+	return result
+
+
+def cloned() -> list[pathlib.Path]:
+	if not REPOS.is_dir():
+		return []
+	return sorted(p for p in REPOS.iterdir() if p.is_dir())
+
+
+def command_list() -> int:
+	on_disk = {p.name for p in cloned()}
+	names = {repo for _, repo in listed()}
+	for user, repo in listed():
+		mark = "" if repo in on_disk else "   (not cloned)"
+		print(f"{user}:{repo}  -> repos/{repo}{mark}")
+	for name in sorted(on_disk - names):
+		print(f"repos/{name}  is on disk but not listed in {REGISTRY.name}")
+	return 0
+
+
+def command_clone() -> int:
+	REPOS.mkdir(exist_ok=True)
+	added = 0
+	for user, repo in listed():
+		target = REPOS / repo
+		if target.exists():
+			continue
+		print(f"cloning {user}:{repo}")
+		# Colocated, because the git side is what the remote and any contributor speak.
+		subprocess.run(
+			["jj", "git", "clone", "--colocate", f"https://github.com/{user}/{repo}.git", str(target)],
+			check=True,
+		)
+		added += 1
+	print(f"{added} cloned; {len(cloned())} present")
+	return 0
+
+
+def command_pull() -> int:
+	for repo in cloned():
+		if not is_repository(repo):
+			print(f"{repo.name}: not a repository, skipped")
+			continue
+		fetched = jj("git", "fetch", cwd=repo, check=False)
+		if fetched.returncode != 0:
+			print(f"{repo.name}: fetch failed")
+			sys.stderr.write(fetched.stderr)
+			continue
+		behind = jj(
+			"log", "--no-graph", "-r", "main..main@origin",
+			"-T", 'commit_id.short() ++ " " ++ description.first_line() ++ "\\n"',
+			cwd=repo, check=False,
+		).stdout.strip()
+		print(f"{repo.name}: {'up to date' if not behind else 'behind by'}")
+		for line in behind.splitlines():
+			print(f"    {line}")
+	return 0
+
+
+def command_push() -> int:
+	for repo in cloned():
+		if not is_repository(repo):
+			continue
+		ahead = jj(
+			"log", "--no-graph", "-r", "main@origin..main",
+			"-T", 'commit_id.short() ++ "\\n"', cwd=repo, check=False,
+		).stdout.strip()
+		if not ahead:
+			print(f"{repo.name}: nothing to push")
+			continue
+		print(f"{repo.name}: pushing {len(ahead.splitlines())} commit(s)")
+		subprocess.run(["jj", "git", "push", "--bookmark", "main"], cwd=repo, check=True)
+	return 0
+
+
+def command_check() -> int:
+	problems = 0
+	entries = listed()
+	names = {repo for _, repo in entries}
+	roots = set(task_roots())
+
+	# One set, two files: mise cannot read repos.toml, so config_roots states it again. This is
+	# what keeps the second copy honest.
+	expected = {f"repos/{repo}" for repo in names}
+	for missing in sorted(expected - roots):
+		print(f"mise.toml [monorepo].config_roots is missing {missing}")
+		problems += 1
+	for extra in sorted(roots - expected):
+		print(f"mise.toml [monorepo].config_roots names {extra}, which {REGISTRY.name} does not list")
+		problems += 1
+
+	for path in cloned():
+		if path.name not in names:
+			print(f"repos/{path.name} is on disk but not listed in {REGISTRY.name}")
+			problems += 1
+		elif not is_repository(path):
+			print(f"repos/{path.name} is not a repository -- repos/*/ is ignored, so nothing tracks it")
+			problems += 1
+
+	if problems == 0:
+		print(f"{len(entries)} listed, {len(cloned())} cloned, task roots agree")
+	return 1 if problems else 0
+
+
+def main(argv: list[str]) -> int:
+	action = argv[0] if argv else None
+	if action == "list":
+		return command_list()
+	if action == "clone":
+		return command_clone()
+	if action == "pull":
+		return command_pull()
+	if action == "push":
+		return command_push()
+	if action == "check":
+		return command_check()
+	raise fail("usage: repos list | clone | pull | push | check")
+
+
+if __name__ == "__main__":
+	try:
+		raise SystemExit(main(sys.argv[1:]))
+	except subprocess.CalledProcessError as error:
+		raise SystemExit(f"error: {' '.join(error.cmd)} failed") from error
