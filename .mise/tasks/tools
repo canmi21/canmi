@@ -35,6 +35,12 @@ REPOS = ROOT / "repos"
 
 # Where a tool's stable channel is published, and how to read it. A tool absent from here has
 # no channel this can check; `outdated` says so rather than guessing from the highest tag.
+# What mise would take if the pins were lifted. mise resolves against every published version
+# and has never heard of a dist-tag, so this is where its answer and the publisher's stable
+# channel come apart -- and where its own advice has to be dropped rather than passed on.
+BUMP = re.compile(r"^Would install (\S+)@(\S+)\s*$", re.MULTILINE)
+OWNER = re.compile(r"^Would bump (\S+)@\S+ in (.+?)\s*$", re.MULTILINE)
+
 CHANNELS = {
 	"pnpm": ("npm", "pnpm"),
 	"oxlint": ("npm", "oxlint"),
@@ -70,6 +76,16 @@ def stable(tool: str) -> str | None:
 	except (urllib.error.URLError, KeyError, IndexError, TimeoutError):
 		return None
 	return None
+
+
+def order(version: str) -> tuple:
+	"""A version as something comparable. Numeric where it can be, so 10 sorts above 9.
+
+	The first version of this compared `tuple(version.split("."))`, which is string comparison:
+	"10" sorts below "9" and the ahead/behind verdict inverts at every tenth release. Nothing had
+	hit it yet, which is the only reason it survived being written.
+	"""
+	return tuple(int(part) if part.isdigit() else part for part in version.split("."))
 
 
 def series(version: str) -> str | None:
@@ -241,7 +257,7 @@ def report(rows) -> tuple[int, int, int]:
 		elif series(version) != series(current):
 			print(f"{label(where):<14} {tool:<10} {version:<12} -> {current} across a pin")
 			behind += 1
-		elif tuple(version.split(".")) > tuple(current.split(".")):
+		elif order(version) > order(current):
 			print(f"{label(where):<14} {tool:<10} {version:<12} is AHEAD of stable {current}")
 			ahead += 1
 		else:
@@ -259,12 +275,54 @@ def command_outdated(name: str | None = None) -> int:
 	return 0
 
 
+def beyond(where: pathlib.Path) -> list[tuple[str, str, str, str | None]]:
+	"""(tool, version, stable) for what `mise upgrade --bump` would take in this directory.
+
+	Asked because mise's own line about it -- "Newer versions are available outside the configured
+	version ranges, use `mise upgrade --bump`" -- is advice this repository must not follow. mise
+	resolves against every published release and cannot see a dist-tag, so for pnpm that line
+	points at the `next` line: it named 11.25.0 while npm's stable tag was 11.24.0. `up` drops the
+	line and prints what is below instead, which says which channel the version is actually on.
+
+	The line was not dropped for tidiness. It was read, believed, and acted on, and the pin was
+	edited to a prerelease because this command said to.
+	"""
+	result = subprocess.run(
+		["mise", "upgrade", "--bump", "--dry-run"], cwd=where, capture_output=True, text=True
+	)
+	# Keyed by the file that owns the pin, not by where the question was asked. A pin in this
+	# repository is visible from every project below it, so asking in three directories returned
+	# the same tool three times; the "Would bump ... in <file>" line is what tells them apart.
+	owners = {tool: owner for tool, owner in OWNER.findall(result.stdout)}
+	found = []
+	for tool, version in BUMP.findall(result.stdout):
+		owner = pathlib.Path(owners.get(tool, str(where / "mise.toml"))).expanduser()
+		try:
+			owner = owner.relative_to(ROOT)
+		except ValueError:
+			pass
+		found.append((str(owner), tool, version, stable(tool)))
+	return found
+
+
 def command_up(name: str | None = None, dry: bool = False) -> int:
 	moved = []
+	waiting = []
 	for where in configured(name):
 		before = dict(installed(where))
 		command = ["mise", "upgrade", "--local"] + (["--dry-run"] if dry else [])
-		subprocess.run(command, cwd=where, check=True)
+		# Captured rather than streamed so the bump advice can be dropped. The cost is that a long
+		# install prints nothing until it finishes, which is the smaller of the two problems.
+		run = subprocess.run(command, cwd=where, capture_output=True, text=True)
+		for stream in (run.stdout, run.stderr):
+			for line in stream.splitlines():
+				if "upgrade --bump" not in line:
+					print(line)
+		if run.returncode != 0:
+			raise fail(f"mise upgrade failed in {label(where)}")
+		for row in beyond(where):
+			if row not in waiting:
+				waiting.append(row)
 		after = before if dry else dict(installed(where))
 		for tool, was in before.items():
 			if after.get(tool) != was:
@@ -292,6 +350,18 @@ def command_up(name: str | None = None, dry: bool = False) -> int:
 		print("nothing to install; mise reported no upgrade within the pins")
 	else:
 		print("everything is current within its pins")
+
+	# In place of the line that was dropped. Same facts, plus the one mise does not have.
+	if waiting:
+		print("\nBeyond the pins, and what channel each is actually on:\n")
+		for owner, tool, version, current in waiting:
+			if current is None:
+				verdict = "no stable channel to compare"
+			elif order(version) > order(current):
+				verdict = f"ahead of stable {current}; a prerelease line, do not take it"
+			else:
+				verdict = "stable; edit [tools] to cross the pin"
+			print(f"{owner:<24} {tool:<10} {version:<12} {verdict}")
 
 	# Last, after a separator: this is the part a person has to act on, and an install log is
 	# long enough to bury it.

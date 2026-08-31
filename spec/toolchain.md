@@ -167,6 +167,18 @@ index. So `mise run tools outdated` asks those, per tool, and reports a version 
 stable as loudly as one behind it. A tool whose channel cannot be read is named as such rather
 than guessed at from the highest tag.
 
+**`update` drops mise's own upgrade advice rather than passing it on.** After upgrading within
+the pins, mise prints that newer versions exist outside the configured ranges and to run `mise
+upgrade --bump`. Following that here installs a prerelease: mise resolves against every published
+version and cannot read a dist-tag, so its bump target for pnpm was 11.25.0 while npm's stable
+tag was 11.24.0. The line is filtered out of the output and replaced with one that names the
+version, the file that pins it, and which channel it is actually on.
+
+This is not tidying. The line was read, believed and acted on -- the pin in `mise.toml` was
+edited to `11.25` because the command said to, one line below the command saying everything was
+already current. A tool that reports a rule and repeats advice contrary to it has not reported
+the rule.
+
 `pnpm = "11.24"` carries a minor for exactly this reason, which is the kind of reason the rule
 below asks a narrow pin to have. The digit comes off when the two lines converge.
 
