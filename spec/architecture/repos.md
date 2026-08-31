@@ -33,6 +33,17 @@ a rule about one project goes in that project.** The position is the mechanism, 
 setting to keep in step and nothing to synchronise -- which is why an earlier design that copied
 these files into each project, and checked the copies, is gone.
 
+**The rule is mechanical, not remembered.** `mise run check` fails when a project carries a
+version-controlled copy of `.editorconfig`, `rustfmt.toml`, `.oxlintrc.json`, `.oxfmtrc.json` or
+`jj.toml`, and when it declares a tool the workspace already declares. Both existed and neither
+was visible: still carried byte-identical copies of two of them and redeclared `rust`, and
+nothing said so for as long as the copies happened to agree. A rule that only holds while two
+files match is not a rule, it is a coincidence with a deadline.
+
+An identical copy and a divergent one are reported differently -- the first is dead weight, the
+second is the shadowing this arrangement exists to prevent -- and both fail, because a deliberate
+override has to be written down here before it is legitimate.
+
 A project cloned on its own therefore has no formatter configuration and no hooks. That is
 accepted rather than worked around: the way to get a complete environment is to clone this
 repository and the one project you want, nested. Two clones, not all of them.
@@ -156,6 +167,16 @@ commands left it out: `push` reported nothing to push while this repository was 
 of its origin, which is the worst possible way for a push command to be wrong. A command that
 means "all of them" has to mean all of them, and the one holding the others is the easiest to
 forget.
+
+**Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after
+the verb, because mise appends it last: `mise run push press --dry-run`. `push` and `update` pass
+it to the tool underneath, which has a real one; `pull` skips the fetch and says the divergence
+it reports is as of the last one; `verify` prints the task paths it would run.
+
+`fmt` is the interesting case. `jj fix` has no dry run, and predicting what a formatter will do
+means reimplementing the formatter, so the dry run **runs it and puts the repository back** --
+the operation log records every state the repository has been in, and `jj op restore` returns it
+to the one from before the fix. What it reports is what the formatters actually did.
 
 `check` dispatches to each repository's own `verify` rather than reimplementing it: what a
 project has to pass is the project's to decide, and this only decides where to look. `fmt` is

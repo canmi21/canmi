@@ -14,6 +14,9 @@ aliases onto this, so the short form is what gets typed and this file is where i
   verify           run each repository's own verify
   check            the registry, the task roots and the directories still agree
 
+Every command that changes something takes `--dry-run` (`-n`) and reports what it would do
+instead. `push` and `clone` have a real one; `fmt` gets there by running and rolling back.
+
 push is the user's to run. An agent does not run it and does not offer to -- see
 spec/commits.md.
 """
@@ -34,6 +37,16 @@ CONFIG = ROOT / "mise.toml"
 # `directory = "user:repo"` inside the [repos] table. Read by pattern rather than with a TOML
 # parser: this is one flat table, and which parser is available depends on the python mise
 # happens to resolve, which is not a dependency worth taking for a line of this shape.
+# Configuration this repository provides and every project below resolves by walking up. A
+# project carrying its own copy is what `check` looks for: an identical one is dead weight, and
+# a different one shadows this repository's silently. `.editorconfig` is the sharp case -- it
+# carries `root = true`, whose whole meaning is to stop that walk -- and rustfmt likewise stops
+# at the first file it finds. See spec/architecture/repos.md.
+#
+# `.gitattributes` is deliberately absent: git resolves attributes only within one worktree, so
+# it never inherits and a project setting its own is correct.
+INHERITED = (".editorconfig", "rustfmt.toml", ".oxlintrc.json", ".oxfmtrc.json", "jj.toml")
+
 ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$', re.MULTILINE)
 
 
@@ -108,7 +121,7 @@ def command_list() -> int:
 	return 0
 
 
-def command_clone(name: str | None) -> int:
+def command_clone(name: str | None, dry: bool = False) -> int:
 	REPOS.mkdir(exist_ok=True)
 	listed = registry()
 	wanted = {name: listed[name]} if name and name in listed else listed
@@ -117,6 +130,10 @@ def command_clone(name: str | None) -> int:
 		target = REPOS / directory
 		if target.exists():
 			continue
+		if dry:
+			print(f"would clone {user}:{repo} into repos/{directory}")
+			added += 1
+			continue
 		print(f"cloning {user}:{repo} into repos/{directory}")
 		# Colocated, because the git side is what the remote and any contributor speak.
 		subprocess.run(
@@ -124,32 +141,41 @@ def command_clone(name: str | None) -> int:
 			check=True,
 		)
 		added += 1
-	print(f"{added} cloned")
+	print(f"{added} {'would be cloned' if dry else 'cloned'}")
 	return 0
 
 
-def command_pull(name: str | None) -> int:
+def command_pull(name: str | None, dry: bool = False) -> int:
+	"""Fetch, and say what that brought in.
+
+	`jj git fetch` has no dry run and needs none of its own: it writes remote-tracking refs and
+	nothing else -- no commit, no working copy. The dry run skips it anyway and reports the
+	divergence the last fetch left, saying which it is rather than passing stale state off as
+	current.
+	"""
 	for repo in selected(name):
 		if not is_repository(repo):
 			print(f"{label(repo)}: not a repository, skipped")
 			continue
-		result = jj("git", "fetch", cwd=repo, check=False)
-		if result.returncode != 0:
-			print(f"{label(repo)}: fetch failed")
-			sys.stderr.write(result.stderr)
-			continue
+		if not dry:
+			result = jj("git", "fetch", cwd=repo, check=False)
+			if result.returncode != 0:
+				print(f"{label(repo)}: fetch failed")
+				sys.stderr.write(result.stderr)
+				continue
 		behind = jj(
 			"log", "--no-graph", "-r", "main..main@origin",
 			"-T", 'commit_id.short() ++ " " ++ description.first_line() ++ "\\n"',
 			cwd=repo, check=False,
 		).stdout.strip()
-		print(f"{label(repo)}: {'up to date' if not behind else 'behind by'}")
+		stale = " (as of the last fetch; none run)" if dry else ""
+		print(f"{label(repo)}: {'up to date' if not behind else 'behind by'}{stale}")
 		for line in behind.splitlines():
 			print(f"    {line}")
 	return 0
 
 
-def command_push(name: str | None) -> int:
+def command_push(name: str | None, dry: bool = False) -> int:
 	for repo in selected(name):
 		if not is_repository(repo):
 			continue
@@ -160,34 +186,82 @@ def command_push(name: str | None) -> int:
 		if not ahead:
 			print(f"{label(repo)}: nothing to push")
 			continue
-		print(f"{label(repo)}: pushing {len(ahead.splitlines())} commit(s)")
-		subprocess.run(["jj", "git", "push", "--bookmark", "main"], cwd=repo, check=True)
+		verb = "would push" if dry else "pushing"
+		print(f"{label(repo)}: {verb} {len(ahead.splitlines())} commit(s)")
+		command = ["jj", "git", "push", "--bookmark", "main"] + (["--dry-run"] if dry else [])
+		subprocess.run(command, cwd=repo, check=True)
 	return 0
 
 
-def command_fmt(name: str | None) -> int:
-	"""`jj fix` over the working copy, with the formatters jj.toml names for every repository."""
+def command_fmt(name: str | None, dry: bool = False) -> int:
+	"""`jj fix` over the working copy, with the formatters jj.toml names for every repository.
+
+	`jj fix` has no dry run, so the dry one runs it and then puts the repository back. That is
+	cheaper than it sounds and better than the alternative: the operation log records every state
+	the repository has been in, `jj op restore` returns it to the one from before, and what gets
+	reported is therefore what the formatters actually did rather than a guess at it. Predicting
+	the output of a formatter means reimplementing the formatter.
+	"""
 	for repo in selected(name):
 		if not is_repository(repo):
 			continue
+		mark = jj("op", "log", "-n1", "--no-graph", "-T", "id.short()", cwd=repo).stdout.strip()
+		before = jj("log", "-r", "@", "--no-graph", "-T", "commit_id", cwd=repo).stdout.strip()
 		result = jj("fix", "--source", "@", cwd=repo, check=False)
-		print(f"{label(repo)}: {result.stdout.strip().splitlines()[0] if result.stdout.strip() else 'nothing to fix'}")
 		if result.returncode != 0:
+			print(f"{label(repo)}: fix failed")
 			sys.stderr.write(result.stderr)
+			continue
+		after = jj("log", "-r", "@", "--no-graph", "-T", "commit_id", cwd=repo).stdout.strip()
+		if before == after:
+			print(f"{label(repo)}: nothing to fix")
+			continue
+		changed = jj("diff", "--from", before, "--to", after, "--summary", cwd=repo, check=False)
+		print(f"{label(repo)}: {'would reformat' if dry else 'reformatted'}")
+		for line in changed.stdout.strip().splitlines():
+			print(f"    {line}")
+		if dry:
+			jj("op", "restore", mark, cwd=repo)
 	return 0
 
 
-def command_verify(name: str | None) -> int:
+def command_verify(name: str | None, dry: bool = False) -> int:
 	"""Each repository's own verify, by its namespaced task path."""
 	failed = []
 	for repo in selected(name):
 		task = "//:verify" if repo == ROOT else f"//repos/{repo.name}:verify"
+		if dry:
+			print(f"would run {task}")
+			continue
 		print(f"\n=== {task} ===")
 		if subprocess.run(["mise", "run", task], cwd=ROOT).returncode != 0:
 			failed.append(label(repo))
 	if failed:
 		print(f"\nfailed: {', '.join(failed)}")
 	return 1 if failed else 0
+
+
+def shadowing(project: pathlib.Path) -> list[str]:
+	"""Files in a project that this repository already provides by position.
+
+	Only version-controlled ones: `jj file list` is the question worth asking, because a copy
+	nobody committed is a local accident and a committed one is what a fresh clone gets. An
+	identical copy and a divergent one are both reported, differently -- the first is dead weight,
+	the second is the shadowing this arrangement exists to avoid, and only a rule written down in
+	spec/ can make it correct.
+	"""
+	listed = jj("file", "list", cwd=project, check=False)
+	found = []
+	for relative in listed.stdout.splitlines():
+		path = project / relative
+		if path.name not in INHERITED or not path.is_file():
+			continue
+		provided = ROOT / path.name
+		if provided.is_file() and provided.read_bytes() == path.read_bytes():
+			found.append(f"{relative} is a byte-identical copy of the workspace's; delete it")
+		else:
+			found.append(f"{relative} shadows the workspace's, which is inherited by position")
+	return found
 
 
 def command_check() -> int:
@@ -212,6 +286,10 @@ def command_check() -> int:
 			elif not is_repository(path):
 				print(f"repos/{path.name} is not a repository -- repos/*/ is ignored, so nothing tracks it")
 				problems += 1
+			else:
+				for complaint in shadowing(path):
+					print(f"repos/{path.name}/{complaint}")
+					problems += 1
 
 	if problems == 0:
 		print(f"{len(listed)} listed, task roots agree")
@@ -219,23 +297,34 @@ def command_check() -> int:
 
 
 def main(argv: list[str]) -> int:
-	action = argv[0] if argv else None
-	name = argv[1] if len(argv) > 1 else None
+	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise."""
+	dry = False
+	rest = []
+	for argument in argv:
+		if argument in ("-n", "--dry-run"):
+			dry = True
+		elif argument.startswith("-"):
+			raise fail(f"unknown option {argument}")
+		else:
+			rest.append(argument)
+	action = rest[0] if rest else None
+	name = rest[1] if len(rest) > 1 else None
 	if action == "list":
 		return command_list()
 	if action == "clone":
-		return command_clone(name)
+		return command_clone(name, dry)
 	if action == "pull":
-		return command_pull(name)
+		return command_pull(name, dry)
 	if action == "push":
-		return command_push(name)
+		return command_push(name, dry)
 	if action == "fmt":
-		return command_fmt(name)
+		return command_fmt(name, dry)
 	if action == "verify":
-		return command_verify(name)
+		return command_verify(name, dry)
 	if action == "check":
+		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
-	raise fail("usage: repos list | clone | pull | push | fmt | verify | check  [name]")
+	raise fail("usage: repos list | clone | pull | push | fmt | verify | check  [name] [--dry-run]")
 
 
 if __name__ == "__main__":

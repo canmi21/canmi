@@ -15,7 +15,8 @@ resolves a pin against every published release, which for pnpm includes the `nex
 resolved to 11.25.0 while npm's `latest` was 11.24.0. Being ahead of stable is as wrong here as
 being behind it, and both are reported.
 
-`check` is part of `mise run verify` and needs no network. `outdated` and `up` do.
+`check` is part of `mise run verify` and needs no network. `outdated` and `up` do. `up` takes
+`--dry-run` (`-n`) and reports what it would install and rewrite.
 """
 
 import json
@@ -175,19 +176,49 @@ def write_derived(path: pathlib.Path, resolved: str) -> None:
 	path.write_text(text[:start] + re.sub(r"pnpm@[^\"]+", f"pnpm@{resolved}", line) + text[end:])
 
 
+def redundant(where: pathlib.Path, provided: dict[str, str]) -> list[str]:
+	"""Tools a project declares that the workspace already declares.
+
+	mise resolves the nearest declaration, so a project restating one takes over the version for
+	that directory -- silently while the two agree, and invisibly once they stop. A project states
+	a tool of its own only where it needs one the workspace does not carry, the way press names
+	rclone. See spec/architecture/repos.md.
+	"""
+	found = []
+	for tool, version in installed(where):
+		if tool not in provided:
+			continue
+		if provided[tool] == version:
+			found.append(f"declares {tool} = {version}, which the workspace already declares; drop it")
+		else:
+			found.append(f"pins {tool} to {version} over the workspace's {provided[tool]}")
+	return found
+
+
 def command_check(name: str | None = None) -> int:
 	"""The files an outside build reads must name the version mise resolves."""
-	problems = 0
+	# Two kinds, counted apart because only one of them has a command that fixes it. Printing
+	# "`mise run update` rewrites them" under a redundant declaration would be advice that does
+	# not work: update installs and regenerates, and never edits a [tools] table.
+	drifted = shadowed = 0
+	provided = dict(installed(ROOT))
 	for where in configured(name):
 		for path, written, resolved in derived(where):
 			print(f"{label(where)}: {path.name} says {written}, mise resolves {resolved}")
-			problems += 1
-	if problems:
+			drifted += 1
+		if where != ROOT:
+			for complaint in redundant(where, provided):
+				print(f"{label(where)} {complaint}")
+				shadowed += 1
+	if drifted:
 		print("    an outside build reads these; nothing out there has heard of mise")
 		print("    `mise run update` rewrites them")
-	else:
+	if shadowed:
+		print("    a project declares a tool only where the workspace does not carry one")
+		print("    edit the project's [tools]; nothing rewrites it for you")
+	if not drifted and not shadowed:
 		print("the versions an outside build reads agree with mise")
-	return 1 if problems else 0
+	return 1 if drifted or shadowed else 0
 
 
 def survey(name: str | None = None) -> list[tuple[pathlib.Path, str, str, str | None]]:
@@ -228,12 +259,13 @@ def command_outdated(name: str | None = None) -> int:
 	return 0
 
 
-def command_up(name: str | None = None) -> int:
+def command_up(name: str | None = None, dry: bool = False) -> int:
 	moved = []
 	for where in configured(name):
 		before = dict(installed(where))
-		subprocess.run(["mise", "upgrade", "--local"], cwd=where, check=True)
-		after = dict(installed(where))
+		command = ["mise", "upgrade", "--local"] + (["--dry-run"] if dry else [])
+		subprocess.run(command, cwd=where, check=True)
+		after = before if dry else dict(installed(where))
 		for tool, was in before.items():
 			if after.get(tool) != was:
 				moved.append((label(where), tool, was, after.get(tool, "?")))
@@ -243,17 +275,21 @@ def command_up(name: str | None = None) -> int:
 	rewritten = []
 	for where in configured(name):
 		for path, _, resolved in derived(where):
-			write_derived(path, resolved)
+			if not dry:
+				write_derived(path, resolved)
 			rewritten.append((label(where), path.name, resolved))
 
 	print()
 	if rewritten:
-		for place, name, resolved in rewritten:
-			print(f"{place:<14} {name:<16} rewritten to {resolved}")
+		for place, written, resolved in rewritten:
+			verb = "would be rewritten to" if dry else "rewritten to"
+			print(f"{place:<14} {written:<16} {verb} {resolved}")
 	if moved:
 		for place, tool, was, now in moved:
 			print(f"{place:<14} {tool:<10} {was} -> {now}")
 		print("\nRun each repository's verify before trusting this; a toolchain move is a change.")
+	elif dry:
+		print("nothing to install; mise reported no upgrade within the pins")
 	else:
 		print("everything is current within its pins")
 
@@ -269,15 +305,26 @@ def command_up(name: str | None = None) -> int:
 
 
 def main(argv: list[str]) -> int:
-	action = argv[0] if argv else None
-	name = argv[1] if len(argv) > 1 else None
+	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise."""
+	dry = False
+	rest = []
+	for argument in argv:
+		if argument in ("-n", "--dry-run"):
+			dry = True
+		elif argument.startswith("-"):
+			raise fail(f"unknown option {argument}")
+		else:
+			rest.append(argument)
+	action = rest[0] if rest else None
+	name = rest[1] if len(rest) > 1 else None
+	# check and outdated read and report; there is nothing for a dry run to hold back.
 	if action == "check":
 		return command_check(name)
 	if action == "outdated":
 		return command_outdated(name)
 	if action == "up":
-		return command_up(name)
-	raise fail("usage: tools check | outdated | up  [name]")
+		return command_up(name, dry)
+	raise fail("usage: tools check | outdated | up  [name] [--dry-run]")
 
 
 if __name__ == "__main__":

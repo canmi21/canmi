@@ -48,31 +48,31 @@ oxlint = "1"
 # The short forms. Each takes an optional name from repos.toml and means every repository
 # without one: `mise run pull` is all of them, `mise run pull press` is that one.
 [tasks.pull]
-description = "Fetch every repository, or one: `pull [name]`"
+description = "Fetch every repository, or one: `pull [name] [--dry-run]`"
 run = ".mise/tasks/repos pull"
 
 [tasks.push]
-description = "Push every repository's main, or one: `push [name]`"
+description = "Push every repository's main, or one: `push [name] [--dry-run]`"
 run = ".mise/tasks/repos push"
 
 [tasks.fmt]
-description = "Format the working copy of every repository, or one: `fmt [name]`"
+description = "Format the working copy of every repository, or one: `fmt [name] [--dry-run]`"
 run = ".mise/tasks/repos fmt"
 
 [tasks.check]
-description = "Run every repository's own verify, or one: `check [name]`"
+description = "Run every repository's own verify, or one: `check [name] [--dry-run]`"
 run = ".mise/tasks/repos verify"
 
 [tasks.update]
-description = "Upgrade tools within their pins and name what waits across one: `update [name]`"
+description = "Upgrade tools within their pins and name what waits across one: `update [name] [--dry-run]`"
 run = ".mise/tasks/tools up"
 
 [tasks.check-tools]
-description = "Check that the versions an outside build reads agree with what mise resolves"
+description = "Check the versions an outside build reads, and that no project redeclares a workspace tool"
 run = ".mise/tasks/tools check"
 
 [tasks.check-repos]
-description = "Check that the repository list and the task roots still agree"
+description = "Check the registry, the task roots, and that no project copies what it inherits"
 run = ".mise/tasks/repos check"
 
 [tasks.check-hooks]

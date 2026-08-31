@@ -84,9 +84,10 @@ YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
 **One verb, optionally one name.** `mise run pull|push|fmt|check|update` run across every
-repository; add a name from `repos.toml` -- `mise run check press` -- to run against one. `check`
-dispatches to each repository's own `verify`; `update` upgrades tools within their pinned majors
-and ends by naming any major it would not cross, which is the only place that gets reported.
+repository; add a name from `repos.toml` -- `mise run check press` -- to run against one, and
+`--dry-run` to any of them to be told what it would do. `check` dispatches to each repository's
+own `verify`; `update` upgrades tools within their pinned majors and ends by naming any major it
+would not cross, which is the only place that gets reported.
 See [spec/toolchain.md](spec/toolchain.md).
 
 **A project's tasks are reached by path.** `mise tasks ls` shows only this repository's; the
