@@ -65,6 +65,25 @@ becoming everyone's. It resolves relative to where an agent starts, so it reache
 when the agent starts in that project and not otherwise, which is the right shape for a tool one
 project owns.
 
+## `.gitattributes` is the exception: it does not inherit
+
+Everything above inherits downward. `.gitattributes` does not, and that is deliberate rather
+than a gap. git resolves attributes by walking up from a file **to the top of its own worktree
+and no further**, so a separate repository below never sees this one's -- measured, in
+`repos/still`, where `git check-attr -a src/main.rs` returns nothing. This repository also
+ignores `repos/*/`, so GitHub's language statistics for it never reach a project's files either.
+
+The file here exists to fix what those statistics say. Linguist counts a file only when its
+language is type `programming` or `markup`; Markdown is type `prose`, so 98KB of spec documents
+-- the entire point of this repository -- counted for nothing and GitHub called it 100% Python
+off the hooks and the task scripts. `*.md linguist-detectable=true` overrides that type test.
+Nothing is excluded to reach the result: with Markdown counted the split is about 68/32 against
+the Python that really is here.
+
+**A project sets its own, by its own logic.** A Rust application and a website have nothing to
+say to each other about what language they are written in, and the non-inheritance is what makes
+that work without any opt-out.
+
 ## Why not a submodule
 
 jj has no submodule support, and the failure is quiet. Colocating over a repository that has one

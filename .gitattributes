@@ -1,0 +1,15 @@
+# What GitHub reports this repository as being written in.
+#
+# Linguist counts a file only when its language is type `programming` or `markup`. Markdown is
+# type `prose`, so the spec documents -- 98KB of the 164KB here, and the entire point of the
+# repository -- were not counted at all, and GitHub called this 100% Python off the hooks and
+# the task scripts. `linguist-detectable` overrides that type test, in either direction.
+#
+# This is not a thumb on the scale: with Markdown counted the split is roughly 68/32 against the
+# Python that really is here, which is the honest answer. Nothing is excluded to reach it.
+*.md linguist-detectable=true
+
+# The two task scripts carry no extension and are detected from their shebang. Stated anyway,
+# because a shebang is a heuristic and this is a fact.
+.mise/tasks/repos linguist-language=Python
+.mise/tasks/tools linguist-language=Python
