@@ -40,6 +40,10 @@ pnpm = "11"
 jj = "0.44"
 oxlint = "1"
 
+[tasks.update]
+description = "Upgrade every repository's tools within their pins, and name the majors waiting"
+run = ".mise/tasks/tools up"
+
 [tasks.check-repos]
 description = "Check that the repository list and the task roots still agree"
 run = ".mise/tasks/repos check"

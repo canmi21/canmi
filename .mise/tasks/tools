@@ -161,20 +161,25 @@ def command_up() -> int:
 			now = after.get(tool)
 			moved.append((label(where), tool, was, "still behind" if now == was else "upgraded"))
 
-	across = 0
-	for where in configured():
-		waiting = across_a_pin(where)
-		if waiting:
-			print(f"{label(where)}: not upgraded across a pin")
-			across += report_pins(where)
-
-	if not moved:
-		print("everything is current within its pins")
-		return 0
 	print()
-	for place, tool, was, outcome in moved:
-		print(f"{place:<14} {tool:<10} {was} {outcome}")
-	print("\nRun each repository's verify before trusting this; a toolchain move is a change.")
+	if moved:
+		for place, tool, was, outcome in moved:
+			print(f"{place:<14} {tool:<10} {was} {outcome}")
+		print("\nRun each repository's verify before trusting this; a toolchain move is a change.")
+	else:
+		print("everything is current within its pins")
+
+	# Last, and after a blank line, because this is the part a person has to act on and the
+	# upgrade output above is long enough to bury it.
+	waiting = [(where, across_a_pin(where)) for where in configured()]
+	waiting = [(where, rows) for where, rows in waiting if rows]
+	if waiting:
+		print("\n" + "-" * 72)
+		print("Held back at a pin. Nothing above crossed a major; these are waiting:\n")
+		for where, rows in waiting:
+			for tool, version, available in rows:
+				print(f"  {tool:<10} {version}  ->  {available}")
+			print(f"  {'':<10} edit [tools] in {(where / 'mise.toml').relative_to(ROOT)} to take one")
 	return 0
 
 

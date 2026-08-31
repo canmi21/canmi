@@ -122,14 +122,25 @@ cross.
 
 **mise will not tell you a new major exists.** With a pin in place `mise outdated` reports
 nothing outside it -- it answers "are you current within what you asked for", which is a
-different question. So `tools up` asks the other one itself, against `mise ls-remote`, and prints
-what is waiting without taking it:
+different question. So `mise run update` asks the other one itself, against `mise ls-remote`, and
+prints what is waiting without taking it:
 
 ```
-workspace: not upgraded across a pin
-    pnpm 11.25.0 is pinned; 12.1.0 is out
-    to take one, edit [tools] in mise.toml
+workspace      oxlint     1.79.0 upgraded
+
+------------------------------------------------------------------------
+Held back at a pin. Nothing above crossed a major; these are waiting:
+
+  pnpm       11.25.0  ->  12.1.0
+             edit [tools] in mise.toml to take one
 ```
+
+**The notice goes last, after the upgrade output, and nowhere else.** It is the only part a
+person has to act on, and an install log is long enough to bury it. Putting the same check into
+`verify` was the alternative and is worse: `verify` runs constantly and is offline, so it would
+either gain a network dependency or report a cached answer that is stale exactly when it
+matters. Asking at the moment somebody has decided to update costs nothing extra and reaches
+them while the subject is already in mind.
 
 This replaced `latest` everywhere, and the reason is worth keeping. `latest` is resolved once,
 when a tool is first installed, and never advances on its own -- so it reads as "always current"

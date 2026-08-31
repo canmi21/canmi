@@ -82,6 +82,10 @@ do not offer it. mise owns every tool version. Indentation is tabs at width 2 in
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
+**Updating the toolchain is `mise run update`.** It upgrades every repository's tools within
+their pinned majors and ends by naming any major it would not cross, which is the only place
+that gets reported -- see [spec/toolchain.md](spec/toolchain.md).
+
 **A project's tasks are reached by path.** `mise tasks ls` shows only this repository's; the
 projects' are `//repos/<name>:<task>` and need `mise tasks ls --all` to be listed. A project
 that is not cloned is a warning, not an error, so a machine holding one project still works.
