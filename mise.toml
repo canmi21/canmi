@@ -33,16 +33,25 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 #
 # jj is pinned at minor precision because it is pre-1.0, where a minor is the breaking release.
 # rust is a channel rather than a version and has no major to cross.
+#
+# pnpm carries a minor for a different reason, and it is the kind of reason a narrow pin is
+# supposed to have: mise resolves against every published release, and pnpm publishes its `next`
+# line there, so `11` reached 11.25.0 while npm's stable tag was 11.24.0. The extra digit holds
+# it to the release an outside build resolves. Drop it when the two lines converge.
 [tools]
 node = "26"
 rust = "stable"
-pnpm = "11"
+pnpm = "11.24"
 jj = "0.44"
 oxlint = "1"
 
 [tasks.update]
 description = "Upgrade every repository's tools within their pins, and name the majors waiting"
 run = ".mise/tasks/tools up"
+
+[tasks.check-tools]
+description = "Check that the versions an outside build reads agree with what mise resolves"
+run = ".mise/tasks/tools check"
 
 [tasks.check-repos]
 description = "Check that the repository list and the task roots still agree"
@@ -54,4 +63,4 @@ run = "/usr/bin/python3 -m unittest discover -s hooks -p 'test_*.py'"
 
 [tasks.verify]
 description = "Everything a change to this repository has to pass"
-depends = ["check-repos", "check-hooks"]
+depends = ["check-tools", "check-repos", "check-hooks"]

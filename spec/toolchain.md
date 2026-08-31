@@ -152,6 +152,36 @@ typed is a version the repository actually records.
 npm's `latest` tag pointed at 11.24.0, so `latest` had already put this workspace on a
 prerelease line without saying so. Another reason the number is written down.
 
+### Stable means the publisher's channel, not the highest version that exists
+
+mise resolves a pin against every release a tool has published, and a published release is not
+the same as a released one. pnpm publishes its `next` line to npm, so `pnpm = "11"` reached
+11.25.0 while npm's `latest` tag was 11.24.0 -- the workspace was on a prerelease line and
+nothing said so. The same mistake was then made twice over in the tooling written to prevent it,
+which reported pnpm 12.1.0 as available because the version existed, when npm has no `latest-12`
+at all.
+
+**The version tracked is the one an outside build resolves.** Cloudflare and Vercel have never
+heard of mise; they read npm's dist-tags, a GitHub release marked not-prerelease, nodejs.org's
+index. So `mise run tools outdated` asks those, per tool, and reports a version **ahead** of
+stable as loudly as one behind it. A tool whose channel cannot be read is named as such rather
+than guessed at from the highest tag.
+
+`pnpm = "11.24"` carries a minor for exactly this reason, which is the kind of reason the rule
+below asks a narrow pin to have. The digit comes off when the two lines converge.
+
+### The files an outside build reads are generated, not maintained
+
+`.node-version` and `packageManager` restate a version whose home is a `mise.toml`. They exist
+because an outside build reads them and nothing out there knows about mise -- and a restated
+fact drifts, which it had: `.node-version` said 26.5.0 while mise resolved 26.8.1, so Cloudflare
+was building on a node three patches from the one every local check ran against.
+
+So they are written rather than edited. `mise run update` rewrites each from the pin it mirrors,
+and `mise run verify` fails when something else has moved one. That is the same arrangement as
+the generated Rust URL mirror in press: a copy across a boundary a tool cannot see, plus a check
+that fails the moment it stops agreeing.
+
 ### Inside the major, a version number is a bug report
 
 Within a pinned major nothing is written down: `node = "26"` takes whatever 26.x is current,
