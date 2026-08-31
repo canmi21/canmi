@@ -170,6 +170,13 @@ than guessed at from the highest tag.
 `pnpm = "11.24"` carries a minor for exactly this reason, which is the kind of reason the rule
 below asks a narrow pin to have. The digit comes off when the two lines converge.
 
+**Node follows the current release line, never LTS.** `node = "26"` is the Current line, and
+26 is not an LTS -- that is the intended state and not something to correct. Cloudflare serves
+both lines, so the safety an LTS buys is availability this does not need, and what it costs is
+running a runtime a year behind the one being written against. Nothing here is a commercial
+deployment with a support contract to honour. `nodejs.org`'s index is read newest-first for the
+same reason, so "stable" for node means released, not blessed.
+
 ### The files an outside build reads are generated, not maintained
 
 `.node-version` and `packageManager` restate a version whose home is a `mise.toml`. They exist
