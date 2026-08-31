@@ -37,6 +37,21 @@ A project cloned on its own therefore has no formatter configuration and no hook
 accepted rather than worked around: the way to get a complete environment is to clone this
 repository and the one project you want, nested. Two clones, not all of them.
 
+**What decides whether a tool can live only here: does it need the project's module graph?**
+A self-contained binary can. `oxlint`, `rustfmt`, `jj`, `node` and `rust` are declared once, in
+this repository's `mise.toml`, and every project resolves the same one -- a project states a tool
+of its own only where it needs one this list does not carry, the way press names `rclone` for a
+bucket nothing else touches. A tool that resolves its own plugins through node cannot: `oxfmt`
+with `svelte: true` reaches `svelte/compiler` through the module graph of wherever it is
+installed, so the copy here formats markdown and JSON and fails on a `.svelte` file, and the
+project that has Svelte keeps a copy of its own. That is the test to apply before moving a tool
+up: plugins mean per project, otherwise once, here.
+
+Nothing is installed globally. A global install is a third place a version can come from, with
+no file recording it and nothing upgrading it -- a globally installed oxfmt sat at 0.28 for long
+enough to format this repository differently from the project beside it. What a project needs, a
+project or this repository declares.
+
 **Sharing the rules is not the same as sharing the tool that applies them.** `jj fix` is
 configured once, in `jj.toml`, and `JJ_CONFIG` is set here so every repository below inherits
 it -- but the formatter it invokes is whichever one that repository's `PATH` provides. This has

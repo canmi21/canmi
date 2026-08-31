@@ -31,6 +31,7 @@ node = "latest"
 rust = "stable"
 pnpm = "latest"
 jj = "latest"
+oxlint = "latest"
 
 [tasks.check-repos]
 description = "Check that the repository list and the task roots still agree"
