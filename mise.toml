@@ -26,12 +26,19 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 
 # The toolchain every project here is built with. A repository states a version of its own only
 # where it needs one this list does not carry.
+# Pinned to a major, not to `latest`. Within the pin `tools up` moves freely; crossing it is a
+# decision with a diff and a commit message behind it, because a major is where a lockfile
+# format or a runtime behaviour changes. `tools up` prints what is available across each pin
+# and refuses to take it -- edit the number here to accept one.
+#
+# jj is pinned at minor precision because it is pre-1.0, where a minor is the breaking release.
+# rust is a channel rather than a version and has no major to cross.
 [tools]
-node = "latest"
+node = "26"
 rust = "stable"
-pnpm = "latest"
-jj = "latest"
-oxlint = "latest"
+pnpm = "11"
+jj = "0.44"
+oxlint = "1"
 
 [tasks.check-repos]
 description = "Check that the repository list and the task roots still agree"

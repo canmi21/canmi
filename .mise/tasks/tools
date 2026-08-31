@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+#MISE description="The toolchain across every repository: `tools outdated`, `tools up`"
+"""Keep the pinned toolchain current. See spec/architecture/repos.md.
+
+`mise upgrade` works on the configuration chain of one directory, and a project's own tools are
+below the workspace rather than in its chain -- so upgrading everything means visiting each
+repository in turn. That is all this is.
+
+  outdated   what is behind, per repository, and what waits across a major
+  up         upgrade within the pins, then say what moved
+
+Scoped with --local, so it works on what this workspace and its projects declare and leaves the
+user's own ~/.config/mise/config.toml alone.
+
+Tools are pinned to a major. `mise outdated` reports nothing outside that pin -- so a new major
+is invisible to it, and reporting one is this file's job. Crossing a pin is never automatic:
+the notice names the version and the file, and the pin is edited by hand.
+"""
+
+import json
+import pathlib
+import re
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+sys.stdout.reconfigure(line_buffering=True)
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+REPOS = ROOT / "repos"
+
+# `mise outdated` prints one tool per line: name, requested, current, latest, source.
+ROW = re.compile(r"^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)")
+
+
+def series(version: str) -> str | None:
+	"""The part of a version a pin is meant to hold.
+
+	The major, except below 1.0 where the minor is the breaking release -- jj at 0.44 and 0.45
+	are as far apart as node 26 and 27. A channel like `stable` has no series and is skipped.
+	"""
+	parts = version.split(".")
+	if not parts[0].isdigit():
+		return None
+	if parts[0] != "0":
+		return parts[0]
+	return ".".join(parts[:2]) if len(parts) > 1 and parts[1].isdigit() else None
+
+
+def fail(message: str) -> "SystemExit":
+	return SystemExit(f"error: {message}")
+
+
+def configured() -> list[pathlib.Path]:
+	"""Every directory here that declares tools of its own, the workspace first."""
+	found = [ROOT]
+	if REPOS.is_dir():
+		found.extend(sorted(p for p in REPOS.iterdir() if (p / "mise.toml").is_file()))
+	return found
+
+
+def outdated(where: pathlib.Path) -> list[tuple[str, str, str]]:
+	"""(tool, current, latest) for what this directory declares and is behind on."""
+	result = subprocess.run(
+		["mise", "outdated", "--local"], cwd=where, capture_output=True, text=True
+	)
+	# --local excludes the user's global config but still lists what this directory inherits
+	# from above, so the source column decides ownership. Compared as a resolved path rather
+	# than by suffix: a project named `space` would otherwise match `.../workspace/mise.toml`.
+	own = (where / "mise.toml").resolve()
+	rows = []
+	for line in result.stdout.splitlines():
+		match = ROW.match(line)
+		if not match:
+			continue
+		source = pathlib.Path(match.group(5).replace("~", str(pathlib.Path.home()), 1)).resolve()
+		if source == own:
+			rows.append((match.group(1), match.group(3), match.group(4)))
+	return rows
+
+
+def installed(where: pathlib.Path) -> list[tuple[str, str]]:
+	"""(tool, version) for the tools this directory's own mise.toml declares."""
+	result = subprocess.run(
+		["mise", "ls", "--current", "--json"], cwd=where, capture_output=True, text=True
+	)
+	if result.returncode != 0:
+		return []
+	own = str((where / "mise.toml").resolve())
+	found = []
+	for tool, entries in json.loads(result.stdout).items():
+		for entry in entries:
+			if entry.get("source", {}).get("path") == own:
+				found.append((tool, entry.get("version", "")))
+	return found
+
+
+def newest(tool: str) -> str | None:
+	"""The highest release mise offers, pin or no pin. Prereleases are not versions to cross to."""
+	result = subprocess.run(["mise", "ls-remote", tool], capture_output=True, text=True)
+	if result.returncode != 0:
+		return None
+	stable = [v for v in result.stdout.split() if re.fullmatch(r"\d+(\.\d+)*", v)]
+	return stable[-1] if stable else None
+
+
+def across_a_pin(where: pathlib.Path) -> list[tuple[str, str, str]]:
+	"""(tool, installed, available) for every tool whose next series is out."""
+	waiting = []
+	for tool, version in installed(where):
+		here = series(version)
+		if here is None:
+			continue
+		there = newest(tool)
+		if there is None:
+			continue
+		if series(there) != here:
+			waiting.append((tool, version, there))
+	return waiting
+
+
+def report_pins(where: pathlib.Path) -> int:
+	waiting = across_a_pin(where)
+	for tool, version, available in waiting:
+		print(f"    {tool} {version} is pinned; {available} is out")
+	if waiting:
+		print(f"    to take one, edit [tools] in {(where / 'mise.toml').relative_to(ROOT)}")
+	return len(waiting)
+
+
+def label(where: pathlib.Path) -> str:
+	return "workspace" if where == ROOT else f"repos/{where.name}"
+
+
+def command_outdated() -> int:
+	behind = across = 0
+	for where in configured():
+		rows = outdated(where)
+		print(f"{label(where)}:" if rows else f"{label(where)}: current within its pins")
+		for tool, current, latest in rows:
+			print(f"    {tool:<10} {current} -> {latest}")
+			behind += 1
+		across += report_pins(where)
+	summary = f"{behind} tool(s) behind" if behind else "everything is current within its pins"
+	print(f"\n{summary}" + (f", {across} major(s) waiting across a pin" if across else ""))
+	return 0
+
+
+def command_up() -> int:
+	moved = []
+	for where in configured():
+		before = {tool: current for tool, current, _ in outdated(where)}
+		if not before:
+			continue
+		print(f"{label(where)}: upgrading {', '.join(sorted(before))}")
+		subprocess.run(["mise", "upgrade", "--local"], cwd=where, check=True)
+		after = {tool: current for tool, current, _ in outdated(where)}
+		for tool, was in before.items():
+			# Still listed as outdated means the upgrade did not reach the latest version --
+			# worth saying, because the alternative is a silent no-op that reads as success.
+			now = after.get(tool)
+			moved.append((label(where), tool, was, "still behind" if now == was else "upgraded"))
+
+	across = 0
+	for where in configured():
+		waiting = across_a_pin(where)
+		if waiting:
+			print(f"{label(where)}: not upgraded across a pin")
+			across += report_pins(where)
+
+	if not moved:
+		print("everything is current within its pins")
+		return 0
+	print()
+	for place, tool, was, outcome in moved:
+		print(f"{place:<14} {tool:<10} {was} {outcome}")
+	print("\nRun each repository's verify before trusting this; a toolchain move is a change.")
+	return 0
+
+
+def main(argv: list[str]) -> int:
+	action = argv[0] if argv else None
+	if action == "outdated":
+		return command_outdated()
+	if action == "up":
+		return command_up()
+	raise fail("usage: tools outdated | up")
+
+
+if __name__ == "__main__":
+	try:
+		raise SystemExit(main(sys.argv[1:]))
+	except subprocess.CalledProcessError as error:
+		raise SystemExit(f"error: {' '.join(error.cmd)} failed") from error

@@ -107,25 +107,61 @@ Three consequences worth knowing:
 Prefer the mise registry short name (`oxlint`) over a backend-qualified one (`npm:oxlint`);
 both resolve to the same package, and the short form keeps `mise.toml` readable.
 
-### `latest` is the pin, until something breaks
+### A tool is pinned to its major, and crossing one is a decision
 
-Most tools here are declared `latest` on purpose. A version number is a claim that _this_
-release is the one this repository works with, and for a linter or a CLI that claim is almost
-never true -- it is simply the release that happened to be current on the day somebody typed it.
-What the number then buys is a tool that stops improving until a person remembers to raise it,
-and a diff every few months that says nothing except that time passed.
+`[tools]` names a major -- `node = "26"`, `pnpm = "11"` -- rather than `latest`. Inside that
+number `mise run tools up` moves freely; outside it nothing moves until the number is edited, so
+crossing a major arrives as a diff with a commit message rather than as a surprise on a machine.
+A major is where a lockfile format or a runtime behaviour changes, which is exactly the class of
+change worth stopping for.
 
-**A pin is a bug report, not hygiene.** It is written when a specific release actually breaks
-this repository, and it carries the reason beside it: which version, what it broke, and what
-would let the pin be lifted. A pin with no such note is indistinguishable from one nobody has
-revisited, so the next reader cannot tell whether it is still needed.
+Below 1.0 the minor is the breaking release, so jj is pinned at `0.44` rather than `0`. The
+distance from jj 0.44 to 0.45 is the distance from node 26 to 27, and a pin that could not see
+it would be a pin in name only. `rust` is a channel rather than a version and has no major to
+cross.
 
-`rust = "stable"` is the same rule wearing a channel name rather than `latest`.
+**mise will not tell you a new major exists.** With a pin in place `mise outdated` reports
+nothing outside it -- it answers "are you current within what you asked for", which is a
+different question. So `tools up` asks the other one itself, against `mise ls-remote`, and prints
+what is waiting without taking it:
 
-The exposure this accepts is real and is the point: a tool can change under a build nobody
-touched. `mise run verify` is what makes that survivable -- the change surfaces as a failing
-check on the next run rather than as behaviour nobody notices, which is the trade a pin makes in
-the opposite direction and worse, by deferring the same discovery indefinitely.
+```
+workspace: not upgraded across a pin
+    pnpm 11.25.0 is pinned; 12.1.0 is out
+    to take one, edit [tools] in mise.toml
+```
+
+This replaced `latest` everywhere, and the reason is worth keeping. `latest` is resolved once,
+when a tool is first installed, and never advances on its own -- so it reads as "always current"
+while meaning "whatever the day of installation happened to offer". Two machines set up a month
+apart get different toolchains from the same file and neither says so. A major that has to be
+typed is a version the repository actually records.
+
+**mise's `latest` is not the publisher's stable channel either.** It offered pnpm 11.25.0 while
+npm's `latest` tag pointed at 11.24.0, so `latest` had already put this workspace on a
+prerelease line without saying so. Another reason the number is written down.
+
+### Inside the major, a version number is a bug report
+
+Within a pinned major nothing is written down: `node = "26"` takes whatever 26.x is current,
+and `tools up` moves it. Naming an exact release there is a claim that *this* one is what the
+repository works with, and for a linter or a CLI that claim is almost never true -- it is the
+release that happened to be current on the day somebody typed it. What the number then buys is a
+tool that stops improving until a person remembers to raise it, and a diff every few months that
+says nothing except that time passed.
+
+So a version narrower than the major is written when a specific release actually breaks
+something, and it carries the reason beside it: which version, what it broke, and what would let
+it be lifted. A narrow pin with no such note is indistinguishable from one nobody has revisited,
+and the next reader cannot tell whether it is still needed.
+
+`rust = "stable"` is the same rule wearing a channel name.
+
+What this accepts is that a patch release can change under a build nobody touched. That is
+survivable because `verify` runs: the change surfaces as a failing check rather than as
+behaviour nobody notices. Freezing an exact version defers the same discovery indefinitely
+instead, which is the worse side of the same trade -- and it is why the boundary sits at the
+major, where the change is large enough to be worth stopping for, rather than at every release.
 
 ### The JavaScript toolchain lives in package.json
 
