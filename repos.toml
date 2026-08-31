@@ -1,12 +1,17 @@
 # The repositories this workspace is made of.
 #
-# `user:repo` on GitHub, cloned to `repos/<repo>`. The user half is carried so an organisation's
-# repository is one entry like any other, rather than a second mechanism.
+#   <local directory> = "<user>:<repo>"
 #
-# This is the list `repos clone` restores a machine from. mise needs the same set as task roots
-# and cannot read it from here, so `[monorepo].config_roots` in mise.toml states it a second
-# time and `repos check` fails when the two disagree.
-repos = [
-	"canmi21:press",
-	"canmi21:still",
-]
+# The directory is the key, so it is unique by the format rather than by a check -- two entries
+# cannot claim one folder, and a duplicate is a parse error rather than a surprise on clone. The
+# user half is carried so an organisation's repository is an entry like any other, and so the
+# same repository name under two owners can live side by side under different directories.
+#
+# Every command that takes a name takes one of these keys: `mise run pull press`, `mise run
+# check still`. Without one they run everywhere. See spec/architecture/repos.md.
+#
+# mise needs the same set as task roots and cannot read this file, so [monorepo].config_roots in
+# mise.toml states it a second time; `check-repos` fails when the two disagree.
+[repos]
+press = "canmi21:press"
+still = "canmi21:still"

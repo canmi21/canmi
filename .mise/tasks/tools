@@ -85,8 +85,19 @@ def series(version: str) -> str | None:
 	return ".".join(parts[:2]) if len(parts) > 1 and parts[1].isdigit() else None
 
 
-def configured() -> list[pathlib.Path]:
-	"""Every directory here that declares tools of its own, the workspace first."""
+def configured(name: str | None = None) -> list[pathlib.Path]:
+	"""Directories declaring tools of their own: one when named, the workspace first otherwise.
+
+	`workspace` names this repository, so a single tool can be upgraded without touching the
+	projects; any other name is a directory under repos/.
+	"""
+	if name == "workspace":
+		return [ROOT]
+	if name:
+		target = REPOS / name
+		if not (target / "mise.toml").is_file():
+			raise fail(f"repos/{name} declares no tools of its own")
+		return [target]
 	found = [ROOT]
 	if REPOS.is_dir():
 		found.extend(sorted(p for p in REPOS.iterdir() if (p / "mise.toml").is_file()))
@@ -164,10 +175,10 @@ def write_derived(path: pathlib.Path, resolved: str) -> None:
 	path.write_text(text[:start] + re.sub(r"pnpm@[^\"]+", f"pnpm@{resolved}", line) + text[end:])
 
 
-def command_check() -> int:
+def command_check(name: str | None = None) -> int:
 	"""The files an outside build reads must name the version mise resolves."""
 	problems = 0
-	for where in configured():
+	for where in configured(name):
 		for path, written, resolved in derived(where):
 			print(f"{label(where)}: {path.name} says {written}, mise resolves {resolved}")
 			problems += 1
@@ -179,10 +190,10 @@ def command_check() -> int:
 	return 1 if problems else 0
 
 
-def survey() -> list[tuple[pathlib.Path, str, str, str | None]]:
+def survey(name: str | None = None) -> list[tuple[pathlib.Path, str, str, str | None]]:
 	"""(where, tool, installed, stable) for everything declared here."""
 	rows = []
-	for where in configured():
+	for where in configured(name):
 		for tool, version in installed(where):
 			rows.append((where, tool, version, stable(tool)))
 	return rows
@@ -208,8 +219,8 @@ def report(rows) -> tuple[int, int, int]:
 	return behind, ahead, unknown
 
 
-def command_outdated() -> int:
-	behind, ahead, _ = report(survey())
+def command_outdated(name: str | None = None) -> int:
+	behind, ahead, _ = report(survey(name))
 	if not behind and not ahead:
 		print("every tool is on its publisher's stable release")
 	elif ahead:
@@ -217,9 +228,9 @@ def command_outdated() -> int:
 	return 0
 
 
-def command_up() -> int:
+def command_up(name: str | None = None) -> int:
 	moved = []
-	for where in configured():
+	for where in configured(name):
 		before = dict(installed(where))
 		subprocess.run(["mise", "upgrade", "--local"], cwd=where, check=True)
 		after = dict(installed(where))
@@ -230,7 +241,7 @@ def command_up() -> int:
 	# Written from the pins rather than maintained: whatever the toolchain moved to, the files
 	# an outside build reads say so without anybody remembering to edit them.
 	rewritten = []
-	for where in configured():
+	for where in configured(name):
 		for path, _, resolved in derived(where):
 			write_derived(path, resolved)
 			rewritten.append((label(where), path.name, resolved))
@@ -248,7 +259,7 @@ def command_up() -> int:
 
 	# Last, after a separator: this is the part a person has to act on, and an install log is
 	# long enough to bury it.
-	rows = [r for r in survey() if r[3] is not None and r[2] != r[3]]
+	rows = [r for r in survey(name) if r[3] is not None and r[2] != r[3]]
 	if rows:
 		print("\n" + "-" * 72)
 		print("Against each publisher's stable channel:\n")
@@ -259,13 +270,14 @@ def command_up() -> int:
 
 def main(argv: list[str]) -> int:
 	action = argv[0] if argv else None
+	name = argv[1] if len(argv) > 1 else None
 	if action == "check":
-		return command_check()
+		return command_check(name)
 	if action == "outdated":
-		return command_outdated()
+		return command_outdated(name)
 	if action == "up":
-		return command_up()
-	raise fail("usage: tools check | outdated | up")
+		return command_up(name)
+	raise fail("usage: tools check | outdated | up  [name]")
 
 
 if __name__ == "__main__":

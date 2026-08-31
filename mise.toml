@@ -45,8 +45,26 @@ pnpm = "11.24"
 jj = "0.44"
 oxlint = "1"
 
+# The short forms. Each takes an optional name from repos.toml and means every repository
+# without one: `mise run pull` is all of them, `mise run pull press` is that one.
+[tasks.pull]
+description = "Fetch every repository, or one: `pull [name]`"
+run = ".mise/tasks/repos pull"
+
+[tasks.push]
+description = "Push every repository's main, or one: `push [name]`"
+run = ".mise/tasks/repos push"
+
+[tasks.fmt]
+description = "Format the working copy of every repository, or one: `fmt [name]`"
+run = ".mise/tasks/repos fmt"
+
+[tasks.check]
+description = "Run every repository's own verify, or one: `check [name]`"
+run = ".mise/tasks/repos verify"
+
 [tasks.update]
-description = "Upgrade every repository's tools within their pins, and name the majors waiting"
+description = "Upgrade tools within their pins and name what waits across one: `update [name]`"
 run = ".mise/tasks/tools up"
 
 [tasks.check-tools]

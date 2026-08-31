@@ -90,8 +90,21 @@ warning: adding embedded git repository: repos/press
 
 ## `repos.toml` lists them; `mise.toml` says it again
 
-`repos.toml` holds `user:repo` per project, cloned to `repos/<repo>`. The user half is carried so
-an organisation's repository is one entry like any other rather than a second mechanism.
+`repos.toml` maps a local directory to a remote:
+
+```toml
+[repos]
+press = "canmi21:press"
+still = "canmi21:still"
+```
+
+**The directory is the key, so uniqueness comes from the format rather than from a check.** Two
+entries cannot claim one folder, and a duplicate is a parse error where it would otherwise be a
+surprise on clone. The user half is carried so an organisation's repository is an entry like any
+other, and so one repository name under two owners can sit side by side under different
+directories -- which is the case a bare `user:repo` list could not express at all.
+
+That key is also the name every command takes.
 
 mise needs the same set as task roots and cannot read that file, so `[monorepo].config_roots`
 states it a second time. Two copies of one fact, and therefore a check: `repos check` fails when
@@ -100,6 +113,28 @@ they disagree. This is the shape used wherever a fact has to cross a boundary a 
 A listed project that is not cloned is a warning from mise and nothing more, which is what makes
 the two-clone workflow work: a machine holding one project runs that project's tasks and is not
 told off about the others.
+
+## One verb, optionally one name
+
+`pull`, `push`, `fmt`, `check` and `update` run across every repository, and take a name from
+`repos.toml` to run against one:
+
+```
+mise run pull            every repository
+mise run pull press      that one
+mise run check           each repository's own verify
+mise run update still    that one's tools
+```
+
+They are one-line aliases onto a single implementation, so the short form is what gets typed and
+the logic lives once. A name that is not in the registry is an error that lists the names that
+are, because the alternative -- doing nothing quietly, or doing everything -- are both worse than
+saying so.
+
+`check` dispatches to each repository's own `verify` rather than reimplementing it: what a
+project has to pass is the project's to decide, and this only decides where to look. `fmt` is
+`jj fix` with the formatters `jj.toml` names, which is why formatting is identical everywhere
+without any project configuring it.
 
 ## Tasks are reached by path
 

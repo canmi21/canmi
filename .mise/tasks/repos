@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-#MISE description="Work with the repositories under repos/: `repos list|clone|pull|push|check`"
-"""The repositories this workspace is made of. See spec/architecture/repos.md.
+#MISE description="Work on the repositories: `repos list|clone|pull|push|check|fmt|verify [name]`"
+"""Every command here takes an optional repository name and means all of them without one.
 
-repos.toml lists them as `user:repo`; each is cloned to repos/<repo> and is its own jj
-repository, ignored here. Nothing is a submodule and nothing is pinned: this workspace holds no
-opinion about which revision of a project is current, because it builds nothing from them.
+The name is a key from repos.toml, which is the local directory: `repos pull press` is press,
+`repos pull` is everything. The top-level `pull`, `push`, `check` and `fmt` tasks are one-line
+aliases onto this, so the short form is what gets typed and this file is where it lives once.
 
-  list    what the list holds and what is on disk
-  clone   clone whatever is listed and missing
-  pull    fetch every cloned repository and say what moved
-  push    push every cloned repository's main
-  check   the list, the task roots and the directories still agree
+  list             what the registry holds and what is on disk
+  clone            clone whatever is listed and missing
+  pull             fetch, and say what moved
+  push             push main
+  fmt              format the working copy through `jj fix`
+  verify           run each repository's own verify
+  check            the registry, the task roots and the directories still agree
 
-push exists for the user to run. An agent does not run it and does not offer to -- see
+push is the user's to run. An agent does not run it and does not offer to -- see
 spec/commits.md.
 """
 
@@ -22,8 +24,6 @@ import subprocess
 import sys
 
 sys.dont_write_bytecode = True
-# Subprocesses write straight to the same descriptor, so block-buffered prints would surface
-# after output they were meant to introduce.
 sys.stdout.reconfigure(line_buffering=True)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -31,27 +31,41 @@ REPOS = ROOT / "repos"
 REGISTRY = ROOT / "repos.toml"
 CONFIG = ROOT / "mise.toml"
 
-# `user:repo`, one per line inside the array. Read by pattern rather than with a TOML parser:
-# the file is one list, and which parser is available depends on the python mise happens to
-# resolve, which is not a dependency worth taking for a line of this shape.
-ENTRY = re.compile(r'^\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*,?\s*$', re.MULTILINE)
+# `directory = "user:repo"` inside the [repos] table. Read by pattern rather than with a TOML
+# parser: this is one flat table, and which parser is available depends on the python mise
+# happens to resolve, which is not a dependency worth taking for a line of this shape.
+ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$', re.MULTILINE)
 
 
 def fail(message: str) -> "SystemExit":
 	return SystemExit(f"error: {message}")
 
 
-def listed() -> list[tuple[str, str]]:
-	"""(user, repo) for every entry, in the order the file gives them."""
+def registry() -> dict[str, tuple[str, str]]:
+	"""directory -> (user, repo), in the order the file gives them."""
 	if not REGISTRY.is_file():
 		raise fail(f"{REGISTRY.name} does not exist")
-	return ENTRY.findall(REGISTRY.read_text())
+	table = re.search(r"^\[repos\]\n((?:.*\n)*)", REGISTRY.read_text(), re.MULTILINE)
+	found = {}
+	for directory, user, repo in ENTRY.findall(table.group(1) if table else ""):
+		if directory in found:
+			raise fail(f"{REGISTRY.name} lists {directory} twice")
+		found[directory] = (user, repo)
+	return found
 
 
-def task_roots() -> list[str]:
-	"""What mise loads tasks from. Stated separately because mise cannot read the list above."""
-	block = re.search(r"^config_roots\s*=\s*\[(.*?)\]", CONFIG.read_text(), re.MULTILINE | re.DOTALL)
-	return re.findall(r'"([^"]+)"', block.group(1)) if block else []
+def selected(name: str | None) -> list[pathlib.Path]:
+	"""The directories a command applies to: one when named, every cloned one otherwise."""
+	listed = registry()
+	if name:
+		if name not in listed:
+			known = ", ".join(listed) or "nothing"
+			raise fail(f"{REGISTRY.name} does not list {name}; it lists {known}")
+		target = REPOS / name
+		if not target.is_dir():
+			raise fail(f"repos/{name} is listed but not cloned -- `mise run repos clone` first")
+		return [target]
+	return [REPOS / d for d in listed if (REPOS / d).is_dir()]
 
 
 def is_repository(path: pathlib.Path) -> bool:
@@ -66,50 +80,51 @@ def jj(*args: str, cwd: pathlib.Path, check: bool = True) -> subprocess.Complete
 	return result
 
 
-def cloned() -> list[pathlib.Path]:
-	if not REPOS.is_dir():
-		return []
-	return sorted(p for p in REPOS.iterdir() if p.is_dir())
+def task_roots() -> list[str]:
+	block = re.search(r"^config_roots\s*=\s*\[(.*?)\]", CONFIG.read_text(), re.MULTILINE | re.DOTALL)
+	return re.findall(r'"([^"]+)"', block.group(1)) if block else []
 
 
 def command_list() -> int:
-	on_disk = {p.name for p in cloned()}
-	names = {repo for _, repo in listed()}
-	for user, repo in listed():
-		mark = "" if repo in on_disk else "   (not cloned)"
-		print(f"{user}:{repo}  -> repos/{repo}{mark}")
-	for name in sorted(on_disk - names):
-		print(f"repos/{name}  is on disk but not listed in {REGISTRY.name}")
+	listed = registry()
+	on_disk = {p.name for p in REPOS.iterdir() if p.is_dir()} if REPOS.is_dir() else set()
+	for directory, (user, repo) in listed.items():
+		mark = "" if directory in on_disk else "   (not cloned)"
+		print(f"{directory:<12} {user}:{repo}{mark}")
+	for name in sorted(on_disk - set(listed)):
+		print(f"{name:<12} on disk but not listed in {REGISTRY.name}")
 	return 0
 
 
-def command_clone() -> int:
+def command_clone(name: str | None) -> int:
 	REPOS.mkdir(exist_ok=True)
+	listed = registry()
+	wanted = {name: listed[name]} if name and name in listed else listed
 	added = 0
-	for user, repo in listed():
-		target = REPOS / repo
+	for directory, (user, repo) in wanted.items():
+		target = REPOS / directory
 		if target.exists():
 			continue
-		print(f"cloning {user}:{repo}")
+		print(f"cloning {user}:{repo} into repos/{directory}")
 		# Colocated, because the git side is what the remote and any contributor speak.
 		subprocess.run(
 			["jj", "git", "clone", "--colocate", f"https://github.com/{user}/{repo}.git", str(target)],
 			check=True,
 		)
 		added += 1
-	print(f"{added} cloned; {len(cloned())} present")
+	print(f"{added} cloned")
 	return 0
 
 
-def command_pull() -> int:
-	for repo in cloned():
+def command_pull(name: str | None) -> int:
+	for repo in selected(name):
 		if not is_repository(repo):
 			print(f"{repo.name}: not a repository, skipped")
 			continue
-		fetched = jj("git", "fetch", cwd=repo, check=False)
-		if fetched.returncode != 0:
+		result = jj("git", "fetch", cwd=repo, check=False)
+		if result.returncode != 0:
 			print(f"{repo.name}: fetch failed")
-			sys.stderr.write(fetched.stderr)
+			sys.stderr.write(result.stderr)
 			continue
 		behind = jj(
 			"log", "--no-graph", "-r", "main..main@origin",
@@ -122,8 +137,8 @@ def command_pull() -> int:
 	return 0
 
 
-def command_push() -> int:
-	for repo in cloned():
+def command_push(name: str | None) -> int:
+	for repo in selected(name):
 		if not is_repository(repo):
 			continue
 		ahead = jj(
@@ -138,15 +153,38 @@ def command_push() -> int:
 	return 0
 
 
+def command_fmt(name: str | None) -> int:
+	"""`jj fix` over the working copy, with the formatters jj.toml names for every repository."""
+	for repo in selected(name):
+		if not is_repository(repo):
+			continue
+		result = jj("fix", "--source", "@", cwd=repo, check=False)
+		print(f"{repo.name}: {result.stdout.strip().splitlines()[0] if result.stdout.strip() else 'nothing to fix'}")
+		if result.returncode != 0:
+			sys.stderr.write(result.stderr)
+	return 0
+
+
+def command_verify(name: str | None) -> int:
+	"""Each repository's own verify, by its namespaced task path."""
+	failed = []
+	for repo in selected(name):
+		task = f"//repos/{repo.name}:verify"
+		print(f"\n=== {task} ===")
+		if subprocess.run(["mise", "run", task], cwd=ROOT).returncode != 0:
+			failed.append(repo.name)
+	if failed:
+		print(f"\nfailed: {', '.join(failed)}")
+	return 1 if failed else 0
+
+
 def command_check() -> int:
 	problems = 0
-	entries = listed()
-	names = {repo for _, repo in entries}
+	listed = registry()
 	roots = set(task_roots())
 
-	# One set, two files: mise cannot read repos.toml, so config_roots states it again. This is
-	# what keeps the second copy honest.
-	expected = {f"repos/{repo}" for repo in names}
+	# One set, two files: mise cannot read repos.toml, so config_roots states it again.
+	expected = {f"repos/{directory}" for directory in listed}
 	for missing in sorted(expected - roots):
 		print(f"mise.toml [monorepo].config_roots is missing {missing}")
 		problems += 1
@@ -154,32 +192,38 @@ def command_check() -> int:
 		print(f"mise.toml [monorepo].config_roots names {extra}, which {REGISTRY.name} does not list")
 		problems += 1
 
-	for path in cloned():
-		if path.name not in names:
-			print(f"repos/{path.name} is on disk but not listed in {REGISTRY.name}")
-			problems += 1
-		elif not is_repository(path):
-			print(f"repos/{path.name} is not a repository -- repos/*/ is ignored, so nothing tracks it")
-			problems += 1
+	if REPOS.is_dir():
+		for path in sorted(p for p in REPOS.iterdir() if p.is_dir()):
+			if path.name not in listed:
+				print(f"repos/{path.name} is on disk but not listed in {REGISTRY.name}")
+				problems += 1
+			elif not is_repository(path):
+				print(f"repos/{path.name} is not a repository -- repos/*/ is ignored, so nothing tracks it")
+				problems += 1
 
 	if problems == 0:
-		print(f"{len(entries)} listed, {len(cloned())} cloned, task roots agree")
+		print(f"{len(listed)} listed, task roots agree")
 	return 1 if problems else 0
 
 
 def main(argv: list[str]) -> int:
 	action = argv[0] if argv else None
+	name = argv[1] if len(argv) > 1 else None
 	if action == "list":
 		return command_list()
 	if action == "clone":
-		return command_clone()
+		return command_clone(name)
 	if action == "pull":
-		return command_pull()
+		return command_pull(name)
 	if action == "push":
-		return command_push()
+		return command_push(name)
+	if action == "fmt":
+		return command_fmt(name)
+	if action == "verify":
+		return command_verify(name)
 	if action == "check":
 		return command_check()
-	raise fail("usage: repos list | clone | pull | push | check")
+	raise fail("usage: repos list | clone | pull | push | fmt | verify | check  [name]")
 
 
 if __name__ == "__main__":
