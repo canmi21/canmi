@@ -12,6 +12,7 @@ aliases onto this, so the short form is what gets typed and this file is where i
   push             push main
   fmt              format the working copy through `jj fix`
   verify           run each repository's own verify
+  publish          run one repository's own publish; a name is required
   check            the registry, the task roots and the directories still agree
 
 Every command that changes something takes `--dry-run` (`-n`) and reports what it would do
@@ -45,7 +46,14 @@ CONFIG = ROOT / "mise.toml"
 #
 # `.gitattributes` is deliberately absent: git resolves attributes only within one worktree, so
 # it never inherits and a project setting its own is correct.
-INHERITED = (".editorconfig", "rustfmt.toml", ".oxlintrc.json", ".oxfmtrc.json", "jj.toml")
+INHERITED = (
+	".editorconfig",
+	"rustfmt.toml",
+	"rust-toolchain.toml",
+	".oxlintrc.json",
+	".oxfmtrc.json",
+	"jj.toml",
+)
 
 ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$', re.MULTILINE)
 
@@ -264,6 +272,39 @@ def shadowing(project: pathlib.Path) -> list[str]:
 	return found
 
 
+def command_publish(name: str | None, dry: bool = False) -> int:
+	"""One repository's own `publish`, by its namespaced task path.
+
+	**The only verb here that refuses to mean every repository.** Everywhere else a missing name
+	is a convenience; here it would be a release of everything that has a publish task, to a
+	registry that accepts a version once and where yanking leaves it downloadable. So the name is
+	required, the workspace is not a candidate, and a project without the task is told so rather
+	than quietly doing nothing.
+	"""
+	if not name:
+		# The ones that actually have the task, not merely the ones that exist: an error that
+		# suggests a command which then fails is worse than the error it replaced.
+		without = "<name>"
+		have = [
+			d
+			for d in registry()
+			if (REPOS / d / "mise.toml").is_file()
+			and "[tasks.publish]" in (REPOS / d / "mise.toml").read_text()
+		]
+		named = ", ".join(have) if have else without
+		raise fail(f"publish takes a repository name, one of: {named}")
+	repo = selected(name)[0]
+	if repo == ROOT:
+		raise fail("the workspace publishes nothing; it holds configuration")
+	config = repo / "mise.toml"
+	if not config.is_file() or "[tasks.publish]" not in config.read_text():
+		raise fail(f"repos/{repo.name} has no publish task")
+	task = f"//repos/{repo.name}:publish"
+	print(f"=== {task}{' --dry-run' if dry else ''} ===")
+	command = ["mise", "run", task] + (["--dry-run"] if dry else [])
+	return subprocess.run(command, cwd=ROOT).returncode
+
+
 def command_check() -> int:
 	problems = 0
 	listed = registry()
@@ -321,10 +362,14 @@ def main(argv: list[str]) -> int:
 		return command_fmt(name, dry)
 	if action == "verify":
 		return command_verify(name, dry)
+	if action == "publish":
+		return command_publish(name, dry)
 	if action == "check":
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
-	raise fail("usage: repos list | clone | pull | push | fmt | verify | check  [name] [--dry-run]")
+	raise fail(
+		"usage: repos list | clone | pull | push | fmt | verify | publish | check  [name] [--dry-run]"
+	)
 
 
 if __name__ == "__main__":

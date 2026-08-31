@@ -32,8 +32,9 @@ hooks/         the agent hook entrypoint both vendors call
 repos/         one directory per project, each a separate repository
 ```
 
-Formatting configuration lives here and is found by walking up: `.editorconfig`, `rustfmt.toml`
-and `.oxlintrc.json` are read from a project below without being copied into it. So is the
+Formatting configuration lives here and is found by walking up: `.editorconfig`, `rustfmt.toml`,
+`rust-toolchain.toml` and `.oxlintrc.json` are read from a project below without being copied
+into it. So is the
 toolchain in `mise.toml`, and so are the hooks. See
 [spec/architecture/repos.md](spec/architecture/repos.md).
 
@@ -90,6 +91,10 @@ own `verify`; `update` upgrades tools within their pinned majors and ends by nam
 would not cross, which is the only place that gets reported.
 See [spec/toolchain.md](spec/toolchain.md).
 
+**`publish` is the one verb that refuses to mean everything.** `mise run publish <name>` runs
+that project's own publish task and a missing name is an error, because a release cannot be
+taken back. See [spec/architecture/repos.md](spec/architecture/repos.md).
+
 **A project's tasks are reached by path.** `mise tasks ls` shows only this repository's; the
 projects' are `//repos/<name>:<task>` and need `mise tasks ls --all` to be listed. A project
 that is not cloned is a warning, not an error, so a machine holding one project still works.
@@ -125,3 +130,4 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | ------------ | ------------------------------------------------ |
 | `repos/press` | the site, its workers, the CMS and the corpus -- [repos/press/spec/](repos/press/spec/) |
 | `repos/still` | a macOS application; no spec yet                 |
+| `repos/governor` | a published crate, `canmi21:axum-governor` -- [repos/governor/spec/](repos/governor/spec/) |

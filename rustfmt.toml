@@ -14,3 +14,11 @@ newline_style = "Unix"
 # does not read .editorconfig itself.
 hard_tabs = true
 tab_spaces = 2
+
+# rustfmt keeps a set of width thresholds below max_width -- struct literals at 18 columns,
+# function call arguments at 60, arrays, chains -- and breaks a construct across lines once it
+# passes its own one. "Max" raises every threshold to max_width, so anything that fits on a
+# line stays on it. It arrived with the governor crate, which had it and nothing else did; the
+# choice was to drop it there or adopt it everywhere, and one rule set for every repository is
+# the point of this file.
+use_small_heuristics = "Max"

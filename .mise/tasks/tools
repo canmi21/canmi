@@ -47,6 +47,7 @@ CHANNELS = {
 	"jj": ("github", "jj-vcs/jj"),
 	"rclone": ("github", "rclone/rclone"),
 	"node": ("node", ""),
+	"rust": ("rust", ""),
 }
 
 
@@ -73,6 +74,17 @@ def stable(tool: str) -> str | None:
 			return None if release.get("prerelease") else release["tag_name"].lstrip("v")
 		if kind == "node":
 			return get("https://nodejs.org/dist/index.json")[0]["version"].lstrip("v")
+		if kind == "rust":
+			# The whole channel manifest, because the version wanted is inside [pkg.rust] and the
+			# first one in the file is cargo's. It is about a megabyte; this runs online only.
+			request = urllib.request.Request(
+				"https://static.rust-lang.org/dist/channel-rust-stable.toml",
+				headers={"User-Agent": "workspace-tools"},
+			)
+			with urllib.request.urlopen(request, timeout=30) as response:
+				body = response.read().decode("utf8", "replace")
+			found = re.search(r'^\[pkg\.rust\]\nversion = "(\d+\.\d+\.\d+)', body, re.MULTILINE)
+			return found.group(1) if found else None
 	except (urllib.error.URLError, KeyError, IndexError, TimeoutError):
 		return None
 	return None
@@ -153,6 +165,25 @@ def active(where: pathlib.Path, tool: str) -> str | None:
 	return None
 
 
+def rust_channel(where: pathlib.Path) -> str | None:
+	"""What rustup's stable toolchain currently is, with rust-toolchain.toml stepped around.
+
+	`rustc --version` would answer with the version that file pins, which is comparing the file
+	against itself: it could never drift and the check could never fail. `rustup run stable` asks
+	the channel instead, which is the thing the file is supposed to be a record of.
+
+	mise is not asked because its rust is a symlink to the rustup toolchain rather than one it
+	installs, so it has no version of its own to report.
+	"""
+	result = subprocess.run(
+		["rustup", "run", "stable", "rustc", "--version"], cwd=where, capture_output=True, text=True
+	)
+	if result.returncode != 0:
+		return None
+	found = re.search(r"rustc (\d+\.\d+\.\d+)", result.stdout)
+	return found.group(1) if found else None
+
+
 def derived(where: pathlib.Path) -> list[tuple[pathlib.Path, str, str]]:
 	"""(file, written, resolved) for the files an outside build reads, where they disagree.
 
@@ -170,6 +201,13 @@ def derived(where: pathlib.Path) -> list[tuple[pathlib.Path, str, str]]:
 		if running and written != running:
 			found.append((node_version, written, running))
 
+	toolchain = where / "rust-toolchain.toml"
+	if toolchain.is_file():
+		running = rust_channel(where)
+		written = re.search(r'channel\s*=\s*"([^"]+)"', toolchain.read_text())
+		if running and written and written.group(1) != running:
+			found.append((toolchain, written.group(1), running))
+
 	manifest = where / "package.json"
 	if manifest.is_file():
 		declared = json.loads(manifest.read_text()).get("packageManager", "")
@@ -184,6 +222,10 @@ def derived(where: pathlib.Path) -> list[tuple[pathlib.Path, str, str]]:
 def write_derived(path: pathlib.Path, resolved: str) -> None:
 	if path.name == ".node-version":
 		path.write_text(f"{resolved}\n")
+		return
+	if path.name == "rust-toolchain.toml":
+		text = path.read_text()
+		path.write_text(re.sub(r'(channel\s*=\s*")[^"]+(")', rf"\g<1>{resolved}\g<2>", text, count=1))
 		return
 	text = path.read_text()
 	start = text.index('"packageManager"')

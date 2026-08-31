@@ -9,6 +9,7 @@ cloned into `repos/` and ignored here. Nothing is a submodule.
 workspace/            this repository -- rules, hooks, formatter configuration, the list
   repos/press/        a repository of its own
   repos/still/        another
+  repos/governor/     and another, whose directory name is not its repository name
 ```
 
 They are nested on the filesystem so the shared rules sit one directory up, where the tools that
@@ -24,8 +25,8 @@ whole problem.
 
 ## Configuration is inherited by position, not copied
 
-`.editorconfig`, `rustfmt.toml`, `.oxlintrc.json`, `.oxfmtrc.json`, the `[tools]` in `mise.toml`
-and the agent hooks all live here and are found by walking up. Measured, each of them: a project
+`.editorconfig`, `rustfmt.toml`, `rust-toolchain.toml`, `.oxlintrc.json`, `.oxfmtrc.json`, the
+`[tools]` in `mise.toml` and the agent hooks all live here and are found by walking up. Measured, each of them: a project
 below carries no copy and needs none.
 
 That is what decides the split. **A rule that holds for everything the author writes goes here;
@@ -133,6 +134,8 @@ entries cannot claim one folder, and a duplicate is a parse error where it would
 surprise on clone. The user half is carried so an organisation's repository is an entry like any
 other, and so one repository name under two owners can sit side by side under different
 directories -- which is the case a bare `user:repo` list could not express at all.
+`governor = "canmi21:axum-governor"` is the everyday version of the same thing: the directory
+reads as what the project is here, and the remote keeps the name it is published under.
 
 That key is also the name every command takes.
 
@@ -177,6 +180,16 @@ it reports is as of the last one; `verify` prints the task paths it would run.
 means reimplementing the formatter, so the dry run **runs it and puts the repository back** --
 the operation log records every state the repository has been in, and `jj op restore` returns it
 to the one from before the fix. What it reports is what the formatters actually did.
+
+**`publish` is the exception, and refuses to mean every repository.** It takes a name, it errors
+without one, and the workspace is not a candidate. Everywhere else a missing name is a
+convenience; here it would be a release of everything that has the task, to a registry that
+accepts a version once and where yanking leaves it downloadable. A project without a publish task
+is told so rather than quietly doing nothing, and the error names only the projects that have
+one -- an error suggesting a command that then fails is worse than the error it replaced.
+
+The task itself belongs to the project, which is what decides that a release depends on its own
+`verify` passing first. This only decides where to look, the same as `check`.
 
 `check` dispatches to each repository's own `verify` rather than reimplementing it: what a
 project has to pass is the project's to decide, and this only decides where to look. `fmt` is

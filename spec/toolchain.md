@@ -182,6 +182,17 @@ the rule.
 `pnpm = "11.24"` carries a minor for exactly this reason, which is the kind of reason the rule
 below asks a narrow pin to have. The digit comes off when the two lines converge.
 
+**`rust-toolchain.toml` is generated too, and rustup is what reads it.** mise's rust is a
+symlink to the rustup toolchain rather than one mise installs, so the file at the workspace root
+is the thing that actually decides which compiler every crate below builds with. It carries a
+concrete version rather than the word `stable`, for the reason every pin here does: a channel
+name records nothing, and two machines set up a month apart would build with different compilers
+from the same file and neither would say so.
+
+`update` writes it and `verify` checks it, the same as `.node-version`. The version is read with
+`rustup run stable rustc --version` rather than plain `rustc --version`, which would return the
+version the file itself pins -- comparing the file against itself, a check that could never fail.
+
 **Node follows the current release line, never LTS.** `node = "26"` is the Current line, and
 26 is not an LTS -- that is the intended state and not something to correct. Cloudflare serves
 both lines, so the safety an LTS buys is availability this does not need, and what it costs is

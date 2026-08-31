@@ -15,3 +15,4 @@
 [repos]
 press = "canmi21:press"
 still = "canmi21:still"
+governor = "canmi21:axum-governor"

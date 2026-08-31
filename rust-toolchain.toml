@@ -1,0 +1,16 @@
+# The Rust toolchain every repository below resolves. Written by `mise run update`, never by
+# hand -- `mise run verify` fails when it disagrees with what rustup's stable channel holds.
+#
+# It lives here rather than in a project for the same reason .editorconfig does: rustup walks up
+# from the crate it is invoked in, so one file covers all of them. It arrived with the governor
+# repository, which carried its own copy pinned to an older compiler.
+#
+# A concrete version rather than the word "stable": a channel name records nothing, so two
+# machines set up a month apart would build with different compilers from the same file and
+# neither would say so. That is the same reason the mise pins carry numbers.
+#
+# mise's rust is a symlink to the rustup toolchain rather than one mise manages, which is why
+# this file is the thing that decides and why `update` asks rustup, not mise, what stable is.
+[toolchain]
+channel = "1.98.0"
+components = ["rustfmt", "clippy", "rust-src"]

@@ -8,7 +8,7 @@ monorepo_root = true
 # .gitignore says about them. A missing entry is a warning and nothing more, so a machine that
 # has cloned only one project still runs that project's tasks. See spec/architecture/repos.md.
 [monorepo]
-config_roots = ["repos/press", "repos/still"]
+config_roots = ["repos/press", "repos/still", "repos/governor"]
 
 # jj's own repo config lives outside the working copy and cannot be version controlled.
 # JJ_CONFIG merges a colon-separated list left to right, so this keeps the user's personal
@@ -62,6 +62,10 @@ run = ".mise/tasks/repos fmt"
 [tasks.check]
 description = "Run every repository's own verify, or one: `check [name] [--dry-run]`"
 run = ".mise/tasks/repos verify"
+
+[tasks.publish]
+description = "Publish one repository, which must be named: `publish <name> [--dry-run]`"
+run = ".mise/tasks/repos publish"
 
 [tasks.update]
 description = "Upgrade tools within their pins and name what waits across one: `update [name] [--dry-run]`"
