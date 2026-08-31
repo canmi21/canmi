@@ -1,6 +1,6 @@
 # Nested Workspace
 
-This repository contains the shared configuration, tooling, documentation, and conventions used across my projects.
+This repository contains the shared configuration, tooling, documentation, and conventions used across my work.
 
 The projects themselves live under `repos/`, but they are not Git submodules and are not tracked by this repository.
 
