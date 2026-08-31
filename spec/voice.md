@@ -41,6 +41,19 @@ What this rules out is renaming a directory to disambiguate the user's speech. `
 deployables and `repos/` holds separate repositories -- see [repos.md](architecture/repos.md)
 -- and neither name is the place to record which sense a sentence used.
 
+## "Base" means this workspace
+
+Unqualified, **base** is the workspace root -- this repository, the one holding `repos/`. It is
+the opposite case from *app* above: one meaning, assumed, and only a sentence that says otherwise
+overrides it. "Run it from base", "add it at base", "base config" all mean here, not in whichever
+project the conversation happens to be about.
+
+This is worth stating because the word is otherwise the most contextual one available -- a
+codebase, a database, a base branch, a base directory -- so an agent reading it fresh has every
+reason to hesitate, and hesitating is the wrong answer. The setting supplies the meaning: work
+happens in a project, instructions come from the level above it, and the level above is what
+needs a short name.
+
 ## Tone
 
 - Terse and action-oriented. Skip pleasantries and pep talk.
