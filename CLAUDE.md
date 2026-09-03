@@ -106,7 +106,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 | Topic                                     | File                                             |
 | ----------------------------------------- | ------------------------------------------------ |
-| Cold start, decision authority, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
+| Cold start, decision authority, reading upstream, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
 | Voice and communication                   | [spec/voice.md](spec/voice.md)                   |
 | Commit conventions and their enforcement  | [spec/commits.md](spec/commits.md)               |
 

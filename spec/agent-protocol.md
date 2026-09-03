@@ -132,6 +132,29 @@ Read-only investigation is exempt and needs no approval: searching, reading, typ
 running the test suite, taking a screenshot. That is the material a proposal is made of, and
 none of it changes the tree.
 
+## Read the source before measuring the behaviour
+
+**What this stack depends on is open source, so its behaviour is not a black box unless you choose
+to treat it as one.** Svelte, SvelteKit, Vite, the Rust crates -- all of them are on disk, in
+`node_modules` or in a vendored checkout, and every question about what one of them does has an
+answer written in it. Reaching for a test first to find out is choosing to rediscover, by
+experiment, something the author already wrote down.
+
+The order is: **read the code, form the rule, then measure to confirm the rule holds.** A test
+written after reading is a check on your understanding and on the version installed today. A test
+written instead of reading is a search, and a search stops at the first result that looks right --
+which is how a rule comes to be inferred from three measurements when the upstream option that
+governs it was named in the source all along.
+
+**This is not an argument against measuring.** An upstream that changes is exactly why the
+measurement stays: it is what fails the day the reading goes stale, and several checks exist for
+no other reason. The rule is only about which comes first, and reversing the two costs the time
+twice -- once to guess, once to find out the guess was shaped wrong.
+
+Where a project's whole design rests on an upstream's behaviour, that project's `spec/` says so
+and names the files. See [repos/seam/spec/references.md](../repos/seam/spec/references.md) for the
+shape of that.
+
 ## Checking your own work
 
 Make the change and hand it back. Do not stand up a browser to confirm that a colour is the
