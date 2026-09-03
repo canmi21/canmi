@@ -279,6 +279,29 @@ outside an activated shell.
 This exception covers hook scripts only. Everything a human or an agent invokes on purpose
 still belongs in `mise.toml`.
 
+## The desktop app is inspected through an MCP server pinned to its plugin
+
+`.mcp.json` at the root declares one project-scoped server, `tauri`. It drives press's CMS
+window -- screenshots, a DOM snapshot, computed styles, JavaScript in the webview, any Tauri
+command the app exposes -- and it is the only way to see a desktop window from here. Chrome
+DevTools MCP reaches a browser tab, and the CMS is not one.
+
+**Its version is not free.** The server speaks to `tauri-plugin-mcp-bridge`, a Rust dependency of
+`repos/press/apps/cms/src-tauri`, over a WebSocket the plugin opens on port 9223; the two ship
+from one repository and are released together. So the pin in `.mcp.json` is exact and equals the
+crate's version, and moving one without the other is how a protocol change becomes a connection
+that opens and then answers nothing. It is fetched with `npx` rather than added to this
+repository's `package.json`, because a repository that holds configuration and nothing else should
+not carry a package it has no build to verify it against -- and the exact version is already the
+whole claim.
+
+It reaches an app that is already running and nothing else: press's `base up cms` first. A server
+that starts cleanly and finds no window is the ordinary shape of a mistake here, and it reads as
+the server being broken rather than as the app being absent.
+
+A project-scoped server is approved once, by the user, in an interactive session. An agent cannot
+approve one and should not try; `claude mcp list` says which state it is in.
+
 ## Dependency policy
 
 `pnpm-workspace.yaml` sets `minimumReleaseAge: 1440` -- a package version must have been

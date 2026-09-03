@@ -139,11 +139,14 @@ colour you just typed, that a radius applied, or that a class landed -- the type
 the build already catch the failures that class of edit can have, and the user is a faster
 judge of the rest than any screenshot. They will say when something is wrong.
 
-Chrome DevTools MCP is for debugging that is genuinely hard without it: a value that renders
-differently from what the source says and nobody can say why, a layout that only breaks at one
-size, something that misbehaves after hydration and not before. The signal is that a question
-about the running page cannot be answered by reading the code -- not that a change was made and
-might in principle be wrong.
+Chrome DevTools MCP for a page, and the `tauri` MCP server for the CMS window
+([toolchain.md](toolchain.md)), are for debugging that is genuinely hard without them: a value
+that renders differently from what the source says and nobody can say why, a layout that only
+breaks at one size, something that misbehaves after hydration and not before. The signal is that
+a question about the running application cannot be answered by reading the code -- not that a
+change was made and might in principle be wrong. Reaching a desktop window is newly possible and
+is not therefore newly worth doing; the restraint is the same one, and it was written for the
+browser only because the browser was the only thing reachable.
 
 The cost is not the tool call. It is the round trip: booting a browser, waiting on a dev
 server, screenshotting, reading pixels back, all to restate what the diff already says. That

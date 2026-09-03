@@ -29,6 +29,7 @@ mise.toml      monorepo root, task roots, the shared toolchain
 repos.toml     which repositories this workspace is made of, as user:repo
 spec/          rules that follow the author
 hooks/         the agent hook entrypoint both vendors call
+.mcp.json      the MCP server that drives press's desktop window, pinned to its plugin
 repos/         one directory per project, each a separate repository
 ```
 
