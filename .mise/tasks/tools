@@ -19,6 +19,8 @@ being behind it, and both are reported.
 `--dry-run` (`-n`) and reports what it would install and rewrite.
 """
 
+from __future__ import annotations
+
 import json
 import pathlib
 import re

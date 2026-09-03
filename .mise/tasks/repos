@@ -22,6 +22,8 @@ push is the user's to run. An agent does not run it and does not offer to -- see
 spec/commits.md.
 """
 
+from __future__ import annotations
+
 import pathlib
 import re
 import subprocess
