@@ -68,13 +68,21 @@ constraint and the trade runs the other way.
 
 Application source keeps the standard API that expresses its intent. A browser missing a runtime
 built-in does not make every call site retreat to an older spelling: the client startup boundary
-detects the feature and dynamically loads the narrow `core-js` module before hydration. Browsers
-that already implement the feature do not request that fallback chunk.
+detects the gap and dynamically loads the fallback before hydration. Browsers that already
+implement the feature do not request that chunk.
 
-Feature detection decides, never the user agent. Vite's build target can lower syntax but does not
+Feature detection decides, never the user agent. A build target can lower syntax but does not
 provide runtime built-ins, while a hand-written approximation can quietly disagree with the
 standard on sparse arrays or generic receivers. The standards implementation belongs in one
 compatibility module; business code remains modern and unaware of it.
+
+**What the check loads is the whole polyfill set, not the one module named by the crash.** Naming
+modules makes the fallback a list, and a list has no knowable correct length -- the entry nobody
+thought of is a crash in a reader's browser. One check gating everything has no such entry. It is
+affordable only because the import is dynamic and the payload is therefore reached by nobody who
+does not need it, which is a property of the bundler rather than of the polyfill; a static import
+of the same set is a tax on every reader. press measures both sides of that in
+[its own spec](../repos/press/spec/compat.md).
 
 ## Errors are types on the way up and one message at the edge
 
