@@ -151,6 +151,12 @@ measurement stays: it is what fails the day the reading goes stale, and several 
 no other reason. The rule is only about which comes first, and reversing the two costs the time
 twice -- once to guess, once to find out the guess was shaped wrong.
 
+**And the order continues past the measurement.** Read the source, form the rule, measure with
+Node that the upstream does what the rule says, and only then write ours -- and once ours is
+written, add the check that holds the two together, so the next change is measured by it rather
+than by memory. Writing ours first and reading afterwards is what produces code shaped around a
+guess. This is forward development: every step is a check on the one before it.
+
 Where a project's whole design rests on an upstream's behaviour, that project's `spec/` says so
 and names the files. See [repos/seam/spec/references.md](../repos/seam/spec/references.md) for the
 shape of that.
