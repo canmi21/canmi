@@ -132,3 +132,4 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | `repos/press` | the site, its workers, the CMS and the corpus -- [repos/press/spec/](repos/press/spec/) |
 | `repos/still` | a macOS application; no spec yet                 |
 | `repos/governor` | a published crate, `canmi21:axum-governor` -- [repos/governor/spec/](repos/governor/spec/) |
+| `repos/rdm`  | a Rust application; no spec yet                 |

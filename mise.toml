@@ -8,7 +8,7 @@ monorepo_root = true
 # .gitignore says about them. A missing entry is a warning and nothing more, so a machine that
 # has cloned only one project still runs that project's tasks. See spec/architecture/repos.md.
 [monorepo]
-config_roots = ["repos/press", "repos/still", "repos/governor", "repos/seam"]
+config_roots = ["repos/press", "repos/still", "repos/governor", "repos/seam", "repos/rdm"]
 
 # jj's own repo config lives outside the working copy and cannot be version controlled.
 # JJ_CONFIG merges a colon-separated list left to right, so this keeps the user's personal
