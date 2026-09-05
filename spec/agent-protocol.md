@@ -155,6 +155,28 @@ Where a project's whole design rests on an upstream's behaviour, that project's 
 and names the files. See [repos/seam/spec/references.md](../repos/seam/spec/references.md) for the
 shape of that.
 
+## A long command never holds the conversation
+
+**Anything that can run longer than about a minute runs in the background**, and the conversation
+goes on. The agent reads its output when there is output to read -- an instant read, not a wait --
+and reports what is there, saying plainly when a result is still pending. A user watching a
+spinner for eight minutes has no way to tell a job that is working from one that has hung, and
+twice in one session that was exactly the position they were put in.
+
+Three consequences:
+
+- **A foreground command carries its own timeout**, in the command, short enough that a stuck one
+  reports in seconds. The tool's own timeout is a backstop for a bug, never the plan.
+- **A poll loop is bounded in seconds, not minutes.** `for i in 1 2 3; do ...; sleep 5; done` is a
+  poll; `until <cond>; do sleep 20; done` with a nine-minute ceiling is a wait wearing a poll's
+  clothes, and it was what the user interrupted.
+- **A job that will take minutes -- a full route scan, a corpus rebuild -- is started in the
+  background and left there.** The next check is a read of its output file, and if the job writes
+  nothing until it finishes, the job is changed to write progress, not the wait made longer.
+
+Waiting is not work. When the only thing left is a pending result, hand back what is finished and
+say what is pending, rather than holding the turn open for it.
+
 ## Checking your own work
 
 Make the change and hand it back. Do not stand up a browser to confirm that a colour is the
