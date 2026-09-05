@@ -169,13 +169,25 @@ and reports what is there, saying plainly when a result is still pending. A user
 spinner for eight minutes has no way to tell a job that is working from one that has hung, and
 twice in one session that was exactly the position they were put in.
 
-Three consequences:
+Four consequences:
 
+- **Anything whose duration is not known carries a timeout, every time.** A command that might
+  take a second or might take ten minutes -- a build, a fetch, a test run against the network, a
+  wait for another process -- is given a ceiling in the command itself, and the ceiling is chosen
+  from what the job should take, not from what the tool allows. The agent that omits it is betting
+  the conversation on the job finishing, and it has lost that bet: one afternoon a wait for a
+  rebuild that no source edit had triggered held the turn for the tool's full five minutes, and
+  the user had to interrupt it. A timeout that fires is a report; a wait that never ends is a
+  hang, and nobody outside can tell the two apart.
 - **A foreground command carries its own timeout**, in the command, short enough that a stuck one
   reports in seconds. The tool's own timeout is a backstop for a bug, never the plan.
 - **A poll loop is bounded in seconds, not minutes.** `for i in 1 2 3; do ...; sleep 5; done` is a
   poll; `until <cond>; do sleep 20; done` with a nine-minute ceiling is a wait wearing a poll's
   clothes, and it was what the user interrupted.
+- **A wait needs a trigger it can name.** Before waiting for a rebuild, a restart or a file to
+  appear, the agent checks that something it did will cause it -- a source edit under the
+  watcher's filter, a job it started -- and does not wait otherwise. Waiting for an event that
+  nothing set in motion is the one wait no timeout makes sensible.
 - **A job that will take minutes -- a full route scan, a corpus rebuild -- is started in the
   background and left there.** The next check is a read of its output file, and if the job writes
   nothing until it finishes, the job is changed to write progress, not the wait made longer.
