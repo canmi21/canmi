@@ -4,5 +4,12 @@
 	"trailingComma": "all",
 	"printWidth": 100,
 	"svelte": true,
-	"ignorePatterns": ["**/data/", "**/.claude/", "**/contents/", "**/node_modules/", "**/target/"]
+	"ignorePatterns": [
+		"**/data/",
+		"**/.claude/",
+		"**/contents/",
+		"**/node_modules/",
+		"**/target/",
+		"**/vendor/"
+	]
 }

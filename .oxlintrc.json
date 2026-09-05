@@ -20,6 +20,8 @@
 		"**/.svelte-kit/**",
 		"**/.wrangler/**",
 		"**/worker-configuration.d.ts",
+		// Source taken from another project verbatim is theirs to lint; see repos/seam/vendor/kit/VENDOR.md.
+		"**/vendor/**",
 		"data/**"
 	],
 	"rules": {
