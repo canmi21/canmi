@@ -191,6 +191,13 @@ Four consequences:
 - **A job that will take minutes -- a full route scan, a corpus rebuild -- is started in the
   background and left there.** The next check is a read of its output file, and if the job writes
   nothing until it finishes, the job is changed to write progress, not the wait made longer.
+- **What the agent starts, the agent stops.** A watcher, a dev loop or a server put in the
+  background outlives the session that started it: the process is reparented to launchd, its
+  output goes on being written to a scratchpad nobody will open again, and it keeps acting on the
+  machine. One rdm `dev` loop left behind that way ran for seventeen hours, spent 174 minutes of
+  CPU and closed and reopened the user's window all day, and the user found it before the agent
+  that started it did. Stop it when the work it was for is done, or end the reply by saying it is
+  still up and how to stop it.
 
 Waiting is not work. When the only thing left is a pending result, hand back what is finished and
 say what is pending, rather than holding the turn open for it.
