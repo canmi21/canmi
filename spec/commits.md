@@ -101,6 +101,25 @@ and moves the `main` bookmark before handing the result back. A separate request
 not required. Partial or blocked work stays uncommitted, and unrelated changes already in the
 working copy are never swept into the task's commit merely to make the tree clean.
 
+### Leave the working copy above `main`, not on it
+
+The last step is `jj new`. `main` ends on the commit that was written, and the working copy ends
+as an empty child above it rather than as `main` itself. Moving the bookmark and then `jj new`,
+or `jj new` and then `jj bookmark move main --to @-`, come to the same place.
+
+Ending on `main` works until the next push. jj's default `immutable_heads()` covers `trunk()`,
+which is `main@origin`, so the moment a push lands, the commit the working copy is sitting in
+becomes immutable. jj will not leave a working copy there -- every save after that would be a
+rewrite of published history -- so it makes the empty child itself and says so:
+
+```
+Warning: The working-copy commit became immutable; a new commit has been created on top of it.
+```
+
+Nothing is broken when that appears: the push succeeded, and the shape afterwards is the shape
+this rule asks for. It arrives as a warning in the middle of the user's push instead of as a step
+the agent took, which is the whole of the difference and the whole of the reason for the step.
+
 ### When `main` moved meanwhile
 
 Other workspaces commit onto the same `main` -- see [toolchain.md](toolchain.md), "Parallel
