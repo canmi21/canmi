@@ -284,17 +284,32 @@ def recursive(where: pathlib.Path) -> list[str]:
 	return ["-r", "--filter", "!./vendor/**"]
 
 
-def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.CompletedProcess:
-	"""One resolver command, its output shown as it arrives unless the caller only wants the text.
+# pnpm's name for "this version exists and is younger than minimumReleaseAge". press sets that
+# delay to a day, so a Cloudflare release from this morning stops the run -- which is the policy
+# working, not the command failing. See spec/toolchain.md on the dependency policy.
+IMMATURE = "ERR_PNPM_NO_MATURE_MATCHING_VERSION"
 
-	Streamed rather than captured, unlike the toolchain half: nothing here has to be filtered out
-	of the output, and a cargo update that resolves a large graph is long enough that silence
-	while it runs reads as a hang.
+
+def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.CompletedProcess:
+	"""One resolver command, its output shown as it arrives and kept, unless only the text is asked.
+
+	Shown as it arrives rather than captured and printed at the end, because a cargo update that
+	resolves a large graph is long enough that silence reads as a hang. Kept as well as shown,
+	because what a resolver refused for has to be read back: a run that stops on the supply-chain
+	delay is a wait and a run that stops on anything else is a failure, and the difference is a
+	line of its output.
 	"""
 	if quiet:
 		return subprocess.run(list(command), cwd=where, capture_output=True, text=True)
 	print(f"$ {' '.join(command)}")
-	return subprocess.run(list(command), cwd=where)
+	process = subprocess.Popen(
+		list(command), cwd=where, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+	)
+	seen = []
+	for line in process.stdout:
+		print(line, end="")
+		seen.append(line)
+	return subprocess.CompletedProcess(command, process.wait(), "".join(seen), "")
 
 
 def upgrade_available() -> bool:
@@ -328,9 +343,18 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 	# that dependencies had been moved across their ranges. Nothing had moved. A step that fails
 	# is named here and the command exits non-zero.
 	failed = []
+	immature = []
 
 	def take(repo: pathlib.Path, *command: str) -> None:
-		if step(repo, *command).returncode != 0:
+		result = step(repo, *command)
+		if result.returncode == 0:
+			return
+		# A refusal on the supply-chain delay is press's own policy holding, and it lifts itself
+		# within the day. Reporting it as a failed run would make `update` red on any morning
+		# Cloudflare shipped, which teaches a person to stop reading the last line.
+		if IMMATURE in result.stdout:
+			immature.append(label(repo))
+		else:
 			failed.append((label(repo), " ".join(command)))
 
 	for repo in selected(name):
@@ -352,6 +376,9 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 				take(repo, "pnpm", "update", *recursive(repo), *(["--latest"] if major else []))
 
 	print("\n" + "-" * 72)
+	if immature:
+		print(f"Held by the supply-chain delay, nothing moved: {', '.join(sorted(set(immature)))}")
+		print("  a version younger than minimumReleaseAge; run again once it has aged\n")
 	if failed:
 		print("Refused, and nothing moved in these:\n")
 		for place, command in failed:
