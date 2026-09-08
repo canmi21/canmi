@@ -267,13 +267,21 @@ def manifests(where: pathlib.Path) -> list[str]:
 
 
 def recursive(where: pathlib.Path) -> list[str]:
-	"""`-r`, but only where there is a pnpm workspace for it to mean something.
+	"""`-r`, but only where there is a pnpm workspace for it to mean something, and never vendored.
 
 	Without a `pnpm-workspace.yaml` pnpm reads `-r` as "walk down from here", and here is a
 	directory with five other repositories under it: asked from the workspace root it descended
 	into `repos/press/apps/api` and failed on a lockfile that is press's business, not this one's.
+
+	The vendor filter is the rule in spec/vendor.md, which this command broke on its first real
+	run. seam lists `vendor/*` as workspace packages, so `pnpm update -r` rewrote eleven ranges in
+	`vendor/kit/package.json` -- source that is kept as upstream wrote it precisely so the next
+	upgrade stays a copy rather than a hand merge. A vendored package is upgraded by taking a newer
+	upstream, never by a resolver here.
 	"""
-	return ["-r"] if (where / "pnpm-workspace.yaml").is_file() else []
+	if not (where / "pnpm-workspace.yaml").is_file():
+		return []
+	return ["-r", "--filter", "!./vendor/**"]
 
 
 def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.CompletedProcess:
