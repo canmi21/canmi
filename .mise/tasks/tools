@@ -10,10 +10,21 @@ mise pins are one fact in several places, and they are checked against each othe
   outdated   online: what is behind its publisher's stable channel, and what waits across a pin
   up         upgrade within the pins, then name the majors it would not cross
 
+`up` also runs `rustup update`. rust is the one tool `mise upgrade` cannot move -- mise's rust is
+a symlink to rustup's toolchain rather than an install of its own -- so without it the channel
+was reported as behind on every run with no command here that would have advanced it.
+
 **Stable means the publisher's stable channel, not the highest version that exists.** mise
 resolves a pin against every published release, which for pnpm includes the `next` line -- `11`
 resolved to 11.25.0 while npm's `latest` was 11.24.0. Being ahead of stable is as wrong here as
 being behind it, and both are reported.
+
+**A pin makes "current" two questions, and only one of them used to be asked.** "Is a new major
+out" is answered by the publisher's newest release; "am I current on the line I pinned" is
+answered by that line's own stable release, `latest-11` rather than `latest`. Asking only the
+first is how `pnpm = "11.24"` sat two stable releases behind its own line while every run here
+reported the single thing waiting as 12, across a pin, and therefore not `up`'s to take. Both are
+asked now, and a pin narrower than its line is named as the reason a release is out of reach.
 
 `check` is part of `mise run verify` and needs no network. `outdated` and `up` do. `up` takes
 `--dry-run` (`-n`) and reports what it would install and rewrite.
@@ -52,6 +63,11 @@ CHANNELS = {
 	"rust": ("rust", ""),
 }
 
+# One answer per (tool, line) for the life of the process. `up` asks the same questions from every
+# repository it walks and the rust manifest alone is a megabyte, so without this a six-repository
+# run fetched it six times to be told the same thing.
+ASKED: dict[tuple[str, str | None], str | None] = {}
+
 
 def fail(message: str) -> "SystemExit":
 	return SystemExit(f"error: {message}")
@@ -63,19 +79,61 @@ def get(url: str) -> dict | list:
 		return json.load(response)
 
 
-def stable(tool: str) -> str | None:
-	"""What an outside build would resolve as this tool's current release."""
+def stable(tool: str, line: str | None = None) -> str | None:
+	"""What an outside build would resolve as this tool's current release.
+
+	`line` names a series -- "12" for pnpm, "0.45" for jj -- and asking for one is a different
+	question: not "is there a new major" but "am I current on the line I pinned". Only the second
+	notices a pin that has fallen behind its own line, and this file was blind to it. `pnpm =
+	"11.24"` sat two stable releases behind `latest-11` while every report here compared it against
+	`latest` and said the only thing waiting was 12, which is across a pin and therefore not
+	something `up` would take. The result was a workspace that was behind, on a line it had chosen,
+	and told nobody.
+
+	A line whose channel cannot be read is None rather than the highest version in it. A published
+	release is not a released one -- that is the whole subject of this file.
+	"""
+	if (tool, line) in ASKED:
+		return ASKED[(tool, line)]
+	answer = ask(tool, line)
+	ASKED[(tool, line)] = answer
+	return answer
+
+
+def ask(tool: str, line: str | None) -> str | None:
 	kind, where = CHANNELS.get(tool, (None, None))
 	try:
 		if kind == "npm":
-			return get(f"https://registry.npmjs.org/{where}")["dist-tags"]["latest"]
+			tags = get(f"https://registry.npmjs.org/{where}")["dist-tags"]
+			if line is None:
+				return tags["latest"]
+			# npm's per-line tag where the publisher keeps one. pnpm does, for every major it still
+			# supports. Where there is none, the overall `latest` answers for its own line and for
+			# no other -- an older line without a tag has no stable release this can name.
+			if f"latest-{line}" in tags:
+				return tags[f"latest-{line}"]
+			return tags["latest"] if series(tags["latest"]) == line else None
 		if kind == "github":
-			release = get(f"https://api.github.com/repos/{where}/releases/latest")
-			# The `latest` endpoint already excludes prereleases; the flag is checked anyway
-			# because a repository can move a release into that state after publishing it.
-			return None if release.get("prerelease") else release["tag_name"].lstrip("v")
+			if line is None:
+				release = get(f"https://api.github.com/repos/{where}/releases/latest")
+				# The `latest` endpoint already excludes prereleases; the flag is checked anyway
+				# because a repository can move a release into that state after publishing it.
+				return None if release.get("prerelease") else release["tag_name"].lstrip("v")
+			# No endpoint answers "the latest release of 0.45", so the release list is walked. It
+			# arrives newest first, and a draft or a prerelease is not a release.
+			for release in get(f"https://api.github.com/repos/{where}/releases?per_page=100"):
+				if release.get("prerelease") or release.get("draft"):
+					continue
+				tag = release["tag_name"].lstrip("v")
+				if series(tag) == line:
+					return tag
+			return None
 		if kind == "node":
-			return get("https://nodejs.org/dist/index.json")[0]["version"].lstrip("v")
+			for release in get("https://nodejs.org/dist/index.json"):
+				version = release["version"].lstrip("v")
+				if line is None or series(version) == line:
+					return version
+			return None
 		if kind == "rust":
 			# The whole channel manifest, because the version wanted is inside [pkg.rust] and the
 			# first one in the file is cargo's. It is about a megabyte; this runs online only.
@@ -153,6 +211,33 @@ def installed(where: pathlib.Path) -> list[tuple[str, str]]:
 			if entry.get("source", {}).get("path") == own:
 				found.append((tool, entry.get("version", "")))
 	return sorted(found)
+
+
+def pinned(where: pathlib.Path) -> dict[str, str]:
+	"""tool -> the string `[tools]` actually asks for, which is not always the whole series.
+
+	`pnpm = "11"` and `pnpm = "11.24"` name the same line and are not the same pin: only the first
+	lets `up` move inside it. Without this the report said 11.26.0 was available inside the pin
+	while nothing in this repository would ever have taken it, which is a worse answer than the
+	silence it replaced -- it names an upgrade and implies a command that does it.
+	"""
+	result = subprocess.run(
+		["mise", "ls", "--current", "--json"], cwd=where, capture_output=True, text=True
+	)
+	if result.returncode != 0:
+		return {}
+	own = str((where / "mise.toml").resolve())
+	found = {}
+	for tool, entries in json.loads(result.stdout).items():
+		for entry in entries:
+			if entry.get("source", {}).get("path") == own:
+				found[tool] = entry.get("requested_version", "")
+	return found
+
+
+def allows(pin: str, version: str) -> bool:
+	"""Whether a pin would accept this version. mise matches a pin as a prefix of the version."""
+	return bool(pin) and (version == pin or version.startswith(f"{pin}."))
 
 
 def active(where: pathlib.Path, tool: str) -> str | None:
@@ -281,37 +366,87 @@ def command_check(name: str | None = None) -> int:
 	return 1 if drifted or shadowed else 0
 
 
-def survey(name: str | None = None) -> list[tuple[pathlib.Path, str, str, str | None]]:
-	"""(where, tool, installed, stable) for everything declared here."""
+def resolved(where: pathlib.Path, tool: str, version: str) -> str | None:
+	"""The concrete release behind a pin that names a channel instead of a version.
+
+	`rust = "stable"` is the only one here. A channel name has no series, so every comparison that
+	starts by splitting it on dots gets a wrong answer -- which is how `rust stable -> 1.98.1
+	across a pin` came to be printed on every run: "stable" and "1.98.1" have different first
+	components, so the code read a channel name as a major two behind. rust has no major to cross,
+	says so in `mise.toml` and in the spec, and the report said otherwise anyway.
+
+	What is actually worth asking is whether the toolchain the channel resolves to is the one the
+	channel currently holds, and rustup is the only thing that can answer it -- mise's rust is a
+	symlink to rustup's toolchain rather than one mise installs.
+	"""
+	return rust_channel(where) if tool == "rust" else None
+
+
+def survey(name: str | None = None) -> list[tuple]:
+	"""(where, tool, installed, the pin, its line's stable release, the publisher's newest).
+
+	Two channels rather than one, because a pin makes them two different questions and reporting
+	only the second hid the first. See `stable`.
+	"""
 	rows = []
 	for where in configured(name):
+		pins = pinned(where)
 		for tool, version in installed(where):
-			rows.append((where, tool, version, stable(tool)))
+			line = series(version)
+			within = stable(tool, line) if line else None
+			rows.append((where, tool, version, pins.get(tool, ""), within, stable(tool)))
 	return rows
 
 
-def report(rows) -> tuple[int, int, int]:
+def report(rows) -> tuple[list[str], int, int, int]:
+	"""One line per tool that is not where it should be, and nothing for the ones that are.
+
+	Returned rather than printed, because `up` prints this section under a heading and must know
+	whether there is anything under it before writing the heading.
+
+	The order of these branches is the point. Ahead is tested before across-a-pin: a prerelease
+	that has crossed a series boundary -- pnpm publishing 13.0.0 on `next` while npm's stable tag
+	is still 12 -- differs in series from stable and is also ahead of it, and reading that as
+	"behind, go and take it" is precisely the inversion this file exists to prevent.
+	"""
+	lines = []
 	behind = ahead = unknown = 0
-	for where, tool, version, current in rows:
-		if current is None:
-			print(f"{label(where):<14} {tool:<10} {version:<12} no stable channel to compare")
+	for where, tool, version, pin, line, newest in rows:
+		place = f"{label(where):<14} {tool:<10} {version:<12}"
+		if newest is None:
+			lines.append(f"{place} no stable channel to compare")
 			unknown += 1
-		elif version == current:
-			continue
-		elif series(version) != series(current):
-			print(f"{label(where):<14} {tool:<10} {version:<12} -> {current} across a pin")
-			behind += 1
-		elif order(version) > order(current):
-			print(f"{label(where):<14} {tool:<10} {version:<12} is AHEAD of stable {current}")
+		elif series(version) is None:
+			# A channel, not a version. Whether it is current is a question about the toolchain it
+			# resolves to, and there is no pin involved either way.
+			holds = resolved(where, tool, version)
+			if holds and holds != newest:
+				lines.append(f"{place} holds {holds}, the channel is {newest}")
+				behind += 1
+		elif line and order(version) > order(line):
+			lines.append(f"{place} is AHEAD of stable {line}")
 			ahead += 1
-		else:
-			print(f"{label(where):<14} {tool:<10} {version:<12} -> {current}")
+		elif line and version != line:
+			# Behind inside its own line. Invisible until this file learned to ask for a line: the
+			# comparison was against the publisher's newest, which for a pinned tool is nearly
+			# always across a pin and therefore filed as something `up` was right not to take.
+			# Whether `up` can reach it is a second question, and the pin is what answers it.
+			within = "inside the pin" if allows(pin, line) else f'held back by the pin "{pin}"'
+			lines.append(f"{place} -> {line} {within}")
 			behind += 1
-	return behind, ahead, unknown
+		elif series(version) != series(newest):
+			lines.append(f"{place} -> {newest} across a pin")
+			behind += 1
+		elif version != newest:
+			lines.append(f"{place} -> {newest}")
+			behind += 1
+	return lines, behind, ahead, unknown
 
 
 def command_outdated(name: str | None = None) -> int:
-	behind, ahead, _ = report(survey(name))
+	lines, behind, ahead, _ = report(survey(name))
+	for line in lines:
+		print(line)
 	if not behind and not ahead:
 		print("every tool is on its publisher's stable release")
 	elif ahead:
@@ -345,13 +480,29 @@ def beyond(where: pathlib.Path) -> list[tuple[str, str, str, str | None]]:
 			owner = owner.relative_to(ROOT)
 		except ValueError:
 			pass
-		found.append((str(owner), tool, version, stable(tool)))
+		# Against its own line, not against the publisher's newest. A bump target is by definition
+		# in a series nobody here has pinned, and "is 12.1.0 a real release" is a question only
+		# `latest-12` answers -- comparing it against `latest` was how this reported 12.1.0 as
+		# waiting when npm had no `latest-12` at all.
+		found.append((str(owner), tool, version, stable(tool, series(version))))
 	return found
 
 
 def command_up(name: str | None = None, dry: bool = False) -> int:
 	moved = []
 	waiting = []
+
+	# rust is the one tool `mise upgrade` cannot move. mise's rust is a symlink to rustup's
+	# toolchain rather than an install of its own, so inside the `stable` channel it is rustup that
+	# advances -- and nothing here was asking it to. The result was a tool reported as behind on
+	# every run with no command in this repository that would have moved it, which is a report
+	# nobody can act on. It runs once rather than per repository: rustup is global.
+	if any(tool == "rust" for where in configured(name) for tool, _ in installed(where)):
+		if dry:
+			print("would run rustup update stable")
+		elif subprocess.run(["rustup", "update", "stable"], cwd=ROOT).returncode != 0:
+			print("rustup update failed; rust is left where it was")
+
 	for where in configured(name):
 		before = dict(installed(where))
 		command = ["mise", "upgrade", "--local"] + (["--dry-run"] if dry else [])
@@ -376,10 +527,10 @@ def command_up(name: str | None = None, dry: bool = False) -> int:
 	# an outside build reads say so without anybody remembering to edit them.
 	rewritten = []
 	for where in configured(name):
-		for path, _, resolved in derived(where):
+		for path, _, current in derived(where):
 			if not dry:
-				write_derived(path, resolved)
-			rewritten.append((label(where), path.name, resolved))
+				write_derived(path, current)
+			rewritten.append((label(where), path.name, current))
 
 	print()
 	if rewritten:
@@ -408,12 +559,15 @@ def command_up(name: str | None = None, dry: bool = False) -> int:
 			print(f"{owner:<24} {tool:<10} {version:<12} {verdict}")
 
 	# Last, after a separator: this is the part a person has to act on, and an install log is
-	# long enough to bury it.
-	rows = [r for r in survey(name) if r[3] is not None and r[2] != r[3]]
-	if rows:
+	# long enough to bury it. What is worth printing is decided by `report` rather than by a filter
+	# here, because the two disagreed -- a filter comparing against the publisher's newest kept
+	# rows that only differ by a major, which is the one thing this section is not about.
+	lines, _, _, _ = report(survey(name))
+	if lines:
 		print("\n" + "-" * 72)
 		print("Against each publisher's stable channel:\n")
-		report(rows)
+		for line in lines:
+			print(line)
 		print("\n  a pin is crossed by editing [tools]; nothing here does it for you")
 	return 0
 
