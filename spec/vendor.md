@@ -41,6 +41,13 @@ run apart from the project's, to read rather than to gate.
 workspace root, so that the files stay byte for byte the upstream's and a diff against the next
 tag is the upstream's diff.
 
+**So does the dependency resolver.** A vendored package is upgraded by taking a newer upstream and
+by nothing else, so `mise run update` filters it out rather than resolving it. seam lists
+`vendor/*` among its pnpm workspace packages, and without the filter `pnpm update` rewrote eleven
+ranges in `vendor/kit/package.json` -- which is the hand merge this arrangement exists to avoid,
+arrived at by a command nobody thought of as editing. It also stops the upstream's own pins being
+reported as something this repository is behind on: SvelteKit holds cookie at 0.6 deliberately.
+
 **The upstream's checks run over it.** Where the upstream ships tests beside its source, they are
 kept and run under a config of their own from the vendor directory, and `VENDOR.md` says what they
 report at the pinned version and which are excluded, and why.

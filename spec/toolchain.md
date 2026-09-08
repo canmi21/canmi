@@ -115,10 +115,26 @@ crossing a major arrives as a diff with a commit message rather than as a surpri
 A major is where a lockfile format or a runtime behaviour changes, which is exactly the class of
 change worth stopping for.
 
-Below 1.0 the minor is the breaking release, so jj is pinned at `0.44` rather than `0`. The
+Below 1.0 the minor is the breaking release, so jj is pinned at `0.45` rather than `0`. The
 distance from jj 0.44 to 0.45 is the distance from node 26 to 27, and a pin that could not see
 it would be a pin in name only. `rust` is a channel rather than a version and has no major to
 cross.
+
+**A pin makes "am I current" two questions, and only one of them is about majors.** The
+publisher's newest release answers "is a new major out". "Am I current on the line I pinned" is
+answered by that line's own stable release -- npm's `latest-11`, not `latest` -- and asking only
+the first is how `pnpm = "11.24"` sat two stable releases behind 11 while every run reported the
+one thing waiting as 12, across a pin and therefore correctly not taken. `update` asks both.
+
+**A pin narrower than its line is named as the reason a release is out of reach.** `11.24` and
+`11` are the same line and not the same pin, and a report that cannot tell them apart offers an
+upgrade no command here will take. Reporting a version as available inside the pin when nothing
+will install it is worse than the silence it replaced.
+
+**`update` runs `rustup update`.** rust is the one tool `mise upgrade` cannot move -- mise's rust
+is a symlink to rustup's toolchain rather than an install of its own -- so without it the channel
+was reported as behind on every run with nothing in this repository that would advance it. A
+report nobody can act on is not a report.
 
 **mise will not tell you a new major exists.** With a pin in place `mise outdated` reports
 nothing outside it -- it answers "are you current within what you asked for", which is a
@@ -126,14 +142,25 @@ different question. So `mise run update` asks the other one itself, against `mis
 prints what is waiting without taking it:
 
 ```
-workspace      oxlint     1.79.0 upgraded
+workspace      oxlint     1.81.0 -> 1.82.0
+
+Beyond the pins, and what channel each is actually on:
+
+mise.toml                jj         0.45.1       stable; edit [tools] to cross the pin
 
 ------------------------------------------------------------------------
-Held back at a pin. Nothing above crossed a major; these are waiting:
+Against each publisher's stable channel:
 
-  pnpm       11.25.0  ->  12.1.0
-             edit [tools] in mise.toml to take one
+workspace      jj         0.44.0       -> 0.45.1 across a pin
+workspace      pnpm       11.24.0      -> 11.26.0 held back by the pin "11.24"
+workspace      rust       stable       holds 1.98.0, the channel is 1.98.1
+
+  a pin is crossed by editing [tools]; nothing here does it for you
 ```
+
+Three verdicts and three different actions: cross a pin, widen one, or let `update` run again.
+A report that collapsed them into "behind" would be a report nobody could act on -- which is what
+this was, printing `rust stable -> 1.98.1 across a pin` over a tool that has no pin to cross.
 
 **The notice goes last, after the upgrade output, and nowhere else.** It is the only part a
 person has to act on, and an install log is long enough to bury it. Putting the same check into
@@ -179,8 +206,12 @@ edited to `11.25` because the command said to, one line below the command saying
 already current. A tool that reports a rule and repeats advice contrary to it has not reported
 the rule.
 
-`pnpm = "11.24"` carries a minor for exactly this reason, which is the kind of reason the rule
-below asks a narrow pin to have. The digit comes off when the two lines converge.
+`pnpm = "12.3"` carries a minor for exactly this reason, which is the kind of reason the rule
+below asks a narrow pin to have: `next-12` is 12.4.0 while npm's `latest-12` is 12.3.4. The digit
+comes off when the two lines converge, and the 11 line shows that they do -- `next-11` and
+`latest-11` are now the same release, which was the condition the note on `11.24` gave for
+dropping its digit. Nobody dropped it, and the pin outlived its reason by two stable releases.
+**A narrow pin's note names the fact that would let it go, and somebody has to check that fact.**
 
 **`rust-toolchain.toml` is generated too, and rustup is what reads it.** mise's rust is a
 symlink to the rustup toolchain rather than one mise installs, so the file at the workspace root
@@ -303,6 +334,34 @@ A project-scoped server is approved once, by the user, in an interactive session
 approve one and should not try; `claude mcp list` says which state it is in.
 
 ## Dependency policy
+
+### Dependencies move the way tools do
+
+`mise run update` covers both halves. `cargo update` and `pnpm update` move dependencies inside
+the range their manifest asks for, exactly as `mise upgrade` moves a tool inside its pin; crossing
+a range rewrites the manifest, which is a decision with a diff and a commit message behind it,
+exactly as crossing a pin is. So the default moves inside and names the rest, `mise run repos deps
+--major` is what takes it, and `update` refuses the flag rather than forwarding it. One verb does
+not get to do both.
+
+This was missing rather than decided against. Lockfiles were nobody's job -- no task touched them,
+no project declared one, and nothing here said when or by whom they moved -- while `update` read
+as "bring this workspace current" and meant a third of it.
+
+**What waits across a range is measured, not predicted.** Each resolver is asked what is still out
+of date *after* the in-range pass has run, because whatever survives that is across a boundary by
+construction. The alternative is reimplementing two resolvers' range arithmetic in order to
+disagree with them later.
+
+`cargo upgrade` is cargo-edit, which cargo does not ship and mise's registry does not carry; the
+only backend that could is `cargo:`, which builds it from source. That is a compile on every fresh
+machine to answer a question asked about weekly, so it is a tool used when present and **named
+when absent** rather than declared -- silently skipping the half that needs it would report a
+clean list that was never checked.
+
+Vendored source is filtered out of all of this. See [vendor.md](vendor.md).
+
+### A package version waits a day before it can be installed
 
 `pnpm-workspace.yaml` sets `minimumReleaseAge: 1440` -- a package version must have been
 public for 24 hours before it can be installed, transitive dependencies included. Most npm

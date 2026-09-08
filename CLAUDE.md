@@ -88,8 +88,10 @@ See [spec/toolchain.md](spec/toolchain.md).
 **One verb, optionally one name.** `mise run pull|push|fmt|check|update` run across every
 repository; add a name from `repos.toml` -- `mise run check press` -- to run against one, and
 `--dry-run` to any of them to be told what it would do. `check` dispatches to each repository's
-own `verify`; `update` upgrades tools within their pinned majors and ends by naming any major it
-would not cross, which is the only place that gets reported.
+own `verify`. `update` covers both halves of what has moved out there: tools within their pinned
+majors and dependencies within the ranges their manifests declare, ending by naming what waits
+across a boundary without crossing it, which is the only place that gets reported. Crossing one is
+an edit to `[tools]` or `mise run repos deps --major`, never `update` itself.
 See [spec/toolchain.md](spec/toolchain.md).
 
 **`publish` is the one verb that refuses to mean everything.** `mise run publish <name>` runs
