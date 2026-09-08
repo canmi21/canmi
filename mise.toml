@@ -36,13 +36,16 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 #
 # pnpm carries a minor for a different reason, and it is the kind of reason a narrow pin is
 # supposed to have: mise resolves against every published release, and pnpm publishes its `next`
-# line there, so `11` reached 11.25.0 while npm's stable tag was 11.24.0. The extra digit holds
-# it to the release an outside build resolves. Drop it when the two lines converge.
+# line there, so a bare major takes whatever `next` has reached. `next-12` is 12.4.0 while npm's
+# `latest-12` is 12.3.4, so `12.3` is what holds it to the release an outside build resolves.
+# Drop the extra digit when the two lines converge -- which is what happened on the 11 line, where
+# `next-11` and `latest-11` are now the same release. That the digit outlived its reason is how
+# this sat at 11.24.0 with 11.26.0 stable and every report saying the only thing waiting was 12.
 [tools]
 node = "26"
 rust = "stable"
-pnpm = "11.24"
-jj = "0.44"
+pnpm = "12.3"
+jj = "0.45"
 oxlint = "1"
 
 # The short forms. Each takes an optional name from repos.toml and means every repository

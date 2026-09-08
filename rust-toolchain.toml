@@ -12,5 +12,5 @@
 # mise's rust is a symlink to the rustup toolchain rather than one mise manages, which is why
 # this file is the thing that decides and why `update` asks rustup, not mise, what stable is.
 [toolchain]
-channel = "1.98.0"
+channel = "1.98.1"
 components = ["rustfmt", "clippy", "rust-src"]
