@@ -361,6 +361,40 @@ clean list that was never checked.
 
 Vendored source is filtered out of all of this. See [vendor.md](vendor.md).
 
+### A cache is what a tool can write again, and nothing else is
+
+`mise run clean` removes build output and tool caches, everywhere or in one named repository. The
+line it draws is what makes it safe to run without thinking first:
+
+- **Dependencies are not caches.** `node_modules` stays exactly as installed and only what tools
+  dropped inside it goes -- `.vite`, `.vite-temp`, `.cache`, `.vitest`. A clean that ends in a
+  reinstall is not a clean, it is a network bill. pnpm's own store is pruned instead, which
+  removes packages nothing references and leaves every installed tree alone; that runs only on the
+  unnamed sweep, because one store serves the whole machine and pruning it from inside one project
+  reaches a long way outside what was asked for.
+- **Local state is not a cache.** `.wrangler/state` is a local D1, KV and R2 emulation -- rows
+  somebody typed, not output somebody built -- so only `.wrangler/tmp` goes.
+- **cargo owns its own output.** `cargo clean` is what empties the target directory, and the
+  directory cargo names is pruned from the sweep. `[build] target-dir` can move it anywhere, so a
+  sweep matching the word `target` would miss the real one and find somebody else's -- and did,
+  reporting a gigabyte of `target/debug/build` as its own finding.
+
+**What gets removed is decided twice, by a name and by version control.** A path has to match the
+list of things a build tool writes *and* be ignored by the repository *and* have nothing tracked
+underneath it. Neither half is enough on its own: press ignores `build/` and tracks five records
+under `data/build/` that a site-only CI job cannot regenerate, so a name alone would delete them --
+while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
+database.
+
+**The sweep stops at every repository boundary that is not its own.** The workspace holds five
+repositories under `repos/`, so a walk that went through would make `clean workspace` mean `clean`;
+press lists `repos/*` among its pnpm workspace packages, so the same is true one level down. A
+directory carrying a `.git` or a `.jj` is somebody else's to clean.
+
+The list is toolchain-generic rather than per-project, because a cache belongs to the tool that
+writes it and the tools are this repository's to declare. A project needing more than the list
+covers is the point at which that stops being true, and nothing has reached it yet.
+
 ### A package version waits a day before it can be installed
 
 `pnpm-workspace.yaml` sets `minimumReleaseAge: 1440` -- a package version must have been

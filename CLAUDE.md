@@ -85,14 +85,15 @@ do not offer it. mise owns every tool version. Indentation is tabs at width 2 in
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
-**One verb, optionally one name.** `mise run pull|push|fmt|check|update` run across every
+**One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean` run across every
 repository; add a name from `repos.toml` -- `mise run check press` -- to run against one, and
 `--dry-run` to any of them to be told what it would do. `check` dispatches to each repository's
 own `verify`. `update` covers both halves of what has moved out there: tools within their pinned
 majors and dependencies within the ranges their manifests declare, ending by naming what waits
 across a boundary without crossing it, which is the only place that gets reported. Crossing one is
-an edit to `[tools]` or `mise run repos deps --major`, never `update` itself.
-See [spec/toolchain.md](spec/toolchain.md).
+an edit to `[tools]` or `mise run repos deps --major`, never `update` itself. `clean` removes
+what a tool wrote and can write again; dependencies and local state are not caches and it never
+touches them. See [spec/toolchain.md](spec/toolchain.md).
 
 **`publish` is the one verb that refuses to mean everything.** `mise run publish <name>` runs
 that project's own publish task and a missing name is an error, because a release cannot be

@@ -66,6 +66,10 @@ run = ".mise/tasks/repos fmt"
 description = "Run every repository's own verify, or one: `check [name] [--dry-run]`"
 run = ".mise/tasks/repos verify"
 
+[tasks.clean]
+description = "Remove build output and tool caches, never dependencies: `clean [name] [--dry-run]`"
+run = ".mise/tasks/repos clean"
+
 [tasks.publish]
 description = "Publish one repository, which must be named: `publish <name> [--dry-run]`"
 run = ".mise/tasks/repos publish"

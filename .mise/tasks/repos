@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#MISE description="Work on the repositories: `repos list|clone|pull|push|fmt|deps|verify [name]`"
+#MISE description="The repositories: `repos list|clone|pull|push|fmt|deps|clean|verify [name]`"
 """Every command here takes an optional repository name and means all of them without one.
 
 The name is a key from repos.toml, which is the local directory: `repos pull press` is press,
@@ -12,6 +12,7 @@ aliases onto this, so the short form is what gets typed and this file is where i
   push             push main
   fmt              format the working copy through `jj fix`
   deps             update dependencies inside their ranges, and name what waits across one
+  clean            remove build output and tool caches, never dependencies or local state
   verify           run each repository's own verify
   publish          run one repository's own publish; a name is required
   check            the registry, the task roots and the directories still agree
@@ -25,6 +26,8 @@ spec/commits.md.
 
 from __future__ import annotations
 
+import json
+import os
 import pathlib
 import re
 import subprocess
@@ -59,6 +62,36 @@ INHERITED = (
 )
 
 ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$', re.MULTILINE)
+
+# Directories a build tool writes and can write again, by the name it writes them under. This
+# list decides what `clean` *looks at*; whether a match is actually removed is decided by version
+# control, in `disposable`. Both halves are needed and neither is enough: press ignores `build/`
+# and also tracks records under `data/build/`, so a name alone would delete them, while "anything
+# git ignores" is `node_modules`, `.env`, press's photograph library and a local D1 database.
+#
+# Kept to names the toolchain writes rather than names a project chose. A cache belongs to the
+# tool that produces it, and the tools are the workspace's to declare -- see spec/toolchain.md.
+# `target` is absent on purpose: it is cargo's, `[build] target-dir` can move it anywhere, and a
+# sweep matching the word would both miss the real one and find somebody else's.
+SWEPT = ("dist", "build", "coverage", ".svelte-kit", ".turbo", ".output", "__pycache__")
+
+# Caches that sit inside a directory whose other contents must not be touched, so the sweep looks
+# for these by exact position and never descends past the parent.
+#
+# `node_modules` is the whole point of the distinction: clearing a cache must not turn into
+# reinstalling dependencies, so the installed tree is left exactly as it is and only what tools
+# dropped inside it goes. `.wrangler/state` is a local D1, KV and R2 emulation -- data somebody
+# entered, not output somebody built -- and only `.wrangler/tmp` is a cache.
+NESTED = {
+	"node_modules": (
+		".vite",
+		".vite-temp",
+		".cache",
+		".vitest",
+		".svelte2tsx-language-server-files",
+	),
+	".wrangler": ("tmp",),
+}
 
 
 def fail(message: str) -> "SystemExit":
@@ -390,7 +423,8 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		return 0
 	print("Beyond the ranges each manifest declares:\n")
 	if not edit:
-		print("  cargo upgrade is missing, so no crate's major was checked -- `cargo install cargo-edit`")
+		print("  cargo upgrade is missing, so no crate's major was checked")
+		print("  `cargo install cargo-edit` is what supplies it")
 	held = False
 	for repo in selected(name):
 		kinds = manifests(repo)
@@ -410,6 +444,160 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		print("  nothing; every dependency is at the top of the range its manifest allows")
 	else:
 		print("\n  `mise run repos deps --major` rewrites the manifests; nothing else here does")
+	return 0
+
+
+def disposable(repo: pathlib.Path, path: pathlib.Path) -> bool:
+	"""Whether the repository's own version control says this path is output rather than record.
+
+	Two questions, because either alone deletes something somebody wanted. The path has to be
+	ignored -- a `dist/` that is committed is a decision, not an oversight -- and nothing tracked
+	may live under it. press is where both earn their place: `data/build/` holds five records the
+	site's build reads and cannot regenerate without a Rust toolchain, sitting inside a directory
+	whose name is on the sweep list, under a `data/**` ignore with the records named back in.
+
+	git rather than jj: `check-ignore` and `ls-files` answer exactly these two questions, every
+	repository here is colocated, and the ignore file they read is the one the project wrote.
+	"""
+	relative = str(path.relative_to(repo))
+	if subprocess.run(["git", "check-ignore", "-q", relative], cwd=repo).returncode != 0:
+		return False
+	tracked = subprocess.run(
+		["git", "ls-files", "--", relative], cwd=repo, capture_output=True, text=True
+	)
+	return not tracked.stdout.strip()
+
+
+def cargo_output(repo: pathlib.Path) -> pathlib.Path | None:
+	"""Where cargo writes, asked rather than guessed.
+
+	Asked because `[build] target-dir` moves it and because guessing was wrong in both directions
+	at once. The sweep list leaves `target` out on the grounds that cargo owns it -- and then the
+	walk went straight through it and matched every `target/debug/build` inside, reporting a
+	gigabyte of cargo's own output as though this command had found it. Pruning what cargo names
+	is the same rule the list was written for, applied where it actually decides something.
+	"""
+	result = subprocess.run(
+		["cargo", "metadata", "--format-version", "1", "--no-deps"],
+		cwd=repo,
+		capture_output=True,
+		text=True,
+	)
+	if result.returncode != 0:
+		return None
+	try:
+		return pathlib.Path(json.loads(result.stdout)["target_directory"])
+	except (ValueError, KeyError):
+		return None
+
+
+def artifacts(repo: pathlib.Path) -> list[pathlib.Path]:
+	"""Every candidate under one repository, stopping at each boundary that is not its own.
+
+	**A nested repository is not part of this one.** The workspace holds five of them under
+	`repos/`, so a sweep that walked through would make `clean workspace` mean `clean`, and press
+	lists `repos/*` among its pnpm workspace packages, so the same is true one level down. The walk
+	stops at anything carrying a `.git` or a `.jj` of its own.
+	"""
+	found = []
+	output = cargo_output(repo) if (repo / "Cargo.toml").is_file() else None
+	for current, directories, files in os.walk(repo):
+		here = pathlib.Path(current)
+		keep = []
+		for name in directories:
+			path = here / name
+			if name in (".git", ".jj") or is_repository(path):
+				continue
+			if output is not None and path == output:
+				continue
+			if name in NESTED:
+				found.extend(path / cache for cache in NESTED[name] if (path / cache).exists())
+				continue
+			if name in SWEPT:
+				found.append(path)
+				continue
+			keep.append(name)
+		# Pruned in place, which is what os.walk reads back to decide where it goes next. A match
+		# is not descended into either: what is inside something already being removed is not a
+		# second finding.
+		directories[:] = keep
+		found.extend(here / name for name in files if name.endswith(".tsbuildinfo"))
+	return [path for path in found if disposable(repo, path)]
+
+
+def weight(path: pathlib.Path) -> int:
+	"""Bytes under a path, counting a symlink as the link rather than as what it points at.
+
+	node_modules is a forest of links into pnpm's store, so following them would report a cache as
+	several gigabytes and report the same gigabytes again for the next repository.
+	"""
+	if path.is_file() or path.is_symlink():
+		return path.lstat().st_size
+	total = 0
+	for current, _, files in os.walk(path):
+		for name in files:
+			try:
+				total += (pathlib.Path(current) / name).lstat().st_size
+			except OSError:
+				continue
+	return total
+
+
+def size(count: float) -> str:
+	for unit in ("B", "KiB", "MiB", "GiB"):
+		if count < 1024 or unit == "GiB":
+			return f"{count:.0f} {unit}" if unit == "B" else f"{count:.1f} {unit}"
+		count /= 1024
+	return f"{count:.1f} GiB"
+
+
+def command_clean(name: str | None, dry: bool = False) -> int:
+	"""Build output and tool caches, and nothing a person would have to make again.
+
+	The line this draws is what makes it safe to run without thinking: **a cache is what a tool
+	wrote and can write again, from what is already on disk.** Dependencies are not caches --
+	`node_modules` and `Cargo.lock`'s downloads stay, and only what tools dropped inside them goes,
+	because a clean that ends in a reinstall is not a clean, it is a network bill. Local state is
+	not a cache either: `.wrangler/state` is a database somebody typed into.
+
+	pnpm's own store is pruned, but only on the run that names no repository. It is one store for
+	the whole machine, so pruning it from inside one project would be reaching a long way outside
+	what was asked for. It removes packages nothing references and never touches an installed tree.
+	"""
+	total = 0
+	for repo in selected(name):
+		print(f"\n=== {label(repo)} ===")
+		if (repo / "Cargo.toml").is_file():
+			# cargo's own, because the target directory is cargo's to name and a `[build]
+			# target-dir` anywhere up the chain moves it somewhere this sweep would never look.
+			result = step(repo, "cargo", "clean", *(["--dry-run"] if dry else []), quiet=True)
+			for line in (result.stdout + result.stderr).splitlines():
+				if line.strip():
+					print(f"    {line.strip()}")
+		for path in sorted(artifacts(repo)):
+			bytes_here = weight(path)
+			total += bytes_here
+			print(f"    {str(path.relative_to(repo)):<52} {size(bytes_here):>10}")
+			if not dry:
+				subprocess.run(["rm", "-rf", str(path)], check=True)
+
+	if name is None:
+		print("\n=== pnpm store ===")
+		if dry:
+			# No dry run of its own, and the honest stand-in for one is a sentence. Reporting a
+			# figure by running it would be the opposite of what the flag promises.
+			print("    would prune packages the store holds that nothing installed references")
+		else:
+			step(ROOT, "pnpm", "store", "prune")
+
+	print("\n" + "-" * 72)
+	# Two numbers rather than one sum. cargo reports its own removal per repository and reports it
+	# in its own units, and adding a parsed figure to a measured one would produce a total that is
+	# right only until cargo rewords the line.
+	verb = "would be freed" if dry else "freed"
+	swept = f"{size(total)} {verb} by the sweep" if total else "the sweep found nothing to free"
+	print(f"{swept}; cargo's own totals are the per-repository lines above")
+	print("  dependencies were not touched; a clean that ends in a reinstall is not a clean")
 	return 0
 
 
@@ -528,6 +716,8 @@ def main(argv: list[str]) -> int:
 		raise fail("--major belongs to deps; crossing a boundary is that command's decision to take")
 	if action == "deps":
 		return command_deps(name, dry, major)
+	if action == "clean":
+		return command_clean(name, dry)
 	if action == "list":
 		return command_list()
 	if action == "clone":
@@ -546,7 +736,7 @@ def main(argv: list[str]) -> int:
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
 	raise fail(
-		"usage: repos list | clone | pull | push | fmt | deps | verify | publish | check"
+		"usage: repos list | clone | pull | push | fmt | deps | clean | verify | publish | check"
 		"  [name] [--dry-run]"
 	)
 
