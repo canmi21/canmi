@@ -32,6 +32,7 @@ asked now, and a pin narrower than its line is named as the reason a release is 
 
 from __future__ import annotations
 
+import http.client
 import json
 import pathlib
 import re
@@ -59,6 +60,7 @@ CHANNELS = {
 	"oxlint": ("npm", "oxlint"),
 	"jj": ("github", "jj-vcs/jj"),
 	"rclone": ("github", "rclone/rclone"),
+	"watchexec": ("github", "watchexec/watchexec"),
 	"node": ("node", ""),
 	"rust": ("rust", ""),
 }
@@ -145,7 +147,18 @@ def ask(tool: str, line: str | None) -> str | None:
 				body = response.read().decode("utf8", "replace")
 			found = re.search(r'^\[pkg\.rust\]\nversion = "(\d+\.\d+\.\d+)', body, re.MULTILINE)
 			return found.group(1) if found else None
-	except (urllib.error.URLError, KeyError, IndexError, TimeoutError):
+	except (
+		urllib.error.URLError,
+		http.client.HTTPException,
+		OSError,
+		ValueError,
+		KeyError,
+		IndexError,
+	):
+		# A channel that cannot be read is None, and every caller already says so rather than
+		# guessing. That includes a read that starts and stops halfway: npm's document for pnpm is
+		# three quarters of a megabyte and an `IncompleteRead` on it took down a whole `update`
+		# run, mid-install, over a question none of the installing depended on.
 		return None
 	return None
 
@@ -444,11 +457,15 @@ def report(rows) -> tuple[list[str], int, int, int]:
 
 
 def command_outdated(name: str | None = None) -> int:
-	lines, behind, ahead, _ = report(survey(name))
+	lines, behind, ahead, unknown = report(survey(name))
 	for line in lines:
 		print(line)
 	if not behind and not ahead:
-		print("every tool is on its publisher's stable release")
+		# Counted apart from the rest: a tool with no readable channel is not a tool that is
+		# current, and saying so under two lines that just said the opposite is how a summary stops
+		# being read at all.
+		verdict = "every tool this can ask about is on its publisher's stable release"
+		print(verdict if unknown else "every tool is on its publisher's stable release")
 	elif ahead:
 		print("\nA version ahead of stable is on a prerelease line. Pin it down to the stable one.")
 	return 0
