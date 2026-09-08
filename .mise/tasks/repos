@@ -259,12 +259,19 @@ def shadowing(project: pathlib.Path) -> list[str]:
 	identical copy and a divergent one are both reported, differently -- the first is dead weight,
 	the second is the shadowing this arrangement exists to avoid, and only a rule written down in
 	spec/ can make it correct.
+
+	Vendored source is skipped, on the rule that already excludes it from the linter and the
+	formatter -- see spec/vendor.md. Svelte ships two runtime-legacy test samples that carry an
+	`.editorconfig` of their own, and those are fixtures whose whole point is a local override:
+	reading them as this repository being shadowed failed `verify` over files nobody here may edit.
 	"""
 	listed = jj("file", "list", cwd=project, check=False)
 	found = []
 	for relative in listed.stdout.splitlines():
 		path = project / relative
 		if path.name not in INHERITED or not path.is_file():
+			continue
+		if "vendor" in pathlib.PurePosixPath(relative).parts:
 			continue
 		provided = ROOT / path.name
 		if provided.is_file() and provided.read_bytes() == path.read_bytes():
