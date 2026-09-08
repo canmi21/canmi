@@ -67,9 +67,19 @@ run = ".mise/tasks/repos verify"
 description = "Publish one repository, which must be named: `publish <name> [--dry-run]`"
 run = ".mise/tasks/repos publish"
 
+# Both halves of the same question -- what has moved out there, and what of it can be taken
+# without a decision. Tools move within their pins, dependencies within the ranges their manifests
+# declare, and each names what waits across a boundary without crossing it.
+#
+# A shell function because mise appends a task's arguments to the last command it runs and to no
+# other, so an array here would hand `press --dry-run` to the second script and nothing to the
+# first. Defining one and calling it puts both behind the same argument list.
+#
+# `--major` is deliberately not accepted: crossing a range belongs to `repos deps --major`, the
+# same way crossing a pin belongs to an edit of [tools]. One verb does not get to do both.
 [tasks.update]
-description = "Upgrade tools within their pins and name what waits across one: `update [name] [--dry-run]`"
-run = ".mise/tasks/tools up"
+description = "Upgrade tools and dependencies within their bounds, and name what waits across one"
+run = 'update() { .mise/tasks/tools up "$@" && .mise/tasks/repos deps "$@"; }; update'
 
 [tasks.check-tools]
 description = "Check the versions an outside build reads, and that no project redeclares a workspace tool"

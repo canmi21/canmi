@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#MISE description="Work on the repositories: `repos list|clone|pull|push|check|fmt|verify [name]`"
+#MISE description="Work on the repositories: `repos list|clone|pull|push|fmt|deps|verify [name]`"
 """Every command here takes an optional repository name and means all of them without one.
 
 The name is a key from repos.toml, which is the local directory: `repos pull press` is press,
@@ -11,6 +11,7 @@ aliases onto this, so the short form is what gets typed and this file is where i
   pull             fetch, and say what moved
   push             push main
   fmt              format the working copy through `jj fix`
+  deps             update dependencies inside their ranges, and name what waits across one
   verify           run each repository's own verify
   publish          run one repository's own publish; a name is required
   check            the registry, the task roots and the directories still agree
@@ -251,6 +252,113 @@ def command_verify(name: str | None, dry: bool = False) -> int:
 	return 1 if failed else 0
 
 
+def manifests(where: pathlib.Path) -> list[str]:
+	"""Which resolvers own dependencies in this repository, in the order they should be asked.
+
+	cargo first: press and seam declare both, and the Rust half is what the JavaScript half builds
+	against there rather than the other way round.
+	"""
+	found = []
+	if (where / "Cargo.toml").is_file():
+		found.append("cargo")
+	if (where / "package.json").is_file():
+		found.append("pnpm")
+	return found
+
+
+def recursive(where: pathlib.Path) -> list[str]:
+	"""`-r`, but only where there is a pnpm workspace for it to mean something.
+
+	Without a `pnpm-workspace.yaml` pnpm reads `-r` as "walk down from here", and here is a
+	directory with five other repositories under it: asked from the workspace root it descended
+	into `repos/press/apps/api` and failed on a lockfile that is press's business, not this one's.
+	"""
+	return ["-r"] if (where / "pnpm-workspace.yaml").is_file() else []
+
+
+def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.CompletedProcess:
+	"""One resolver command, its output shown as it arrives unless the caller only wants the text.
+
+	Streamed rather than captured, unlike the toolchain half: nothing here has to be filtered out
+	of the output, and a cargo update that resolves a large graph is long enough that silence
+	while it runs reads as a hang.
+	"""
+	if quiet:
+		return subprocess.run(list(command), cwd=where, capture_output=True, text=True)
+	print(f"$ {' '.join(command)}")
+	return subprocess.run(list(command), cwd=where)
+
+
+def upgrade_available() -> bool:
+	"""Whether `cargo upgrade` exists. It is cargo-edit, which cargo does not ship.
+
+	mise's registry does not carry cargo-edit, and the only backend that could is `cargo:`, which
+	builds it from source -- a compile on every fresh machine to answer a question asked at most
+	weekly. So it is a tool this repository uses when it is there and names when it is not, rather
+	than one it declares. Only the major half needs it; `cargo update` is cargo's own.
+	"""
+	return subprocess.run(["cargo", "upgrade", "--version"], capture_output=True).returncode == 0
+
+
+def command_deps(name: str | None, dry: bool = False, major: bool = False) -> int:
+	"""Dependencies within the ranges their manifests declare, and what waits across one.
+
+	The same shape as the toolchain half and for the same reason. `cargo update` and `pnpm update`
+	move inside the range a manifest asks for; crossing one rewrites the manifest, which is a
+	decision with a diff behind it exactly as crossing a tool pin is. So the default moves inside
+	and reports the rest, and `--major` is what takes it.
+
+	**What waits is measured, not predicted.** Each resolver is asked what is still out of date
+	*after* the in-range update has run, because whatever survives that is across a range boundary
+	by construction. The alternative is reimplementing two resolvers' range arithmetic in order to
+	disagree with them later.
+	"""
+	edit = upgrade_available()
+	for repo in selected(name):
+		kinds = manifests(repo)
+		if not kinds:
+			continue
+		print(f"\n=== {label(repo)} ===")
+		if "cargo" in kinds:
+			if major and edit:
+				step(repo, "cargo", "upgrade", "--incompatible", *(["--dry-run"] if dry else []))
+			step(repo, "cargo", "update", *(["--dry-run"] if dry else []))
+		if "pnpm" in kinds:
+			if dry:
+				# pnpm update has no dry run, so the read-only question stands in for it.
+				step(repo, "pnpm", "outdated", *recursive(repo))
+			else:
+				step(repo, "pnpm", "update", *recursive(repo), *(["--latest"] if major else []))
+
+	print("\n" + "-" * 72)
+	if major:
+		print("Dependencies were moved across their ranges. Run verify before trusting this.\n")
+		return 0
+	print("Beyond the ranges each manifest declares:\n")
+	if not edit:
+		print("  cargo upgrade is missing, so no crate's major was checked -- `cargo install cargo-edit`")
+	held = False
+	for repo in selected(name):
+		kinds = manifests(repo)
+		lines = []
+		if "cargo" in kinds and edit:
+			result = step(repo, "cargo", "upgrade", "--incompatible", "--dry-run", quiet=True)
+			lines += [line for line in result.stdout.splitlines() if line.strip()]
+		if "pnpm" in kinds:
+			result = step(repo, "pnpm", "outdated", *recursive(repo), quiet=True)
+			lines += [line for line in result.stdout.splitlines() if line.strip()]
+		if lines:
+			held = True
+			print(f"{label(repo)}:")
+			for line in lines:
+				print(f"    {line}")
+	if not held:
+		print("  nothing; every dependency is at the top of the range its manifest allows")
+	else:
+		print("\n  `mise run repos deps --major` rewrites the manifests; nothing else here does")
+	return 0
+
+
 def shadowing(project: pathlib.Path) -> list[str]:
 	"""Files in a project that this repository already provides by position.
 
@@ -349,16 +457,23 @@ def command_check() -> int:
 def main(argv: list[str]) -> int:
 	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise."""
 	dry = False
+	major = False
 	rest = []
 	for argument in argv:
 		if argument in ("-n", "--dry-run"):
 			dry = True
+		elif argument == "--major":
+			major = True
 		elif argument.startswith("-"):
 			raise fail(f"unknown option {argument}")
 		else:
 			rest.append(argument)
 	action = rest[0] if rest else None
 	name = rest[1] if len(rest) > 1 else None
+	if major and action != "deps":
+		raise fail("--major belongs to deps; crossing a boundary is that command's decision to take")
+	if action == "deps":
+		return command_deps(name, dry, major)
 	if action == "list":
 		return command_list()
 	if action == "clone":
@@ -377,7 +492,8 @@ def main(argv: list[str]) -> int:
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
 	raise fail(
-		"usage: repos list | clone | pull | push | fmt | verify | publish | check  [name] [--dry-run]"
+		"usage: repos list | clone | pull | push | fmt | deps | verify | publish | check"
+		"  [name] [--dry-run]"
 	)
 
 
