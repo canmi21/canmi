@@ -322,6 +322,17 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 	disagree with them later.
 	"""
 	edit = upgrade_available()
+	# A resolver that refuses is not a resolver that had nothing to do, and the first version of
+	# this could not tell them apart: press's `pnpm update --latest` stopped on the supply-chain
+	# delay -- eight versions younger than `minimumReleaseAge` -- and the run went on to report
+	# that dependencies had been moved across their ranges. Nothing had moved. A step that fails
+	# is named here and the command exits non-zero.
+	failed = []
+
+	def take(repo: pathlib.Path, *command: str) -> None:
+		if step(repo, *command).returncode != 0:
+			failed.append((label(repo), " ".join(command)))
+
 	for repo in selected(name):
 		kinds = manifests(repo)
 		if not kinds:
@@ -329,16 +340,24 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		print(f"\n=== {label(repo)} ===")
 		if "cargo" in kinds:
 			if major and edit:
-				step(repo, "cargo", "upgrade", "--incompatible", *(["--dry-run"] if dry else []))
-			step(repo, "cargo", "update", *(["--dry-run"] if dry else []))
+				take(repo, "cargo", "upgrade", "--incompatible", *(["--dry-run"] if dry else []))
+			take(repo, "cargo", "update", *(["--dry-run"] if dry else []))
 		if "pnpm" in kinds:
 			if dry:
-				# pnpm update has no dry run, so the read-only question stands in for it.
+				# pnpm update has no dry run, so the read-only question stands in for it. Its exit
+				# code says whether anything is outdated rather than whether it worked, so unlike
+				# the others it is not checked.
 				step(repo, "pnpm", "outdated", *recursive(repo))
 			else:
-				step(repo, "pnpm", "update", *recursive(repo), *(["--latest"] if major else []))
+				take(repo, "pnpm", "update", *recursive(repo), *(["--latest"] if major else []))
 
 	print("\n" + "-" * 72)
+	if failed:
+		print("Refused, and nothing moved in these:\n")
+		for place, command in failed:
+			print(f"  {place:<12} {command}")
+		print("\n  the resolver said why above; this reports it rather than passing over it")
+		return 1
 	if major:
 		print("Dependencies were moved across their ranges. Run verify before trusting this.\n")
 		return 0
