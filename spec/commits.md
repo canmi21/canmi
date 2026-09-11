@@ -41,7 +41,24 @@ already makes the area clear.
 
 ## Body
 
-Optional. Wrap at 96 characters. Explain why, not what -- the diff already shows what.
+Optional. Wrap at 96 characters.
+
+Plain text. No Markdown: no backticks, no asterisks, no headings, no bullet syntax, no links.
+A commit message is read in terminals, logs and blame views that render none of it, where the
+marks are noise around the words. Messages written before this rule are left as they are.
+
+A body states what changed. Objectively, and briefly.
+
+What it is not:
+
+- Not a restatement of the subject line in longer form.
+- Not a cause and its effect. "Because X, Y was changed" carries the reasoning of one moment
+  into every later reading of the log, where it reads as an instruction about what to do next.
+- Not self-referential. "This change", "this commit", "here we" -- the commit is the thing being
+  read; it does not introduce itself.
+
+Reasoning that is worth keeping belongs in `spec/` or beside the code, where the next reader is
+looking when they need it. The log answers what changed.
 
 ## Language
 

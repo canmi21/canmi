@@ -54,7 +54,8 @@ Every rule the user states gets written down. Never leave one in chat only.
 ## Core rules
 
 **Commits** -- Conventional Commits. Omit the scope in most cases. Subject starts lowercase,
-imperative mood, 96 characters max. See [spec/commits.md](spec/commits.md).
+imperative mood, 96 characters max. Plain text throughout, never Markdown; a body says what
+changed and nothing else. See [spec/commits.md](spec/commits.md).
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
 untranslated. Everything written into a file is English only, no exceptions: code, comments,
@@ -79,8 +80,9 @@ language. See [spec/lint-format.md](spec/lint-format.md).
 tool go through that tool's shell instead, which is usually not fish, so the two are written
 differently on purpose.
 
-Version control is jj (Jujutsu), colocated with git -- use `jj`, not `git`, in this repository
-and in every one below it. Bookmarks do not advance on their own. Pushing is the user's to run;
+Local development is `localhost`, everywhere it is written down; a literal IP is only for
+reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
+-- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on their own. Pushing is the user's to run;
 do not offer it. mise owns every tool version. Indentation is tabs at width 2 in every language,
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
@@ -127,7 +129,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | ------------------------------ | ------------------------------------------ |
 | Type checking, tests, comments | [spec/code.md](spec/code.md)               |
 | Linting and formatting         | [spec/lint-format.md](spec/lint-format.md) |
-| Shell, secrets, versions, jj   | [spec/toolchain.md](spec/toolchain.md)     |
+| Shell, addresses, secrets, versions, jj | [spec/toolchain.md](spec/toolchain.md) |
 
 **The projects**
 

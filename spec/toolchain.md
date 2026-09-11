@@ -61,6 +61,22 @@ including for the sops you would use to repair it. Call sops by absolute path wh
 runs first in `verify` because it is the only check there guarding something irreversible: a
 plaintext credential reaching the remote is not undone by deleting the file.
 
+## Addresses
+
+Local development is `localhost`. Every URL typed, configured or written down for a service
+running on this machine uses that name, at every layer: the browser, the config file, the health
+check, the test fixture.
+
+A literal IP is what a machine on the local network is reached by, and only that. `localhost` on
+another device is that device, so an address handed across the network has to name a host rather
+than a role. Whichever form the network offers -- the address itself or a name that resolves to
+it -- is the one to use.
+
+Public addresses are decided case by case. There is no default worth writing down for them.
+
+A listen address is not an address in this sense. What a server binds to answers which interfaces
+it accepts on, and `0.0.0.0` or `::` there is a different question with a different answer.
+
 ## Version control
 
 jj (Jujutsu), colocated with git -- `.jj` and `.git` sit side by side in the repo root. Use
