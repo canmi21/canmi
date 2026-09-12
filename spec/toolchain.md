@@ -398,6 +398,39 @@ clean list that was never checked.
 
 Vendored source is filtered out of all of this. See [vendor.md](vendor.md).
 
+### A dependency that moved while you were working is the user's upgrade
+
+Manifests and lockfiles that changed under an agent mid-task were not changed by the task. The
+user raises dependencies whenever they have time, from whichever terminal they happen to be in,
+and that is the only thing that routinely rewrites those files here. So there is nothing to
+investigate and nothing to attribute: carry on, and keep the change out of whatever commit the
+task was making, which is what a path-scoped `jj commit` is for.
+
+What the agent owes the change is one thing, and it is not an opinion about the versions. **Run
+`verify` and say whether it still passes.** That is the whole review. A dependency diff nobody
+has checked is the only failure mode available here, and checking it costs one command.
+
+### An upgrade that breaks is reverted in the lockfile, never pinned in the manifest
+
+The preference is plainly for the newest version of everything, and it is a preference about debt
+rather than about features: a repository that stays current is never more than one release behind
+the ecosystem it is written against, while one that defers is eventually a migration.
+
+So when a raised dependency breaks something, the repair is to **put the lockfile back** and leave
+every declared range alone. The range is a statement about what the code can work with, and
+narrowing it to route around one bad release is a claim that outlives the release: the next reader
+finds a bound with no reason attached, and the version it excludes was fixed months ago.
+
+A reverted lockfile makes the same repair and forgets it on purpose. The next `mise run update`
+tries the range again from the top, and if the upstream has been fixed in the meantime the
+repository simply moves. Nobody has to remember to lift anything, which is the part a manifest pin
+gets wrong. This is press's Cargo rule -- a lockfile pin at the version that worked, no manifest
+constraint and no `[patch]` -- stated for every ecosystem here rather than for one.
+
+What carries across the gap is the user's own memory of what broke, and the retry is theirs: they
+come back to it after a few days and run the same flow again. An agent's part is to say what
+failed and how, not to build a record of it.
+
 ### A cache is what a tool can write again, and nothing else is
 
 `mise run clean` removes build output and tool caches, everywhere or in one named repository. The
