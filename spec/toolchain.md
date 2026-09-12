@@ -12,10 +12,13 @@ This matters in two directions, and they are opposite:
   on this machine is zsh, so it must be POSIX syntax. Writing fish syntax there fails with a
   parse error, and writing bash syntax into a fish snippet fails the same way in reverse.
 
-Two more platform facts that cost time when forgotten: this is macOS, so `sed` is BSD sed
+Three more platform facts that cost time when forgotten. This is macOS, so `sed` is BSD sed
 and does not support `\b` word boundaries -- use `perl -pi -e` for word-boundary replaces.
-And mise activation is directory-scoped and shell-based, so a command run from a shell
-without mise sees none of the pinned versions.
+mise activation is directory-scoped and shell-based, so a command run from a shell
+without mise sees none of the pinned versions. And **there is no `timeout`**: it is GNU
+coreutils, `gtimeout` is not linked either, and
+[agent-protocol.md](agent-protocol.md) asks every command of unknown duration to carry a
+ceiling. `perl -e 'alarm N; exec @ARGV' <command>` is the one that is always present.
 
 ### An agent deletes with `trash`, never with `rm`
 
