@@ -17,6 +17,27 @@ and does not support `\b` word boundaries -- use `perl -pi -e` for word-boundary
 And mise activation is directory-scoped and shell-based, so a command run from a shell
 without mise sees none of the pinned versions.
 
+### An agent deletes with `trash`, never with `rm`
+
+`/usr/bin/trash` takes files and directories alike, so every deletion an agent types goes
+through it. This is not a preference about safety; it is about which command can be run
+without a person present. The CLI the user works through often cannot decide on its own
+whether an `rm` is safe, so it stops and waits to be asked. With nobody watching, that is a
+turn that hangs rather than one that fails -- the failure mode
+[agent-protocol.md](agent-protocol.md) spends a whole section on. `trash` carries no such
+hold-up.
+
+Where the point is only to get something out of the way, moving it to a temporary directory
+answers just as well and reads more honestly than a deletion.
+
+The rule covers commands an agent types. What a tool does inside itself is the tool's --
+`mise run clean` removing what a build wrote is that task's business, and nothing here
+reaches into it.
+
+The cost is small and worth stating so nobody is surprised by it: the bytes go to the
+Finder's trash instead of being unlinked, so the space is not returned until the trash is
+emptied, and what was deleted is recoverable until then.
+
 ## Secrets
 
 Credentials live in `secrets.json`, encrypted with [sops](https://getsops.io) to an

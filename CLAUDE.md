@@ -78,7 +78,9 @@ language. See [spec/lint-format.md](spec/lint-format.md).
 **The user's shell is fish.** Any command written for them to run must be fish syntax --
 `set -gx X y`, not `export X=y`; `$(cmd)` is not fish. Commands an agent runs through its own
 tool go through that tool's shell instead, which is usually not fish, so the two are written
-differently on purpose.
+differently on purpose. **An agent deletes with `trash`, never with `rm`** -- files and
+directories alike, because `rm` is the command the user's CLI stops and asks about, and an
+unattended ask is a hung turn.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
