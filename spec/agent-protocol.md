@@ -224,6 +224,24 @@ of the kind you started are alive, what they hold, and what the machine's total 
 A tool reports on itself and cannot see its neighbours, which is exactly the blindness this order
 of investigation exists to cover.
 
+**When the machine comes back clean, the next suspect is your own concurrency, not the code under
+it.** Two copies of the same snapshot run, started together against one dev server, both stopped
+dead on the same page after 137 of 390 captures. Every reading said healthy: load 2.0 on eighteen
+cores, 81% of memory free, the server answering that same route in 173 milliseconds, no orphans.
+Both node processes and all eight browser processes sat at 0% CPU for fifteen minutes, and a
+`sample` of one showed it parked in the event loop waiting on I/O that was never going to arrive.
+The same page, captured by one run on its own, took ten minutes for all thirty variants and exited
+zero. Nothing was wrong with the harness, the page, the server or the machine. What was wrong was
+that there were two of them.
+
+The reason there were two is the part worth carrying: they were a pair run to measure how much two
+runs of an unchanged tree disagree, so the real comparison could subtract it. When the pair was
+stopped and their 136 finished captures compared -- 152764 elements, ninety-eight properties each,
+plus geometry -- they disagreed in nothing at all. The measurement being paid for had a value of
+zero, and paying for it was what broke the run. **Estimate what a measurement can find before
+buying it**; a correction worth nothing costs the same as one worth everything, and here it cost
+more.
+
 Waiting is not work. When the only thing left is a pending result, hand back what is finished and
 say what is pending, rather than holding the turn open for it.
 
