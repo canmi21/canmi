@@ -198,6 +198,31 @@ Four consequences:
   CPU and closed and reopened the user's window all day, and the user found it before the agent
   that started it did. Stop it when the work it was for is done, or end the reply by saying it is
   still up and how to stop it.
+- **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** press's
+  `base down` kills its tmux session and leaves `workerd` behind: after an afternoon of restarting
+  the dev servers and running the migration's snapshot harness, forty-nine of them were alive
+  holding 3175 MB, the oldest for a day and seven hours, against the two the API and the CDN
+  actually need. They break nothing. They take memory and CPU from everything else, so what they
+  produce is not an error but a machine that is slowly, unaccountably slower. Count them before a
+  long run and after a supervisor is stopped; the ones to keep are the ones serving the pinned
+  ports, and the rest are orphans however recently they were started.
+
+### Measure the machine before blaming the program
+
+A long-running job that has become slow is a question about the machine first and the code second,
+and the order is not a preference: reversing it produces a confident wrong answer, quickly.
+
+This was got wrong an hour before the paragraph above was written. A snapshot run that had been
+taking 2.5 seconds an item was taking 80. The dev server answered in 25 milliseconds, so the time
+was plainly not being spent there, and the conclusion drawn from those two numbers was that a wait
+inside the harness must be timing out. An agent was told so. The harness had not been touched: the
+cause was the forty-nine processes above, competing for a machine that had no error to report about
+any of it.
+
+**So the first three things to look at are the ones no program will tell you**: how many processes
+of the kind you started are alive, what they hold, and what the machine's total resident size is.
+A tool reports on itself and cannot see its neighbours, which is exactly the blindness this order
+of investigation exists to cover.
 
 Waiting is not work. When the only thing left is a pending result, hand back what is finished and
 say what is pending, rather than holding the turn open for it.
