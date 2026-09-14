@@ -84,6 +84,40 @@ There is no longer an arrangement for two agents inside one repository; projects
 repositories, so two pieces of work are two directories. What crosses between them is a commit
 and nothing else. See [architecture/repos.md](architecture/repos.md).
 
+### A supervisor and the agents it spawns are the exception, and it has its own rules
+
+The rule above is about *peer sessions* -- two conversations that found each other on a machine.
+An agent that spawns workers and directs them is a different arrangement, the user asks for it by
+name, and it does work: five agents wrote five parts of one feature against a written contract,
+never compiling together, and the tree built on the first try when the parts were declared.
+
+What makes it work is not the messaging. It is that **every decision reached in a message is
+written into the tree before the work is called done** -- into a comment where the next person
+meets it, a spec section, or a commit body. A message is where a decision is *reached*; it is
+never where one *lives*. The failure the section above names is real and this is what answers it.
+
+**A brief has to carry these, every time, because a spawned agent starts cold:**
+
+- Delete with `trash`, never `rm`. It is in [toolchain.md](toolchain.md) with the reason, and an
+  agent that has not read it will reach for `rm` and hang the turn with nobody watching.
+- `jj`, never `git`. Do not move the bookmark -- the supervisor does. Never push.
+- **Commit with an explicit path list.** Several agents share one working copy, and a bare
+  `jj commit` sweeps a neighbour's half-written files into your commit. This is the single most
+  expensive mistake available to a spawned agent and it is silent.
+- Which files are yours, stated as a list, and that everything else belongs to somebody else. A
+  file two agents may both want -- a module list, a CLI, a shared struct -- belongs to the
+  supervisor and to nobody else.
+- Whether the tree is expected to compile. When parts are written in parallel against a contract,
+  it will not until they are all declared, and an agent that does not know that will try to fix it.
+- What to do on finding the brief wrong: say so and stop, rather than conforming quietly. Twice in
+  one session an agent found a signature that disagreed with its brief and asked; both times the
+  brief was the thing that was wrong, and quiet conformance would have broken files it did not own.
+
+**And the supervisor's own rule: do not answer a question by looking only at what is in front of
+you.** Asked whether a landed signature or the briefed one was right, checking the disk and
+answering "keep what you have" contradicted an instruction already given to another agent, and cost
+a round trip to undo. The question a supervisor is being asked is rarely only about the file.
+
 ## Decision authority
 
 Decisions belong to the user. An agent implements them.
