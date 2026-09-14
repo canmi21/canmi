@@ -5,6 +5,18 @@
 - **Chat / spoken reply**: simplified Chinese mixed with English technical nouns. Don't translate established English terminology (e.g., "fetchpriority", "viewBox", "Hono", "OKLCH", "preset") — keep them as proper nouns inside Chinese sentences.
 - **File content, including code comments**: English only. No Chinese.
 - **Commit messages**: English only.
+- **A name is quoted, not written, and English-only does not reach it.** The rule above governs
+  what an author composes: prose, comments, identifiers, commit messages, documentation. A field
+  whose value *is* somebody else's name is not composed -- it is recorded, and it is recorded as
+  its owner spells it, in the language that owner publishes in first, verbatim. A publisher
+  leading in two languages is taken at the one it leads with, never at the one the reader happens
+  to speak. So the show a clip in `press` is cut from is credited `爱情公寓`: `iPartment` is a
+  distributor's rendering, and rendering a proper noun does not make the file more English, it
+  makes the record less true -- and the record is the whole reason the field exists. This covers a
+  publisher credit, a person, a product, a place: anything a reader could go and check.
+  It licenses nothing around the name. The sentence containing it is still English, an identifier
+  derived from it is still ASCII, and a *description* of the thing is still written in English and
+  translated like any other description.
 - **No emoji by default** anywhere, and an assistant never adds one on its own initiative. An
   explicit user request may add one or two visible emoji to the requested interface, including the
   source literal needed to render them. That permission is local: it does not extend to unrelated

@@ -58,11 +58,12 @@ imperative mood, 96 characters max. Plain text throughout, never Markdown; a bod
 changed and nothing else. See [spec/commits.md](spec/commits.md).
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
-untranslated. Everything written into a file is English only, no exceptions: code, comments,
-docs, commit messages. Only an explicit user request overrides this. "App" means a standalone
-application, a deployed service, or a desktop client depending on context -- read which from
-the sentence rather than asking every time. "Base", unqualified, is this workspace. See
-[spec/voice.md](spec/voice.md).
+untranslated. Everything written into a file is English only: code, comments, docs, commit
+messages. The one exception is a value that *is* somebody else's name, which is recorded as its
+owner spells it rather than translated. An explicit user request overrides the rest. "App" means
+a standalone application, a deployed service, or a desktop client depending on context -- read
+which from the sentence rather than asking every time. "Base", unqualified, is this workspace.
+See [spec/voice.md](spec/voice.md).
 
 **Naming** -- Files and directories are lowercase English, hyphens allowed. A language with
 its own convention wins locally: Rust source files use underscores. Identifiers inside code
