@@ -388,6 +388,14 @@ This was missing rather than decided against. Lockfiles were nobody's job -- no 
 no project declared one, and nothing here said when or by whom they moved -- while `update` read
 as "bring this workspace current" and meant a third of it.
 
+**A name narrows the dependency half and nothing else, and that is the one place `update` does not
+behave like its neighbours.** `check press` runs press's verify and no other; `update press` moves
+press's dependencies and no other, and then reports on the toolchain exactly as it would have
+without the name. There is no per-repository toolchain to narrow to -- `[tools]` here is the one
+set of pins every repository reads by walking up, so raising press's tools would be raising
+everyone's under a name saying otherwise. The asymmetry is real and it reads like an ignored
+argument, which is why the task description says it rather than leaving it to be found.
+
 **What waits across a range is measured, not predicted.** Each resolver is asked what is still out
 of date *after* the in-range pass has run, because whatever survives that is across a boundary by
 construction. The alternative is reimplementing two resolvers' range arithmetic in order to

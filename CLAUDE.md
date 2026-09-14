@@ -95,10 +95,11 @@ repository; add a name from `repos.toml` -- `mise run check press` -- to run aga
 `--dry-run` to any of them to be told what it would do. `check` dispatches to each repository's
 own `verify`. `update` covers both halves of what has moved out there: tools within their pinned
 majors and dependencies within the ranges their manifests declare, ending by naming what waits
-across a boundary without crossing it, which is the only place that gets reported. Crossing one is
-an edit to `[tools]` or `mise run repos deps --major`, never `update` itself. `clean` removes
-what a tool wrote and can write again; dependencies and local state are not caches and it never
-touches them. See [spec/toolchain.md](spec/toolchain.md).
+across a boundary without crossing it, which is the only place that gets reported. A name narrows
+its dependency half alone -- the toolchain is the workspace's, so there is no per-repository one
+to narrow to. Crossing a boundary is an edit to `[tools]` or `mise run repos deps --major`, never
+`update` itself. `clean` removes what a tool wrote and can write again; dependencies and
+local state are not caches and it never touches them. See [spec/toolchain.md](spec/toolchain.md).
 
 **`publish` is the one verb that refuses to mean everything.** `mise run publish <name>` runs
 that project's own publish task and a missing name is an error, because a release cannot be

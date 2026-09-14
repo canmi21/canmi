@@ -84,8 +84,15 @@ run = ".mise/tasks/repos publish"
 #
 # `--major` is deliberately not accepted: crossing a range belongs to `repos deps --major`, the
 # same way crossing a pin belongs to an edit of [tools]. One verb does not get to do both.
+#
+# A name narrows the dependency half and nothing else, which is the one place this verb does not
+# behave like its neighbours. The toolchain is the workspace's -- one set of pins every repository
+# reads by walking up -- so there is no per-repository version of it to upgrade, and `update press`
+# raising press's tools would be raising everyone's under a name that says otherwise. So the tools
+# half reports the same thing whatever is named. That reads exactly like an argument being ignored,
+# which is why the description says it out loud rather than leaving it to be discovered.
 [tasks.update]
-description = "Upgrade tools and dependencies within their bounds, and name what waits across one"
+description = "Upgrade tools and dependencies within their bounds: `update [name] [--dry-run]`, a name narrowing deps only"
 run = 'update() { .mise/tasks/tools up "$@" && .mise/tasks/repos deps "$@"; }; update'
 
 [tasks.check-tools]
