@@ -59,7 +59,7 @@ changed and nothing else. See [spec/commits.md](spec/commits.md).
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
 untranslated. Everything written into a file is English only: code, comments, docs, commit
-messages. The one exception is a value that *is* somebody else's name, which is recorded as its
+messages. The one exception is a value that _is_ somebody else's name, which is recorded as its
 owner spells it rather than translated. An explicit user request overrides the rest. "App" means
 a standalone application, a deployed service, or a desktop client depending on context -- read
 which from the sentence rather than asking every time. "Base", unqualified, is this workspace.
@@ -113,34 +113,34 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 **Starting, and working with the user**
 
-| Topic                                     | File                                             |
-| ----------------------------------------- | ------------------------------------------------ |
-| Cold start, decision authority, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
-| Voice and communication                   | [spec/voice.md](spec/voice.md)                   |
-| Commit conventions and their enforcement  | [spec/commits.md](spec/commits.md)               |
+| Topic                                                                                        | File                                             |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Cold start, decision authority, citing a section, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
+| Voice and communication                                                                      | [spec/voice.md](spec/voice.md)                   |
+| Commit conventions and their enforcement                                                     | [spec/commits.md](spec/commits.md)               |
 
 **How the arrangement is shaped**
 
-| Topic                                     | File                                                     |
-| ----------------------------------------- | -------------------------------------------------------- |
-| Separate repositories, nested and shared  | [spec/architecture/repos.md](spec/architecture/repos.md) |
-| Naming conventions                        | [spec/naming.md](spec/naming.md)                         |
-| Vendored source: where, how taken, how treated | [spec/vendor.md](spec/vendor.md)                    |
+| Topic                                          | File                                                     |
+| ---------------------------------------------- | -------------------------------------------------------- |
+| Separate repositories, nested and shared       | [spec/architecture/repos.md](spec/architecture/repos.md) |
+| Naming conventions                             | [spec/naming.md](spec/naming.md)                         |
+| Vendored source: where, how taken, how treated | [spec/vendor.md](spec/vendor.md)                         |
 
 **Writing code**
 
-| Topic                          | File                                       |
-| ------------------------------ | ------------------------------------------ |
-| Type checking, tests, comments | [spec/code.md](spec/code.md)               |
-| Linting and formatting         | [spec/lint-format.md](spec/lint-format.md) |
-| Shell, addresses, secrets, versions, jj | [spec/toolchain.md](spec/toolchain.md) |
+| Topic                                   | File                                       |
+| --------------------------------------- | ------------------------------------------ |
+| Type checking, tests, comments          | [spec/code.md](spec/code.md)               |
+| Linting and formatting                  | [spec/lint-format.md](spec/lint-format.md) |
+| Shell, addresses, secrets, versions, jj | [spec/toolchain.md](spec/toolchain.md)     |
 
 **The projects**
 
-| Project      | Rules                                            |
-| ------------ | ------------------------------------------------ |
-| `repos/press` | the site, its workers, the CMS and the corpus -- [repos/press/spec/](repos/press/spec/) |
-| `repos/still` | a macOS application; no spec yet                 |
-| `repos/governor` | a published crate, `canmi21:axum-governor` -- [repos/governor/spec/](repos/governor/spec/) |
-| `repos/rdm`  | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/) |
-| `repos/seam` | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/) |
+| Project          | Rules                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `repos/press`    | the site, its workers, the CMS and the corpus -- [repos/press/spec/](repos/press/spec/)                |
+| `repos/still`    | a macOS application; no spec yet                                                                       |
+| `repos/governor` | a published crate, `canmi21:axum-governor` -- [repos/governor/spec/](repos/governor/spec/)             |
+| `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                |
+| `repos/seam`     | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/) |

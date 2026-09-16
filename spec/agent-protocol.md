@@ -49,6 +49,22 @@ works if it carries the _why_. A rule with no recorded reason loses every argume
 plausible-sounding alternative, because nobody can tell whether it was considered or just
 inherited.
 
+## A citation may name a section, and then the heading is an interface
+
+Cite a section by quoting its heading beside the file: `spec/x.md, "Section name"`, or
+`spec/x.md ("Section name")`. Both spellings are checked -- from a code comment, and from one
+spec file citing another -- and the check is the same one above, one level further down: a file
+still existing does not mean the section named inside it does.
+
+**So renaming a heading is a change with references to update**, exactly like moving a file.
+That is the cost of the convention and it is the point of it: without the quote a pointer decays
+into "somewhere in that file", and the reader who follows it has to guess what was meant before
+the rewrite. Paraphrasing the heading buys the same decay for the same price.
+
+The quote is matched on words, not characters, so backticks, an em dash and a line break inside
+it make no difference. What it cannot survive is the heading being reworded, which is the event
+worth being told about.
+
 ## Cold start
 
 Starting a conversation with no context about this project:
@@ -86,15 +102,15 @@ and nothing else. See [architecture/repos.md](architecture/repos.md).
 
 ### A supervisor and the agents it spawns are the exception, and it has its own rules
 
-The rule above is about *peer sessions* -- two conversations that found each other on a machine.
+The rule above is about _peer sessions_ -- two conversations that found each other on a machine.
 An agent that spawns workers and directs them is a different arrangement, the user asks for it by
 name, and it does work: five agents wrote five parts of one feature against a written contract,
 never compiling together, and the tree built on the first try when the parts were declared.
 
 What makes it work is not the messaging. It is that **every decision reached in a message is
 written into the tree before the work is called done** -- into a comment where the next person
-meets it, a spec section, or a commit body. A message is where a decision is *reached*; it is
-never where one *lives*. The failure the section above names is real and this is what answers it.
+meets it, a spec section, or a commit body. A message is where a decision is _reached_; it is
+never where one _lives_. The failure the section above names is real and this is what answers it.
 
 **A brief has to carry these, every time, because a spawned agent starts cold:**
 

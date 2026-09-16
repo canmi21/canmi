@@ -224,6 +224,13 @@ Every comment line stays inside **100 columns** with tabs at two, the width oxfm
 and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so this one is
 held by hand.
 
+All three are counted rather than eyeballed. `mise run comments` measures every block in every
+language that carries one and is part of press's `verify`, which is where the percentages above
+come from. A file a tool generated is exempt: its comments are nobody's to fix, and a check
+naming a line that may not be edited teaches its reader to skip the rest of the output. The
+limits are this repository's; the check is press's, because press is the project that needed one
+first and the only place it runs today.
+
 **What decides where a fact lives is who needs it, not how long it is.** If a second file would
 have to know it, it is a rule and belongs in `spec/`. If only this file does, it stays here
 however long it runs -- moving it sends the reader out for something nothing else uses. Length is
