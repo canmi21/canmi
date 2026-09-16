@@ -286,7 +286,7 @@ that fails the moment it stops agreeing.
 ### Inside the major, a version number is a bug report
 
 Within a pinned major nothing is written down: `node = "26"` takes whatever 26.x is current,
-and `tools up` moves it. Naming an exact release there is a claim that *this* one is what the
+and `tools up` moves it. Naming an exact release there is a claim that _this_ one is what the
 repository works with, and for a linter or a CLI that claim is almost never true -- it is the
 release that happened to be current on the day somebody typed it. What the number then buys is a
 tool that stops improving until a person remembers to raise it, and a diff every few months that
@@ -397,7 +397,7 @@ everyone's under a name saying otherwise. The asymmetry is real and it reads lik
 argument, which is why the task description says it rather than leaving it to be found.
 
 **What waits across a range is measured, not predicted.** Each resolver is asked what is still out
-of date *after* the in-range pass has run, because whatever survives that is across a boundary by
+of date _after_ the in-range pass has run, because whatever survives that is across a boundary by
 construction. The alternative is reimplementing two resolvers' range arithmetic in order to
 disagree with them later.
 
@@ -461,7 +461,7 @@ line it draws is what makes it safe to run without thinking first:
   reporting a gigabyte of `target/debug/build` as its own finding.
 
 **What gets removed is decided twice, by a name and by version control.** A path has to match the
-list of things a build tool writes *and* be ignored by the repository *and* have nothing tracked
+list of things a build tool writes _and_ be ignored by the repository _and_ have nothing tracked
 underneath it. Neither half is enough on its own: press ignores `build/` and tracks five records
 under `data/build/` that a site-only CI job cannot regenerate, so a name alone would delete them --
 while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
@@ -527,4 +527,3 @@ Help is clap's own, styled with `anstyle` to cargo's palette -- green headings, 
 Not clap's defaults: this stands next to `cargo` in the same terminal, and one constant saves its
 reader a second colour language. The hand-written usage text it replaced had drifted anyway, with
 one command's description printed under another's name.
-

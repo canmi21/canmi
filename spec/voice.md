@@ -7,7 +7,7 @@
 - **Commit messages**: English only.
 - **A name is quoted, not written, and English-only does not reach it.** The rule above governs
   what an author composes: prose, comments, identifiers, commit messages, documentation. A field
-  whose value *is* somebody else's name is not composed -- it is recorded, and it is recorded as
+  whose value _is_ somebody else's name is not composed -- it is recorded, and it is recorded as
   its owner spells it, in the language that owner publishes in first, verbatim. A publisher
   leading in two languages is taken at the one it leads with, never at the one the reader happens
   to speak. So the show a clip in `press` is cut from is credited `爱情公寓`: `iPartment` is a
@@ -15,7 +15,7 @@
   makes the record less true -- and the record is the whole reason the field exists. This covers a
   publisher credit, a person, a product, a place: anything a reader could go and check.
   It licenses nothing around the name. The sentence containing it is still English, an identifier
-  derived from it is still ASCII, and a *description* of the thing is still written in English and
+  derived from it is still ASCII, and a _description_ of the thing is still written in English and
   translated like any other description.
 - **No emoji by default** anywhere, and an assistant never adds one on its own initiative. An
   explicit user request may add one or two visible emoji to the requested interface, including the
@@ -56,7 +56,7 @@ deployables and `repos/` holds separate repositories -- see [repos.md](architect
 ## "Base" means this workspace
 
 Unqualified, **base** is the workspace root -- this repository, the one holding `repos/`. It is
-the opposite case from *app* above: one meaning, assumed, and only a sentence that says otherwise
+the opposite case from _app_ above: one meaning, assumed, and only a sentence that says otherwise
 overrides it. "Run it from base", "add it at base", "base config" all mean here, not in whichever
 project the conversation happens to be about.
 

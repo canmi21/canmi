@@ -34,6 +34,13 @@ Because `jj fix` repairs history rather than guarding a commit, formatting can n
 "too late" here. A badly formatted commit from last week is one `jj fix -s` away from
 correct.
 
+**What it does not reach is a file nobody has touched.** `jj fix` visits the files a revision
+changed, so a formatter upgrade leaves every file outside that set at whatever the previous
+version produced -- or, for a file predating the pattern that now matches it, at no version's
+output at all. Measured when oxfmt reached 0.68: five of this repository's twelve Markdown files
+and forty-seven files in press. A bulk run over the whole tree is the only thing that closes
+that, and it is owed once per upgrade rather than once per commit.
+
 ## Baseline
 
 Start from each tool's own default configuration. Deviate only to resolve a real conflict or
@@ -53,6 +60,13 @@ Whenever a new tool of either kind is added, do this before committing it:
    that owns them.
 
 ## Recorded decisions
+
+**oxfmt cannot format Markdown unless `svelte` is declared beside it.** Its `svelte` peer is
+optional, so a repository that omits it installs cleanly and then fails on every `.md` and
+`.svelte` file with `Cannot find module 'svelte/compiler'` -- Markdown included, because a fenced
+block may be Svelte. `jj fix` reports that as a warning and still exits zero, so `mise run fmt`
+passes while formatting nothing. Any repository whose files reach oxfmt therefore declares svelte
+next to it, this one included, where nothing else has a use for it.
 
 **`no-irregular-whitespace` is off in oxlint.** Verified by writing a U+00A0 into a `.ts`
 file: oxfmt rewrites it to a plain space unprompted. Leaving the rule on would report a

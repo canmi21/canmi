@@ -3,6 +3,7 @@
 	"private": true,
 	"type": "module",
 	"devDependencies": {
-		"oxfmt": "^0.67.0"
+		"oxfmt": "^0.68.0",
+		"svelte": "^5.57.0"
 	}
 }

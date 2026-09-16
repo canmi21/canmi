@@ -104,7 +104,7 @@ writes but never updates it and never checks the content out, so the pointer cou
 through hand-run git commits in a colocated repository.
 
 Inverting the layers was considered and measured -- a plain git outer repository with jj inside
-each submodule works, including `jj git init --colocate` onto a modern gitlink *file*. It is
+each submodule works, including `jj git init --colocate` onto a modern gitlink _file_. It is
 rejected on what it buys. A submodule pointer earns its cost when the superproject builds against
 the submodule, and this one builds nothing; the dependency runs the other way. Recording which
 revision of a project was current at a given commit here would be a record with no consumer, paid
