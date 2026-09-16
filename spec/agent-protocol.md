@@ -134,6 +134,25 @@ you.** Asked whether a landed signature or the briefed one was right, checking t
 answering "keep what you have" contradicted an instruction already given to another agent, and cost
 a round trip to undo. The question a supervisor is being asked is rarely only about the file.
 
+**Its mirror image cost more, and between them they name the whole rule.** Asked which of two
+landed shapes was right, a supervisor answered from two agents' reports read against each other
+rather than from the file, and got it backwards; retracted it; and got the retraction backwards
+too. One interface was rewritten seven times in an afternoon, and four of those were the
+supervisor rewriting the spec from a report while the agents were reading that spec. Every
+disagreement was silent, and each was found by a person happening to describe one out loud.
+
+So: **a read has a timestamp, and a report is a read somebody else took.** What went wrong at the
+end was not that anyone skipped the file -- the worker had read it three times and acted correctly
+each time -- but that it narrated a read taken before an edit landed as though it were current.
+Checking is half of it; checking that the check is still fresh when the sentence is written is the
+other half. Between two descriptions of one file, neither is evidence; the file is.
+
+The structural repair is worth more than the discipline. Two hand-written spellings of one
+interface, in two programs that never compile together, disagree silently by construction -- and
+the afternoon ended by moving the shape into a package both import, so the eighth disagreement
+would have been a compile error. A rule that asks people to be careful is what you write when you
+cannot yet write the one that makes carelessness fail loudly.
+
 ## Decision authority
 
 Decisions belong to the user. An agent implements them.
