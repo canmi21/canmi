@@ -206,6 +206,34 @@ Write for someone scanning, not reading. Lead with the point; if the first line 
 it, cut down to the line that does. The full argument belongs in `spec/`, with the comment
 naming the file rather than repeating it.
 
+### How long, and where the rest of it goes
+
+A comment block is at most **six body lines**. The block that opens a file and introduces the
+whole of it gets **ten**. A body line is one carrying text: `/**`, `*/` and a blank `*` separator
+are punctuation, and a JSDoc block spends about two lines on them.
+
+Aim at one to three, and let five be the honest ceiling. Six is where a check fires, not where
+the writing should land, and the gap between the two is the point of it: prose aimed at three
+lands at three to five, and a limit with no slack reports that as a fault. Measured across press,
+blocks over five body lines are 18.7% of the blocks and carry 49.8% of all comment prose -- half
+the weight in a fifth of the places, which is how a tree ends up annotated everywhere and legible
+nowhere. Six is also where the return falls off: five to six exempts another 3.5% of blocks, and
+every line after that buys under three.
+
+Every comment line stays inside **100 columns** with tabs at two, the width oxfmt's `printWidth`
+and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so this one is
+held by hand.
+
+**What decides where a fact lives is who needs it, not how long it is.** If a second file would
+have to know it, it is a rule and belongs in `spec/`. If only this file does, it stays here
+however long it runs -- moving it sends the reader out for something nothing else uses. Length is
+the symptom that makes the question worth asking, never the answer to it.
+
+**A pointer names the question, not the answer.** "See spec/search.md for why it is one and not
+nine" survives that file being rewritten; "the index is one because ..." does not, and nothing
+links the two, so nobody finds out. The exception is a value this file's own code uses: a
+constant states its own number here and points at `spec/` for why that number.
+
 ### `FIXME` is a problem; `TODO` is a plan
 
 Two markers, and the line between them is whether anything is **wrong**.
