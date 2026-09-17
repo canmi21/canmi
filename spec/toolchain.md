@@ -56,6 +56,17 @@ reaching for it is the decision to leak whatever it was holding.
 Measured, after one session that had not been watching: 25 orphaned `workerd` processes at
 `ppid=1`, 2.0 GB resident. One `SIGINT` to a `vite dev` holding four of them reaped all four.
 
+**The signal has to reach the process that owns the child, not a wrapper above it.** That is the
+half this rule was missing, and it was missing because it had only been tried the easy way. A
+`mise run dev-api` is a shell running a node process running `workerd`; signalling the shell ends
+the shell, and what it was supervising is orphaned with its exit hook unrun. The same session that
+measured four children reaped cleanly went on to signal three wrappers and leave 22 behind, 1.4 GB
+-- the rule had been written from the one case that worked.
+
+So: signal the node process by name, or the whole process group with `kill -INT -<pgid>`, and
+**count what is left afterwards** rather than assuming. `ps -eo ppid | awk '$1==1'` is the check,
+and it takes a second.
+
 The same reasoning says not to go after the children instead. A supervised runtime is
 restarted when it dies -- miniflare counts the crashes and says so -- so killing a child whose
 parent is still alive buys nothing and hides the leak. Stop the parent, or restart it.
