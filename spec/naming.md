@@ -133,3 +133,25 @@ Identifiers follow the language's own convention with no interference from this 
 
 A `camelCase` variable inside a `user-profile.ts` file is correct. The two rules do not
 interact.
+
+## Inside data
+
+**A key in a serialized format is lowercase, and words in it are joined by an underscore.** JSON,
+YAML, TOML, a column name, a query parameter: `focal_length`, `color_space`, `country_code`,
+`cancel_token`. Never `focalLength`, never `FocalLength`.
+
+**This does not interact with the rule above either, and that is the whole point.** A record is
+read by more than one language -- press's image manifest is written by Rust and read by
+TypeScript -- so a key that follows the writer's convention makes the reader spell it the other
+way round, and a key that follows the reader's does the same to the writer. Lowercase with
+underscores belongs to neither and is legible in both. Rust is free to call the field
+`focal_length` and TypeScript is free to call a local `focalLength`; what travels is the key.
+
+The corollary is that a type describing a serialized record is not an ordinary type. Its property
+names are the wire format, so they take the data rule rather than the language's, and a
+`serde(rename)` or a mapping layer is the thing to notice: either the record disagrees with the
+rule, or two spellings of one field now exist. Press's manifest carries exactly one, `frameRate`,
+which predates this.
+
+A value is not a key and keeps whatever it is. Locale tags stay `en-US`, a content hash stays the
+hash, and a name somebody else spells is spelled their way -- see [voice.md](voice.md).

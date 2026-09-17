@@ -125,6 +125,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | ---------------------------------------------- | -------------------------------------------------------- |
 | Separate repositories, nested and shared       | [spec/architecture/repos.md](spec/architecture/repos.md) |
 | Naming conventions                             | [spec/naming.md](spec/naming.md)                         |
+| JSON and record contracts                      | [spec/json.md](spec/json.md)                             |
 | Vendored source: where, how taken, how treated | [spec/vendor.md](spec/vendor.md)                         |
 
 **Writing code**
