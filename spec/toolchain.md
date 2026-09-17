@@ -41,6 +41,28 @@ The cost is small and worth stating so nobody is surprised by it: the bytes go t
 Finder's trash instead of being unlinked, so the space is not returned until the trash is
 emptied, and what was deleted is recoverable until then.
 
+### An agent stops a background process with a signal it can catch
+
+`kill -9` on a dev server leaves its children running for as long as the machine is up. A
+supervisor written in node -- `vite dev` carrying a Cloudflare platform proxy, `wrangler dev`,
+anything standing on miniflare -- registers its cleanup on `exit`, `SIGINT`, `SIGTERM` and
+`SIGHUP`. `SIGKILL` runs none of those, and the child runtime does not watch for its parent's
+death, so it is reparented to `init` and holds its memory until something else kills it.
+
+So a background process is stopped with `kill -TERM` or `kill -INT`, and the agent waits for
+it to be gone before moving on. `-9` is for a process still there after a grace period, and
+reaching for it is the decision to leak whatever it was holding.
+
+Measured, after one session that had not been watching: 25 orphaned `workerd` processes at
+`ppid=1`, 2.0 GB resident. One `SIGINT` to a `vite dev` holding four of them reaped all four.
+
+The same reasoning says not to go after the children instead. A supervised runtime is
+restarted when it dies -- miniflare counts the crashes and says so -- so killing a child whose
+parent is still alive buys nothing and hides the leak. Stop the parent, or restart it.
+
+This is about signals an agent sends, not about how the user leaves a server: Ctrl-C in a
+terminal is already `SIGINT`, and closing the window is `SIGHUP`. Both are caught.
+
 ## Secrets
 
 Credentials live in `secrets.json`, encrypted with [sops](https://getsops.io) to an
