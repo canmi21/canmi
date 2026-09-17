@@ -70,8 +70,12 @@ run = ".mise/tasks/repos verify"
 description = "Remove build output and tool caches, never dependencies: `clean [name] [--dry-run]`"
 run = ".mise/tasks/repos clean"
 
+# The flags belong to the project, not to this verb. Everywhere else here `--dry-run` means one
+# thing; what publishing is dry about is the project's own question, and press's mirror is dry by
+# default and takes `--live`. So anything after the name is handed on unread. See
+# spec/architecture/repos.md.
 [tasks.publish]
-description = "Publish one repository, which must be named: `publish <name> [--dry-run]`"
+description = "Publish one repository, which must be named: `publish <name> [flags]`"
 run = ".mise/tasks/repos publish"
 
 # Both halves of the same question -- what has moved out there, and what of it can be taken

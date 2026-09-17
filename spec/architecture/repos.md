@@ -191,6 +191,18 @@ one -- an error suggesting a command that then fails is worse than the error it 
 The task itself belongs to the project, which is what decides that a release depends on its own
 `verify` passing first. This only decides where to look, the same as `check`.
 
+**And so do its flags.** Every other verb here means one thing everywhere and owns `--dry-run`;
+publishing does not, because what a publish is dry about -- and which way round the flag runs --
+is the project's own question. press's mirror is dry by default and takes `--live`, which is the
+safe polarity for something that deletes. So `publish` collects whatever follows the name and
+hands it on unread, rather than recognising a fixed list.
+
+It used to forward `--dry-run` and nothing else, which meant `publish press --live` ran a dry
+mirror, exited 0 and printed a full report of what it had not done. The documented way to publish
+could not publish, and said it had. Two lessons, both cheap: **a dispatcher that translates flags
+is claiming to know the project's vocabulary**, and **a dry run that looks exactly like a real one
+has to be checked against the thing it was supposed to change** -- the bucket, not the log.
+
 `check` dispatches to each repository's own `verify` rather than reimplementing it: what a
 project has to pass is the project's to decide, and this only decides where to look. `fmt` is
 `jj fix` with the formatters `jj.toml` names, which is why formatting is identical everywhere

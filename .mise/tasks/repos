@@ -631,7 +631,7 @@ def shadowing(project: pathlib.Path) -> list[str]:
 	return found
 
 
-def command_publish(name: str | None, dry: bool = False) -> int:
+def command_publish(name: str | None, passed: list[str]) -> int:
 	"""One repository's own `publish`, by its namespaced task path.
 
 	**The only verb here that refuses to mean every repository.** Everywhere else a missing name
@@ -659,9 +659,15 @@ def command_publish(name: str | None, dry: bool = False) -> int:
 	if not config.is_file() or "[tasks.publish]" not in config.read_text():
 		raise fail(f"repos/{repo.name} has no publish task")
 	task = f"//repos/{repo.name}:publish"
-	print(f"=== {task}{' --dry-run' if dry else ''} ===")
-	command = ["mise", "run", task] + (["--dry-run"] if dry else [])
-	return subprocess.run(command, cwd=ROOT).returncode
+	# Whatever was typed after the name goes to the project's own task, unread.
+	#
+	# Every other verb here means one thing everywhere and owns `--dry-run`. Publishing does not:
+	# what it is dry about, and which way round the flag runs, is the project's. press's mirror is
+	# dry by default and takes `--live`; this used to forward `--dry-run` and nothing else, so
+	# `publish press --live` ran a dry mirror and reported success -- the documented way to publish
+	# could not publish. See spec/architecture/repos.md.
+	print(f"=== {task}{' ' + ' '.join(passed) if passed else ''} ===")
+	return subprocess.run(["mise", "run", task, *passed], cwd=ROOT).returncode
 
 
 def command_check() -> int:
@@ -697,17 +703,22 @@ def command_check() -> int:
 
 
 def main(argv: list[str]) -> int:
-	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise."""
+	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise.
+
+	`publish` is the exception: its flags belong to the project being published, so anything this
+	does not recognise is collected rather than refused, and handed on unread.
+	"""
 	dry = False
 	major = False
 	rest = []
+	unknown = []
 	for argument in argv:
 		if argument in ("-n", "--dry-run"):
 			dry = True
 		elif argument == "--major":
 			major = True
 		elif argument.startswith("-"):
-			raise fail(f"unknown option {argument}")
+			unknown.append(argument)
 		else:
 			rest.append(argument)
 	action = rest[0] if rest else None
@@ -731,7 +742,9 @@ def main(argv: list[str]) -> int:
 	if action == "verify":
 		return command_verify(name, dry)
 	if action == "publish":
-		return command_publish(name, dry)
+		return command_publish(name, (["--dry-run"] if dry else []) + unknown)
+	if unknown:
+		raise fail(f"unknown option {unknown[0]}")
 	if action == "check":
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
