@@ -1,0 +1,232 @@
+# Delegation
+
+How work is split between the conversation the user is having and the agents that conversation
+spawns. The split is shaped for the user's hands, not for an agent's throughput, and every rule
+below follows from that.
+
+## The point is the user testing while the conversation builds
+
+**The user is the fastest test this project has.** They click in two seconds what a browser
+round trip costs minutes, they are already looking at the thing, and they are the only party who
+knows what "feels wrong" means. So the loop is not _finish, verify, report_. It is: hand back
+something clickable, and go on working while it is being clicked.
+
+Two obligations follow, and they are what actually saves the time.
+
+**Never end a turn without something for the user to do.** A turn that ends in "still working"
+spends their attention and returns nothing to spend it on.
+
+**Never hold a turn to confirm what they would confirm faster.** This is the existing rule in
+[agent-protocol.md](agent-protocol.md), "Checking your own work", and delegation does not soften
+it -- it makes it load-bearing, because the cycles saved by not confirming are the cycles the
+next wave is dispatched in.
+
+**And an honest limit, so this is not sold as more than it is.** Parallelism pays only where
+there are two or more independent concerns. A request with one causal chain stays serial however
+many workers exist: the table of contents indicator was one chain -- collapsed geometry, open
+geometry, one element -- and no arrangement of agents would have made it two. What delegation
+buys there is not wall-clock but **context**: a few hundred tokens of brief instead of twenty
+thousand of reading and editing, and a conversation that can still hold the whole task at the
+end of it.
+
+The wall-clock lever is elsewhere, and half of it is the user's. **A batch of requests in one
+message becomes a wave of agents; one request at a time stays a queue however it is executed.**
+The other half is the overlap: wave N is being clicked while wave N+1 is being dispatched. A
+conversation that goes quiet for ten minutes has failed at this even if every agent in it
+succeeded.
+
+## What the conversation keeps
+
+Three things, and they are the three that cannot be handed to a worker that starts cold.
+
+**Paraphrase.** Turning what the user said into this project's terms is the whole of the top
+level's value. The user says the indicator feels wrong; the brief says which function writes
+which property, in which of the rail's two layouts, and which one it should have been reading. A
+worker handed the first sentence goes and rediscovers the codebase, and is paid for by the token.
+
+**Decisions, and `spec/`.** Who decides what is [agent-protocol.md](agent-protocol.md),
+"Decision authority", unchanged. What delegation adds is that **a spawned agent never writes
+`spec/` or `CLAUDE.md`**: the rules are the shared decision record, two workers editing them
+concurrently conflict by construction, and a rule is a decision, which was never the worker's to
+take. A worker that believes a rule is wrong says so in its report, which is the same thing it
+does with a brief it believes is wrong.
+
+**Sequence and commits.** Who runs when, who owns which file, and what lands in which commit.
+
+**Search is delegated; diagnosis is not.** Finding where something lives -- which file, which
+call sites, which naming convention this corner uses -- is token burn with no judgement in it
+and goes out every time. Working out _why_ something is broken usually is judgement, and a
+shallow diagnosis returned as a fact is worse than no diagnosis at all: the conversation cannot
+falsify it without loading the context it delegated to avoid, and it is about to write a brief
+on top of it. The line, drawn from the case this file was written after -- "find the table of
+contents component and say which function positions the indicator" goes out; "it is written at
+the settled geometry while the column is still animating" stays.
+
+## A spawned agent is an editing tool that can think
+
+**A brief names an outcome, not a procedure.** If it is naming lines and characters, the edit
+should have been made directly and the brief is pure overhead. If it names a goal the worker has
+to take a decision to reach, it should have been a question to the user. A brief lives between
+those two: a specific command, in the project's own terms, with the how left to the worker
+because the worker is standing in the file and the conversation is not.
+
+Briefed that way, most edits land correct with nothing checking them. Not all of them, which is
+why the diff gets read; the estimate is the user's and it is not good enough to skip the net.
+
+**Every brief carries these, because a spawned agent starts cold.**
+
+- Delete with `trash`, never `rm`. It is in [toolchain.md](toolchain.md) with the reason, and a
+  worker that has not read it reaches for `rm` and hangs the turn with nobody watching.
+- `jj`, never `git`. It does not commit, does not move the bookmark, does not push.
+- **Which files are its own, as an explicit list, and that every other file belongs to somebody
+  else.** See the next section; this is the line the whole arrangement rests on.
+- **Which `spec/` sections bind this change**, cited by name so it reads them rather than
+  inferring the convention from the code around it.
+- Whether the tree is expected to compile. Parts written in parallel against a contract will not
+  until they are all declared, and a worker that does not know that will try to fix it.
+- **Do not run the test suite, the type checker, the formatter or the linter.** The reason is in
+  "Testing is the user's; checking is the conversation's" below.
+- **Do not touch `spec/` or `CLAUDE.md`**, and do not reformat or tidy code the brief did not
+  name. A neighbouring improvement is indistinguishable from a mistake in a diff, and it lands in
+  a commit about something else.
+- **Stop and report rather than improvise.** A brief that turns out to be wrong, a file it needs
+  and does not own, a rule it cannot satisfy and follow at once: all of these come back as a
+  report. Twice in one session a worker found a signature that disagreed with its brief and
+  asked; both times the brief was the thing that was wrong, and quiet conformance would have
+  broken files it did not own.
+
+**Every decision reached in a message is written into the tree before the work is called done**
+-- into a comment where the next reader meets it, a `spec/` section, or a commit body. A message
+is where a decision is _reached_; it is never where one _lives_. This is what answers the
+objection in [agent-protocol.md](agent-protocol.md), "Working beside other agents": a decision
+made in a conversation between two agents is otherwise recorded nowhere, and the arrangement here
+is only legitimate because it does not stay there.
+
+## File ownership is the whole of the concurrency control
+
+There is one working copy. Separate workspaces would mean separate commits to reconcile, which
+costs more than it saves at this size, so the only partition available is by file -- and being
+the only one, it has to be exact.
+
+- **The file set is declared before dispatch**, not discovered during it.
+- **Disjoint sets run together; overlapping sets run in sequence.** There is no third answer, and
+  no locking cleverness worth inventing for a handful of workers.
+- **A file two workers might both want belongs to the conversation** and to nobody else. A module
+  list, a shared type, a route table, a constant two features both read.
+- **One refactor is one agent.** A signature and its call sites are a single task however many
+  files they span. Splitting them gives two workers one interface to guess at independently,
+  which is the failure this repository has already paid for once: one interface rewritten seven
+  times in an afternoon, every disagreement silent, each found by a person happening to describe
+  it out loud. Parallelism is across independent concerns, never across one change.
+
+The structural repair is worth more than the discipline. Two hand-written spellings of one
+interface, in two programs that never compile together, disagree silently by construction -- and
+that afternoon ended by moving the shape into a package both import, so the eighth disagreement
+would have been a compile error. A rule that asks people to be careful is what gets written when
+the rule that makes carelessness fail loudly is not yet available.
+
+## Testing is the user's; checking is the conversation's
+
+They are different things and the rule differs for each.
+
+**Testing** -- does this behave the way it should -- belongs to the user. They will say when
+something is wrong, and they will say it faster than any verification loop. The evidence is
+direct: a hover that revealed the mark on the first pass and never again took six browser round
+trips to find, and the user would have said "it does not come back on the second hover" in two
+seconds of clicking.
+
+**Checking** -- does it type, lint and format -- belongs to the conversation, **once per wave,
+before the user is asked to click.** Before rather than after, because a type error means the dev
+server is serving a broken bundle: the user's click test then costs them a round trip to learn
+what the checker would have said for free.
+
+**A spawned agent runs neither.** Not because it could not, but because several of them in one
+working copy would run the same suite against the same tree at the same time, and the failures
+that produces are about the concurrency rather than about the code. Checking is a whole-tree
+question and only the party that sees the whole wave can ask it.
+
+**The one test a spawned agent may run is one it can isolate**: pure logic, no dev server, no
+port, no process anyone else is sharing, and nothing written outside the files it owns. A
+function it just wrote, with the test file it just wrote beside it. Not the suite, not a build,
+not anything that needs the application up.
+
+**The browser and the desktop window open only when the acceptance criterion is a number.**
+Geometry, timing, drift, a count -- things clicking cannot produce. The rail's indicator was
+209px from its own label at the instant it appeared and travelled 125px up the viewport
+afterwards, and no amount of looking would have turned that into a fix; the measurement was the
+fix. Everything else goes to the user. This narrows [agent-protocol.md](agent-protocol.md),
+"Checking your own work", rather than contradicting it: that section asks whether reading the
+code could answer the question, and this one adds that even when it could not, the answer has to
+be a number before the round trip is worth its cost.
+
+## The conversation reads the diff, not the file
+
+**Every worker that returns gets its diff read** -- `jj diff` over the paths it owned. The diff,
+not the files: the cost is a fraction of authoring the change and it is what makes briefing at
+four-in-five acceptable rather than reckless.
+
+Four things are being looked for, and a worker's own report is evidence for none of them:
+
+- it changed the files it was given, and no others;
+- it did the thing, rather than something adjacent that was easier;
+- it left nothing half-finished behind a plausible summary;
+- it did not walk past a `spec/` rule the brief had cited.
+
+**A read has a timestamp, and a report is a read somebody else took.** That distinction was
+learned expensively: a supervisor once answered which of two landed shapes was right from two
+workers' reports read against each other rather than from the file, got it backwards, retracted
+it, and got the retraction backwards too -- while the workers were reading the spec it was
+rewriting from those reports. Between two descriptions of one file, neither is evidence. The file
+is. Checking is half of it; checking that the check is still fresh when the sentence is written
+is the other half.
+
+There is a second reason, and it is not about trust. **The conversation writes the commit message
+and the `spec/` entry, and neither can be written from somebody else's summary.** A commit body
+says what changed; a rule says what was decided and why. Both are claims about a tree that has to
+have been read.
+
+## Commits separate concerns, not buildable states
+
+**Commit by path list.** Ten changed files landing as three commits is three `jj commit` calls
+naming their paths -- not three rounds of restoring the tree to a state it never passed through.
+The staging dance buys a history that looks like the work was done in order, and the work was not
+done in order.
+
+**A commit here is not required to build on its own.** This is the author's workspace, not a
+library with bisect discipline and strangers depending on its history. A commit's job is to keep
+one concern legible; where two timelines cross inside one, that is the honest record of an
+afternoon in which two things were being done at once.
+
+**Only the conversation commits.** This is a carve-out from [commits.md](commits.md),
+"Completion", which has an agent commit its own completed work: that rule holds for an agent
+working directly, and is suspended for a spawned worker, which never commits, never describes and
+never moves the bookmark. With several workers in one working copy the alternative is a bare
+`jj commit` sweeping a neighbour's half-written files into somebody else's change, silently.
+
+**Commit after the user's verdict, not before it.** The sequence is: wave lands, diffs read,
+checks run once, user clicks, then the commits are written. What the user rejects never becomes a
+commit to revert.
+
+**The trap is silent and has caught this project before.** A path list omits what it does not
+name, without saying so: a rename is two paths, a bracketed path needs quoting, a file the wave
+touched incidentally is simply left behind. `jj st` is read after every partial commit, and what
+remains uncommitted is compared against what was meant to remain.
+
+## What the user is shown
+
+**Before a wave runs: one line per worker** -- what it does, and which files it owns. Not the
+brief itself, which is long enough to bury the thing worth checking. The cheapest place in the
+whole loop to catch a misparaphrased intent is before three workers have acted on it, and a line
+is cheap enough to be read at a glance where a full brief is not.
+
+**After a wave lands: what to click.** Named specifically -- which page, which interaction, what
+should be true -- because "have a look" hands the user the job of working out what changed.
+
+## When not to delegate
+
+**If the brief would be as long as the edit, make the edit.** One line, one constant, a rename
+already known, a comment. The overhead of a cold worker is real and it is not always smaller than
+the work.
+
+**A decision is never delegated**, to a worker or to the tree. It goes to the user, as one
+focused question. See [agent-protocol.md](agent-protocol.md), "Decision authority".

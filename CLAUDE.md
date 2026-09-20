@@ -53,6 +53,13 @@ Every rule the user states gets written down. Never leave one in chat only.
 
 ## Core rules
 
+**Delegation** -- work is split between this conversation and the agents it spawns, by default
+rather than on request. The conversation paraphrases the user's intent, decides, owns `spec/`,
+reads every worker's diff, runs the one type check per wave and writes every commit; the workers
+edit, each owning a declared set of files and touching nothing else. Testing belongs to the
+user -- they are faster than any verification loop -- so a turn ends with something to click, not
+with a report. See [spec/delegation.md](spec/delegation.md).
+
 **Commits** -- Conventional Commits. Omit the scope in most cases. Subject starts lowercase,
 imperative mood, 96 characters max. Plain text throughout, never Markdown; a body says what
 changed and nothing else. See [spec/commits.md](spec/commits.md).
@@ -116,6 +123,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Topic                                                                                        | File                                             |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | Cold start, decision authority, citing a section, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
+| Spawning workers: briefs, file ownership, who tests, who checks, who commits                 | [spec/delegation.md](spec/delegation.md)         |
 | Voice and communication                                                                      | [spec/voice.md](spec/voice.md)                   |
 | Commit conventions and their enforcement                                                     | [spec/commits.md](spec/commits.md)               |
 

@@ -100,58 +100,22 @@ There is no longer an arrangement for two agents inside one repository; projects
 repositories, so two pieces of work are two directories. What crosses between them is a commit
 and nothing else. See [architecture/repos.md](architecture/repos.md).
 
-### A supervisor and the agents it spawns are the exception, and it has its own rules
+### A supervisor and the agents it spawns are the exception
 
 The rule above is about _peer sessions_ -- two conversations that found each other on a machine.
-An agent that spawns workers and directs them is a different arrangement, the user asks for it by
-name, and it does work: five agents wrote five parts of one feature against a written contract,
-never compiling together, and the tree built on the first try when the parts were declared.
+An agent that spawns workers and directs them is a different arrangement, and it works: five
+agents wrote five parts of one feature against a written contract, never compiling together, and
+the tree built on the first try when the parts were declared.
 
-What makes it work is not the messaging. It is that **every decision reached in a message is
-written into the tree before the work is called done** -- into a comment where the next person
-meets it, a spec section, or a commit body. A message is where a decision is _reached_; it is
-never where one _lives_. The failure the section above names is real and this is what answers it.
+It is also no longer something the user asks for by name. It is how work is done here by default,
+and [delegation.md](delegation.md) is the whole of it -- what the conversation keeps, what a brief
+must carry, how concurrent workers are kept off each other's files, who tests, who checks, and who
+commits.
 
-**A brief has to carry these, every time, because a spawned agent starts cold:**
-
-- Delete with `trash`, never `rm`. It is in [toolchain.md](toolchain.md) with the reason, and an
-  agent that has not read it will reach for `rm` and hang the turn with nobody watching.
-- `jj`, never `git`. Do not move the bookmark -- the supervisor does. Never push.
-- **Commit with an explicit path list.** Several agents share one working copy, and a bare
-  `jj commit` sweeps a neighbour's half-written files into your commit. This is the single most
-  expensive mistake available to a spawned agent and it is silent.
-- Which files are yours, stated as a list, and that everything else belongs to somebody else. A
-  file two agents may both want -- a module list, a CLI, a shared struct -- belongs to the
-  supervisor and to nobody else.
-- Whether the tree is expected to compile. When parts are written in parallel against a contract,
-  it will not until they are all declared, and an agent that does not know that will try to fix it.
-- What to do on finding the brief wrong: say so and stop, rather than conforming quietly. Twice in
-  one session an agent found a signature that disagreed with its brief and asked; both times the
-  brief was the thing that was wrong, and quiet conformance would have broken files it did not own.
-
-**And the supervisor's own rule: do not answer a question by looking only at what is in front of
-you.** Asked whether a landed signature or the briefed one was right, checking the disk and
-answering "keep what you have" contradicted an instruction already given to another agent, and cost
-a round trip to undo. The question a supervisor is being asked is rarely only about the file.
-
-**Its mirror image cost more, and between them they name the whole rule.** Asked which of two
-landed shapes was right, a supervisor answered from two agents' reports read against each other
-rather than from the file, and got it backwards; retracted it; and got the retraction backwards
-too. One interface was rewritten seven times in an afternoon, and four of those were the
-supervisor rewriting the spec from a report while the agents were reading that spec. Every
-disagreement was silent, and each was found by a person happening to describe one out loud.
-
-So: **a read has a timestamp, and a report is a read somebody else took.** What went wrong at the
-end was not that anyone skipped the file -- the worker had read it three times and acted correctly
-each time -- but that it narrated a read taken before an edit landed as though it were current.
-Checking is half of it; checking that the check is still fresh when the sentence is written is the
-other half. Between two descriptions of one file, neither is evidence; the file is.
-
-The structural repair is worth more than the discipline. Two hand-written spellings of one
-interface, in two programs that never compile together, disagree silently by construction -- and
-the afternoon ended by moving the shape into a package both import, so the eighth disagreement
-would have been a compile error. A rule that asks people to be careful is what you write when you
-cannot yet write the one that makes carelessness fail loudly.
+What makes it legitimate rather than a violation of the rule above is one line of that file:
+**every decision reached in a message is written into the tree before the work is called done.**
+A message is where a decision is reached; it is never where one lives. The failure this section
+names is real, and that is what answers it.
 
 ## Decision authority
 
@@ -334,6 +298,10 @@ The cost is not the tool call. It is the round trip: booting a browser, waiting 
 server, screenshotting, reading pixels back, all to restate what the diff already says. That
 time is the user's, and confirming the obvious spends it to reach a conclusion the next message
 would have delivered for free.
+
+[delegation.md](delegation.md), "Testing is the user's; checking is the conversation's", narrows
+this by one turn: even where reading the code cannot answer the question, the answer has to be a
+number -- geometry, timing, drift, a count -- before the round trip is worth what it costs.
 
 ## Selfcheck
 

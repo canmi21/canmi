@@ -118,6 +118,12 @@ and moves the `main` bookmark before handing the result back. A separate request
 not required. Partial or blocked work stays uncommitted, and unrelated changes already in the
 working copy are never swept into the task's commit merely to make the tree clean.
 
+**A spawned worker is the exception, and never commits at all.** Several of them share one
+working copy, so a commit taken by one sweeps up whatever its neighbours have half-written. The
+conversation that spawned them commits, by path list, after the user has said the change is
+right. See [delegation.md](delegation.md), "Commits separate concerns, not buildable states",
+which also records why a commit here is not required to build on its own.
+
 ### Leave the working copy above `main`, not on it
 
 The last step is `jj new`. `main` ends on the commit that was written, and the working copy ends
