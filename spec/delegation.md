@@ -132,6 +132,40 @@ uses.
 lines whose shape it already knows, or when the question is one it cannot state without having
 seen the file -- which is the honest description of some debugging.
 
+## Research has the same brief as a read, pointed outward
+
+A question about an upstream -- a platform limit, a runtime's behaviour, what a library actually
+does -- is delegated on the same terms as reading this tree, with three additions.
+
+**Name the sources and their order.** Primary first: the vendor's own documentation, its blog,
+its source. Where a documentation skill for that vendor exists, it is invoked before the open
+web. And say the quiet part explicitly: **do not answer from memory without checking.** Platform
+numbers change, a model's recollection of them does not, and a stale limit stated confidently is
+the one outcome that makes the research worse than not having done it.
+
+**Ask for the mechanism, not the verdict.** A brief that asks "should we do X" gets an opinion.
+A brief that asks how the thing works, with the verdict as the last line, gets something the
+conversation can reason from when the next question turns out to be adjacent rather than the
+same. The test to write into the brief: **enough that the reader could predict the answer to a
+question that was not asked.**
+
+**Require the line between fact and inference to be drawn every time**, and make "not documented"
+an acceptable answer. A worker that cannot distinguish the two returns something worse than
+nothing, because it cannot be checked without redoing the work. A load-bearing claim carries its
+URL inline, or it carries the word "inferred".
+
+**Concise but not thin** is the standard, and it is worth saying in exactly those words. Without
+it a research brief comes back either as a paragraph that repeats the question, or as a survey
+of everything adjacent. Bound it the way a read is bounded -- a reading time, a line cap on
+quoted code -- and forbid the filler by name: no restating the question, no explaining what the
+subject is, no recommendation that was not asked for.
+
+**A research brief usually has a local half, and it belongs in the same worker.** What the
+platform does in general is only half an answer; what this tree does with it is the other. One
+worker holding both gives an answer already applied, and the alternative is the conversation
+joining two reports that were written without reference to each other -- which is the failure
+recorded in "The conversation reads the diff, not the file".
+
 ## A spawned agent is an editing tool that can think
 
 **A brief names an outcome, not a procedure.** If it is naming lines and characters, the edit
