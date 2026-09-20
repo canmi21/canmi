@@ -151,9 +151,32 @@ moves when told to is a bookmark whose position means something.
 Pushing is the user's to run. Do not offer it at the end of a task and do not ask whether to
 push. Commit and move the bookmark; stop there.
 
-One checkout per repository, and one agent in it. The arrangement that ran several checkouts
-of one repository side by side is gone: projects are separate repositories now, so two pieces of
-work that used to collide inside one tree no longer share a tree at all. See
+### Rejected: parallel workspaces
+
+**One checkout per repository, and every agent working in it shares that one checkout.** jj
+offers `jj workspace` for the obvious alternative -- a working copy per concurrent piece of work,
+each on its own commit -- and it was tried here and abandoned.
+
+Three costs, and none of them was the merging itself. **Reconciling the commits was the work**:
+every pair of workspaces that touched adjacent things produced a conflict somebody had to sit
+down with, and the sitting down was more expensive than the concurrency was worth. **The dev
+servers had lifecycles**, one set per workspace, competing for pinned ports and each outliving
+the work it was started for. And the arrangement grew rules of its own to stay coherent -- an
+"overlay workspace" that existed only to hold what the others had to agree about -- which is the
+sign that a structure is being propped up rather than used.
+
+**What replaces it is one checkout, one line of commits, and concurrency partitioned by file.**
+See [delegation.md](delegation.md), "File ownership is the whole of the concurrency control".
+
+**The cost is real and is accepted rather than hidden: a commit here is not guaranteed to build
+on its own.** Several pieces of work land in one sequence, so checking out a commit in the middle
+may find a change half of whose tree arrived in the next one. That is the price, and against it
+is a mental overhead that is lower by a wide margin -- one tree, one set of servers, one place
+the current state of anything is read. This is not a library with strangers bisecting its
+history. See [commits.md](commits.md), "Completion", for what a commit is therefore for.
+
+Projects are separate repositories, so this is a question about concurrency inside one project
+and never about two. Two projects are two directories and always were. See
 [architecture/repos.md](architecture/repos.md).
 
 ## Tool versions

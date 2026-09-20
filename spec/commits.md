@@ -145,24 +145,21 @@ the agent took, which is the whole of the difference and the whole of the reason
 
 ### When `main` moved meanwhile
 
-Other workspaces commit onto the same `main` -- see [toolchain.md](toolchain.md), "Parallel
-workspaces". If it advanced while the task was underway, `jj bookmark move` refuses to move it
-sideways, and that refusal is the synchronisation point: `jj rebase -d main`, run `mise run
-verify` again on the rebased result, then move. The order matters. Each workspace verified
-its own change in isolation; the rebased commit is the first place the two changes meet, and
-it is what `main` is about to claim.
+`main` can be ahead of where the task started -- a fetch, or the same repository worked on
+another machine. There are no sibling workspaces to race with; see
+[toolchain.md](toolchain.md), "Rejected: parallel workspaces". When it has advanced,
+`jj bookmark move` refuses to move it sideways, and that refusal is the synchronisation point:
+`jj rebase -d main`, run `mise run verify` again on the rebased result, then move. The order
+matters. The change was verified against the tree it was written on; the rebased commit is the
+first place the two changes meet, and it is what `main` is about to claim.
 
 A conflict does not stop the rebase -- jj records it in the commit -- and it is resolved by
-the agent whose change it is, in that workspace, because that is where the reasoning behind
-the change still lives. Nobody resolves it on somebody else's behalf.
+whoever wrote the change, because that is where the reasoning behind it still lives.
 
-**Only rewrite commits that belong to your own workspace.** Rebasing, squashing or describing
-another workspace's commits rewrites the parents its working copy sits on and leaves it stale
-until that agent runs `jj workspace update-stale`, in the middle of whatever it was doing.
-The one bookmark everyone moves is `main`; the commits under it are each written by exactly
-one workspace, and stay that way until they are on `main`. A base session in particular does
-not land other workspaces' commits for them: the trailer below records who shaped a change,
-and a change landed by a hand that did not write it makes that record wrong.
+**Nothing already on `main` is rewritten.** jj's own `immutable_heads()` covers `main@origin`
+and will refuse, but the rule holds one commit earlier than the refusal does: a commit the user
+has seen and accepted is a claim they made, and rebasing it to tidy the history edits their
+record of the afternoon.
 
 The rebase is also where rule changes arrive: `spec/` moves with `main` like everything else,
 and [agent-protocol.md](agent-protocol.md) says what to do with the delta.
@@ -229,9 +226,9 @@ published.
 `hooks/spec_diff.py` runs after a `jj rebase` and hands back the diff of `spec/` and
 `CLAUDE.md` between the working copy before the rebase and after it. It reads the previous
 state out of jj's operation log rather than remembering anything, and prints nothing when no
-rule moved. It exists because a rule written in one workspace reaches another only through
-`main`, and the moment it does is otherwise invisible: the files change under an agent whose
-context still holds the old text. It does not block; whether a changed rule touches the task
+rule moved. It exists because a rule written elsewhere -- another machine, an earlier session --
+reaches this checkout only through `main`, and the moment it does is otherwise invisible: the
+files change under an agent whose context still holds the old text. It does not block; whether a changed rule touches the task
 is the agent's call, and it is asked at the one moment the answer is cheap.
 
 What all of this does not cover, and why the rules above still have to be read rather than

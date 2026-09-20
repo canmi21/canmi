@@ -35,6 +35,38 @@ The other half is the overlap: wave N is being clicked while wave N+1 is being d
 conversation that goes quiet for ten minutes has failed at this even if every agent in it
 succeeded.
 
+## A returning worker is an event, not an instruction
+
+A worker that finishes sends a notification into the conversation, and it arrives wherever the
+conversation happens to be -- which is usually in the middle of something else. **It does not get
+to set the topic.** The default is to park the result and finish the exchange in progress.
+
+This is not politeness, it is the point of the whole arrangement. A conversation that stops to
+report every return has spent the freedom it delegated the work to buy: the user is back to
+waiting on a worker, through an intermediary, having gained nothing.
+
+**Parked results surface at the seam between topics, never inside one.** "Right, that is
+settled", "let us look at the other thing", a question that closes a thread -- those are where a
+parked result comes out. Mid-idea is not.
+
+**One turn, one topic.** Answering the idea, reporting a returned worker and dispatching the next
+one in a single message is the failure this rule exists to prevent: three things arrive at once
+and none of them is legible.
+
+**Three things break the thread, and each gets one line rather than a report.**
+
+- **A worker is blocked.** That is not a result, it is a stalled resource, and every exchange it
+  waits through is the parallelism this arrangement was built for, idle.
+- **What came back contradicts the premise of what is being discussed right now.** Designing on a
+  fact that has just been disproved costs more than the interruption does.
+- **The new idea touches a file an in-flight worker owns.** This is not a report at all, it is
+  "File ownership is the whole of the concurrency control" doing its job. Say so before the idea
+  is designed around a file that is being rewritten underneath it.
+
+**Reading which of these applies is judgement, and nothing in the notification carries it.** If
+the user's last message was about something else, they are on something else. If they ask how it
+is going, they want the result. The signal is what they are doing, not what has arrived.
+
 ## What the conversation keeps
 
 Three things, and they are the three that cannot be handed to a worker that starts cold.
@@ -53,14 +85,52 @@ does with a brief it believes is wrong.
 
 **Sequence and commits.** Who runs when, who owns which file, and what lands in which commit.
 
-**Search is delegated; diagnosis is not.** Finding where something lives -- which file, which
-call sites, which naming convention this corner uses -- is token burn with no judgement in it
-and goes out every time. Working out _why_ something is broken usually is judgement, and a
-shallow diagnosis returned as a fact is worse than no diagnosis at all: the conversation cannot
-falsify it without loading the context it delegated to avoid, and it is about to write a brief
-on top of it. The line, drawn from the case this file was written after -- "find the table of
-contents component and say which function positions the indicator" goes out; "it is written at
-the settled geometry while the column is still animating" stays.
+**Judgement.** Working out _why_ something is broken, and what the fix has to be, stays here. It
+is made on text a worker quoted back rather than on a worker's conclusion, which is the subject
+of the next section.
+
+## Reading is delegated; the judgement on what comes back is not
+
+**Reading the code is delegated by default, not only searching it.** Both halves of the cost are
+worth avoiding: a file read into the conversation stays there for the rest of the session, and
+the minutes spent reading it are minutes the user is waiting rather than talking. A worker reads
+in the background and the thread stays free, which is the whole arrangement in one sentence.
+
+**A read brief names four things**, and the fourth is what makes it worth sending at all.
+
+- **The scope.** Files, a directory, or a pattern -- never "the codebase". A worker given the
+  repository will give back an essay.
+- **The tool, and the pattern where it is already known.** `rg` for text, `ast-grep` for
+  structure -- a call shape, a hook, every implementation of one interface. Naming the pattern
+  saves the worker rediscovering what the conversation already worked out.
+- **The question, in one sentence.**
+- **The return shape**: the exact lines, quoted, with `file:line`; the enclosing signature or
+  declaration so the frame around them is visible; a line cap; and one paragraph answering the
+  question, kept apart from the quotation.
+
+**The quotation is evidence and the paragraph is not.** A report is a read somebody else took --
+a quoted line is the read itself, taken through a worker instead of by hand. The two arrive in
+one message and must not be weighed the same.
+
+**A line cap is not tidiness.** A worker that returns the file has returned the problem: the
+context was spent, just later and by somebody else.
+
+**Choosing which ten lines to quote is itself a judgement, and it can be wrong.** Asking for the
+enclosing structure makes a badly framed snippet visible sometimes, and not always. The reliable
+signal is the other one: **an answer that surprises is read again by hand.** A finding that does
+not fit what the rest of the tree implies is either a discovery or a mis-framed quotation, and
+from the summary those two look identical.
+
+**Dispatch as soon as an area is named, not when the plan is settled.** A user describing an idea
+that plainly touches the rail, the CMS window, one worker -- the read goes out then, and by the
+time the idea is settled the evidence is already back. This inverts the usual order, where
+research follows the decision, and it is only available because reads run in the background. The
+area has to be concrete enough to scope a brief; a vague mention buys a speculative read nobody
+uses.
+
+**The conversation reads for itself** when the answer surprised it, when the file is a handful of
+lines whose shape it already knows, or when the question is one it cannot state without having
+seen the file -- which is the honest description of some debugging.
 
 ## A spawned agent is an editing tool that can think
 
@@ -79,7 +149,10 @@ why the diff gets read; the estimate is the user's and it is not good enough to 
   worker that has not read it reaches for `rm` and hangs the turn with nobody watching.
 - `jj`, never `git`. It does not commit, does not move the bookmark, does not push.
 - **Which files are its own, as an explicit list, and that every other file belongs to somebody
-  else.** See the next section; this is the line the whole arrangement rests on.
+  else.** See "File ownership is the whole of the concurrency control"; this is the line the
+  whole arrangement rests on.
+- **A short name**, because a worker that cannot be referred to cannot be parked, reported on in
+  one line, or asked after by the user.
 - **Which `spec/` sections bind this change**, cited by name so it reads them rather than
   inferring the convention from the code around it.
 - Whether the tree is expected to compile. Parts written in parallel against a contract will not
@@ -104,9 +177,9 @@ is only legitimate because it does not stay there.
 
 ## File ownership is the whole of the concurrency control
 
-There is one working copy. Separate workspaces would mean separate commits to reconcile, which
-costs more than it saves at this size, so the only partition available is by file -- and being
-the only one, it has to be exact.
+There is one working copy, and that is a decision with its own reasoning and its own accepted
+cost -- [toolchain.md](toolchain.md), "Rejected: parallel workspaces". It leaves file ownership
+as the only partition available, and being the only one, it has to be exact.
 
 - **The file set is declared before dispatch**, not discovered during it.
 - **Disjoint sets run together; overlapping sets run in sequence.** There is no third answer, and
@@ -221,6 +294,16 @@ is cheap enough to be read at a glance where a full brief is not.
 
 **After a wave lands: what to click.** Named specifically -- which page, which interaction, what
 should be true -- because "have a look" hands the user the job of working out what changed.
+
+**A one-line status tail, on the turns where the state moved.** A reply that dispatched a worker,
+or in which one returned, ends with a line naming what is in flight and what is parked --
+`in flight: rail-fix (editing) - parked: toc-read (done, unreported)`. Turns where nothing moved
+carry nothing; a status line on every message is noise, and noise is what stops it being read.
+
+It earns its place twice. It is the insurance against the parking rule's one real risk, which is
+the conversation quietly losing track of its own outstanding work. And it is where the user says
+"report that one first" -- the parked order is a default, and the line is what makes it
+overridable without their having to ask what is outstanding.
 
 ## When not to delegate
 
