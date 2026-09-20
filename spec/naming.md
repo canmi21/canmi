@@ -87,7 +87,7 @@ One. If the answer is more, the vendor has leaked past the boundary.
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 
 **Twitter is Twitter here**, in identifiers, module names, spec files, commands and URLs, and it
-stays that way whatever the service calls itself. See press's `twitter.md` for that case in
+stays that way whatever the service calls itself. See lattice's `twitter.md` for that case in
 full; the rule it stands for is general.
 
 A name has one job: to say which thing this is, at the point somebody reads it. `X` cannot do
@@ -103,7 +103,7 @@ permanently redirects, not because the old name is willed into being. Were it sw
 address would follow and the name in the source would not.
 
 This rule and the "name for responsibility" rule in
-press's `architecture/workspace.md` are the same instinct at two scales: the volatile fact --
+lattice's `architecture/workspace.md` are the same instinct at two scales: the volatile fact --
 product, domain, deployment shape, supplier -- never gets carved into the part that is
 expensive to change.
 
@@ -141,7 +141,7 @@ YAML, TOML, a column name, a query parameter: `focal_length`, `color_space`, `co
 `cancel_token`. Never `focalLength`, never `FocalLength`.
 
 **This does not interact with the rule above either, and that is the whole point.** A record is
-read by more than one language -- press's image manifest is written by Rust and read by
+read by more than one language -- lattice's image manifest is written by Rust and read by
 TypeScript -- so a key that follows the writer's convention makes the reader spell it the other
 way round, and a key that follows the reader's does the same to the writer. Lowercase with
 underscores belongs to neither and is legible in both. Rust is free to call the field

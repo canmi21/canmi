@@ -29,7 +29,7 @@ mise.toml      monorepo root, task roots, the shared toolchain
 repos.toml     which repositories this workspace is made of, as user:repo
 spec/          rules that follow the author
 hooks/         the agent hook entrypoint both vendors call
-.mcp.json      the MCP server that drives press's desktop window, pinned to its plugin
+.mcp.json      the MCP server that drives lattice's desktop window, pinned to its plugin
 repos/         one directory per project, each a separate repository
 ```
 
@@ -91,7 +91,7 @@ YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
 **One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean` run across every
-repository; add a name from `repos.toml` -- `mise run check press` -- to run against one, and
+repository; add a name from `repos.toml` -- `mise run check lattice` -- to run against one, and
 `--dry-run` to any of them to be told what it would do. `check` dispatches to each repository's
 own `verify`. `update` covers both halves of what has moved out there: tools within their pinned
 majors and dependencies within the ranges their manifests declare, ending by naming what waits
@@ -140,7 +140,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 | Project          | Rules                                                                                                  |
 | ---------------- | ------------------------------------------------------------------------------------------------------ |
-| `repos/press`    | the site, its workers, the CMS and the corpus -- [repos/press/spec/](repos/press/spec/)                |
+| `repos/lattice`  | the site, its workers, the CMS and the corpus -- [repos/lattice/spec/](repos/lattice/spec/)            |
 | `repos/still`    | a macOS application; no spec yet                                                                       |
 | `repos/governor` | a published crate, `canmi21:axum-governor` -- [repos/governor/spec/](repos/governor/spec/)             |
 | `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                |

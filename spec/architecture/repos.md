@@ -7,7 +7,7 @@ cloned into `repos/` and ignored here. Nothing is a submodule.
 
 ```
 workspace/            this repository -- rules, hooks, formatter configuration, the list
-  repos/press/        a repository of its own
+  repos/lattice/        a repository of its own
   repos/still/        another
   repos/governor/     and another, whose directory name is not its repository name
 ```
@@ -52,7 +52,7 @@ repository and the one project you want, nested. Two clones, not all of them.
 **What decides whether a tool can live only here: does it need the project's module graph?**
 A self-contained binary can. `oxlint`, `rustfmt`, `jj`, `node` and `rust` are declared once, in
 this repository's `mise.toml`, and every project resolves the same one -- a project states a tool
-of its own only where it needs one this list does not carry, the way press names `rclone` for a
+of its own only where it needs one this list does not carry, the way lattice names `rclone` for a
 bucket nothing else touches. A tool that resolves its own plugins through node cannot: `oxfmt`
 with `svelte: true` reaches `svelte/compiler` through the module graph of wherever it is
 installed, so the copy here formats markdown and JSON and fails on a `.svelte` file, and the
@@ -115,8 +115,8 @@ for by giving up jj at the level where jj does the most.
 `git add -A` runs:
 
 ```
-warning: adding embedded git repository: repos/press
-160000 31cfb453... 0	repos/press
+warning: adding embedded git repository: repos/lattice
+160000 31cfb453... 0	repos/lattice
 ```
 
 ## `repos.toml` lists them; `mise.toml` says it again
@@ -125,7 +125,7 @@ warning: adding embedded git repository: repos/press
 
 ```toml
 [repos]
-press = "canmi21:press"
+lattice = "canmi21:lattice"
 still = "canmi21:still"
 ```
 
@@ -154,7 +154,7 @@ told off about the others.
 
 ```
 mise run pull            every repository
-mise run pull press      that one
+mise run pull lattice      that one
 mise run check           each repository's own verify
 mise run update still    that one's tools
 ```
@@ -172,7 +172,7 @@ means "all of them" has to mean all of them, and the one holding the others is t
 forget.
 
 **Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after
-the verb, because mise appends it last: `mise run push press --dry-run`. `push` and `update` pass
+the verb, because mise appends it last: `mise run push lattice --dry-run`. `push` and `update` pass
 it to the tool underneath, which has a real one; `pull` skips the fetch and says the divergence
 it reports is as of the last one; `verify` prints the task paths it would run.
 
@@ -193,11 +193,11 @@ The task itself belongs to the project, which is what decides that a release dep
 
 **And so do its flags.** Every other verb here means one thing everywhere and owns `--dry-run`;
 publishing does not, because what a publish is dry about -- and which way round the flag runs --
-is the project's own question. press's mirror is dry by default and takes `--live`, which is the
+is the project's own question. lattice's mirror is dry by default and takes `--live`, which is the
 safe polarity for something that deletes. So `publish` collects whatever follows the name and
 hands it on unread, rather than recognising a fixed list.
 
-It used to forward `--dry-run` and nothing else, which meant `publish press --live` ran a dry
+It used to forward `--dry-run` and nothing else, which meant `publish lattice --live` ran a dry
 mirror, exited 0 and printed a full report of what it had not done. The documented way to publish
 could not publish, and said it had. Two lessons, both cheap: **a dispatcher that translates flags
 is claiming to know the project's vocabulary**, and **a dry run that looks exactly like a real one
@@ -263,7 +263,7 @@ checkout that has `hooks/`. A fixed path was the alternative and is wrong: the w
 one entrypoint serve every project.
 
 This is why the commit conventions reach a project without anything being installed in it: a
-commit written inside `repos/press` is held to them, and a contributor's own clone is not, which
+commit written inside `repos/lattice` is held to them, and a contributor's own clone is not, which
 is the right split.
 
 **The walk starts from `pwd` when jj answers nothing.** Outside any repository `jj workspace

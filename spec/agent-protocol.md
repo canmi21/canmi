@@ -80,7 +80,7 @@ reading it late is worth nothing.
 
 Step 3 exists because a change lands in one repository and the rules governing it may live in
 another. `jj workspace root` says which repository the working directory belongs to -- inside
-`repos/press` it answers about press, not about this one, which is the same fact the hook
+`repos/lattice` it answers about lattice, not about this one, which is the same fact the hook
 resolver depends on. A task begins with `jj new main` in whichever repository is being changed,
 so the rules read in step 2 are the ones `main` currently holds rather than the ones a previous
 task left the working copy on. See [architecture/repos.md](architecture/repos.md).
@@ -267,7 +267,7 @@ Four consequences:
   CPU and closed and reopened the user's window all day, and the user found it before the agent
   that started it did. Stop it when the work it was for is done, or end the reply by saying it is
   still up and how to stop it.
-- **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** press's
+- **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** lattice's
   `base down` kills its tmux session and leaves `workerd` behind: after an afternoon of restarting
   the dev servers and running the migration's snapshot harness, forty-nine of them were alive
   holding 3175 MB, the oldest for a day and seven hours, against the two the API and the CDN

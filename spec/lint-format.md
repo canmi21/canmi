@@ -38,7 +38,7 @@ correct.
 changed, so a formatter upgrade leaves every file outside that set at whatever the previous
 version produced -- or, for a file predating the pattern that now matches it, at no version's
 output at all. Measured when oxfmt reached 0.68: five of this repository's twelve Markdown files
-and forty-seven files in press. A bulk run over the whole tree is the only thing that closes
+and forty-seven files in lattice. A bulk run over the whole tree is the only thing that closes
 that, and it is owed once per upgrade rather than once per commit.
 
 ## Baseline

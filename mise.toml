@@ -8,7 +8,7 @@ monorepo_root = true
 # .gitignore says about them. A missing entry is a warning and nothing more, so a machine that
 # has cloned only one project still runs that project's tasks. See spec/architecture/repos.md.
 [monorepo]
-config_roots = ["repos/press", "repos/still", "repos/governor", "repos/seam", "repos/rdm"]
+config_roots = ["repos/lattice", "repos/still", "repos/governor", "repos/seam", "repos/rdm"]
 
 # jj's own repo config lives outside the working copy and cannot be version controlled.
 # JJ_CONFIG merges a colon-separated list left to right, so this keeps the user's personal
@@ -49,7 +49,7 @@ jj = "0.45"
 oxlint = "1"
 
 # The short forms. Each takes an optional name from repos.toml and means every repository
-# without one: `mise run pull` is all of them, `mise run pull press` is that one.
+# without one: `mise run pull` is all of them, `mise run pull lattice` is that one.
 [tasks.pull]
 description = "Fetch every repository, or one: `pull [name] [--dry-run]`"
 run = ".mise/tasks/repos pull"
@@ -71,7 +71,7 @@ description = "Remove build output and tool caches, never dependencies: `clean [
 run = ".mise/tasks/repos clean"
 
 # The flags belong to the project, not to this verb. Everywhere else here `--dry-run` means one
-# thing; what publishing is dry about is the project's own question, and press's mirror is dry by
+# thing; what publishing is dry about is the project's own question, and lattice's mirror is dry by
 # default and takes `--live`. So anything after the name is handed on unread. See
 # spec/architecture/repos.md.
 [tasks.publish]
@@ -83,7 +83,7 @@ run = ".mise/tasks/repos publish"
 # declare, and each names what waits across a boundary without crossing it.
 #
 # A shell function because mise appends a task's arguments to the last command it runs and to no
-# other, so an array here would hand `press --dry-run` to the second script and nothing to the
+# other, so an array here would hand `lattice --dry-run` to the second script and nothing to the
 # first. Defining one and calling it puts both behind the same argument list.
 #
 # `--major` is deliberately not accepted: crossing a range belongs to `repos deps --major`, the
@@ -91,8 +91,8 @@ run = ".mise/tasks/repos publish"
 #
 # A name narrows the dependency half and nothing else, which is the one place this verb does not
 # behave like its neighbours. The toolchain is the workspace's -- one set of pins every repository
-# reads by walking up -- so there is no per-repository version of it to upgrade, and `update press`
-# raising press's tools would be raising everyone's under a name that says otherwise. So the tools
+# reads by walking up -- so there is no per-repository version of it to upgrade, and `update lattice`
+# raising lattice's tools would be raising everyone's under a name that says otherwise. So the tools
 # half reports the same thing whatever is named. That reads exactly like an argument being ignored,
 # which is why the description says it out loud rather than leaving it to be discovered.
 [tasks.update]

@@ -81,8 +81,8 @@ modules makes the fallback a list, and a list has no knowable correct length -- 
 thought of is a crash in a reader's browser. One check gating everything has no such entry. It is
 affordable only because the import is dynamic and the payload is therefore reached by nobody who
 does not need it, which is a property of the bundler rather than of the polyfill; a static import
-of the same set is a tax on every reader. press measures both sides of that in
-[its own spec](../repos/press/spec/compat.md).
+of the same set is a tax on every reader. lattice measures both sides of that in
+[its own spec](../repos/lattice/spec/compat.md).
 
 ## Errors are types on the way up and one message at the edge
 
@@ -92,7 +92,7 @@ receives a string can only print it, and a caller that receives a panic cannot d
 
 The distinction that decides between an error and a panic is **whose mistake it is**. A person
 hand-writing frontmatter will mistype it, so unreadable frontmatter is an ordinary event and
-returns `Malformed` -- press's `apps/cms/src/i18n/segment.rs`. A panic is for the state that cannot
+returns `Malformed` -- lattice's `apps/cms/src/i18n/segment.rs`. A panic is for the state that cannot
 arise unless this code is already wrong. `cms i18n` used to abort on a stray colon in an article,
 with a message naming the fault and not the file, which left a binary search through the corpus
 as the way to find out which article it was.
@@ -144,7 +144,7 @@ Two members of the tree are there on exactly this basis:
   set of hues under one naming scheme, and deleting two of them leaves the next component wanting
   a green mark either inventing an `oklch` or borrowing a name that means something else.
 - The italic and bold cuts of Ioskeley Mono. Only the regular weight is reachable under the
-  current highlighting themes -- see press's `architecture/fonts.md` for the measurement -- and
+  current highlighting themes -- see lattice's `architecture/fonts.md` for the measurement -- and
   a monospace family cut down to one weight is a family that has to be re-cut the first time
   anything wants emphasis.
 
@@ -214,7 +214,7 @@ are punctuation, and a JSDoc block spends about two lines on them.
 
 Aim at one to three, and let five be the honest ceiling. Six is where a check fires, not where
 the writing should land, and the gap between the two is the point of it: prose aimed at three
-lands at three to five, and a limit with no slack reports that as a fault. Measured across press,
+lands at three to five, and a limit with no slack reports that as a fault. Measured across lattice,
 blocks over five body lines are 18.7% of the blocks and carry 49.8% of all comment prose -- half
 the weight in a fifth of the places, which is how a tree ends up annotated everywhere and legible
 nowhere. Six is also where the return falls off: five to six exempts another 3.5% of blocks, and
@@ -225,10 +225,10 @@ and rustfmt's `max_width` already give code. Neither formatter rewraps a comment
 held by hand.
 
 All three are counted rather than eyeballed. `mise run comments` measures every block in every
-language that carries one and is part of press's `verify`, which is where the percentages above
+language that carries one and is part of lattice's `verify`, which is where the percentages above
 come from. A file a tool generated is exempt: its comments are nobody's to fix, and a check
 naming a line that may not be edited teaches its reader to skip the rest of the output. The
-limits are this repository's; the check is press's, because press is the project that needed one
+limits are this repository's; the check is lattice's, because lattice is the project that needed one
 first and the only place it runs today.
 
 **What decides where a fact lives is who needs it, not how long it is.** If a second file would
@@ -253,7 +253,7 @@ Two markers, and the line between them is whether anything is **wrong**.
 **`FIXME` is a debt.** The code knowingly departs from a rule in `spec/`, or behaves in a way
 somebody would call a bug if they met it cold. It says which rule, why it stands, and what has to
 happen first. `cms tn` and `cms embed` carry one because their operations live inside the CLI
-adapter, which press's `architecture/cms.md` does not allow.
+adapter, which lattice's `architecture/cms.md` does not allow.
 
 **`TODO` is not a debt**, which is why it needs its own word rather than a softer `FIXME`. It
 marks something deliberately unfinished with no bad consequence while it waits -- a value

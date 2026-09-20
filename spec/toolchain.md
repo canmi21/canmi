@@ -313,7 +313,7 @@ was building on a node three patches from the one every local check ran against.
 
 So they are written rather than edited. `mise run update` rewrites each from the pin it mirrors,
 and `mise run verify` fails when something else has moved one. That is the same arrangement as
-the generated Rust URL mirror in press: a copy across a boundary a tool cannot see, plus a check
+the generated Rust URL mirror in lattice: a copy across a boundary a tool cannot see, plus a check
 that fails the moment it stops agreeing.
 
 ### Inside the major, a version number is a bug report
@@ -385,13 +385,13 @@ still belongs in `mise.toml`.
 
 ## The desktop app is inspected through an MCP server pinned to its plugin
 
-`.mcp.json` at the root declares one project-scoped server, `tauri`. It drives press's CMS
+`.mcp.json` at the root declares one project-scoped server, `tauri`. It drives lattice's CMS
 window -- screenshots, a DOM snapshot, computed styles, JavaScript in the webview, any Tauri
 command the app exposes -- and it is the only way to see a desktop window from here. Chrome
 DevTools MCP reaches a browser tab, and the CMS is not one.
 
 **Its version is not free.** The server speaks to `tauri-plugin-mcp-bridge`, a Rust dependency of
-`repos/press/apps/cms/src-tauri`, over a WebSocket the plugin opens on port 9223; the two ship
+`repos/lattice/apps/cms/src-tauri`, over a WebSocket the plugin opens on port 9223; the two ship
 from one repository and are released together. So the pin in `.mcp.json` is exact and equals the
 crate's version, and moving one without the other is how a protocol change becomes a connection
 that opens and then answers nothing. It is fetched with `npx` rather than added to this
@@ -399,7 +399,7 @@ repository's `package.json`, because a repository that holds configuration and n
 not carry a package it has no build to verify it against -- and the exact version is already the
 whole claim.
 
-It reaches an app that is already running and nothing else: press's `base up cms` first. A server
+It reaches an app that is already running and nothing else: lattice's `base up cms` first. A server
 that starts cleanly and finds no window is the ordinary shape of a mistake here, and it reads as
 the server being broken rather than as the app being absent.
 
@@ -422,10 +422,10 @@ no project declared one, and nothing here said when or by whom they moved -- whi
 as "bring this workspace current" and meant a third of it.
 
 **A name narrows the dependency half and nothing else, and that is the one place `update` does not
-behave like its neighbours.** `check press` runs press's verify and no other; `update press` moves
-press's dependencies and no other, and then reports on the toolchain exactly as it would have
+behave like its neighbours.** `check lattice` runs lattice's verify and no other; `update lattice` moves
+lattice's dependencies and no other, and then reports on the toolchain exactly as it would have
 without the name. There is no per-repository toolchain to narrow to -- `[tools]` here is the one
-set of pins every repository reads by walking up, so raising press's tools would be raising
+set of pins every repository reads by walking up, so raising lattice's tools would be raising
 everyone's under a name saying otherwise. The asymmetry is real and it reads like an ignored
 argument, which is why the task description says it rather than leaving it to be found.
 
@@ -468,7 +468,7 @@ finds a bound with no reason attached, and the version it excludes was fixed mon
 A reverted lockfile makes the same repair and forgets it on purpose. The next `mise run update`
 tries the range again from the top, and if the upstream has been fixed in the meantime the
 repository simply moves. Nobody has to remember to lift anything, which is the part a manifest pin
-gets wrong. This is press's Cargo rule -- a lockfile pin at the version that worked, no manifest
+gets wrong. This is lattice's Cargo rule -- a lockfile pin at the version that worked, no manifest
 constraint and no `[patch]` -- stated for every ecosystem here rather than for one.
 
 What carries across the gap is the user's own memory of what broke, and the retry is theirs: they
@@ -495,14 +495,14 @@ line it draws is what makes it safe to run without thinking first:
 
 **What gets removed is decided twice, by a name and by version control.** A path has to match the
 list of things a build tool writes _and_ be ignored by the repository _and_ have nothing tracked
-underneath it. Neither half is enough on its own: press ignores `build/` and tracks five records
+underneath it. Neither half is enough on its own: lattice ignores `build/` and tracks five records
 under `data/build/` that a site-only CI job cannot regenerate, so a name alone would delete them --
 while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
 database.
 
 **The sweep stops at every repository boundary that is not its own.** The workspace holds five
 repositories under `repos/`, so a walk that went through would make `clean workspace` mean `clean`;
-press lists `repos/*` among its pnpm workspace packages, so the same is true one level down. A
+lattice lists `repos/*` among its pnpm workspace packages, so the same is true one level down. A
 directory carrying a `.git` or a `.jj` is somebody else's to clean.
 
 The list is toolchain-generic rather than per-project, because a cache belongs to the tool that

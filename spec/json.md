@@ -65,7 +65,7 @@ refuse rather than misread.
 This is why a reader validates the shape it needs instead of the shape it was handed. A parser
 that rejects unknown keys turns every future addition into an outage; one that strips them lets a
 producer drift silently. Neither catches a producer writing a field the type dropped -- see
-[architecture/artifacts.md](../repos/press/spec/architecture/artifacts.md) in press for the
+[architecture/artifacts.md](../repos/lattice/spec/architecture/artifacts.md) in lattice for the
 worked example, where a stale writer cost nine published objects and no consumer could have seen
 it.
 
