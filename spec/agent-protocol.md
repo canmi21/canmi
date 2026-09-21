@@ -41,13 +41,26 @@ lose sync.
 `mise run refs` checks that the links resolve -- markdown links in docs, and `spec/*.md`
 citations in code. It is part of `mise run verify`, because a reference that points nowhere
 fails silently: nothing breaks, the reader just follows a dead path. It deliberately ignores
-path-shaped strings in prose, since the rules use invented names as examples on purpose.
+path-shaped strings in prose, since the rules use invented names as examples on purpose. In code
+it ignores nothing, which is the rule below.
 
 Spec exists to be the place an argument gets settled. When code, an agent, or a later opinion
 disagrees about how something should work, this is the reference that decides it -- which only
 works if it carries the _why_. A rule with no recorded reason loses every argument against a
 plausible-sounding alternative, because nobody can tell whether it was considered or just
 inherited.
+
+## In code a spec path is a citation, so an illustration is spelled to fail
+
+The exemption above is prose's alone. In code -- and in the extensionless scripts lying beside
+it -- a path-shaped `spec/` string is a citation wherever it sits: a comment, a docstring, a
+string literal, a message a program prints. Narrowing the check to comment lines was considered
+and does not hold: three live citations sit outside them, two in messages a check prints and one
+in a test asserting an error text, and a dead path shown to a reader is dead wherever it sat.
+
+So **spell a real file, and spell an illustration so it cannot resolve** -- `spec/<f>.md`, or a
+glob like `spec/**/*.md`. Only a plausible-looking invented name trips this, and in the whole tree
+exactly one file has ever needed the escape, which is what the rule costs.
 
 ## A citation may name a section, and then the heading is an interface
 

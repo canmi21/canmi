@@ -66,6 +66,12 @@ and usually absent**: it says what changed, in three lines or so, and never why.
 goes to `spec/` or beside the code, where somebody is looking for it -- a log carrying it twice
 is the mistake this rule exists to stop. See [spec/commits.md](spec/commits.md).
 
+**Comments** -- a comment points rather than argues. The settled argument lives in `spec/` and the
+comment names the file; **a decision nobody has made yet goes to an issue**, linked in one line.
+Once it is made it becomes a `spec/` rule plus the change that implements it, never a comment
+carrying the debate. See [spec/code.md](spec/code.md), "spec/ holds what is settled; an issue holds
+what is not".
+
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
 untranslated. Everything written into a file is English only: code, comments, docs, commit
 messages. The one exception is a value that _is_ somebody else's name, which is recorded as its
@@ -90,7 +96,8 @@ language. See [spec/lint-format.md](spec/lint-format.md).
 tool go through that tool's shell instead, which is usually not fish, so the two are written
 differently on purpose. **An agent deletes with `trash`, never with `rm`** -- files and
 directories alike, because `rm` is the command the user's CLI stops and asks about, and an
-unattended ask is a hung turn.
+unattended ask is a hung turn. `trash old.log`, `trash dist/`, `trash a b c` -- no recursive flag
+exists or is needed. There is no deletion small enough for `rm`.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git

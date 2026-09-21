@@ -220,6 +220,17 @@ the weight in a fifth of the places, which is how a tree ends up annotated every
 nowhere. Six is also where the return falls off: five to six exempts another 3.5% of blocks, and
 every line after that buys under three.
 
+**A configuration file aims shorter still, at one or two lines.** The six holds there as it holds
+everywhere, but a config file has no surrounding code to carry the context, and that absence is
+exactly what tempts a comment there into explaining the whole system. The thing a reader at that
+line cannot get wrong is almost always one sentence.
+
+The pair worth keeping in mind is the one where both are right. lattice's
+`apps/site/site.config.yaml` cut its IndexNow block from seven body lines to three, because every
+sentence it lost was already in lattice's `indexing.md` word for word. `apps/cdn/wrangler.jsonc`
+stopped at five, because one of its lines carries a measured fact nothing else records -- dev
+serving `max-age=0` where production serves a year. **Length follows load, not file type.**
+
 Every comment line stays inside **100 columns** with tabs at two, the width oxfmt's `printWidth`
 and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so this one is
 held by hand.
@@ -231,6 +242,11 @@ naming a line that may not be edited teaches its reader to skip the rest of the 
 limits are this repository's; the check is lattice's, because lattice is the project that needed one
 first and the only place it runs today.
 
+**A link is not length.** Only the plain text counts against either limit: a URL may sit in a block
+without spending a line of its budget, and a long one does not make the block too wide. Prose is
+read and therefore rationed; an address is followed once and never reread, and a rule that charged
+for it would push a comment into paraphrasing the page rather than pointing at it.
+
 **What decides where a fact lives is who needs it, not how long it is.** If a second file would
 have to know it, it is a rule and belongs in `spec/`. If only this file does, it stays here
 however long it runs -- moving it sends the reader out for something nothing else uses. Length is
@@ -240,6 +256,22 @@ the symptom that makes the question worth asking, never the answer to it.
 nine" survives that file being rewritten; "the index is one because ..." does not, and nothing
 links the two, so nobody finds out. The exception is a value this file's own code uses: a
 constant states its own number here and points at `spec/` for why that number.
+
+### `spec/` holds what is settled; an issue holds what is not
+
+The rule above sends the full argument to `spec/` and leaves the comment naming the file. This is
+that rule in the other state: **where a comment would otherwise have to argue a decision nobody has
+made, it links to an issue instead.** An issue is where an open question lives, and the link is the
+whole comment -- the argument is had there, by the people having it, and not in a file that merely
+happens to be where somebody noticed.
+
+The link is a waypoint, not an end state. Once the decision is made it stops being an issue and
+becomes a rule in `spec/` plus the change that implements it. What it never becomes is a comment
+carrying the argument, which is how a file ends up holding a debate that was settled elsewhere.
+
+Spelling follows what is here already: a bare URL after "See" in a comment, as
+`apps/site/src/lib/documents/llms.ts` has it, and a markdown link labelled `owner/repo#number` in a
+document, as lattice's `architecture/css/extraction.md` cites `facebook/stylex#1825`.
 
 ### `FIXME` is a problem; `TODO` is a plan
 
