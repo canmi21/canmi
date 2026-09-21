@@ -3,7 +3,8 @@
 """Validate how this repository refers to its own files. Three checks, all objective:
 
 1. A markdown link in a doc points at a file that exists.
-2. A `spec/**/*.md` cited from code, or from the extensionless text beside it, exists.
+2. A `spec/**/*.md`, or a project's `repos/<name>/**/*.md`, cited from code or the text beside
+   it, exists -- unless the project is not cloned, which is a note and not a failure.
 3. A section name quoted beside such a citation, in code or in another doc, exists in it.
 
 All three break silently on rename, and CLAUDE.md is the one file a zero-context agent reads,
@@ -41,12 +42,17 @@ SKIP_FILES = {"pnpm-lock.yaml"}
 
 MD_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 DOC_PATH = r"[a-z0-9-]+(?:/[a-z0-9-]+)*\.md"
-SPEC_REF = re.compile(rf"spec/{DOC_PATH}")
+# Code cites this repository's rules and, one directory down, a project's; both resolve at the
+# root. The project segment is spelled apart from the path so that `repos/<name>/**/*.md` stays
+# unmatched beside `spec/<f>.md` -- spec/agent-protocol.md, "In code a spec path is a citation,
+# so an illustration is spelled to fail".
+CITED = rf"(?:repos/[a-z0-9-]+/{DOC_PATH}|spec/{DOC_PATH})"
+CODE_REF = re.compile(CITED)
 # A citation may name a section: `spec/<f>.md, "Name"` or `spec/<f>.md ("Name")`. The quote need
 # not sit against it, but it may not cross a full stop or a semicolon, or a sentence quoting
 # something else is read as this one's anchor.
 ANCHOR = r'[^".;\n]{0,60}?"(?P<anchor>[^"]{6,160})"'
-CODE_ANCHOR = re.compile(rf"(?P<target>spec/{DOC_PATH}){ANCHOR}")
+CODE_ANCHOR = re.compile(rf"(?P<target>{CITED}){ANCHOR}")
 # A doc cites by markdown link or by bare path, and either may be relative to the citing file.
 DOC_ANCHOR = re.compile(rf"(?:\[[^\]]*\]\()?(?P<target>(?:\.\./)*{DOC_PATH})\)?{ANCHOR}")
 # An anchor may wrap, so continuation lines fold away before matching. `#` is here for
@@ -111,8 +117,8 @@ def citing_files() -> list[pathlib.Path]:
 
 	A suffix allowlist is blind to precisely the files a checker lives among, which is how nine
 	citations of a spec file that never existed survived in lattice's. In any of these a
-	path-shaped `spec/` string is a citation wherever it sits -- comment, docstring or printed
-	message alike, since a dead citation shown to whoever fails a check is still dead.
+	path-shaped `spec/` or `repos/` string is a citation wherever it sits -- comment, docstring
+	or printed message alike, since a dead citation shown to whoever fails a check is still dead.
 	"""
 	return [path for path in tracked() if path.suffix in CODE_SUFFIXES or extensionless_text(path)]
 
@@ -132,9 +138,10 @@ def resolve(base: pathlib.Path, cited: str) -> pathlib.Path | None:
 
 	Two shapes are written here. A doc names a neighbour -- `toolchain.md` from inside `spec/`,
 	`spec/agent-protocol.md` from CLAUDE.md at the root -- which resolves against the citing
-	file's own directory. Code names `spec/<f>.md` from wherever it sits, and that means the
-	workspace root: this repository is the top of the rule hierarchy, with nothing above to
-	walk up into. Trying both in turn reads each shape the way its author meant it.
+	file's own directory. Code names `spec/<f>.md`, or a project's `repos/<name>/<f>.md`, from
+	wherever it sits, and that means the workspace root: this repository is the top of the rule
+	hierarchy, with nothing above to walk up into. Trying both in turn reads each shape the way
+	its author meant it.
 	"""
 	for candidate in (base / cited, ROOT / cited):
 		if candidate.exists():
@@ -173,11 +180,11 @@ def doc_links() -> tuple[list[str], list[str]]:
 
 
 def pair_graph() -> dict[str, list[str]]:
-	"""spec file -> the code files that cite it."""
+	"""cited doc -> the code files that cite it."""
 	graph: dict[str, list[str]] = {}
 	for path in citing_files():
 		rel = str(path.relative_to(ROOT))
-		for spec in sorted(set(SPEC_REF.findall(read(path)))):
+		for spec in sorted(set(CODE_REF.findall(read(path)))):
 			graph.setdefault(spec, []).append(rel)
 	return graph
 
@@ -238,12 +245,14 @@ def main() -> int:
 	dead, absent = doc_links()
 	stale, anchors = dead_anchors()
 
+	gone = {spec: files for spec, files in sorted(graph.items()) if not (ROOT / spec).is_file()}
+	absent += [spec for spec in gone if uncloned(ROOT / spec)]
+
 	problems = [f"dead link: {d}" for d in dead]
 	problems += [
-		f"missing spec cited by {cited}: {spec}"
-		for spec, cited in sorted(graph.items())
-		if not (ROOT / spec).is_file()
-		for cited in [", ".join(cited)]
+		f"missing spec cited by {', '.join(files)}: {spec}"
+		for spec, files in gone.items()
+		if not uncloned(ROOT / spec)
 	]
 	problems += [f"missing section: {s}" for s in stale]
 
