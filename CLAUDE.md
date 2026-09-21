@@ -106,10 +106,11 @@ do not offer it. mise owns every tool version. Indentation is tabs at width 2 in
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
-**One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean` run across every
-repository; add a name from `repos.toml` -- `mise run check lattice` -- to run against one, and
-`--dry-run` to any of them to be told what it would do. `check` dispatches to each repository's
-own `verify`. `update` covers both halves of what has moved out there: tools within their pinned
+**One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean|audit` run across
+every repository; add a name from `repos.toml` -- `mise run check lattice` -- to run against one,
+and `--dry-run` to any of them to be told what it would do. `check` dispatches to each
+repository's own `verify`. `audit` is the same run with every warning counted as a failure, which
+is not what routine work runs; a linter's warning tier is advice until somebody asks. `update` covers both halves of what has moved out there: tools within their pinned
 majors and dependencies within the ranges their manifests declare, ending by naming what waits
 across a boundary without crossing it, which is the only place that gets reported. A name narrows
 its dependency half alone -- the toolchain is the workspace's, so there is no per-repository one

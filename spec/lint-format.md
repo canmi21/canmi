@@ -47,6 +47,46 @@ Start from each tool's own default configuration. Deviate only to resolve a real
 a real defect, and record the reason in a comment next to the setting. A config file in this
 repo should read as a short list of justified exceptions, not a restatement of the defaults.
 
+## Strict mode
+
+**The routine levels are the ones in the config files. `mise run audit` counts every warning as
+a failure.** Both run the same tools over the same files; the only difference is whether a
+warning ends in a non-zero exit. Nothing routine changes -- `mise run check` behaves exactly as
+it did before the mode existed, which is the point of having two names rather than one stricter
+gate.
+
+**When an audit is called for, it is strict mode that runs.** `mise run audit`, or `mise run
+audit <name>` for one repository. It is not part of an ordinary change: the warning tier exists
+to say "look at this eventually", and a gate that refuses every warning leaves nowhere for that
+to be said.
+
+**The mode is an override applied at invocation, never a second configuration.**
+`.oxlintrc.json` and each `[workspace.lints]` table define the routine levels and are read by
+every repository below the workspace; a strict copy of either would be two sources of truth for
+one question, and they would drift. So `audit` is `check` with `AUDIT` set in the environment,
+and each task that has a warning tier appends its own tool's flag:
+
+| Gate         | Tool         | Strict override      |
+| ------------ | ------------ | -------------------- |
+| `lint`       | oxlint       | `--deny-warnings`    |
+| `lint-rust`  | clippy       | `-- -D warnings`     |
+| `check-site` | svelte-check | `--fail-on-warnings` |
+
+`-D warnings` on clippy's command line outranks the lint table, so `complexity = "warn"` fails
+under audit without `Cargo.toml` being touched. It also reaches what that table never named --
+rustc's own `unused-imports`, `unused-variables` and `dead-code`, and the clippy `style` group
+this file says is off and no manifest actually turns off.
+
+**The mode covers every gate, not only the three that have a warning tier.** `audit` runs the
+same dispatch, the same repository list and the same tasks in the same order as `check`; a gate
+with no warning tier -- a test suite, a type check -- behaves identically. A strict mode that
+quietly ran a subset would be the same defect as a gate that passes while blind, which is what
+it exists to find.
+
+Measured against lattice when the mode landed: `check` was green while carrying 53 oxlint
+warnings, 162 clippy warnings and one svelte-check warning -- `a11y_media_has_caption` at
+`apps/site/src/lib/components/video.svelte:379`, which had stood through a green gate.
+
 ## Adding a linter or formatter
 
 Whenever a new tool of either kind is added, do this before committing it:

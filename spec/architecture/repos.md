@@ -149,13 +149,14 @@ told off about the others.
 
 ## One verb, optionally one name
 
-`pull`, `push`, `fmt`, `check` and `update` run across every repository, and take a name from
-`repos.toml` to run against one:
+`pull`, `push`, `fmt`, `check`, `update` and `audit` run across every repository, and take a name
+from `repos.toml` to run against one:
 
 ```
 mise run pull            every repository
 mise run pull lattice      that one
 mise run check           each repository's own verify
+mise run audit           the same, with warnings failing
 mise run update still    that one's tools
 ```
 

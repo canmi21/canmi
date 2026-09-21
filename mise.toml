@@ -66,6 +66,12 @@ run = ".mise/tasks/repos fmt"
 description = "Run every repository's own verify, or one: `check [name] [--dry-run]`"
 run = ".mise/tasks/repos verify"
 
+# `check` with every warning counted. AUDIT reaches each task through the environment, and the
+# ones with a warning tier read it there. See spec/lint-format.md.
+[tasks.audit]
+description = "Run every repository's verify with warnings failing, or one: `audit [name] [--dry-run]`"
+run = "AUDIT=1 .mise/tasks/repos verify"
+
 [tasks.clean]
 description = "Remove build output and tool caches, never dependencies: `clean [name] [--dry-run]`"
 run = ".mise/tasks/repos clean"
