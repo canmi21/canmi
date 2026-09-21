@@ -77,6 +77,35 @@ becoming everyone's. It resolves relative to where an agent starts, so it reache
 when the agent starts in that project and not otherwise, which is the right shape for a tool one
 project owns.
 
+### A rule that is code inherits the same way, as a module the projects import
+
+The three reference rules -- a markdown link resolves, a cited spec file exists, a section quoted
+beside a citation exists -- are one implementation in
+[`.mise/tasks/refs_check.py`](../../.mise/tasks/refs_check.py), which lattice's
+`.mise/tasks/refs` imports. Both entry points stay: `mise run refs` here and
+`mise run //repos/lattice:refs` there, each printing its own count. Lattice keeps what is its
+own -- the `libs/urls` single-sourcing rule, its skip sets, and the upward walk that resolves a
+citation from inside a project.
+
+**A file in `.mise/tasks/` is a library exactly when it is not executable.** mise offers only
+executable files as tasks, so a module sitting beside them adds no third gate and needs no
+opt-out. `hooks/` already has this shape with `jj_command.py`, and so does lattice's own task
+directory.
+
+**The importer resolves a fixed depth and fails loudly by name, rather than walking up.** A walk
+from a project reaches the user's home directory and beyond, and a `refs_check.py` found up there
+would be silently the wrong source. Two directories up is where this file says the workspace is;
+if it is not there the arrangement is wrong, and the gate says so and exits rather than checking
+less.
+
+**Two copies of one rule diverge, and neither tree holds the input that would show it.** The two
+checkers had drifted in two places before they were merged: one collapsed whitespace before
+stripping punctuation and the other after, and one matched a skipped file by its path while the
+other matched its basename. Both were measured to change nothing today -- each tree holds exactly
+one lockfile, at its root, and lattice's whole anchor list is byte-identical either way. They were
+invisible because the input that separates them had never been written, which is the argument for
+one implementation rather than two that look alike.
+
 ## `.gitattributes` is the exception: it does not inherit
 
 Everything above inherits downward. `.gitattributes` does not, and that is deliberate rather

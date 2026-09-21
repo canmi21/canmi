@@ -26,6 +26,17 @@ api-client/
 
 No uppercase, no spaces, no underscores by default.
 
+### Nothing checks the case, and the failure falls on the other machine
+
+The rule above is enforced by nobody. `mise run refs` resolves a cited path with an existence
+test, and the file system here is case-insensitive, so a citation of `spec/VENDOR.md` finds
+`spec/vendor.md` and passes; checking the case would mean listing the directory rather than
+asking whether something is there.
+
+The failure therefore runs the unusual way round. A miscased name does not fail here and pass
+elsewhere; it passes here and stops resolving on a case-sensitive file system. The only person
+who will ever notice is the one writing the name.
+
 ## Language exceptions
 
 When a language has an established convention of its own, that convention wins for source
