@@ -180,6 +180,36 @@ what someone thought to test, and the type checker only sees what it is pointed 
 them is the cheap part; the expensive part is discovering months later which commit broke
 something that nothing was watching.
 
+## A rule is maintainable only when breaking it fails loudly
+
+Correctness first, and over any distance that stops being a matter of care. Four things have to
+hold of a rule, and one missing is enough for it to decay without anybody noticing.
+
+**Violating it makes something fail.** A rule nothing enforces is a sentence. The rule that a
+configuration file's comment stays short lived in a conversation only, was then cited to a worker
+as though it were on the page, and two comments were cut on that authority -- with nothing in the
+tree able to say whether the citation was real.
+
+**The failure has been demonstrated.** A gate never seen to fail is a name rather than a gate.
+`mise run audit` counts every warning -- [lint-format.md](lint-format.md), "Strict mode" -- and was
+driven red on all three tools before it was believed.
+
+**The check can see everywhere the rule applies, including its own home.** A checker told which
+directories to look in is blind to the next one. The reference check read only files with a known
+suffix, so nine citations of a `spec/architecture.md` that does not exist survived in `.gitignore`,
+`.gitattributes` and the task scripts. The comment check was handed `apps/` and `libs/`, so
+`.mise/tasks/`, which held the longest blocks in the repository, was never measured.
+
+**It does not ask a person to hold a global fact.** A threshold resting on a count nobody
+recomputes is a memory. `check-css-budget` skipped any node file it could not parse, so renaming
+one export dropped a third of the article route's CSS out of the measurement and the gate stayed
+green. `shape` compared the fingerprint before the version and returned 0 on a match, so a constant
+raised by hand was reported against the record written for the old one.
+
+Of every failure that session found, all but one was silent; the exception failed the build and
+named the article. **Silence is the default failure mode**, and these four are what turns a silent
+failure into a loud one.
+
 ## Comments
 
 A comment explains a **why** that the code cannot state: the alternative that was rejected, the
@@ -272,6 +302,29 @@ carrying the argument, which is how a file ends up holding a debate that was set
 Spelling follows what is here already: a bare URL after "See" in a comment, as
 `apps/site/src/lib/documents/llms.ts` has it, and a markdown link labeled `owner/repo#number` in a
 document, as lattice's `architecture/css/extraction.md` cites `facebook/stylex#1825`.
+
+### A comment that moves takes its coordinates with it
+
+"Above", "below", "here", "this file", "the rule before it": a positional word is true of where the
+comment was, and a comment that moves keeps it. On arrival it stays grammatical and stops being
+true, which is the worst of the two pairs available. **Re-read every positional word against the new
+position, and name the thing rather than where it used to sit.**
+
+Nothing catches these. The reference check validates citations into `spec/` and the section names
+quoted beside them, and "the rule above" is neither -- it is a pointer, not a citation. A rule
+lifted out of lattice's `apps/site/src/styles/utilities.css` into a component's `<style>` block
+carried a comment ending "The rule above would then only answer to hover over the text", and the
+rule it meant stayed behind. It was caught by eye, in a diff, because somebody happened to read
+that paragraph.
+
+The audit is a grep over five words; the failure is not cheap at all. A reader who follows a
+dangling "above" into an empty `<style>` block concludes the comment is stale and stops trusting
+the rest of it.
+
+**A phrase describing the rendered page is not a coordinate.** In that same comment "the box's
+bottom", "2.5px below the anchor's", "in the same sentence" and "measured on the error page" all
+travelled intact, and one of them reads better after the move than before. The rule is about
+positions in a file, never about the word "below".
 
 ### `FIXME` is a problem; `TODO` is a plan
 

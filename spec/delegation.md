@@ -235,6 +235,35 @@ that afternoon ended by moving the shape into a package both import, so the eigh
 would have been a compile error. A rule that asks people to be careful is what gets written when
 the rule that makes carelessness fail loudly is not yet available.
 
+## File ownership partitions files, and that is all it partitions
+
+The section above is the whole of the concurrency control for editing. Five things sit outside
+editing, and each of them was found by being broken.
+
+**Measurement intersects writing even where the file sets are disjoint.** A worker measuring a
+build while other workers edit its sources measures a tree that never existed. The first CSS budget
+figures of that session were already stale by the time they were read. A measurement is scheduled
+between waves, never beside one.
+
+**jj snapshots the whole tree, so every jj write waits for the writing to stop.** A `jj commit`
+taken while a worker was mid-write produced `Concurrent checkout` and a divergent change id. The
+recovery is to confirm the orphan's content is live in the working copy, then `jj abandon` it.
+
+**A constraint adopted for concurrency is re-evaluated when the concurrency ends.** A rule that
+exists because two workers were in flight outlives its reason unless somebody says so out loud.
+
+**The conversation's own checking method is proven to fail before it is trusted.**
+`mise run verify 2>&1 | tail` returns `tail`'s status, so every "exit 0" read that way meant
+nothing. A worker comparing comment block counts read `jj file show -r @`, which returns the
+working copy because jj auto-snapshots it, compared new against new, and reported a perfect green
+from a comparison that had not happened. This is [code.md](code.md), "A rule is maintainable only
+when breaking it fails loudly", pointed at the checker instead of at the code.
+
+**A project's task and the workspace's can share a name, and the wrong one passes.** `mise run
+refs` from the workspace runs the workspace's gate, which never reads `repos/lattice/spec`. A
+worker verified a lattice edit against it twice and reported a green count line that had not looked
+at the file it changed. **The path goes in the brief**: `mise run //repos/lattice:refs`.
+
 ## Testing is the user's; checking is the conversation's
 
 They are different things and the rule differs for each.
