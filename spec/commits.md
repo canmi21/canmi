@@ -60,6 +60,23 @@ What it is not:
 Reasoning that is worth keeping belongs in `spec/` or beside the code, where the next reader is
 looking when they need it. The log answers what changed.
 
+**A body is optional, and the default is not to have one.** A subject line that already says
+what changed needs nothing after it. Where a trailer is owed, the body is that trailer and
+nothing else; where no trailer is owed either, the message is one line. An empty body is not a
+message somebody neglected to finish.
+
+**When there is a body, three lines. Five is the ceiling, not the target.** Longer than that and
+it has stopped saying what changed and started explaining why, which is the failure the list
+above describes and which no length limit alone prevents -- but a body that will not fit in
+three lines is the reliable sign of it.
+
+The rule is here because it was broken at scale. Seven commits written in one afternoon carried
+bodies of fifteen to twenty-five lines each, every one of them recounting the alternatives
+weighed, the measurements taken and the reasoning behind the choice -- and every one of them
+duplicating a `spec/` section or a code comment written in the same change, which is where a
+reader goes looking for exactly that. The log was left carrying a second copy of the argument,
+in the one place this file says it must not be.
+
 ## Language
 
 English only, no exceptions. See [voice.md](voice.md).

@@ -61,8 +61,10 @@ user -- they are faster than any verification loop -- so a turn ends with someth
 with a report. See [spec/delegation.md](spec/delegation.md).
 
 **Commits** -- Conventional Commits. Omit the scope in most cases. Subject starts lowercase,
-imperative mood, 96 characters max. Plain text throughout, never Markdown; a body says what
-changed and nothing else. See [spec/commits.md](spec/commits.md).
+imperative mood, 96 characters max. Plain text throughout, never Markdown. **A body is optional
+and usually absent**: it says what changed, in three lines or so, and never why. The reasoning
+goes to `spec/` or beside the code, where somebody is looking for it -- a log carrying it twice
+is the mistake this rule exists to stop. See [spec/commits.md](spec/commits.md).
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
 untranslated. Everything written into a file is English only: code, comments, docs, commit
