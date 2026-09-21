@@ -60,7 +60,7 @@ merely different, everywhere, silently.
 something already parsed elsewhere, it is the same library or it is a defect waiting for the
 first input that separates them.
 
-This licence is bounded by destination exactly as the table above is. Nothing here permits a
+This license is bounded by destination exactly as the table above is. Nothing here permits a
 library into a Worker or a browser bundle to save writing twenty lines; there, the payload is the
 constraint and the trade runs the other way.
 
@@ -150,7 +150,7 @@ Two members of the tree are there on exactly this basis:
 
 **What makes this safe rather than an excuse is the cost.** Both are paid in storage nobody reads
 and bytes nobody downloads: a `@font-face` is a declaration, not a request, so an unreachable cut
-costs a reader nothing at all. The same argument does not licence an unused dependency, an unused
+costs a reader nothing at all. The same argument does not license an unused dependency, an unused
 export or an unreachable branch, each of which is paid on every build, every audit and every read.
 
 So the test has two halves, and both must hold: **would the set be incoherent without it, and is
@@ -270,7 +270,7 @@ becomes a rule in `spec/` plus the change that implements it. What it never beco
 carrying the argument, which is how a file ends up holding a debate that was settled elsewhere.
 
 Spelling follows what is here already: a bare URL after "See" in a comment, as
-`apps/site/src/lib/documents/llms.ts` has it, and a markdown link labelled `owner/repo#number` in a
+`apps/site/src/lib/documents/llms.ts` has it, and a markdown link labeled `owner/repo#number` in a
 document, as lattice's `architecture/css/extraction.md` cites `facebook/stylex#1825`.
 
 ### `FIXME` is a problem; `TODO` is a plan

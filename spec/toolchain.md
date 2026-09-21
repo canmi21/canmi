@@ -97,7 +97,7 @@ Only genuinely secret values go in. Facts like `RCLONE_CONFIG_R2_TYPE = "s3"` st
 -- an analytics token, a Sentry DSN, a publishable API key -- is readable from devtools by
 anyone who loads the page. Storing it encrypted does not hide it; it only hides from the
 reader of this repository that it is already public. Those go in `libs/urls` or plain config,
-labelled for what they are.
+labeled for what they are.
 
 The same credential can be secret elsewhere. The API worker's Sentry DSN is a different
 project that never reaches a browser, so it stays a wrangler secret. What decides is exposure,
@@ -219,7 +219,7 @@ can see, so tmux is installed by Homebrew and named nowhere in `[tools]`.
 `[tools]` names a major -- `node = "26"`, `pnpm = "11"` -- rather than `latest`. Inside that
 number `mise run tools up` moves freely; outside it nothing moves until the number is edited, so
 crossing a major arrives as a diff with a commit message rather than as a surprise on a machine.
-A major is where a lockfile format or a runtime behaviour changes, which is exactly the class of
+A major is where a lockfile format or a runtime behavior changes, which is exactly the class of
 change worth stopping for.
 
 Below 1.0 the minor is the breaking release, so jj is pinned at `0.45` rather than `0`. The
@@ -335,7 +335,7 @@ version the file itself pins -- comparing the file against itself, a check that 
 26 is not an LTS -- that is the intended state and not something to correct. Cloudflare serves
 both lines, so the safety an LTS buys is availability this does not need, and what it costs is
 running a runtime a year behind the one being written against. Nothing here is a commercial
-deployment with a support contract to honour. `nodejs.org`'s index is read newest-first for the
+deployment with a support contract to honor. `nodejs.org`'s index is read newest-first for the
 same reason, so "stable" for node means released, not blessed.
 
 ### The files an outside build reads are generated, not maintained
@@ -368,7 +368,7 @@ and the next reader cannot tell whether it is still needed.
 
 What this accepts is that a patch release can change under a build nobody touched. That is
 survivable because `verify` runs: the change surfaces as a failing check rather than as
-behaviour nobody notices. Freezing an exact version defers the same discovery indefinitely
+behavior nobody notices. Freezing an exact version defers the same discovery indefinitely
 instead, which is the worse side of the same trade -- and it is why the boundary sits at the
 major, where the change is large enough to be worth stopping for, rather than at every release.
 
@@ -592,5 +592,5 @@ experiences. The rule was already written; it just was not read.
 
 Help is clap's own, styled with `anstyle` to cargo's palette -- green headings, cyan literals.
 Not clap's defaults: this stands next to `cargo` in the same terminal, and one constant saves its
-reader a second colour language. The hand-written usage text it replaced had drifted anyway, with
+reader a second color language. The hand-written usage text it replaced had drifted anyway, with
 one command's description printed under another's name.

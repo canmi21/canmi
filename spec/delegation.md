@@ -134,7 +134,7 @@ seen the file -- which is the honest description of some debugging.
 
 ## Research has the same brief as a read, pointed outward
 
-A question about an upstream -- a platform limit, a runtime's behaviour, what a library actually
+A question about an upstream -- a platform limit, a runtime's behavior, what a library actually
 does -- is delegated on the same terms as reading this tree, with three additions.
 
 **Name the sources and their order.** Primary first: the vendor's own documentation, its blog,
@@ -262,7 +262,7 @@ not anything that needs the application up.
 
 **The browser and the desktop window open only when the acceptance criterion is a number.**
 Geometry, timing, drift, a count -- things clicking cannot produce. The rail's indicator was
-209px from its own label at the instant it appeared and travelled 125px up the viewport
+209px from its own label at the instant it appeared and traveled 125px up the viewport
 afterwards, and no amount of looking would have turned that into a fix; the measurement was the
 fix. Everything else goes to the user. This narrows [agent-protocol.md](agent-protocol.md),
 "Checking your own work", rather than contradicting it: that section asks whether reading the

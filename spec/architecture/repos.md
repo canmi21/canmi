@@ -235,7 +235,7 @@ citation by name reads correctly either way. Code citations are different: `refs
 cited `spec/*.md` by walking up, so it finds this repository's rules when nested and reports them
 dead when the project stands alone, which is the truth in both cases.
 
-## Cargo does not honour `.gitignore`
+## Cargo does not honor `.gitignore`
 
 git and jj stop at `repos/*/`. Cargo does not -- it walks the filesystem looking for a workspace:
 

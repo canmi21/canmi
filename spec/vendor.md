@@ -27,7 +27,7 @@ upstream commits as a fixture is not taken; build output is ignored by name wher
 ## How it is treated
 
 **The source is not edited.** What a project needs from a vendor it reaches through one package
-of its own, named for what it does, and what it changes about the vendor's behaviour it changes
+of its own, named for what it does, and what it changes about the vendor's behavior it changes
 there. This is the binding edge that [naming.md](naming.md) describes, applied to a copy: if the
 upstream were replaced, one package changes. A vendor's own name appears in the vendor directory,
 in its `package.json` where its own imports need it, and in that one package, and nowhere else.

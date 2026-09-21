@@ -144,7 +144,7 @@ Do not ask when:
 
 - `spec/` already answers it. Follow the spec.
 - The user's described approach implies the answer. An implication carried in the user's own
-  wording counts as their decision -- honour it rather than re-asking.
+  wording counts as their decision -- honor it rather than re-asking.
 - The choice is local, reversible, and leaves no trace in the result.
 
 Calibration matters in both directions. Escalating every trivial choice wastes the user's
@@ -165,7 +165,7 @@ work does not.
 **Every item on the list was already judged once, by whoever wrote the list, and that judgement
 is the thing least worth trusting.** The findings that survive review are rarely the ones that
 looked most obvious in it -- three separate items in the audit this rule came out of were
-overturned by the user: a colour token that read as dead was a deliberate reservation, an emoji
+overturned by the user: a color token that read as dead was a deliberate reservation, an emoji
 that read as unapproved was wanted, and a fix recommended as too small to be worth a dependency
 got the dependency instead. A list presents each entry with equal confidence, and the confidence
 is the author's, not the reader's.
@@ -178,9 +178,9 @@ Read-only investigation is exempt and needs no approval: searching, reading, typ
 running the test suite, taking a screenshot. That is the material a proposal is made of, and
 none of it changes the tree.
 
-## Read the source before measuring the behaviour
+## Read the source before measuring the behavior
 
-**What this stack depends on is open source, so its behaviour is not a black box unless you choose
+**What this stack depends on is open source, so its behavior is not a black box unless you choose
 to treat it as one.** Svelte, SvelteKit, Vite, the Rust crates -- all of them are on disk, in
 `node_modules` or in a vendored checkout, and every question about what one of them does has an
 answer written in it. Reaching for a test first to find out is choosing to rediscover, by
@@ -203,7 +203,7 @@ written, add the check that holds the two together, so the next change is measur
 than by memory. Writing ours first and reading afterwards is what produces code shaped around a
 guess. This is forward development: every step is a check on the one before it.
 
-Where a project's whole design rests on an upstream's behaviour, that project's `spec/` says so
+Where a project's whole design rests on an upstream's behavior, that project's `spec/` says so
 and names the files. See [repos/seam/spec/references.md](../repos/seam/spec/references.md) for the
 shape of that.
 
@@ -293,8 +293,8 @@ say what is pending, rather than holding the turn open for it.
 
 ## Checking your own work
 
-Make the change and hand it back. Do not stand up a browser to confirm that a colour is the
-colour you just typed, that a radius applied, or that a class landed -- the type checker and
+Make the change and hand it back. Do not stand up a browser to confirm that a color is the
+color you just typed, that a radius applied, or that a class landed -- the type checker and
 the build already catch the failures that class of edit can have, and the user is a faster
 judge of the rest than any screenshot. They will say when something is wrong.
 

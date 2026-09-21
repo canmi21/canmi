@@ -74,7 +74,9 @@ what is not".
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
 untranslated. Everything written into a file is English only: code, comments, docs, commit
-messages. The one exception is a value that _is_ somebody else's name, which is recorded as its
+messages. **The English is American** -- `color`, `behavior`, `license`, never the British
+spelling; the platform is already American and half of it is identifiers, so a `colour` in prose
+is a second spelling of a word the reader will search for as `color`. The one exception is a value that _is_ somebody else's name, which is recorded as its
 owner spells it rather than translated. An explicit user request overrides the rest. "App" means
 a standalone application, a deployed service, or a desktop client depending on context -- read
 which from the sentence rather than asking every time. "Base", unqualified, is this workspace.

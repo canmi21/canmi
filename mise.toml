@@ -28,7 +28,7 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 # where it needs one this list does not carry.
 # Pinned to a major, not to `latest`. Within the pin `tools up` moves freely; crossing it is a
 # decision with a diff and a commit message behind it, because a major is where a lockfile
-# format or a runtime behaviour changes. `tools up` prints what is available across each pin
+# format or a runtime behavior changes. `tools up` prints what is available across each pin
 # and refuses to take it -- edit the number here to accept one.
 #
 # jj is pinned at minor precision because it is pre-1.0, where a minor is the breaking release.

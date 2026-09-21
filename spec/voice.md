@@ -5,6 +5,13 @@
 - **Chat / spoken reply**: simplified Chinese mixed with English technical nouns. Don't translate established English terminology (e.g., "fetchpriority", "viewBox", "Hono", "OKLCH", "preset") — keep them as proper nouns inside Chinese sentences.
 - **File content, including code comments**: English only. No Chinese.
 - **Commit messages**: English only.
+- **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` --
+  not the British spelling of any of them. This is not a preference between two correct forms:
+  the platform is already American and half of it is identifiers. `color` is a CSS property, a
+  StyleX key and a token name; `license` is a route, a file and a record type. An author writing
+  `colour` in the prose beside `color:` has put two spellings of one word in one file, and the
+  one that is a reader's search term is the one that loses. The rule removes the choice so the
+  file does not have to keep making it.
 - **A name is quoted, not written, and English-only does not reach it.** The rule above governs
   what an author composes: prose, comments, identifiers, commit messages, documentation. A field
   whose value _is_ somebody else's name is not composed -- it is recorded, and it is recorded as
