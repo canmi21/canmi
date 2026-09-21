@@ -203,6 +203,17 @@ Three consequences worth knowing:
 Prefer the mise registry short name (`oxlint`) over a backend-qualified one (`npm:oxlint`);
 both resolve to the same package, and the short form keeps `mise.toml` readable.
 
+### A machine tool is not a mise tool, and the line is what the tool acts on
+
+mise pins what a project is built and checked with, so every checkout of it agrees. A tool that
+acts on the machine rather than on a project does not belong there: tmux, the terminal, the
+browser a check drives. Pinning one would claim a version for the machine on a project's
+behalf, and the next project would claim a different one.
+
+The test is what would break if two checkouts disagreed. Two node versions build two different
+bundles, so node is pinned. Two tmux versions are two people's preferences and nothing a build
+can see, so tmux is installed by Homebrew and named nowhere in `[tools]`.
+
 ### A tool is pinned to its major, and crossing one is a decision
 
 `[tools]` names a major -- `node = "26"`, `pnpm = "11"` -- rather than `latest`. Inside that
