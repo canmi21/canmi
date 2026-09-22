@@ -35,7 +35,7 @@ from jj_command import invocations
 # Types that usually carry a decision. Absent by design: docs, test, style, chore, fix, ci --
 # a bug fix records its cause at the test, not in the rules.
 DECISION_TYPES = ("feat", "refactor", "build", "perf")
-RULE_PATHS = ("spec/", "CLAUDE.md", "AGENTS.md")
+RULE_PATHS = ("spec/", "AGENTS.md")
 
 
 def run(args: list[str]) -> str:
@@ -74,7 +74,7 @@ def context(payload: dict) -> str:
 		return ""
 
 	lines = [
-		f"Committed `{subject.strip()}` without touching spec/ or CLAUDE.md.",
+		f"Committed `{subject.strip()}` without touching spec/ or AGENTS.md.",
 		"If this change settled a question -- chose one option over another, accepted a "
 		"tradeoff, added a tool, established a convention -- record the decision and its "
 		"reasoning now, while it is still in context. Put it in the commit itself rather than a "

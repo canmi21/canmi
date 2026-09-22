@@ -93,7 +93,7 @@ worker handed the first sentence goes and rediscovers the codebase, and is paid 
 
 **Decisions, and `spec/`.** Who decides what is [agent-protocol.md](agent-protocol.md),
 "Decision authority", unchanged. What delegation adds is that **a spawned agent never writes
-`spec/` or `CLAUDE.md`**: the rules are the shared decision record, two workers editing them
+`spec/` or `AGENTS.md`**: the rules are the shared decision record, two workers editing them
 concurrently conflict by construction, and a rule is a decision, which was never the worker's to
 take. A worker that believes a rule is wrong says so in its report, which is the same thing it
 does with a brief it believes is wrong.
@@ -211,7 +211,7 @@ why the diff gets read; the estimate is the user's and it is not good enough to 
   until they are all declared, and a worker that does not know that will try to fix it.
 - **Do not run the test suite, the type checker, the formatter or the linter.** The reason is in
   "Testing is the user's; checking is the conversation's" below.
-- **Do not touch `spec/` or `CLAUDE.md`**, and do not reformat or tidy code the brief did not
+- **Do not touch `spec/` or `AGENTS.md`**, and do not reformat or tidy code the brief did not
   name. A neighbouring improvement is indistinguishable from a mistake in a diff, and it lands in
   a commit about something else.
 - **Stop and report rather than improvise.** A brief that turns out to be wrong, a file it needs

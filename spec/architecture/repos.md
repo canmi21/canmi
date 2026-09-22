@@ -249,8 +249,8 @@ knowing before concluding a project has no tasks.
 
 ## Nothing is written down inside a project except its own spec
 
-`CLAUDE.md` says every rule the user states gets written down and never left in chat only.
-**Inside a project that rule is narrower.** A project carries `spec/` and no `CLAUDE.md`, because
+`AGENTS.md` says every rule the user states gets written down and never left in chat only.
+**Inside a project that rule is narrower.** A project carries `spec/` and no `AGENTS.md`, because
 work always begins at this repository and a second entry point would be a second thing to keep
 current.
 

@@ -30,7 +30,7 @@ DOC_TAIL = r"(?:[a-z0-9-]+/)*[A-Za-z0-9-]+\.md"
 # anchor and by nothing else, and the list stops here: `README.md` and `VENDOR.md` are
 # per-directory names, so a bare one resolves to whichever the walk reaches and a check that
 # follows the wrong file is worse than no check. A pathed one is what DOC_TAIL already covers.
-ROOT_DOCS = r"(?:CLAUDE|AGENTS)\.md"
+ROOT_DOCS = r"AGENTS\.md"
 # A citation may name a section: `spec/<f>.md, "Name"` or `spec/<f>.md ("Name")`. The quote need
 # not sit against it, but it may not cross a full stop or a semicolon, or a sentence quoting
 # something else is read as this one's anchor. One character at least has to separate the two: a

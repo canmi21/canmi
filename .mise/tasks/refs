@@ -7,7 +7,7 @@
    it, exists -- unless the project is not cloned, which is a note and not a failure.
 3. A section name quoted beside such a citation, in code or in another doc, exists in it.
 
-All three break silently on rename, and CLAUDE.md is the one file a zero-context agent reads, so
+All three break silently on rename, and AGENTS.md is the one file a zero-context agent reads, so
 a citation rotting there costs the most. The three rules themselves are in `refs_check.py` beside
 this file, which lattice's `refs` imports too; what stays here is what is this repository's alone.
 
@@ -60,7 +60,7 @@ SKIP_FILES = {"pnpm-lock.yaml"}
 # so an illustration is spelled to fail".
 CITED = rf"(?:repos/[a-z0-9-]+/{DOC_TAIL}|spec/{DOC_TAIL})"
 CODE_REF = re.compile(CITED)
-# The root docs join the anchor check and nothing else: a bare `CLAUDE.md` in code is a value in
+# The root docs join the anchor check and nothing else: a bare `AGENTS.md` in code is a value in
 # a config list far more often than a pointer, and a rule over those is the tool checking its own
 # configuration, which already fails loudly when it is wrong.
 CODE_ANCHOR = code_anchor(rf"{CITED}|{ROOT_DOCS}")
@@ -74,8 +74,8 @@ def docs() -> list[pathlib.Path]:
 	"""Every tracked markdown file, taken from git rather than from a glob.
 
 	A glob has to name where docs live, and then a doc written somewhere else is unchecked.
-	Symlinks drop out: `AGENTS.md` is `CLAUDE.md` under a second name, and reading both would
-	report every one of its citations twice.
+	Symlinks drop out: one would be a second name for a doc already read, reporting each of its
+	citations twice.
 	"""
 	return sorted(p for p in files() if p.suffix == ".md" and not p.is_symlink())
 
@@ -97,7 +97,7 @@ def resolve(path: pathlib.Path, cited: str) -> pathlib.Path | None:
 def uncloned(target: pathlib.Path) -> bool:
 	"""Whether a citation lands in a project this machine has not cloned.
 
-	CLAUDE.md, "A project's tasks are reached by path": not being cloned is a warning, not an
+	AGENTS.md, "A project's tasks are reached by path": not being cloned is a warning, not an
 	error, so a machine holding one project still works. A file missing from a project that is
 	cloned stays an error, because there the citation really is dead.
 	"""

@@ -24,7 +24,7 @@ links there.
 
 | Layer         | Holds                     | Points at                        |
 | ------------- | ------------------------- | -------------------------------- |
-| `CLAUDE.md`   | one line per topic        | the full `spec/*.md`             |
+| `AGENTS.md`   | one line per topic        | the full `spec/*.md`             |
 | `spec/*.md`   | the decision and why      | the code file that implements it |
 | code comments | why this line is this way | back to `spec/*.md` for the rule |
 
@@ -82,7 +82,7 @@ worth being told about.
 
 Starting a conversation with no context about this project:
 
-1. Read `CLAUDE.md` at the workspace root. It is the only entry point.
+1. Read `AGENTS.md` at the workspace root. It is the only entry point.
 2. Read the `spec/` files that cover the task: this repository's for the rules that hold
    everywhere, and `repos/<project>/spec/` for the project you are about to touch.
 3. Know which repository you are in, and start from its current `main`.
@@ -327,12 +327,12 @@ the next session's view of this project and is invisible to every other agent. I
 
 1. Decide where the rule belongs: an existing `spec/` file, or a new one named for its aspect.
 2. Write it there.
-3. Re-read `CLAUDE.md` and check it still holds. Are the rules it promotes still the most
+3. Re-read `AGENTS.md` and check it still holds. Are the rules it promotes still the most
    important ones? Is the index complete? Has anything drifted, duplicated, or gone stale?
 4. Repair what drifted, then tell the user what moved where.
 
 The test to apply before calling it done: a fresh agent with zero memory of this project,
-starting from `CLAUDE.md` alone, must be able to recover the project's constraints and work
+starting from `AGENTS.md` alone, must be able to recover the project's constraints and work
 correctly. If it could not, the selfcheck is not finished.
 
 ## Unprompted selfcheck

@@ -13,7 +13,7 @@ workspace/
 ├── hooks/        # shared hooks
 ├── mise.toml     # shared tasks and toolchain
 ├── rustfmt.toml  # shared formatting
-├── CLAUDE.md     # agent instructions
+├── AGENTS.md     # agent instructions
 └── ...
 ```
 

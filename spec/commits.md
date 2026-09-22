@@ -241,7 +241,7 @@ firing on those would turn a rule that protects unfinished work into one that de
 published.
 
 `hooks/spec_diff.py` runs after a `jj rebase` and hands back the diff of `spec/` and
-`CLAUDE.md` between the working copy before the rebase and after it. It reads the previous
+`AGENTS.md` between the working copy before the rebase and after it. It reads the previous
 state out of jj's operation log rather than remembering anything, and prints nothing when no
 rule moved. It exists because a rule written elsewhere -- another machine, an earlier session --
 reaches this checkout only through `main`, and the moment it does is otherwise invisible: the

@@ -4,7 +4,7 @@
 In parallel work, one workspace lands a decision in spec/ while another is mid-task with the
 old text in its context. There is no channel to push that change across -- deliberately, see
 spec/agent-protocol.md -- so it arrives the way code does: at the next rebase onto main. This
-hook makes that arrival visible. After a rebase it diffs spec/ and CLAUDE.md between what the
+hook makes that arrival visible. After a rebase it diffs spec/ and AGENTS.md between what the
 working copy was before the rebase and what it is now, and hands the delta back. A few dozen
 lines, exactly the rules that moved, at the one moment they matter: the agent's next commit is
 about to land beside them.
@@ -31,7 +31,7 @@ sys.dont_write_bytecode = True
 
 from jj_command import invocations
 
-RULE_PATHS = ["spec", "CLAUDE.md"]
+RULE_PATHS = ["spec", "AGENTS.md"]
 # A rebase op is described `rebase ...`; the snapshot jj takes first is `snapshot working copy`.
 REBASE_PREFIX = "rebase "
 SNAPSHOT = "snapshot working copy"
@@ -100,7 +100,7 @@ def context(payload: dict) -> str:
 	if len(lines) > MAX_LINES:
 		shown += (
 			f"\n... {len(lines) - MAX_LINES} more lines; run "
-			f"`jj diff --git --from {previous[:12]} --to @ -- spec CLAUDE.md` for the rest."
+			f"`jj diff --git --from {previous[:12]} --to @ -- spec AGENTS.md` for the rest."
 		)
 
 	message = (

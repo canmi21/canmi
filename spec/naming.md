@@ -55,7 +55,7 @@ identifier and cannot contain a hyphen.
 ## Framework exceptions
 
 Some frameworks assign meaning to a filename. Follow the framework -- a renamed file simply
-stops working. Examples: `Cargo.toml`, `Dockerfile`, `README.md`, `CLAUDE.md`, Next.js
+stops working. Examples: `Cargo.toml`, `Dockerfile`, `README.md`, `AGENTS.md`, Next.js
 `[slug]/page.tsx`.
 
 ## Asset directories are singular; infrastructure is plural
