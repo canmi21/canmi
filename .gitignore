@@ -9,3 +9,7 @@ node_modules/
 
 # OS
 .DS_Store
+
+# Python bytecode, written beside the mise task scripts when they run.
+__pycache__/
+*.pyc
