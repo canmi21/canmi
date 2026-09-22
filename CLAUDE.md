@@ -53,12 +53,13 @@ Every rule the user states gets written down. Never leave one in chat only.
 
 ## Core rules
 
-**Delegation** -- work is split between this conversation and the agents it spawns, by default
-rather than on request. The conversation paraphrases the user's intent, decides, owns `spec/`,
-reads every worker's diff, runs the one type check per wave and writes every commit; the workers
-edit, each owning a declared set of files and touching nothing else. Testing belongs to the
-user -- they are faster than any verification loop -- so a turn ends with something to click, not
-with a report. See [spec/delegation.md](spec/delegation.md).
+**Delegation** -- **a session works directly unless the user says it delegates.** Whether to spawn
+agents is the user's call, made per session, and the default is no. Once the user turns it on,
+work is split between this conversation and the agents it spawns: the conversation paraphrases
+the user's intent, decides, owns `spec/`, reads every worker's diff, runs the one type check per
+wave and writes every commit; the workers edit, each owning a declared set of files and touching
+nothing else. Testing belongs to the user -- they are faster than any verification loop -- so a
+turn ends with something to click, not with a report. See [spec/delegation.md](spec/delegation.md).
 
 **Commits** -- Conventional Commits. Omit the scope in most cases. Subject starts lowercase,
 imperative mood, 96 characters max. Plain text throughout, never Markdown. **A body is optional

@@ -4,6 +4,21 @@ How work is split between the conversation the user is having and the agents tha
 spawns. The split is shaped for the user's hands, not for an agent's throughput, and every rule
 below follows from that.
 
+## Whether a session delegates is the user's call, and the default is no
+
+**A session works directly until the user says it delegates.** No spawned worker, no read sent
+out, no wave -- the conversation reads, edits, checks and commits on its own, under
+[commits.md](commits.md), "Completion", as any agent working directly does. The user decides per
+session, and says so in words: "this session dispatches", "use agents", or the like.
+
+**Once they have, every section below applies, and it holds until they say otherwise.** It is not
+re-asked each turn, and it does not lapse into a judgement about which tasks seem worth a worker
+-- "When not to delegate" still governs the individual edit, but it never turns delegation back
+on in a session that has not been told to, nor off in one that has.
+
+**The agent does not propose it either.** A task that looks parallel is not a reason to ask; the
+user knows this file exists and turns it on when they want it.
+
 ## The point is the user testing while the conversation builds
 
 **The user is the fastest test this project has.** They click in two seconds what a browser
@@ -91,7 +106,7 @@ of the next section.
 
 ## Reading is delegated; the judgement on what comes back is not
 
-**Reading the code is delegated by default, not only searching it.** Both halves of the cost are
+**In a delegating session, reading the code is delegated too, not only searching it.** Both halves of the cost are
 worth avoiding: a file read into the conversation stays there for the rest of the session, and
 the minutes spent reading it are minutes the user is waiting rather than talking. A worker reads
 in the background and the thread stays free, which is the whole arrangement in one sentence.

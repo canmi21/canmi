@@ -120,8 +120,9 @@ An agent that spawns workers and directs them is a different arrangement, and it
 agents wrote five parts of one feature against a written contract, never compiling together, and
 the tree built on the first try when the parts were declared.
 
-It is also no longer something the user asks for by name. It is how work is done here by default,
-and [delegation.md](delegation.md) is the whole of it -- what the conversation keeps, what a brief
+It is not the default. The user says whether a session delegates, and a session they have not
+said so of works directly, spawning nothing. Once they have, [delegation.md](delegation.md) is
+the whole of it -- what the conversation keeps, what a brief
 must carry, how concurrent workers are kept off each other's files, who tests, who checks, and who
 commits.
 
