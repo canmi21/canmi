@@ -20,7 +20,10 @@ config_roots = ["repos/lattice", "repos/still", "repos/governor", "repos/seam", 
 # cannot reach `svelte/compiler` through node's module graph. Sharing the rules is not enough
 # on its own -- a globally installed oxfmt formatted this repository at 0.28 while a project
 # used 0.65, which is one rule set and two formatters.
-_.path = ["{{config_root}}/node_modules/.bin"]
+#
+# hooks/bin goes first so an agent's `rm` is the guarded one; outside an agent it is /bin/rm.
+# See spec/toolchain.md, "rm is guarded, not banned".
+_.path = ["{{config_root}}/hooks/bin", "{{config_root}}/node_modules/.bin"]
 
 JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 

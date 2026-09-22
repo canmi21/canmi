@@ -196,7 +196,7 @@ why the diff gets read; the estimate is the user's and it is not good enough to 
 
 - Delete with `trash`, never `rm`, and there is no recursive flag -- a directory goes as it is.
   It is in [toolchain.md](toolchain.md) with the reason, and a worker that has not read it reaches
-  for `rm` and hangs the turn with nobody watching. Carry the flag fact into the brief: the rule
+  for `rm` and, outside the whitelist, gets a refusal it has to recover from. Carry the flag fact into the brief: the rule
   survives being paraphrased and that one detail does not, so a worker holding `rm -rf` habits
   goes looking for the switch and falls back when it finds none.
 - `jj`, never `git`. It does not commit, does not move the bookmark, does not push.

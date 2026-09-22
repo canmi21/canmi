@@ -23,12 +23,10 @@ ceiling. `perl -e 'alarm N; exec @ARGV' <command>` is the one that is always pre
 ### An agent deletes with `trash`, never with `rm`
 
 `/usr/bin/trash` takes files and directories alike, so every deletion an agent types goes
-through it. This is not a preference about safety; it is about which command can be run
-without a person present. The CLI the user works through often cannot decide on its own
-whether an `rm` is safe, so it stops and waits to be asked. With nobody watching, that is a
-turn that hangs rather than one that fails -- the failure mode
-[agent-protocol.md](agent-protocol.md) spends a whole section on. `trash` carries no such
-hold-up.
+through it. The reason is recovery: what `trash` removes can be put back, and what `rm` removes
+cannot, and every deletion accident worth recording here was an ordinary command meeting an
+unexpected value. `rm` is caught when an agent reaches for it anyway -- see "rm is guarded, not
+banned" below -- but the guard is the net, not the method.
 
 Where the point is only to get something out of the way, moving it to a temporary directory
 answers just as well and reads more honestly than a deletion.
@@ -40,6 +38,34 @@ reaches into it.
 The cost is small and worth stating so nobody is surprised by it: the bytes go to the
 Finder's trash instead of being unlinked, so the space is not returned until the trash is
 emptied, and what was deleted is recoverable until then.
+
+### rm is guarded, not banned
+
+An agent's `rm` is `hooks/bin/rm`, put first on PATH by `mise.toml` and judging every operand
+after the shell has expanded it. That is the whole reason it is a shim rather than a pattern
+over the command text: `rm -rf "$DIR/"` with an empty `DIR` reaches it as `/`, which no reading
+of the text could have seen.
+
+- **Inside the whitelist it is the real `/bin/rm`, with no question asked**: the workspace and
+  every repository under it, `/tmp` (where the harness scratchpad lives) and `$TMPDIR`, and the
+  caches -- `~/Library/Caches`, `~/.cache`, `~/.npm`, `~/.bun/install/cache`,
+  `~/.cargo/registry`, `~/.cargo/git`, `~/Library/pnpm/store`, Xcode's `DerivedData`.
+- **Refused outright**, with a hint that a variable is probably empty: an empty operand, `/`,
+  `/Users`, the home directory, another user's, a whitelisted root itself, `repos/` and each
+  repository root under it, and anything inside a `.jj` or `.git` store.
+- **Refused with a pointer to `trash`**: the user's own files -- `Desktop`, `Documents`,
+  `Downloads`, `Movies`, `Music`, `Pictures`, `Public`, iCloud's `Mobile Documents` -- and
+  everywhere else outside the whitelist.
+- **One refused operand deletes nothing**, including the operands that would have passed.
+  Paths compare case-insensitively, because APFS does.
+
+Outside an agent the shim execs `/bin/rm` untouched, so the user's own shell never meets it; an
+agent is recognized by `CLAUDECODE`, `AI_AGENT` or a `CODEX_` variable. Only `/bin/rm` by its
+absolute path skips the shim, which is why that alone is on the harness's ask list. The policy
+is `hooks/rm_guard.py` and its tests run under `mise run check-hooks`.
+
+The shim reaches an agent only through the environment mise gave the shell that launched it --
+a harness started before this entry existed, or outside mise, runs the plain `rm`.
 
 ### An agent stops a background process with a signal it can catch
 

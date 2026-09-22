@@ -98,9 +98,9 @@ language. See [spec/lint-format.md](spec/lint-format.md).
 `set -gx X y`, not `export X=y`; `$(cmd)` is not fish. Commands an agent runs through its own
 tool go through that tool's shell instead, which is usually not fish, so the two are written
 differently on purpose. **An agent deletes with `trash`, never with `rm`** -- files and
-directories alike, because `rm` is the command the user's CLI stops and asks about, and an
-unattended ask is a hung turn. `trash old.log`, `trash dist/`, `trash a b c` -- no recursive flag
-exists or is needed. There is no deletion small enough for `rm`.
+directories alike, because what `trash` removes can be put back. `trash old.log`, `trash dist/`,
+`trash a b c` -- no recursive flag exists or is needed. An `rm` typed anyway meets a guard that
+allows it only inside the workspace, temp and caches, and refuses the rest.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
