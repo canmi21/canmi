@@ -3,6 +3,15 @@
 ## Language
 
 - **Chat / spoken reply**: simplified Chinese mixed with English technical nouns. Don't translate established English terminology (e.g., "fetchpriority", "viewBox", "Hono", "OKLCH", "preset") — keep them as proper nouns inside Chinese sentences.
+- **The chat language holds for the whole turn, status lines included, and a hook holds it.** The
+  rule above was loaded at every start and still broken twice in one session: after a stretch of
+  reading English specs and English tool output, the one-line updates between tool calls turned
+  English, and then the reply did, and nothing from inside the drift notices it. So
+  [hooks/language.py](../hooks/language.py) reads the turn when it ends and holds it open while any
+  block of prose written to the user since they last spoke is English with no Chinese in it -- code,
+  paths and short lines excepted, and a user who wrote English themselves answered in English. The
+  hold asks for the reply restated in Chinese; the check is a backstop, and the rule is still to
+  write in Chinese from the first line.
 - **File content, including code comments**: English only. No Chinese.
 - **Commit messages**: English only.
 - **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` --

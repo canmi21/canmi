@@ -19,6 +19,7 @@ sys.dont_write_bytecode = True
 
 import bookmark
 import commit
+import language
 import spec_check
 import spec_diff
 
@@ -49,7 +50,9 @@ def handle(payload: dict) -> int:
 			)
 		return 0
 	if event == "Stop":
-		result = bookmark.response(payload)
+		# One hold at a time: work left outside the bookmark is the more expensive thing to leave,
+		# and the language is judged again when the turn next tries to end.
+		result = bookmark.response(payload) or language.response(payload)
 		if result:
 			print(json.dumps(result))
 	return 0
