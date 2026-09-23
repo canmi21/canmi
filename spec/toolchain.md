@@ -500,6 +500,15 @@ machine to answer a question asked about weekly, so it is a tool used when prese
 when absent** rather than declared -- silently skipping the half that needs it would report a
 clean list that was never checked.
 
+**A dependency no resolver can move is moved by the repository's own `update` task, run first.**
+A git dependency pinned to a tag is one commit to cargo, so `cargo update` leaves it where it was
+written, and the policy above would silently stop applying to it. A project that has one declares
+an `update` task that takes `--dry-run`; `deps` runs it before the resolvers, so the lockfile and
+the verify that follow see what it wrote, and a failure reverts it with everything else, the
+manifest being among the files put back. The task owes the same line as the rest: move within the
+bound, name what waits beyond it. rdm is the one that has it; see
+[repos/rdm/spec/framework.md](../repos/rdm/spec/framework.md), "Where the crates come from".
+
 Vendored source is filtered out of all of this. See [vendor.md](vendor.md).
 
 ### A dependency that moved while you were working is the user's upgrade

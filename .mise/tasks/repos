@@ -377,6 +377,18 @@ def resolved_files(repo: pathlib.Path) -> dict[pathlib.Path, bytes]:
 	return found
 
 
+def declares(repo: pathlib.Path, task: str) -> bool:
+	"""Whether a project under repos/ has a task of this name, inline or as a file task.
+
+	Never the workspace itself: its own `update` is the verb this runs inside.
+	"""
+	if repo == ROOT:
+		return False
+	config = repo / "mise.toml"
+	inline = config.is_file() and f"[tasks.{task}]" in config.read_text()
+	return inline or (repo / ".mise" / "tasks" / task).is_file()
+
+
 def symptom(output: str) -> list[str]:
 	"""The lines of a failed verify worth repeating under the summary, which a long log buries."""
 	lines = output.splitlines()
@@ -414,8 +426,8 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 	immature = []
 	reverted = []
 
-	def take(repo: pathlib.Path, *command: str) -> None:
-		result = step(repo, *command)
+	def take(repo: pathlib.Path, *command: str, where: pathlib.Path | None = None) -> None:
+		result = step(where or repo, *command)
 		if result.returncode == 0:
 			return
 		# A refusal on the supply-chain delay is press's own policy holding, and it lifts itself
@@ -432,6 +444,10 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 			continue
 		print(f"\n=== {label(repo)} ===")
 		before = {} if dry else resolved_files(repo)
+		# A dependency no resolver can move is the repository's own to move, first, so the
+		# resolvers and the verify below see what it wrote. rdm takes gpui at a Zed tag.
+		if declares(repo, "update"):
+			take(repo, "mise", "run", f"//repos/{repo.name}:update", *(["--dry-run"] if dry else []), where=ROOT)
 		if "cargo" in kinds:
 			if major and edit:
 				take(repo, "cargo", "upgrade", "--incompatible", *(["--dry-run"] if dry else []))
