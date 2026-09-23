@@ -52,8 +52,18 @@ reported as something this repository is behind on: SvelteKit holds cookie at 0.
 kept and run under a config of their own from the vendor directory, and `VENDOR.md` says what they
 report at the pinned version and which are excluded, and why.
 
+**They are not a condition of `verify`.** Upstream's tests carry upstream's judgement, which of
+them to skip included, and a count of them carries that judgement into ours unread: a count cannot
+see a test move from passing into a skip, or out of the suite. Where a project's gate runs the
+upstream's tests at all, it holds them to a list the project keeps outside `vendor/` -- every test
+by name, the state it has to come out as, and for a skip whose reason it is -- and fails on any
+test that disagrees, including one the list does not name. seam's `pkgs/suite/baseline.json` is the
+worked case; its `spec/suite.md` has the states.
+
 ## Upgrading
 
 Take the new tag the way the first one was taken, replace the entry's files, update `VENDOR.md`'s
 version, commit and counts, and read the upstream diff for the files the binding package names.
+Where the project keeps a list of the upstream's tests, the upgrade updates it, and its diff is the
+account of which tests moved.
 An upgrade is one commit saying which tag it moved to.
