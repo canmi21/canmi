@@ -356,6 +356,34 @@ def upgrade_available() -> bool:
 	return subprocess.run(["cargo", "upgrade", "--version"], capture_output=True).returncode == 0
 
 
+# What a resolver rewrites. A manifest is in the list because `--major` rewrites ranges, and a
+# revert that put the lockfile back under a raised range would leave the two disagreeing.
+RESOLVED = ("Cargo.toml", "Cargo.lock", "package.json", "pnpm-lock.yaml")
+
+
+def resolved_files(repo: pathlib.Path) -> dict[pathlib.Path, bytes]:
+	"""Every tracked manifest and lockfile in this repository, as it is on disk now.
+
+	Tracked, so a nested workspace member is covered and `node_modules` is not. Read from disk
+	rather than from the commit, so a manifest somebody was editing when `update` ran comes back
+	with their edit in it.
+	"""
+	files = jj("file", "list", cwd=repo, check=False).stdout.splitlines()
+	found = {}
+	for relative in files:
+		path = repo / relative
+		if path.name in RESOLVED and path.is_file():
+			found[path] = path.read_bytes()
+	return found
+
+
+def symptom(output: str) -> list[str]:
+	"""The lines of a failed verify worth repeating under the summary, which a long log buries."""
+	lines = output.splitlines()
+	marked = [line for line in lines if re.search(r"\berror\b|panicked|FAILED", line)]
+	return (marked or lines)[:10]
+
+
 def command_deps(name: str | None, dry: bool = False, major: bool = False) -> int:
 	"""Dependencies within the ranges their manifests declare, and what waits across one.
 
@@ -368,6 +396,13 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 	*after* the in-range update has run, because whatever survives that is across a range boundary
 	by construction. The alternative is reimplementing two resolvers' range arithmetic in order to
 	disagree with them later.
+
+	**What moved is verified, and put back when it breaks.** The rule in spec/toolchain.md -- an
+	upgrade that breaks is reverted in the lockfile, never pinned in the manifest -- used to be
+	left to whoever ran this, and taking one crate family out of a lockfile by hand is a loop of
+	`cargo update -p --precise` against packages that require each other's exact version. So each
+	repository whose files moved runs its own verify, and a failure restores every manifest and
+	lockfile to what it was before the run. The next `update` tries the range again from the top.
 	"""
 	edit = upgrade_available()
 	# A resolver that refuses is not a resolver that had nothing to do, and the first version of
@@ -377,6 +412,7 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 	# is named here and the command exits non-zero.
 	failed = []
 	immature = []
+	reverted = []
 
 	def take(repo: pathlib.Path, *command: str) -> None:
 		result = step(repo, *command)
@@ -395,6 +431,7 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		if not kinds:
 			continue
 		print(f"\n=== {label(repo)} ===")
+		before = {} if dry else resolved_files(repo)
 		if "cargo" in kinds:
 			if major and edit:
 				take(repo, "cargo", "upgrade", "--incompatible", *(["--dry-run"] if dry else []))
@@ -407,8 +444,31 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 				step(repo, "pnpm", "outdated", *recursive(repo))
 			else:
 				take(repo, "pnpm", "update", *recursive(repo), *(["--latest"] if major else []))
+		if dry:
+			continue
+		if all(path.read_bytes() == data for path, data in before.items() if path.is_file()):
+			continue
+		task = "//:verify" if repo == ROOT else f"//repos/{repo.name}:verify"
+		print()
+		result = step(ROOT, "mise", "run", task)
+		if result.returncode == 0:
+			continue
+		for path, data in before.items():
+			path.write_bytes(data)
+		# pnpm has already installed what it resolved, so the tree is brought back to the lockfile
+		# that was just restored. cargo needs nothing: it reads the lockfile at the next build.
+		if "pnpm" in kinds:
+			step(repo, "pnpm", "install", *recursive(repo))
+		reverted.append((label(repo), symptom(result.stdout)))
 
 	print("\n" + "-" * 72)
+	if reverted:
+		print("Reverted, because verify failed with what moved; every manifest and lockfile is back:\n")
+		for place, lines in reverted:
+			print(f"  {place}")
+			for line in lines:
+				print(f"      {line}")
+		print("\n  the full log is above; the next `update` tries the same ranges again\n")
 	if immature:
 		print(f"Held by the supply-chain delay, nothing moved: {', '.join(sorted(set(immature)))}")
 		print("  a version younger than minimumReleaseAge; run again once it has aged\n")
@@ -419,7 +479,7 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		print("\n  the resolver said why above; this reports it rather than passing over it")
 		return 1
 	if major:
-		print("Dependencies were moved across their ranges. Run verify before trusting this.\n")
+		print("Dependencies were moved across their ranges, and verify passed wherever they were kept.\n")
 		return 0
 	print("Beyond the ranges each manifest declares:\n")
 	if not edit:

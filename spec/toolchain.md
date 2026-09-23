@@ -339,9 +339,9 @@ edited to `11.25` because the command said to, one line below the command saying
 already current. A tool that reports a rule and repeats advice contrary to it has not reported
 the rule.
 
-`pnpm = "12.3"` carries a minor for exactly this reason, which is the kind of reason the rule
-below asks a narrow pin to have: `next-12` is 12.4.0 while npm's `latest-12` is 12.3.4. The digit
-comes off when the two lines converge, and the 11 line shows that they do -- `next-11` and
+`pnpm = "12.5"` carries a minor for exactly this reason, which is the kind of reason the rule
+below asks a narrow pin to have: `next-12` is 12.6.0 while npm's `latest-12` is 12.5.1. The digit
+follows `latest-12` when `up` reports the pin holding a stable release back, and comes off when the two lines converge, and the 11 line shows that they do -- `next-11` and
 `latest-11` are now the same release, which was the condition the note on `11.24` gave for
 dropping its digit. Nobody dropped it, and the pin outlived its reason by two stable releases.
 **A narrow pin's note names the fact that would let it go, and somebody has to check that fact.**
@@ -524,6 +524,15 @@ So when a raised dependency breaks something, the repair is to **put the lockfil
 every declared range alone. The range is a statement about what the code can work with, and
 narrowing it to route around one bad release is a claim that outlives the release: the next reader
 finds a bound with no reason attached, and the version it excludes was fixed months ago.
+
+**`update` makes that repair itself.** A repository whose manifests or lockfiles moved runs its
+own verify before the run moves on, and a failure puts every one of them back to what was on disk
+before the run -- a pnpm tree is reinstalled from the restored lockfile -- and names the repository
+and the lines that failed under the summary. Doing it by hand was the part nobody could do well:
+gpui-unofficial publishes some twenty crates that each require the others' exact release, so
+holding the family back meant a `cargo update -p --precise` per crate in dependency order, while
+every other crate in the graph still had to move. The whole lockfile goes back rather than one
+family, because which family broke is a question only a bisection answers.
 
 A reverted lockfile makes the same repair and forgets it on purpose. The next `mise run update`
 tries the range again from the top, and if the upstream has been fixed in the meantime the

@@ -39,15 +39,16 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 #
 # pnpm carries a minor for a different reason, and it is the kind of reason a narrow pin is
 # supposed to have: mise resolves against every published release, and pnpm publishes its `next`
-# line there, so a bare major takes whatever `next` has reached. `next-12` is 12.4.0 while npm's
-# `latest-12` is 12.3.4, so `12.3` is what holds it to the release an outside build resolves.
-# Drop the extra digit when the two lines converge -- which is what happened on the 11 line, where
+# line there, so a bare major takes whatever `next` has reached. `next-12` is 12.6.0 while npm's
+# `latest-12` is 12.5.1, so `12.5` is what holds it to the release an outside build resolves.
+# The digit follows `latest-12` and moves when `up` reports the pin holding a stable release back.
+# Drop it when the two lines converge -- which is what happened on the 11 line, where
 # `next-11` and `latest-11` are now the same release. That the digit outlived its reason is how
 # this sat at 11.24.0 with 11.26.0 stable and every report saying the only thing waiting was 12.
 [tools]
 node = "26"
 rust = "stable"
-pnpm = "12.3"
+pnpm = "12.5"
 jj = "0.45"
 oxlint = "1"
 
@@ -103,10 +104,32 @@ run = ".mise/tasks/repos publish"
 # reads by walking up -- so there is no per-repository version of it to upgrade, and `update lattice`
 # raising lattice's tools would be raising everyone's under a name that says otherwise. So the tools
 # half reports the same thing whatever is named. That reads exactly like an argument being ignored,
-# which is why the description says it out loud rather than leaving it to be discovered.
+# which is why the description says it out loud rather than leaving it to be discovered. So the
+# tools half is handed the flags alone: given the name too, `tools up` narrows to that project's
+# own mise.toml, and `update rdm` reported on watchexec and nothing the workspace pins.
 [tasks.update]
 description = "Upgrade tools and dependencies within their bounds: `update [name] [--dry-run]`, a name narrowing deps only"
-run = 'update() { .mise/tasks/tools up "$@" && .mise/tasks/repos deps "$@"; }; update'
+run = 'update() { f=; for a; do case $a in -*) f="$f $a";; esac; done; .mise/tasks/tools up $f && .mise/tasks/repos deps "$@"; }; update'
+
+# Any task, in every repository that declares one, and silence from the rest -- mise's own
+# `//repos/...:<task>` does the matching. One at a time, so each project's log reads whole, and
+# on past a failure, so one broken repository does not hide what the others would have said.
+# `//repos/...` rather than `//...`: the workspace's own `check` fans out to every verify itself.
+# `--dry-run` is the verb's, as everywhere here, and is taken out before the rest reaches the task;
+# passed through, it ran every lint with `-n` on the end of clippy's arguments.
+# See spec/architecture/repos.md.
+[tasks.each]
+description = "Run a task in every repository that declares it, one after another: `each <task> [args] [--dry-run]`"
+run = '''
+each() {
+	t= n=
+	for a; do shift
+		case $a in -n|--dry-run) n=-n;; *) if [ -z "$t" ]; then t=$a; else set -- "$@" "$a"; fi;; esac
+	done
+	[ -n "$t" ] || { echo "usage: mise run each <task> [args] [--dry-run]" >&2; return 2; }
+	mise run $n --jobs 1 --continue-on-error "//repos/...:$t" "$@"
+}
+each'''
 
 [tasks.check-tools]
 description = "Check the versions an outside build reads, and that no project redeclares a workspace tool"

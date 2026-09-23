@@ -186,7 +186,7 @@ mise run pull            every repository
 mise run pull lattice      that one
 mise run check           each repository's own verify
 mise run audit           the same, with warnings failing
-mise run update still    that one's tools
+mise run update still    that one's dependencies, and every tool
 ```
 
 They are one-line aliases onto a single implementation, so the short form is what gets typed and
@@ -237,6 +237,24 @@ has to be checked against the thing it was supposed to change** -- the bucket, n
 project has to pass is the project's to decide, and this only decides where to look. `fmt` is
 `jj fix` with the formatters `jj.toml` names, which is why formatting is identical everywhere
 without any project configuring it.
+
+## `each` is the verb for everything else
+
+`mise run each <task> [args]` runs `<task>` in every repository that declares one and passes over
+the rest in silence: `each lint` is every linter a project declares, `each icons` is rdm's alone. The
+matching is mise's own `//repos/...:<task>`, so a project gains the verb by declaring the task and
+nothing here lists which ones do.
+
+It runs one repository at a time and goes on past a failure. A fan-out that interleaves five
+logs, or stops at the first red one, answers "does it pass everywhere" worse than a loop typed by
+hand. The workspace's own tasks are outside it -- `//:check` already fans out to every verify, so
+`//...` would run them twice -- and a task nobody declares is an error rather than a clean run.
+
+`--dry-run` belongs to `each`, as it does to every verb here, and is taken out before the rest of
+the line reaches the task. It is the one flag `each` reads; everything else is the task's.
+
+It does not replace the named verbs. `check`, `clean` and the rest decide something the project
+cannot -- which verify, what counts as a cache -- and `each` decides nothing but where to look.
 
 ## Tasks are reached by path
 

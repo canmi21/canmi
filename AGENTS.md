@@ -128,6 +128,10 @@ to narrow to. Crossing a boundary is an edit to `[tools]` or `mise run repos dep
 `update` itself. `clean` removes what a tool wrote and can write again; dependencies and
 local state are not caches and it never touches them. See [spec/toolchain.md](spec/toolchain.md).
 
+**`each` is every other task.** `mise run each <task> [args]` runs it in every repository that
+declares it, one at a time and on past a failure; the rest are passed over. See
+[spec/architecture/repos.md](spec/architecture/repos.md).
+
 **`publish` is the one verb that refuses to mean everything.** `mise run publish <name>` runs
 that project's own publish task and a missing name is an error, because a release cannot be
 taken back. See [spec/architecture/repos.md](spec/architecture/repos.md).

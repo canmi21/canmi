@@ -49,10 +49,12 @@ REPOS = ROOT / "repos"
 
 # Where a tool's stable channel is published, and how to read it. A tool absent from here has
 # no channel this can check; `outdated` says so rather than guessing from the highest tag.
-# What mise would take if the pins were lifted. mise resolves against every published version
-# and has never heard of a dist-tag, so this is where its answer and the publisher's stable
-# channel come apart -- and where its own advice has to be dropped rather than passed on.
-BUMP = re.compile(r"^Would install (\S+)@(\S+)\s*$", re.MULTILINE)
+# What a `mise upgrade --dry-run` names. INSTALL is every install it would make, inside the pins
+# or across them; OWNER is the line that marks one as across, and says which file holds the pin.
+# mise resolves against every published version and has never heard of a dist-tag, so a bump is
+# where its answer and the publisher's stable channel come apart -- and where its own advice has
+# to be dropped rather than passed on.
+INSTALL = re.compile(r"^Would install (\S+)@(\S+)\s*$", re.MULTILINE)
 OWNER = re.compile(r"^Would bump (\S+)@\S+ in (.+?)\s*$", re.MULTILINE)
 
 CHANNELS = {
@@ -489,10 +491,17 @@ def beyond(where: pathlib.Path) -> list[tuple[str, str, str, str | None]]:
 	# Keyed by the file that owns the pin, not by where the question was asked. A pin in this
 	# repository is visible from every project below it, so asking in three directories returned
 	# the same tool three times; the "Would bump ... in <file>" line is what tells them apart.
-	owners = {tool: owner for tool, owner in OWNER.findall(result.stdout)}
+	#
+	# Only a tool with that line is across its pin. The dry run also lists every install `upgrade`
+	# would make inside the pins, and reading those as bumps filed node 26.10.0 under "edit [tools]
+	# to cross the pin" -- once per repository, against a file that does not declare it.
+	installs = dict(INSTALL.findall(result.stdout))
 	found = []
-	for tool, version in BUMP.findall(result.stdout):
-		owner = pathlib.Path(owners.get(tool, str(where / "mise.toml"))).expanduser()
+	for tool, owner in OWNER.findall(result.stdout):
+		version = installs.get(tool)
+		if version is None:
+			continue
+		owner = pathlib.Path(owner).expanduser()
 		try:
 			owner = owner.relative_to(ROOT)
 		except ValueError:
@@ -526,16 +535,26 @@ def command_up(name: str | None = None, dry: bool = False) -> int:
 		# Captured rather than streamed so the bump advice can be dropped. The cost is that a long
 		# install prints nothing until it finishes, which is the smaller of the two problems.
 		run = subprocess.run(command, cwd=where, capture_output=True, text=True)
+		# A dry run's own lines are dropped too: every directory repeats the workspace's installs,
+		# and the summary below says the same once, against the file that declares each tool.
 		for stream in (run.stdout, run.stderr):
 			for line in stream.splitlines():
-				if "upgrade --bump" not in line:
-					print(line)
+				if "upgrade --bump" in line or (dry and line.startswith("Would ")):
+					continue
+				print(line)
 		if run.returncode != 0:
 			raise fail(f"mise upgrade failed in {label(where)}")
 		for row in beyond(where):
 			if row not in waiting:
 				waiting.append(row)
-		after = before if dry else dict(installed(where))
+		# A dry run installs nothing, so what would move is read from what mise says it would
+		# install -- the tools this directory declares, since the inherited ones are the
+		# workspace's and are reported there. Reading `installed` again said "nothing to install"
+		# directly below mise listing three.
+		if dry:
+			after = {**before, **{t: v for t, v in INSTALL.findall(run.stdout) if t in before}}
+		else:
+			after = dict(installed(where))
 		for tool, was in before.items():
 			if after.get(tool) != was:
 				moved.append((label(where), tool, was, after.get(tool, "?")))
@@ -556,10 +575,10 @@ def command_up(name: str | None = None, dry: bool = False) -> int:
 			print(f"{place:<14} {written:<16} {verb} {resolved}")
 	if moved:
 		for place, tool, was, now in moved:
-			print(f"{place:<14} {tool:<10} {was} -> {now}")
-		print("\nRun each repository's verify before trusting this; a toolchain move is a change.")
-	elif dry:
-		print("nothing to install; mise reported no upgrade within the pins")
+			verb = "would move" if dry else "moved"
+			print(f"{place:<14} {tool:<10} {verb} {was} -> {now}")
+		if not dry:
+			print("\nRun each repository's verify before trusting this; a toolchain move is a change.")
 	else:
 		print("everything is current within its pins")
 
