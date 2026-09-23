@@ -38,6 +38,20 @@ When you catch yourself writing something that already exists elsewhere, delete 
 instead. The duplicate is not redundancy, it is a second thing to keep in sync, and it will
 lose sync.
 
+### A number a command prints is cited, not copied
+
+A count that describes the current state -- how many samples pass, how many are skipped and for
+which reason -- has its home in whatever computes it, and a document names that place rather than
+writing the figure down. The command is the live copy; the document's copy was true the day it was
+typed. seam's suite showed what that costs: the same state was written in four files, and when it
+was checked two of them had already drifted from the run, one by three samples that had passed
+since.
+
+**A number that is evidence is not a state, and it stays.** "342 configs were not being read" is
+the reason a rule exists, measured once, and it stays true of the day it describes. The test: if
+the next run could make the sentence false while nobody edits it, the number is state and belongs
+to the command.
+
 `mise run refs` checks that the links resolve -- markdown links in docs, and `spec/*.md`
 citations in code. It is part of `mise run verify`, because a reference that points nowhere
 fails silently: nothing breaks, the reader just follows a dead path. It deliberately ignores

@@ -144,12 +144,12 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 **Starting, and working with the user**
 
-| Topic                                                                                        | File                                             |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Cold start, decision authority, citing a section, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
-| Spawning workers: briefs, file ownership, who tests, who checks, who commits                 | [spec/delegation.md](spec/delegation.md)         |
-| Voice and communication                                                                      | [spec/voice.md](spec/voice.md)                   |
-| Commit conventions and their enforcement                                                     | [spec/commits.md](spec/commits.md)               |
+| Topic                                                                                                   | File                                             |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
+| Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [spec/delegation.md](spec/delegation.md)         |
+| Voice and communication                                                                                 | [spec/voice.md](spec/voice.md)                   |
+| Commit conventions and their enforcement                                                                | [spec/commits.md](spec/commits.md)               |
 
 **How the arrangement is shaped**
 

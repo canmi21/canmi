@@ -14,8 +14,9 @@ patch, and each entry carries two files of its own:
 - `LICENSE`, the upstream's, unchanged. What may be copied is decided by that file and not by
   anything written here.
 - `VENDOR.md`, saying which upstream, which tag and commit, what was taken and what was not, how
-  it is consumed, what checks run over it and what they report at the pinned version, and how it
-  is upgraded.
+  it is consumed, what checks run over it and which command prints what they report, and how it
+  is upgraded. The report itself is the command's, not copied here -- see
+  [agent-protocol.md](agent-protocol.md), "A number a command prints is cited, not copied".
 
 ## How it is taken
 
@@ -49,8 +50,8 @@ arrived at by a command nobody thought of as editing. It also stops the upstream
 reported as something this repository is behind on: SvelteKit holds cookie at 0.6 deliberately.
 
 **The upstream's checks run over it.** Where the upstream ships tests beside its source, they are
-kept and run under a config of their own from the vendor directory, and `VENDOR.md` says what they
-report at the pinned version and which are excluded, and why.
+kept and run under a config of their own from the vendor directory, and `VENDOR.md` says which
+command runs them and which are excluded, and why.
 
 **They are not a condition of `verify`.** Upstream's tests carry upstream's judgement, which of
 them to skip included, and a count of them carries that judgement into ours unread: a count cannot
@@ -63,7 +64,7 @@ worked case; its `spec/suite.md` has the states.
 ## Upgrading
 
 Take the new tag the way the first one was taken, replace the entry's files, update `VENDOR.md`'s
-version, commit and counts, and read the upstream diff for the files the binding package names.
+version, commit and what was taken, and read the upstream diff for the files the binding package names.
 Where the project keeps a list of the upstream's tests, the upgrade updates it, and its diff is the
 account of which tests moved.
 An upgrade is one commit saying which tag it moved to.
