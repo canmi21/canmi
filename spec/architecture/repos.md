@@ -235,8 +235,8 @@ has to be checked against the thing it was supposed to change** -- the bucket, n
 
 `check` dispatches to each repository's own `verify` rather than reimplementing it: what a
 project has to pass is the project's to decide, and this only decides where to look. `fmt` is
-`jj fix` with the formatters `jj.toml` names, which is why formatting is identical everywhere
-without any project configuring it.
+`jj fix` with the formatters `jj.toml` names, over every file rather than only the changed ones,
+which is why formatting is identical everywhere without any project configuring it.
 
 ## `each` is the verb for everything else
 

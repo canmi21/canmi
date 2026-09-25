@@ -34,12 +34,17 @@ Because `jj fix` repairs history rather than guarding a commit, formatting can n
 "too late" here. A badly formatted commit from last week is one `jj fix -s` away from
 correct.
 
-**What it does not reach is a file nobody has touched.** `jj fix` visits the files a revision
-changed, so a formatter upgrade leaves every file outside that set at whatever the previous
-version produced -- or, for a file predating the pattern that now matches it, at no version's
-output at all. Measured when oxfmt reached 0.68: five of this repository's twelve Markdown files
-and forty-seven files in lattice. A bulk run over the whole tree is the only thing that closes
-that, and it is owed once per upgrade rather than once per commit.
+**`mise run fmt` formats every file, touched or not.** `jj fix` visits only the files a revision
+changed unless told `--include-unchanged-files`, and the commit hook leaves it at that, so a
+commit costs no more than its own files. `fmt` passes the flag. Without it a formatter upgrade left
+every file outside the changed set at whatever the previous version produced -- or, for a file
+predating the pattern that now matches it, at no version's output at all: five of this
+repository's twelve Markdown files and forty-seven files in lattice when oxfmt reached 0.68, and in
+rdm twenty-five Rust files no commit had touched since before its rustfmt settings, found only
+because a formatter run on one file rewrote a hundred lines of it. `fmt` reported "nothing to fix"
+throughout, since it looked only at the working copy's changes. The formatters are trusted with
+the whole tree without a check after: an edge case where one changes what code means has not come
+up, and a check would be a step to pass, which this section exists to avoid.
 
 ## Baseline
 
@@ -140,6 +145,12 @@ time, and re-translation charges for prose nobody changed. Verified when the sve
 landed: reflowing one article's frontmatter broke the corpus tests until the file was
 restored. `.oxfmtrc.json` ignores the directory, and the ignore holds for `--stdin-filepath`
 runs too, so `jj fix` inherits it.
+
+**Nor seam's `corpus/cases/`.** Each case is a component written on one line on purpose, beside
+JSON holding the bytes it has to render to; in a template the whitespace between elements is text
+the output carries, so a formatter spreading the case over lines changes what it renders and every
+case fails. They are test data, as `contents/` is, and are ignored the same way -- found when
+`mise run fmt` first reached files no commit had touched.
 
 ## What oxlint sees in a `.svelte` file
 
