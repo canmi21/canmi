@@ -117,6 +117,14 @@ next to it, this one included, where nothing else has a use for it.
 file: oxfmt rewrites it to a plain space unprompted. Leaving the rule on would report a
 problem the formatter has already solved.
 
+**`no-await-in-loop` is off in oxlint.** The rule assumes the iterations are independent and
+asks for `Promise.all`. Counted across seam the day it was turned off: twenty-two reports, one of
+them right -- a loop awaiting promises that owed each other nothing, since folded into one
+`Promise.all` -- and twenty-one loops that are sequential on purpose: a queue that grows while it
+is walked, a generator driven one step at a time, one render at a time for memory and for a
+deadline, and tests asserting per case. A rule that is wrong twenty-one times in twenty-two
+reports nothing; the one right case is the reviewer's to see.
+
 **An oxlint disable comment takes no reason suffix.** ESLint 9 allows
 `// eslint-disable-next-line rule -- why`, and oxlint does not: the ` -- why` is read as part of
 the rule list, matches no rule, and the whole directive is silently ignored. Nothing is
