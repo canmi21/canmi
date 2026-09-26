@@ -229,9 +229,12 @@ one a place where a search stops at the first result that looks right because th
 thousand lines down. A limit on a file is the one a tool can hold objectively; where a function is
 the size of a file, it is the same problem one level in, and the file limit is where it shows.
 
-**What is measured is code of ours.** Vendored source is somebody else's and is left out, as is
-whatever a tool wrote, and prose: a `spec/` file is long because the reasoning is, and a test
-file's cases are code and counted -- a corpus of cases splits by topic as readily as a module
+**What is measured is code of ours.** Only the files version control tracks are counted -- `jj
+file list`, or `git ls-files` where there is no jj -- so whatever a tool wrote and git ignores,
+paraglide's compiled messages among it, is out without a list to keep. Vendored source is tracked
+and somebody else's, and is left out by its directory, `vendor/`, which is the only place it may
+sit (see [vendor.md](vendor.md)). Prose is out too: a `spec/` file is long because the reasoning
+is, and a test file's cases are code and counted -- a corpus of cases splits by topic as readily as a module
 does. The extensions and the directories skipped are listed in the task, and each argues its
 exemption.
 

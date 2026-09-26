@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import subprocess
 import sys
 
 SOFT = 500
@@ -40,8 +41,28 @@ SKIPPED = {
 }
 
 
+def tracked(root: pathlib.Path) -> set[pathlib.Path] | None:
+	"""The files version control keeps under `root`, or None where there is none to ask.
+
+	What it ignores is what a tool wrote or somebody else's source -- paraglide's compiled
+	messages, a vendored tree -- so asking it leaves those out without a list to keep. jj first,
+	because a jj workspace such as the sandbox has no `.git` of its own.
+	"""
+	for command in (["jj", "file", "list"], ["git", "ls-files"]):
+		if command[0] == "jj" and not (root / ".jj").exists():
+			continue
+		try:
+			result = subprocess.run(command, cwd=root, capture_output=True, text=True)
+		except OSError:
+			continue
+		if result.returncode == 0:
+			return {(root / line).resolve() for line in result.stdout.splitlines() if line}
+	return None
+
+
 def measured(root: pathlib.Path) -> list[tuple[pathlib.Path, int]]:
 	found: list[tuple[pathlib.Path, int]] = []
+	kept = tracked(root)
 	for directory, names, files in os.walk(root):
 		here = pathlib.Path(directory)
 		# `repos/` under the workspace is every project's own checkout: measured by its own
@@ -54,6 +75,8 @@ def measured(root: pathlib.Path) -> list[tuple[pathlib.Path, int]]:
 		for name in files:
 			path = here / name
 			if path.suffix not in CODE and not _extensionless_script(path):
+				continue
+			if kept is not None and path.resolve() not in kept:
 				continue
 			try:
 				with path.open("rb") as handle:
