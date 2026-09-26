@@ -210,6 +210,35 @@ Of every failure that session found, all but one was silent; the exception faile
 named the article. **Silence is the default failure mode**, and these four are what turns a silent
 failure into a loud one.
 
+## A file is read whole, so it stays short
+
+**A source file of ours aims under five hundred lines, and one over a thousand fails the gate.**
+The soft limit is the warning tier -- advice until `mise run audit` -- and the hard one fails
+`verify`. `.mise/tasks/lines` measures it, over a repository or over every one; each repository
+runs it from its own `verify` (`lines` in its `mise.toml`), so a project adopts the gate when it is
+under it and not before.
+
+**Why a file and not a function.** A reader, and an agent, reads a file whole: to change one
+function safely they read what surrounds it, and a nine-thousand-line file is read by nobody. seam's
+`walk.ts` reached 9071 lines and three other files passed a thousand before anything said so, each
+one a place where a search stops at the first result that looks right because the second is four
+thousand lines down. A limit on a file is the one a tool can hold objectively; where a function is
+the size of a file, it is the same problem one level in, and the file limit is where it shows.
+
+**What is measured is code of ours.** Vendored source is somebody else's and is left out, as is
+whatever a tool wrote, and prose: a `spec/` file is long because the reasoning is, and a test
+file's cases are code and counted -- a corpus of cases splits by topic as readily as a module
+does. The extensions and the directories skipped are listed in the task, and each argues its
+exemption.
+
+**Splitting is by the seams already there, never by count.** A long file has clusters that only
+call each other, and those are the modules; a split that lands on a line number rather than a
+cluster makes two files that have to be read together, which is one file with a seam in it. The
+shared types come out first, so the clusters can import them without importing each other, and
+a constant a cluster reads at module load sits with the cluster that owns it, since a circular
+import between modules that only export functions is harmless and one that reads a constant
+during load is a temporal-dead-zone error.
+
 ## Comments
 
 A comment explains a **why** that the code cannot state: the alternative that was rejected, the

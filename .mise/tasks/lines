@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+#MISE description="Hold every source file of ours under the line limits: `lines [root ...]`"
+"""A source file of ours is under five hundred lines, and one over a thousand fails the gate.
+
+Given no root, checks this repository and every project cloned under `repos/`; given roots,
+checks those. Vendored source is somebody else's and is left out, as is anything a tool wrote.
+Prose is left out too: a `spec/` file is long because the reasoning is, and that is not the
+defect this measures. See spec/code.md, "A file is read whole, so it stays short".
+
+The soft limit is a warning tier, so it is advice until `AUDIT` is set, when it fails the way
+every other warning does under `mise run audit`. The hard limit fails always.
+"""
+
+from __future__ import annotations
+
+import os
+import pathlib
+import sys
+
+SOFT = 500
+HARD = 1000
+
+# What counts as a source file of ours. Prose (`.md`), data (`.json`, `.toml`, lockfiles) and
+# generated output are not code and are not measured.
+CODE = {".ts", ".tsx", ".js", ".mjs", ".cjs", ".rs", ".svelte", ".py", ".sh", ".fish"}
+
+# Directories that hold somebody else's source or a tool's output, by name at any depth.
+SKIPPED = {
+	"node_modules",
+	"vendor",
+	"target",
+	"dist",
+	"build",
+	".git",
+	".jj",
+	".svelte-kit",
+	".wrangler",
+	".turbo",
+	".cache",
+}
+
+
+def measured(root: pathlib.Path) -> list[tuple[pathlib.Path, int]]:
+	found: list[tuple[pathlib.Path, int]] = []
+	for directory, names, files in os.walk(root):
+		here = pathlib.Path(directory)
+		# `repos/` under the workspace is every project's own checkout: measured by its own
+		# root below, or on its own gate, never twice.
+		names[:] = [
+			one
+			for one in names
+			if one not in SKIPPED and not one.startswith(".build") and not (here == root and one == "repos")
+		]
+		for name in files:
+			path = here / name
+			if path.suffix not in CODE and not _extensionless_script(path):
+				continue
+			try:
+				with path.open("rb") as handle:
+					count = sum(1 for _ in handle)
+			except OSError:
+				continue
+			found.append((path, count))
+	return found
+
+
+def _extensionless_script(path: pathlib.Path) -> bool:
+	"""A task or hook script with no extension, which is code all the same."""
+	if path.suffix != "" or not path.is_file():
+		return False
+	try:
+		with path.open("rb") as handle:
+			return handle.read(2) == b"#!"
+	except OSError:
+		return False
+
+
+def main(argv: list[str]) -> int:
+	here = pathlib.Path(__file__).resolve().parents[2]
+	roots = [pathlib.Path(one).resolve() for one in argv] or [
+		here,
+		*(one for one in (here / "repos").iterdir() if one.is_dir()),
+	]
+	strict = os.environ.get("AUDIT") is not None
+	over_hard: list[tuple[pathlib.Path, int]] = []
+	over_soft: list[tuple[pathlib.Path, int]] = []
+	total = 0
+	for root in roots:
+		for path, count in measured(root):
+			total += 1
+			if count > HARD:
+				over_hard.append((path, count))
+			elif count > SOFT:
+				over_soft.append((path, count))
+	show = lambda path: os.path.relpath(path, here)  # noqa: E731
+	for path, count in sorted(over_soft, key=lambda one: -one[1]):
+		print(f"warning: {show(path)} is {count} lines, over the soft limit of {SOFT}")
+	for path, count in sorted(over_hard, key=lambda one: -one[1]):
+		print(f"error: {show(path)} is {count} lines, over the hard limit of {HARD}")
+	failed = bool(over_hard) or (strict and bool(over_soft))
+	print(
+		f"lines: {total} files measured, {len(over_soft)} over {SOFT}, {len(over_hard)} over {HARD}"
+		+ (" (audit: warnings fail)" if strict else "")
+	)
+	return 1 if failed else 0
+
+
+if __name__ == "__main__":
+	sys.exit(main(sys.argv[1:]))
