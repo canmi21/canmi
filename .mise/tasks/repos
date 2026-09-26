@@ -48,7 +48,9 @@ CONFIG = ROOT / "mise.toml"
 # project carrying its own copy is what `check` looks for: an identical one is dead weight, and
 # a different one shadows this repository's silently. `.editorconfig` is the sharp case -- it
 # carries `root = true`, whose whole meaning is to stop that walk -- and rustfmt likewise stops
-# at the first file it finds. See spec/architecture/repos.md.
+# at the first file it finds. An `.oxlintrc.json` that `extends` this repository's is the one
+# exception, since it is a difference rather than a copy; see `extends_workspace`.
+# See spec/architecture/repos.md.
 #
 # `.gitattributes` is deliberately absent: git resolves attributes only within one worktree, so
 # it never inherits and a project setting its own is correct.
@@ -704,9 +706,30 @@ def shadowing(project: pathlib.Path) -> list[str]:
 		provided = ROOT / path.name
 		if provided.is_file() and provided.read_bytes() == path.read_bytes():
 			found.append(f"{relative} is a byte-identical copy of the workspace's; delete it")
+		elif extends_workspace(path, provided):
+			continue
 		else:
 			found.append(f"{relative} shadows the workspace's, which is inherited by position")
 	return found
+
+
+def extends_workspace(path: pathlib.Path, provided: pathlib.Path) -> bool:
+	"""Whether a project's `.oxlintrc.json` is a difference over the workspace's, not a copy.
+
+	oxlint reads the nearest configuration per file and honors `extends`, so a file that names the
+	workspace's there and carries only what differs is the tool's own way of stating a project's
+	rule, and repeats nothing it could drift from. Read by pattern rather than parsed: the file
+	carries comments, which no JSON parser here takes, and the question is one string. Only this
+	name has such a mechanism. See spec/architecture/repos.md, "A copy is forbidden; a difference
+	that says what it extends is not".
+	"""
+	if path.name != ".oxlintrc.json":
+		return False
+	text = path.read_text()
+	named = re.search(r'"extends"\s*:\s*\[\s*"([^"]+)"', text)
+	if named is None:
+		return False
+	return (path.parent / named.group(1)).resolve() == provided.resolve()
 
 
 def command_publish(name: str | None, passed: list[str]) -> int:

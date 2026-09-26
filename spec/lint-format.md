@@ -117,13 +117,15 @@ next to it, this one included, where nothing else has a use for it.
 file: oxfmt rewrites it to a plain space unprompted. Leaving the rule on would report a
 problem the formatter has already solved.
 
-**`no-await-in-loop` is off in oxlint.** The rule assumes the iterations are independent and
-asks for `Promise.all`. Counted across seam the day it was turned off: twenty-two reports, one of
-them right -- a loop awaiting promises that owed each other nothing, since folded into one
-`Promise.all` -- and twenty-one loops that are sequential on purpose: a queue that grows while it
-is walked, a generator driven one step at a time, one render at a time for memory and for a
-deadline, and tests asserting per case. A rule that is wrong twenty-one times in twenty-two
-reports nothing; the one right case is the reviewer's to see.
+**A rule one project turns off is turned off in that project.** A project whose code makes an
+oxlint rule wrong more often than right carries its own `.oxlintrc.json` that `extends` the
+workspace's and states the difference, and nothing else -- see
+[architecture/repos.md](architecture/repos.md), "Configuration is inherited by position, not
+copied". oxlint reads the nearest configuration for each file, and does so whether it is run from
+the workspace or from inside the project; measured both ways. The reason for the rule being off
+goes in that project's `spec/`, because it is about that project's code. The workspace file keeps
+what is true of every project, which is why `no-await-in-loop` is not off here: its premise, that
+the iterations are independent, fails in seam's loops and nowhere has it been counted elsewhere.
 
 **An oxlint disable comment takes no reason suffix.** ESLint 9 allows
 `// eslint-disable-next-line rule -- why`, and oxlint does not: the ` -- why` is read as part of

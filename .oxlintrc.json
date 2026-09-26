@@ -30,12 +30,6 @@
 		// duplication. See spec/lint-format.md.
 		"no-irregular-whitespace": "off",
 
-		// Its premise is that the iterations are independent, and here they are sequential on
-		// purpose: a queue that grows while walked, a generator driven a step at a time, one
-		// render at a time. Counted at twenty-one such loops to one it was right about. See
-		// spec/lint-format.md, "`no-await-in-loop` is off in oxlint".
-		"no-await-in-loop": "off",
-
 		// Paraglide exports each message under its literal dotted key, so reading one is a
 		// computed namespace access this rule cannot follow. The check it performs is already
 		// done, and done better, by the compiler: verified that `m['notice.polised']` fails

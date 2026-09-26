@@ -45,6 +45,17 @@ An identical copy and a divergent one are reported differently -- the first is d
 second is the shadowing this arrangement exists to prevent -- and both fail, because a deliberate
 override has to be written down here before it is legitimate.
 
+**A copy is forbidden; a difference that says what it extends is not.** What the check is after
+is a file that replaces the workspace's, whether it happens to agree today or not. An
+`.oxlintrc.json` whose `extends` names the workspace's file and which carries only what differs
+is the opposite of that: it cannot drift from the workspace's, since it repeats none of it, and
+the difference is a rule about one project, which is where the split above says such a rule
+lives. oxlint reads the nearest configuration per file and honors `extends`, so this is its own
+mechanism rather than a workaround. The check reads the `extends` and lets that one shape
+through; the other inherited files have no such mechanism -- `.editorconfig` stops the walk
+outright -- so for them a file of the name is a copy, still. seam's, turning off
+`no-await-in-loop`, is the first; its reason is in seam's `spec/build.md`.
+
 A project cloned on its own therefore has no formatter configuration and no hooks. That is
 accepted rather than worked around: the way to get a complete environment is to clone this
 repository and the one project you want, nested. Two clones, not all of them.
