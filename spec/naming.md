@@ -145,6 +145,21 @@ Identifiers follow the language's own convention with no interference from this 
 A `camelCase` variable inside a `user-profile.ts` file is correct. The two rules do not
 interact.
 
+### A name is not reused inside its own scope
+
+A local does not take the name of something already in scope: not the function or import it is
+about to call, and not the variable an enclosing block already holds. `const held = ...` beside an
+imported `held()`, or a `held` two blocks inside another `held`, reads correctly only after counting
+scopes, and in a codebase whose verbs double as nouns -- `held`, `written`, `kept` -- that count is
+wrong often enough. The linter's `no-shadow` is the check.
+
+**The inner side is what gets renamed, and for what it holds rather than for being inner.** The
+function or the outer variable keeps its name, since it is the one every other reader already
+knows. The inner name says what this particular value is: the set of names an expression mentions is
+`referenced`, the edit that closes a block is `closing`, the text a rune answers to is `answer`.
+Never `held2`, `innerHeld` or `h`. Where the inner turns out to compute the same thing the outer
+already holds, it is deleted instead, which is the case a shadow most often hides.
+
 ## Inside data
 
 **A key in a serialized format is lowercase, and words in it are joined by an underscore.** JSON,
