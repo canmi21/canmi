@@ -214,9 +214,13 @@ failure into a loud one.
 
 **A source file of ours aims under five hundred lines, and one over a thousand fails the gate.**
 The soft limit is the warning tier -- advice until `mise run audit` -- and the hard one fails
-`verify`. `.mise/tasks/lines` measures it, over a repository or over every one; each repository
-runs it from its own `verify` (`lines` in its `mise.toml`), so a project adopts the gate when it is
-under it and not before.
+`verify`. `.mise/tasks/lines` measures it, over a repository or over every one, and this
+repository's `verify` runs it over every one: a project over the limit reddens the workspace's gate
+until it is under, which was decided over the alternative of each project adopting the gate once
+clean -- a gate nobody has to adopt is the one that gets adopted. A project may run the same check
+from its own `verify` as well, as seam does with `lines` in its `mise.toml`, so its own gate says
+so too. Measured the day the rule landed: seam under, and seventeen files over in lattice, rdm and
+governor, which is where the workspace's `verify` is red until they are split.
 
 **Why a file and not a function.** A reader, and an agent, reads a file whole: to change one
 function safely they read what surrounds it, and a nine-thousand-line file is read by nobody. seam's
