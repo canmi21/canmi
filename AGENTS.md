@@ -177,3 +177,4 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | `repos/governor` | a published crate, `canmi21:axum-governor` -- [repos/governor/spec/](repos/governor/spec/)             |
 | `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                |
 | `repos/seam`     | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/) |
+| `repos/grok2api` | no spec yet                                                                                            |
