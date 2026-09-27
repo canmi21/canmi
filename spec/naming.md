@@ -58,6 +58,14 @@ Some frameworks assign meaning to a filename. Follow the framework -- a renamed 
 stops working. Examples: `Cargo.toml`, `Dockerfile`, `README.md`, `AGENTS.md`, Next.js
 `[slug]/page.tsx`.
 
+### Docker's files take Docker's plain names
+
+`Dockerfile`, `.dockerignore` and `docker-compose.yml`, and no variant of any of them: not
+`Dockerfile.dockerignore`, not a suffix naming a target. Docker finds the first two by those names
+without being told, and a reader finds all three the same way; a variant is a name somebody has to
+already know. Where an image needs a context larger than its own directory, the `.dockerignore` sits
+at that context's root and serves every image built from it.
+
 ## Asset directories are singular; infrastructure is plural
 
 Under `data/`, a directory holding addressable resources is named in the singular:
