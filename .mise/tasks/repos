@@ -222,13 +222,22 @@ def command_pull(name: str | None, dry: bool = False) -> int:
 
 
 def command_push(name: str | None, dry: bool = False) -> int:
+	"""Push main wherever origin is behind it. A repository whose origin has no main yet -- a new
+	project cloned from an empty remote -- is behind by all of it: `main@origin` names nothing
+	there and is an error, where `remote_bookmarks()` is an empty set and the range is the whole
+	history. The root commit is jj's, not the project's, so it is never counted."""
 	for repo in selected(name):
 		if not is_repository(repo):
 			continue
-		ahead = jj(
-			"log", "--no-graph", "-r", "main@origin..main",
+		result = jj(
+			"log", "--no-graph", "-r", 'remote_bookmarks(exact:"main", exact:"origin")..main ~ root()',
 			"-T", 'commit_id.short() ++ "\\n"', cwd=repo, check=False,
-		).stdout.strip()
+		)
+		if result.returncode != 0:
+			print(f"{label(repo)}: cannot tell what to push")
+			sys.stderr.write(result.stderr)
+			continue
+		ahead = result.stdout.strip()
 		if not ahead:
 			print(f"{label(repo)}: nothing to push")
 			continue
