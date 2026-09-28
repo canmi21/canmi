@@ -100,6 +100,12 @@ does with a brief it believes is wrong.
 
 **Sequence and commits.** Who runs when, who owns which file, and what lands in which commit.
 
+**The conversation writes no code in a delegating session, a shared contract included.** A type
+two workers build against, a client both call, a skeleton that lets the tree compile: each is the
+first wave's one worker, and the workers depending on it are the next wave, briefed with what it
+landed. The conversation's own edits are `spec/`, the registrations only it may touch -- a
+workspace member list, a URL table entry -- and a one-line fix a brief would be longer than.
+
 **Judgement.** Working out _why_ something is broken, and what the fix has to be, stays here. It
 is made on text a worker quoted back rather than on a worker's conclusion, which is the subject
 of the next section.
