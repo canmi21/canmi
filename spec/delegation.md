@@ -192,6 +192,18 @@ because the worker is standing in the file and the conversation is not.
 Briefed that way, most edits land correct with nothing checking them. Not all of them, which is
 why the diff gets read; the estimate is the user's and it is not good enough to skip the net.
 
+**The model follows the difficulty, and the cheaper one goes first.** A read, a research brief
+and an edit whose shape the brief already names go to Sonnet; Opus is sent only where the edit is
+not plain -- a change that has to be worked out in the file, across a contract, or after a Sonnet
+worker came back without it. The conversation picks the model when it writes the brief, and says
+which in the one line the user is shown.
+
+**A worker that meets a problem reports it rather than forcing its way through.** A test that
+will not pass, an error it does not understand, a second attempt at the same fix: each ends the
+worker's turn with what it saw, quoted, and the conversation decides -- a new brief, a stronger
+model, or a question to the user. A fix forced past a problem it did not understand is the diff
+that looks finished and is not.
+
 **Every brief carries these, because a spawned agent starts cold.**
 
 - Delete with `trash`, never `rm`, and there is no recursive flag -- a directory goes as it is.
@@ -368,7 +380,7 @@ remains uncommitted is compared against what was meant to remain.
 
 ## What the user is shown
 
-**Before a wave runs: one line per worker** -- what it does, and which files it owns. Not the
+**Before a wave runs: one line per worker** -- what it does, which files it owns, and which model. Not the
 brief itself, which is long enough to bury the thing worth checking. The cheapest place in the
 whole loop to catch a misparaphrased intent is before three workers have acted on it, and a line
 is cheap enough to be read at a glance where a full brief is not.
