@@ -272,6 +272,11 @@ Write for someone scanning, not reading. Lead with the point; if the first line 
 it, cut down to the line that does. The full argument belongs in `spec/`, with the comment
 naming the file rather than repeating it.
 
+**A comment states what the code is, never where the idea came from.** A value taken from another
+site, product or design is written as the value -- `64.5rem`, `510` -- with no name of whoever
+used it first, in a comment or in a commit message. Where it came from is chat, and it ages the
+moment the code is edited to be our own.
+
 ### How long, and where the rest of it goes
 
 A comment block is at most **six body lines**. The block that opens a file and introduces the
