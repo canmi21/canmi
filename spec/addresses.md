@@ -44,6 +44,13 @@ since a program's caller reads it once and keeps it. **A page's own query is rea
 a link they share or type, and may be short: `?lang=`, `?ref=`. The page is the site asking its
 API on a reader's behalf; what it takes from its address it hands on under the API's full names.
 
+## A secret or a person's data is never in an address
+
+**What names a person, or proves who they are, goes in the body even where it is the thing**:
+an email address, a token, a code. An address is written into logs, kept by caches and sent on in
+`Referer`, and nothing of a person belongs in any of them. Cancelling a subscription names the
+subscription by its email and its token, in the body of the `DELETE`, not in its path.
+
 ## The body changes it, and a GET never does
 
 **What is written is in the body, sent by the method that says what the write is** -- `POST` to add
