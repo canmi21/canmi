@@ -82,6 +82,23 @@ reason to hesitate, and hesitating is the wrong answer. The setting supplies the
 happens in a project, instructions come from the level above it, and the level above is what
 needs a short name.
 
+## "Kit" is two things -- read the context; "shared lib" is one
+
+When the user says **kit**, it is one of two, and both are everywhere:
+
+- SvelteKit, the framework the web projects are built on;
+- the shared library: the author's own code that knows nothing of any system built on top of it,
+  published as one package, `@canmi/kit`, with each part behind a subpath of its own.
+
+As with _app_, infer which from what is being discussed: a route, a `load`, an adapter or `$app/*`
+is SvelteKit; a package, an import from `@canmi/kit` or a layer is the library. Ask only when the
+sentence leads somewhere different under the two. **"Shared lib", "shared library" and "shared"
+always mean the library**, never SvelteKit -- the user says them when the context would not settle
+it.
+
+Written into a file, the bare word is never left to be read the same way: it is "SvelteKit", or
+"the shared library" or `@canmi/kit`. A reader of a file has no conversation to infer from.
+
 ## Tone
 
 - Terse and action-oriented. Skip pleasantries and pep talk.
