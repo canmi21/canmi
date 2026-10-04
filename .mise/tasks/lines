@@ -43,7 +43,7 @@ ATTRIBUTES = ("linguist-generated", "linguist-vendored", "lines")
 def tracked(root: pathlib.Path) -> list[str] | None:
 	"""The files version control keeps under `root`, relative to it, or None with none to ask.
 
-	jj first, because a jj workspace such as the sandbox has no `.git` of its own.
+	jj first, because a second jj workspace of a repository has no `.git` of its own.
 	"""
 	for command in (["jj", "file", "list"], ["git", "ls-files"]):
 		if command[0] == "jj" and not (root / ".jj").exists():
