@@ -3,7 +3,9 @@
 """A source file of ours is under five hundred lines, and one over a thousand fails the gate.
 
 Given no root, checks this repository and every project cloned under `repos/`; given roots,
-checks those. Vendored source is somebody else's and is left out, as is anything a tool wrote.
+checks those. Vendored source is somebody else's and is left out, as is anything a tool wrote:
+untracked output by asking version control, and a tracked file by the `@generated` marker in its
+first five lines, which rustfmt honors the same way.
 Prose is left out too: a `spec/` file is long because the reasoning is, and that is not the
 defect this measures. See spec/code.md, "A file is read whole, so it stays short".
 
@@ -24,6 +26,11 @@ HARD = 1000
 # What counts as a source file of ours. Prose (`.md`), data (`.json`, `.toml`, lockfiles) and
 # generated output are not code and are not measured.
 CODE = {".ts", ".tsx", ".js", ".mjs", ".cjs", ".rs", ".svelte", ".py", ".sh", ".fish"}
+
+# The marker a tool writes into a file of its own it commits, and how far down it is looked for:
+# rustfmt's own convention, so one line keeps a file out of both. See spec/code.md.
+MARKER = b"@generated"
+MARKER_LINES = 5
 
 # Directories that hold somebody else's source or a tool's output, by name at any depth.
 SKIPPED = {
@@ -80,10 +87,12 @@ def measured(root: pathlib.Path) -> list[tuple[pathlib.Path, int]]:
 				continue
 			try:
 				with path.open("rb") as handle:
-					count = sum(1 for _ in handle)
+					lines = handle.readlines()
 			except OSError:
 				continue
-			found.append((path, count))
+			if any(MARKER in line for line in lines[:MARKER_LINES]):
+				continue
+			found.append((path, len(lines)))
 	return found
 
 

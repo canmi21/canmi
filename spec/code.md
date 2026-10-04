@@ -231,7 +231,10 @@ the size of a file, it is the same problem one level in, and the file limit is w
 
 **What is measured is code of ours.** Only the files version control tracks are counted -- `jj
 file list`, or `git ls-files` where there is no jj -- so whatever a tool wrote and git ignores,
-paraglide's compiled messages among it, is out without a list to keep. Vendored source is tracked
+paraglide's compiled messages among it, is out without a list to keep. **A file a tool writes and
+commits says so by `@generated` in its first five lines**, and that marker is the one thing that
+keeps it out: not a phrase like "do not edit", not a path list. It is rustfmt's convention, which
+skips such a file the same way, so a generator writes one header line and every check agrees. Vendored source is tracked
 and somebody else's, and is left out by its directory, `vendor/`, which is the only place it may
 sit (see [vendor.md](vendor.md)). Prose is out too: a `spec/` file is long because the reasoning
 is, and a test file's cases are code and counted -- a corpus of cases splits by topic as readily as a module
