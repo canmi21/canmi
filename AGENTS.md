@@ -88,8 +88,8 @@ is a second spelling of a word the reader will search for as `color`. The one ex
 owner spells it rather than translated. An explicit user request overrides the rest. "App" means
 a standalone application, a deployed service, or a desktop client depending on context -- read
 which from the sentence rather than asking every time. "Base", unqualified, is this workspace.
-**"Kit" is either SvelteKit or the shared library `@canmi/kit`** -- read which from the context;
-"shared lib" is only ever the library. See [spec/voice.md](spec/voice.md).
+**"Kit" is either SvelteKit or the design package `@canmi/kit`** -- read which from the context;
+"shared lib" is the whole library, the `lib` repository. See [spec/voice.md](spec/voice.md).
 
 **Naming** -- Files and directories are lowercase English, hyphens allowed. A language with
 its own convention wins locally: Rust source files use underscores. Identifiers inside code

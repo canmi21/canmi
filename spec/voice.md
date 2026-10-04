@@ -82,23 +82,26 @@ reason to hesitate, and hesitating is the wrong answer. The setting supplies the
 happens in a project, instructions come from the level above it, and the level above is what
 needs a short name.
 
-## "Kit" is two things -- read the context; "shared lib" is one
+## "Kit" is two things -- read the context; "shared lib" is the repository
 
 When the user says **kit**, it is one of two, and both are everywhere:
 
 - SvelteKit, the framework the web projects are built on;
-- the shared library: the author's own code that depends on nothing else of theirs -- a design
-  system, the addresses of their own sites -- published as one package, `@canmi/kit`, with each
-  part behind a subpath of its own, and as one crate, `canmi`, for the Rust side.
+- `@canmi/kit`, the author's design foundation -- theme, tokens, motion, behavior -- one of the
+  packages of their shared library.
 
 As with _app_, infer which from what is being discussed: a route, a `load`, an adapter or `$app/*`
-is SvelteKit; a package, an import from `@canmi/kit` or a layer is the library. Ask only when the
-sentence leads somewhere different under the two. **"Shared lib", "shared library" and "shared"
-always mean the library**, never SvelteKit -- the user says them when the context would not settle
-it.
+is SvelteKit; a theme, a token, a gesture or an import from `@canmi/kit` is the package. Ask only
+when the sentence leads somewhere different under the two.
+
+**"Shared lib", "shared library" and "lib" mean the library as a whole**: the author's own code
+that depends on nothing else of theirs, kept in one repository, `lib`, and published as
+`canmi`, `@canmi/kit`, `@canmi/ui`, `@canmi/web` and `@canmi/response`, and as the crates
+`canmi`, `response` and the rest. It was briefly called the kit, which is why the word needed this
+section.
 
 Written into a file, the bare word is never left to be read the same way: it is "SvelteKit", or
-"the shared library" or `@canmi/kit`. A reader of a file has no conversation to infer from.
+`@canmi/kit`. A reader of a file has no conversation to infer from.
 
 ## Tone
 
