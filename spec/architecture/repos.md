@@ -189,21 +189,36 @@ told off about the others.
 
 ## One verb, optionally one name
 
-`pull`, `push`, `fmt`, `check`, `update` and `audit` run across every repository, and take a name
-from `repos.toml` to run against one:
+`pull`, `push`, `fmt`, `check`, `audit`, `update` and `clean` run across every repository, and take
+a name from `repos.toml` to run against one:
 
 ```
 mise run pull            every repository
-mise run pull lattice      that one
+mise run pull rdm        that one
 mise run check           each repository's own verify
 mise run audit           the same, with warnings failing
-mise run update still    that one's own tools and dependencies, and nothing else
+mise run update still    still's own update, and nothing else
 ```
 
-They are one-line aliases onto a single implementation, so the short form is what gets typed and
-the logic lives once. A name that is not in the registry is an error that lists the names that
-are, because the alternative -- doing nothing quietly, or doing everything -- are both worse than
+They are one-line aliases onto a single dispatcher, so the short form is what gets typed and the
+loop lives once. A name that is not in the registry is an error that lists the names that are,
+because the alternative -- doing nothing quietly, or doing everything -- are both worse than
 saying so.
+
+**The dispatcher loops; the repository does the work.** What a verb does depends on what a
+repository is built with, so `fmt`, `check`, `audit`, `update` and `clean` each run the
+repository's own task for that verb -- `//repos/<name>:<verb>` -- and know nothing of cargo, pnpm or
+anything else underneath. A workspace that carried the implementations had to be taught every new
+stack, which is the opposite of defining a verb once. **What is the same in every repository
+stays here**: `pull`, `push` and `clone` are jj's, and every repository is a jj repository; so is
+`update`'s revert-on-failure, which reads what changed through jj rather than through a resolver.
+See [toolchain.md](../toolchain.md), "Dependency policy".
+
+**A repository without the task is passed over, and named.** It has said nothing about the verb,
+so it has nothing to fail; the run goes on and ends with a warning listing who was passed over. A
+failure is a declared task that ran and failed, and only that makes the run red. One repository at
+a time, on past a failure, so each log reads whole and one red repository does not hide what the
+others would have said.
 
 **A name is strict.** It means that repository and nothing else, in every half of every verb:
 nothing in the workspace or in a sibling is read for change, written or upgraded under it. What
@@ -220,15 +235,47 @@ of its origin, which is the worst possible way for a push command to be wrong. A
 means "all of them" has to mean all of them, and the one holding the others is the easiest to
 forget.
 
-**Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after
-the verb, because mise appends it last: `mise run push lattice --dry-run`. `push` and `update` pass
-it to the tool underneath, which has a real one; `pull` skips the fetch and says the divergence
-it reports is as of the last one; `verify` prints the task paths it would run.
+**Its own half of a verb is `self:<verb>`.** The workspace's `update`, `clean` and `fmt` cannot be
+named `update`, `clean` and `fmt` -- those are the loops -- so they are hidden file tasks under
+`.mise/tasks/self/`, and the dispatcher reaches them as it reaches any repository's. Its `verify`
+keeps the name, since the loop over verifies is `check`.
 
-`fmt` is the interesting case. `jj fix` has no dry run, and predicting what a formatter will do
-means reimplementing the formatter, so the dry run **runs it and puts the repository back** --
-the operation log records every state the repository has been in, and `jj op restore` returns it
-to the one from before the fix. What it reports is what the formatters actually did.
+**Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after
+the verb, because mise appends it last: `mise run push rdm --dry-run`. `pull` skips the fetch and
+says the divergence it reports is as of the last one; `push` and `clone` have real ones; `check`
+writes nothing, so its dry run prints the task paths it would run. Every other verb hands the flag
+to the repository's task, which is why that task has to take it.
+
+### What a repository's task owes the verb
+
+A repository declares a task for each verb it supports, in its `mise.toml` or as a file task, and
+the task has to keep the promises the verb makes everywhere. The flags are declared with mise's
+`usage`, so mise itself refuses an option the task does not take and the task reads
+`$usage_dry_run` rather than parsing anything:
+
+```toml
+[tasks.update]
+usage = '''
+flag "-n --dry-run" help="Say what would move and write nothing"
+flag "--major" help="Cross the ranges the manifest declares"
+'''
+```
+
+| Verb     | Takes                       | Owes                                                                                                                                                                                                                             |
+| -------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify` | nothing; reads `AUDIT`      | everything a change has to pass, warnings failing under `AUDIT=1`. See [lint-format.md](../lint-format.md)                                                                                                                       |
+| `update` | `--dry-run`, `--major` opt. | moves within declared bounds -- ranges, its own `[tools]`, a tag no resolver moves -- and names what waits beyond them; `--major` crosses the ranges or is refused; writes only inside the repository; never verifies or reverts |
+| `clean`  | `--dry-run`                 | removes only what a tool wrote and can write again, never a dependency or local state; see [toolchain.md](../toolchain.md), "A cache is what a tool can write again"                                                             |
+| `fmt`    | `--dry-run`                 | formats the files `jj.toml` names for its stack, with the same formatters, so `fmt` and the formatting a commit gets agree; the dry run lists what would change                                                                  |
+
+**A dry run writes nothing, and exits 0 when it has reported.** Whatever was found is the answer,
+not a failure -- `cargo fmt --check` and `pnpm outdated` exit non-zero on a finding, and a task
+passes that on as a report.
+
+**An `update` refused by policy is not a failure.** A version younger than pnpm's
+`minimumReleaseAge` stops the resolver, and that is the supply-chain delay working; the task says
+so and exits 0. Anything else a resolver refuses exits non-zero, and the workspace puts back what
+the task had written.
 
 **`publish` is the exception, and refuses to mean every repository.** It takes a name, it errors
 without one, and the workspace is not a candidate. Everywhere else a missing name is a
@@ -252,11 +299,6 @@ could not publish, and said it had. Two lessons, both cheap: **a dispatcher that
 is claiming to know the project's vocabulary**, and **a dry run that looks exactly like a real one
 has to be checked against the thing it was supposed to change** -- the bucket, not the log.
 
-`check` dispatches to each repository's own `verify` rather than reimplementing it: what a
-project has to pass is the project's to decide, and this only decides where to look. `fmt` is
-`jj fix` with the formatters `jj.toml` names, over every file rather than only the changed ones,
-which is why formatting is identical everywhere without any project configuring it.
-
 ## `each` is the verb for everything else
 
 `mise run each <task> [args]` runs `<task>` in every repository that declares one and passes over
@@ -272,8 +314,8 @@ hand. The workspace's own tasks are outside it -- `//:check` already fans out to
 `--dry-run` belongs to `each`, as it does to every verb here, and is taken out before the rest of
 the line reaches the task. It is the one flag `each` reads; everything else is the task's.
 
-It does not replace the named verbs. `check`, `clean` and the rest decide something the project
-cannot -- which verify, what counts as a cache -- and `each` decides nothing but where to look.
+It does not replace the named verbs. They hold their tasks to a contract -- a dry run, a revert, a
+warning for whoever has none -- and `each` holds a task to nothing but being declared.
 
 ## Tasks are reached by path
 

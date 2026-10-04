@@ -53,7 +53,9 @@ jj = "0.45"
 oxlint = "1"
 
 # The short forms. Each takes an optional name from repos.toml and means every repository
-# without one: `mise run pull` is all of them, `mise run pull lattice` is that one.
+# without one: `mise run pull` is all of them, `mise run pull rdm` is that one. pull and push are
+# jj's and live here; fmt, check, audit, update and clean run each repository's own task, and pass
+# over one that has none. See spec/architecture/repos.md, "One verb, optionally one name".
 [tasks.pull]
 description = "Fetch every repository, or one: `pull [name] [--dry-run]`"
 run = ".mise/tasks/repos pull"
@@ -63,7 +65,7 @@ description = "Push every repository's main, or one: `push [name] [--dry-run]`"
 run = ".mise/tasks/repos push"
 
 [tasks.fmt]
-description = "Format the working copy of every repository, or one: `fmt [name] [--dry-run]`"
+description = "Run every repository's own fmt, or one: `fmt [name] [--dry-run]`"
 run = ".mise/tasks/repos fmt"
 
 [tasks.check]
@@ -77,7 +79,7 @@ description = "Run every repository's verify with warnings failing, or one: `aud
 run = "AUDIT=1 .mise/tasks/repos verify"
 
 [tasks.clean]
-description = "Remove build output and tool caches, never dependencies: `clean [name] [--dry-run]`"
+description = "Run every repository's own clean, which never touches dependencies: `clean [name] [--dry-run]`"
 run = ".mise/tasks/repos clean"
 
 # The flags belong to the project, not to this verb. Everywhere else here `--dry-run` means one
@@ -88,24 +90,13 @@ run = ".mise/tasks/repos clean"
 description = "Publish one repository, which must be named: `publish <name> [flags]`"
 run = ".mise/tasks/repos publish"
 
-# Both halves of the same question -- what has moved out there, and what of it can be taken
-# without a decision. Tools move within their pins, dependencies within the ranges their manifests
-# declare, and each names what waits across a boundary without crossing it.
-#
-# A shell function because mise appends a task's arguments to the last command it runs and to no
-# other, so an array here would hand `lattice --dry-run` to the second script and nothing to the
-# first. Defining one and calling it puts both behind the same argument list.
-#
-# `--major` is deliberately not accepted: crossing a range belongs to `repos deps --major`, the
-# same way crossing a pin belongs to an edit of [tools]. One verb does not get to do both.
-#
-# A name means that repository and nothing else, in both halves. `update rdm` moves rdm's own
-# tools -- the ones its mise.toml declares, never the workspace's it reads by walking up -- and
-# rdm's dependencies, and writes nothing outside repos/rdm. Raising the workspace's toolchain is
-# `update workspace`, or `update` with no name. See spec/toolchain.md, "Dependency policy".
+# Each repository's own update, kept only where its own verify still passes, and put back where
+# it does not. What moving means is the repository's -- its resolvers, its pins, a tag no resolver
+# moves -- and the workspace's own is `self:update`. `--major` is handed on: crossing a range is a
+# repository's to do, and one that cannot refuses it. See spec/toolchain.md, "Dependency policy".
 [tasks.update]
-description = "Upgrade tools and dependencies within their bounds: `update [name] [--dry-run]`, a name meaning that repository alone"
-run = 'update() { .mise/tasks/tools up "$@" && .mise/tasks/repos deps "$@"; }; update'
+description = "Run every repository's own update, reverting what its verify rejects: `update [name] [--dry-run] [--major]`"
+run = ".mise/tasks/repos update"
 
 # Any task, in every repository that declares one, and silence from the rest -- mise's own
 # `//repos/...:<task>` does the matching. One at a time, so each project's log reads whole, and

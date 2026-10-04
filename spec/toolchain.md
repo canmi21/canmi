@@ -470,51 +470,35 @@ approve one and should not try; `claude mcp list` says which state it is in.
 
 ### Dependencies move the way tools do
 
-`mise run update` covers both halves. `cargo update` and `pnpm update` move dependencies inside
-the range their manifest asks for, exactly as `mise upgrade` moves a tool inside its pin; crossing
-a range rewrites the manifest, which is a decision with a diff and a commit message behind it,
-exactly as crossing a pin is. So the default moves inside and names the rest, `mise run repos deps
---major` is what takes it, and `update` refuses the flag rather than forwarding it. One verb does
-not get to do both.
+`mise run update` runs every repository's own `update` task, the workspace's included, and a name
+narrows it to one. A dependency moves inside the range its manifest asks for, exactly as a tool
+moves inside its pin; crossing a range rewrites the manifest, which is a decision with a diff and
+a commit message behind it, exactly as crossing a pin is. So an `update` moves inside and names
+the rest, and `--major` is what takes it -- handed on to a repository that supports it, refused by
+one that does not.
 
-This was missing rather than decided against. Lockfiles were nobody's job -- no task touched them,
-no project declared one, and nothing here said when or by whom they moved -- while `update` read
-as "bring this workspace current" and meant a third of it.
+**How a repository moves is the repository's own task, and the workspace knows none of it.** The
+workspace used to carry it -- `cargo update`, `pnpm update -r` with the vendor filter, `cargo
+upgrade` for the majors, the supply-chain delay read out of pnpm's output -- and a repository could
+only add a step in front. That made every new stack a change to the workspace, and split what one
+repository needed between two places: rdm's Zed tag in rdm, its cargo half here. Now each
+repository's `update` is the whole of how it moves, and what it owes is the contract in
+[architecture/repos.md](architecture/repos.md), "What a repository's task owes the verb".
 
-**A name means that repository and nothing else, in both halves.** `check lattice` runs lattice's
-verify and no other; `update rdm` moves the tools rdm's own `mise.toml` declares and rdm's
-dependencies, and writes nothing outside `repos/rdm`. The workspace's `[tools]` is the one set of
-pins every repository reads by walking up, so raising it is `update workspace`, or `update` with
-no name -- never a side effect of naming a project. The report beneath follows the same line: a
-named run speaks for the pins that repository owns.
-
-This replaced an asymmetry. `update <name>` used to narrow only its dependency half and run the
-workspace's toolchain half whatever was named -- `rustup update`, every pinned tool, and a rewrite
-of `rust-toolchain.toml` and `.node-version` at the root -- so asking for one project's upgrade
-changed the files of the repository holding all of them. A name that is honored by half of a verb
-is a name nobody can rely on.
+**A name means that repository and nothing else.** `update rdm` runs rdm's `update` and writes
+nothing outside `repos/rdm`. The workspace's `[tools]` is the one set of pins every repository
+reads by walking up, so raising it is `update workspace` -- its `self:update` -- or `update` with
+no name, never a side effect of naming a project. A repository's own `update` moves the tools its
+own `mise.toml` declares and nothing it inherits.
 
 **What waits across a range is measured, not predicted.** Each resolver is asked what is still out
 of date _after_ the in-range pass has run, because whatever survives that is across a boundary by
-construction. The alternative is reimplementing two resolvers' range arithmetic in order to
-disagree with them later.
+construction. For cargo that is `cargo upgrade --incompatible --dry-run`, which is cargo-edit: cargo
+does not ship it and mise's registry does not carry it, so a repository uses it when present and
+**names it when absent** rather than reporting a clean list that was never checked.
 
-`cargo upgrade` is cargo-edit, which cargo does not ship and mise's registry does not carry; the
-only backend that could is `cargo:`, which builds it from source. That is a compile on every fresh
-machine to answer a question asked about weekly, so it is a tool used when present and **named
-when absent** rather than declared -- silently skipping the half that needs it would report a
-clean list that was never checked.
-
-**A dependency no resolver can move is moved by the repository's own `update` task, run first.**
-A git dependency pinned to a tag is one commit to cargo, so `cargo update` leaves it where it was
-written, and the policy above would silently stop applying to it. A project that has one declares
-an `update` task that takes `--dry-run`; `deps` runs it before the resolvers, so the lockfile and
-the verify that follow see what it wrote, and a failure reverts it with everything else, the
-manifest being among the files put back. The task owes the same line as the rest: move within the
-bound, name what waits beyond it. rdm is the one that has it; see
-[repos/rdm/spec/framework.md](../repos/rdm/spec/framework.md), "Where the crates come from".
-
-Vendored source is filtered out of all of this. See [vendor.md](vendor.md).
+Vendored source is filtered out of all of this, by the repository that holds it. See
+[vendor.md](vendor.md).
 
 ### A dependency that moved while you were working is the user's upgrade
 
@@ -539,10 +523,15 @@ every declared range alone. The range is a statement about what the code can wor
 narrowing it to route around one bad release is a claim that outlives the release: the next reader
 finds a bound with no reason attached, and the version it excludes was fixed months ago.
 
-**`update` makes that repair itself.** A repository whose manifests or lockfiles moved runs its
-own verify before the run moves on, and a failure puts every one of them back to what was on disk
-before the run -- a pnpm tree is reinstalled from the restored lockfile -- and names the repository
-and the lines that failed under the summary. Doing it by hand was the part nobody could do well:
+**`update` makes that repair itself, and it is the one half that stays in the workspace.** Before a
+repository's `update` runs, the workspace records its working copy through jj; afterwards it reads
+which files changed, runs that repository's `verify`, and on a failure puts exactly those files
+back with `jj restore` and names the repository and the lines that failed under the summary. A
+failed `update` is put back the same way, since it may have stopped halfway through a rewrite.
+None of that needs to know what a resolver is, which is why it is not a repository's to repeat.
+By path rather than `jj op restore`, so an edit somebody made elsewhere in the working copy while
+it ran survives. What it does not restore is an installed tree: a pnpm repository's
+`node_modules` follows the restored lockfile at its next install. Doing it by hand was the part nobody could do well:
 gpui-unofficial publishes some twenty crates that each require the others' exact release, so
 holding the family back meant a `cargo update -p --precise` per crate in dependency order, while
 every other crate in the graph still had to move. The whole lockfile goes back rather than one
@@ -560,37 +549,29 @@ failed and how, not to build a record of it.
 
 ### A cache is what a tool can write again, and nothing else is
 
-`mise run clean` removes build output and tool caches, everywhere or in one named repository. The
-line it draws is what makes it safe to run without thinking first:
+`mise run clean` runs every repository's own `clean`, or one named repository's. What each removes
+is the repository's to say, because a cache belongs to the tool that writes it and a repository
+is what chose its tools. The line every one of them draws is the same, and it is what makes `clean`
+safe to run without thinking first:
 
 - **Dependencies are not caches.** `node_modules` stays exactly as installed and only what tools
   dropped inside it goes -- `.vite`, `.vite-temp`, `.cache`, `.vitest`. A clean that ends in a
-  reinstall is not a clean, it is a network bill. pnpm's own store is pruned instead, which
-  removes packages nothing references and leaves every installed tree alone; that runs only on the
-  unnamed sweep, because one store serves the whole machine and pruning it from inside one project
-  reaches a long way outside what was asked for.
+  reinstall is not a clean, it is a network bill. The same holds for `~/.cargo/registry` and
+  `~/.cargo/git`, and pnpm's store is the machine's rather than any repository's, so no `clean`
+  prunes it.
 - **Local state is not a cache.** `.wrangler/state` is a local D1, KV and R2 emulation -- rows
   somebody typed, not output somebody built -- so only `.wrangler/tmp` goes.
-- **cargo owns its own output.** `cargo clean` is what empties the target directory, and the
-  directory cargo names is pruned from the sweep. `[build] target-dir` can move it anywhere, so a
-  sweep matching the word `target` would miss the real one and find somebody else's -- and did,
-  reporting a gigabyte of `target/debug/build` as its own finding.
+- **cargo owns its own output.** `cargo clean` is what empties the target directory. `[build]
+target-dir` can move it anywhere, so a sweep matching the word `target` would miss the real one
+  and find somebody else's -- and did, reporting a gigabyte of `target/debug/build` as its own.
 
-**What gets removed is decided twice, by a name and by version control.** A path has to match the
-list of things a build tool writes _and_ be ignored by the repository _and_ have nothing tracked
+**What gets removed is decided twice, by a name and by version control.** A path a `clean` sweeps
+has to be one its tools write _and_ be ignored by the repository _and_ have nothing tracked
 underneath it. Neither half is enough on its own: lattice ignores `build/` and tracks five records
 under `data/build/` that a site-only CI job cannot regenerate, so a name alone would delete them --
 while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
-database.
-
-**The sweep stops at every repository boundary that is not its own.** The workspace holds five
-repositories under `repos/`, so a walk that went through would make `clean workspace` mean `clean`;
-lattice lists `repos/*` among its pnpm workspace packages, so the same is true one level down. A
-directory carrying a `.git` or a `.jj` is somebody else's to clean.
-
-The list is toolchain-generic rather than per-project, because a cache belongs to the tool that
-writes it and the tools are this repository's to declare. A project needing more than the list
-covers is the point at which that stops being true, and nothing has reached it yet.
+database. **A sweep stops at every repository boundary that is not its own**: a directory carrying
+a `.git` or a `.jj` is somebody else's to clean.
 
 ### A package version waits a day before it can be installed
 

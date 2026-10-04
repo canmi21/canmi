@@ -117,17 +117,17 @@ YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
 **One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean|audit` run across
-every repository; add a name from `repos.toml` -- `mise run check lattice` -- to run against one,
-and `--dry-run` to any of them to be told what it would do. `check` dispatches to each
-repository's own `verify`. `audit` is the same run with every warning counted as a failure, which
-is not what routine work runs; a linter's warning tier is advice until somebody asks. `update` covers both halves of what has moved out there: tools within their pinned
-majors and dependencies within the ranges their manifests declare, ending by naming what waits
-across a boundary without crossing it, which is the only place that gets reported. A name means
-that repository alone, in both halves and in every verb: its own declared tools, its own
-dependencies, nothing in the workspace or a sibling -- the workspace's toolchain moves under
-`update workspace` or a bare `update`. Crossing a boundary is an edit to `[tools]` or `mise run repos deps --major`, never
-`update` itself. `clean` removes what a tool wrote and can write again; dependencies and
-local state are not caches and it never touches them. See [spec/toolchain.md](spec/toolchain.md).
+every repository; add a name from `repos.toml` -- `mise run check rdm` -- to run against one, and
+`--dry-run` to any of them to be told what it would do. A name means that repository alone, in
+every verb. `pull` and `push` are jj's and live here; the rest run each repository's own task --
+`verify` for `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository
+without one, naming it. What such a task owes the verb, `--dry-run` first, is in
+[spec/architecture/repos.md](spec/architecture/repos.md). `audit` is `check` with every warning
+counted as a failure, which is not what routine work runs. `update` moves within declared bounds
+and keeps a repository's move only where its own verify still passes; crossing a range is
+`update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes what a tool wrote and
+can write again; dependencies and local state are not caches. The workspace's own half of a verb
+is `self:<verb>`. See [spec/toolchain.md](spec/toolchain.md).
 
 **`each` is every other task.** `mise run each <task> [args]` runs it in every repository that
 declares it, one at a time and on past a failure; the rest are passed over. See

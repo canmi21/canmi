@@ -1,0 +1,33 @@
+#!/bin/sh
+#MISE description="The workspace's own update: its [tools] within their pins, its package.json within its ranges"
+#MISE hide=true
+#USAGE flag "-n --dry-run" help="Say what would move and write nothing"
+#USAGE flag "--major" help="Cross the ranges package.json declares; a tool pin is crossed by editing [tools], never here"
+# The workspace is a repository like the others, and this is its `update`; `mise run update`
+# reaches it as `workspace`. See spec/toolchain.md, "Dependency policy".
+set -e
+cd "$MISE_PROJECT_ROOT"
+
+if [ "${usage_dry_run:-}" = true ]; then
+	.mise/tasks/tools up workspace --dry-run
+	echo
+	echo '$ pnpm outdated'
+	# Exits non-zero whenever something is outdated, which is the answer rather than a failure.
+	pnpm outdated || true
+	exit 0
+fi
+
+.mise/tasks/tools up workspace
+echo
+echo "\$ pnpm update${usage_major:+ --latest}"
+# A version younger than minimumReleaseAge is the supply-chain delay holding, not a failure; it
+# lifts itself within the day. See spec/toolchain.md.
+if ! out=$(pnpm update ${usage_major:+--latest} 2>&1); then
+	echo "$out"
+	if echo "$out" | grep -q ERR_PNPM_NO_MATURE_MATCHING_VERSION; then
+		echo "held by the supply-chain delay, nothing moved; run again once it has aged"
+		exit 0
+	fi
+	exit 1
+fi
+echo "$out"

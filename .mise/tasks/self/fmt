@@ -1,0 +1,13 @@
+#!/bin/sh
+#MISE description="The workspace's own fmt: oxfmt over the files jj.toml gives it"
+#MISE hide=true
+#USAGE flag "-n --dry-run" help="List the files that would change and write nothing"
+# The same file set as jj.toml's oxfmt entry, so `fmt` and the formatting a commit gets agree.
+set -e
+cd "$MISE_PROJECT_ROOT"
+files='**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx,css,json,jsonc,md,svelte}'
+if [ "${usage_dry_run:-}" = true ]; then
+	oxfmt --list-different --no-error-on-unmatched-pattern "$files" || true
+else
+	oxfmt --no-error-on-unmatched-pattern "$files"
+fi

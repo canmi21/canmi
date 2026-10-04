@@ -1,33 +1,31 @@
 #!/usr/bin/env python3
-#MISE description="The repositories: `repos list|clone|pull|push|fmt|deps|clean|verify [name]`"
+#MISE description="The repositories: `repos list|clone|pull|push|fmt|update|clean|verify [name]`"
 """Every command here takes an optional repository name and means all of them without one.
 
-The name is a key from repos.toml, which is the local directory: `repos pull press` is press,
-`repos pull` is everything. The top-level `pull`, `push`, `check` and `fmt` tasks are one-line
+The name is a key from repos.toml, which is the local directory: `repos pull rdm` is rdm,
+`repos pull` is everything, and `workspace` is this repository. The top-level verbs are one-line
 aliases onto this, so the short form is what gets typed and this file is where it lives once.
 
   list             what the registry holds and what is on disk
   clone            clone whatever is listed and missing
   pull             fetch, and say what moved
   push             push main
-  fmt              format every file in the working copy through `jj fix`
-  deps             update dependencies inside their ranges, and name what waits across one
-  clean            remove build output and tool caches, never dependencies or local state
-  verify           run each repository's own verify
-  publish          run one repository's own publish; a name is required
+  fmt              each repository's own fmt
+  update           each repository's own update, kept where its own verify still passes
+  clean            each repository's own clean
+  verify           each repository's own verify
+  publish          one repository's own publish; a name is required
   check            the registry, the task roots and the directories still agree
 
-Every command that changes something takes `--dry-run` (`-n`) and reports what it would do
-instead. `push` and `clone` have a real one; `fmt` gets there by running and rolling back.
-
-push is the user's to run. An agent does not run it and does not offer to -- see
-spec/commits.md.
+pull, push and clone are jj's and the same in every repository, so they live here. What fmt,
+update, clean and verify do depends on what a repository is built with, so each runs the
+repository's own task, and one without it is passed over and named. Every command that changes
+something takes `--dry-run` (`-n`), and every repository task it reaches takes it as well.
+See spec/architecture/repos.md, "One verb, optionally one name".
 """
 
 from __future__ import annotations
 
-import json
-import os
 import pathlib
 import re
 import subprocess
@@ -64,37 +62,6 @@ INHERITED = (
 )
 
 ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$', re.MULTILINE)
-
-# Directories a build tool writes and can write again, by the name it writes them under. This
-# list decides what `clean` *looks at*; whether a match is actually removed is decided by version
-# control, in `disposable`. Both halves are needed and neither is enough: press ignores `build/`
-# and also tracks records under `data/build/`, so a name alone would delete them, while "anything
-# git ignores" is `node_modules`, `.env`, press's photograph library and a local D1 database.
-#
-# Kept to names the toolchain writes rather than names a project chose. A cache belongs to the
-# tool that produces it, and the tools are the workspace's to declare -- see spec/toolchain.md.
-# `target` is absent on purpose: it is cargo's, `[build] target-dir` can move it anywhere, and a
-# sweep matching the word would both miss the real one and find somebody else's.
-SWEPT = ("dist", "build", "coverage", ".svelte-kit", ".turbo", ".output", "__pycache__")
-
-# Caches that sit inside a directory whose other contents must not be touched, so the sweep looks
-# for these by exact position and never descends past the parent.
-#
-# `node_modules` is the whole point of the distinction: clearing a cache must not turn into
-# reinstalling dependencies, so the installed tree is left exactly as it is and only what tools
-# dropped inside it goes. `.wrangler/state` is a local D1, KV and R2 emulation -- data somebody
-# entered, not output somebody built -- and only `.wrangler/tmp` is a cache.
-NESTED = {
-	"node_modules": (
-		".vite",
-		".vite-temp",
-		".cache",
-		".vitest",
-		".svelte2tsx-language-server-files",
-	),
-	".wrangler": ("tmp",),
-}
-
 
 def fail(message: str) -> "SystemExit":
 	return SystemExit(f"error: {message}")
@@ -253,102 +220,33 @@ def command_push(name: str | None, dry: bool = False) -> int:
 	return 0
 
 
-def command_fmt(name: str | None, dry: bool = False) -> int:
-	"""`jj fix` over every file in the working copy, with the formatters jj.toml names for every
-	repository -- not only the files the working copy changed, which is all `jj fix` visits by
-	default and which left untouched files at no formatter's output. See spec/lint-format.md.
-
-	`jj fix` has no dry run, so the dry one runs it and then puts the repository back. That is
-	cheaper than it sounds and better than the alternative: the operation log records every state
-	the repository has been in, `jj op restore` returns it to the one from before, and what gets
-	reported is therefore what the formatters actually did rather than a guess at it. Predicting
-	the output of a formatter means reimplementing the formatter.
-	"""
-	for repo in selected(name):
-		if not is_repository(repo):
-			continue
-		mark = jj("op", "log", "-n1", "--no-graph", "-T", "id.short()", cwd=repo).stdout.strip()
-		before = jj("log", "-r", "@", "--no-graph", "-T", "commit_id", cwd=repo).stdout.strip()
-		result = jj("fix", "--source", "@", "--include-unchanged-files", cwd=repo, check=False)
-		if result.returncode != 0:
-			print(f"{label(repo)}: fix failed")
-			sys.stderr.write(result.stderr)
-			continue
-		after = jj("log", "-r", "@", "--no-graph", "-T", "commit_id", cwd=repo).stdout.strip()
-		if before == after:
-			print(f"{label(repo)}: nothing to fix")
-			continue
-		changed = jj("diff", "--from", before, "--to", after, "--summary", cwd=repo, check=False)
-		print(f"{label(repo)}: {'would reformat' if dry else 'reformatted'}")
-		for line in changed.stdout.strip().splitlines():
-			print(f"    {line}")
-		if dry:
-			jj("op", "restore", mark, cwd=repo)
-	return 0
+# What each verb runs in a repository. A project's task carries the verb's own name; the
+# workspace's cannot, because there the verb's name is the loop itself, so its own half lives
+# under `self:` -- `.mise/tasks/self/<verb>`. `verify` is not a loop verb (`check` is), so the
+# workspace's keeps its name.
+OWN = {"update": "self:update", "clean": "self:clean", "fmt": "self:fmt"}
 
 
-def command_verify(name: str | None, dry: bool = False) -> int:
-	"""Each repository's own verify, by its namespaced task path."""
-	failed = []
-	for repo in selected(name):
-		task = "//:verify" if repo == ROOT else f"//repos/{repo.name}:verify"
-		if dry:
-			print(f"would run {task}")
-			continue
-		print(f"\n=== {task} ===")
-		if subprocess.run(["mise", "run", task], cwd=ROOT).returncode != 0:
-			failed.append(label(repo))
-	if failed:
-		print(f"\nfailed: {', '.join(failed)}")
-	return 1 if failed else 0
+def own_task(repo: pathlib.Path, verb: str) -> str:
+	if repo == ROOT:
+		return f"//:{OWN.get(verb, verb)}"
+	return f"//repos/{repo.name}:{verb}"
 
 
-def manifests(where: pathlib.Path) -> list[str]:
-	"""Which resolvers own dependencies in this repository, in the order they should be asked.
-
-	cargo first: press and seam declare both, and the Rust half is what the JavaScript half builds
-	against there rather than the other way round.
-	"""
-	found = []
-	if (where / "Cargo.toml").is_file():
-		found.append("cargo")
-	if (where / "package.json").is_file():
-		found.append("pnpm")
-	return found
-
-
-def recursive(where: pathlib.Path) -> list[str]:
-	"""`-r`, but only where there is a pnpm workspace for it to mean something, and never vendored.
-
-	Without a `pnpm-workspace.yaml` pnpm reads `-r` as "walk down from here", and here is a
-	directory with five other repositories under it: asked from the workspace root it descended
-	into `repos/press/apps/api` and failed on a lockfile that is press's business, not this one's.
-
-	The vendor filter is the rule in spec/vendor.md, which this command broke on its first real
-	run. seam lists `vendor/*` as workspace packages, so `pnpm update -r` rewrote eleven ranges in
-	`vendor/kit/package.json` -- source that is kept as upstream wrote it precisely so the next
-	upgrade stays a copy rather than a hand merge. A vendored package is upgraded by taking a newer
-	upstream, never by a resolver here.
-	"""
-	if not (where / "pnpm-workspace.yaml").is_file():
-		return []
-	return ["-r", "--filter", "!./vendor/**"]
-
-
-# pnpm's name for "this version exists and is younger than minimumReleaseAge". press sets that
-# delay to a day, so a Cloudflare release from this morning stops the run -- which is the policy
-# working, not the command failing. See spec/toolchain.md on the dependency policy.
-IMMATURE = "ERR_PNPM_NO_MATURE_MATCHING_VERSION"
+def declares(repo: pathlib.Path, verb: str) -> bool:
+	"""Whether a repository has its own task for this verb, inline or as a file task."""
+	task = OWN.get(verb, verb) if repo == ROOT else verb
+	config = repo / "mise.toml"
+	text = config.read_text() if config.is_file() else ""
+	inline = f"[tasks.{task}]" in text or f'[tasks."{task}"]' in text
+	return inline or (repo / ".mise" / "tasks" / task.replace(":", "/")).is_file()
 
 
 def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.CompletedProcess:
-	"""One resolver command, its output shown as it arrives and kept, unless only the text is asked.
+	"""One command, its output shown as it arrives and kept, unless only the text is asked.
 
-	Shown as it arrives rather than captured and printed at the end, because a cargo update that
-	resolves a large graph is long enough that silence reads as a hang. Kept as well as shown,
-	because what a resolver refused for has to be read back: a run that stops on the supply-chain
-	delay is a wait and a run that stops on anything else is a failure, and the difference is a
-	line of its output.
+	Shown as it arrives because a verify is long enough that silence reads as a hang; kept because
+	the lines it failed on are repeated under the summary, where a long log would bury them.
 	"""
 	if quiet:
 		return subprocess.run(list(command), cwd=where, capture_output=True, text=True)
@@ -363,50 +261,6 @@ def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.
 	return subprocess.CompletedProcess(command, process.wait(), "".join(seen), "")
 
 
-def upgrade_available() -> bool:
-	"""Whether `cargo upgrade` exists. It is cargo-edit, which cargo does not ship.
-
-	mise's registry does not carry cargo-edit, and the only backend that could is `cargo:`, which
-	builds it from source -- a compile on every fresh machine to answer a question asked at most
-	weekly. So it is a tool this repository uses when it is there and names when it is not, rather
-	than one it declares. Only the major half needs it; `cargo update` is cargo's own.
-	"""
-	return subprocess.run(["cargo", "upgrade", "--version"], capture_output=True).returncode == 0
-
-
-# What a resolver rewrites. A manifest is in the list because `--major` rewrites ranges, and a
-# revert that put the lockfile back under a raised range would leave the two disagreeing.
-RESOLVED = ("Cargo.toml", "Cargo.lock", "package.json", "pnpm-lock.yaml")
-
-
-def resolved_files(repo: pathlib.Path) -> dict[pathlib.Path, bytes]:
-	"""Every tracked manifest and lockfile in this repository, as it is on disk now.
-
-	Tracked, so a nested workspace member is covered and `node_modules` is not. Read from disk
-	rather than from the commit, so a manifest somebody was editing when `update` ran comes back
-	with their edit in it.
-	"""
-	files = jj("file", "list", cwd=repo, check=False).stdout.splitlines()
-	found = {}
-	for relative in files:
-		path = repo / relative
-		if path.name in RESOLVED and path.is_file():
-			found[path] = path.read_bytes()
-	return found
-
-
-def declares(repo: pathlib.Path, task: str) -> bool:
-	"""Whether a project under repos/ has a task of this name, inline or as a file task.
-
-	Never the workspace itself: its own `update` is the verb this runs inside.
-	"""
-	if repo == ROOT:
-		return False
-	config = repo / "mise.toml"
-	inline = config.is_file() and f"[tasks.{task}]" in config.read_text()
-	return inline or (repo / ".mise" / "tasks" / task).is_file()
-
-
 def symptom(output: str) -> list[str]:
 	"""The lines of a failed verify worth repeating under the summary, which a long log buries."""
 	lines = output.splitlines()
@@ -414,288 +268,111 @@ def symptom(output: str) -> list[str]:
 	return (marked or lines)[:10]
 
 
-def command_deps(name: str | None, dry: bool = False, major: bool = False) -> int:
-	"""Dependencies within the ranges their manifests declare, and what waits across one.
-
-	The same shape as the toolchain half and for the same reason. `cargo update` and `pnpm update`
-	move inside the range a manifest asks for; crossing one rewrites the manifest, which is a
-	decision with a diff behind it exactly as crossing a tool pin is. So the default moves inside
-	and reports the rest, and `--major` is what takes it.
-
-	**What waits is measured, not predicted.** Each resolver is asked what is still out of date
-	*after* the in-range update has run, because whatever survives that is across a range boundary
-	by construction. The alternative is reimplementing two resolvers' range arithmetic in order to
-	disagree with them later.
-
-	**What moved is verified, and put back when it breaks.** The rule in spec/toolchain.md -- an
-	upgrade that breaks is reverted in the lockfile, never pinned in the manifest -- used to be
-	left to whoever ran this, and taking one crate family out of a lockfile by hand is a loop of
-	`cargo update -p --precise` against packages that require each other's exact version. So each
-	repository whose files moved runs its own verify, and a failure restores every manifest and
-	lockfile to what it was before the run. The next `update` tries the range again from the top.
-	"""
-	edit = upgrade_available()
-	# A resolver that refuses is not a resolver that had nothing to do, and the first version of
-	# this could not tell them apart: press's `pnpm update --latest` stopped on the supply-chain
-	# delay -- eight versions younger than `minimumReleaseAge` -- and the run went on to report
-	# that dependencies had been moved across their ranges. Nothing had moved. A step that fails
-	# is named here and the command exits non-zero.
-	failed = []
-	immature = []
-	reverted = []
-
-	def take(repo: pathlib.Path, *command: str, where: pathlib.Path | None = None) -> None:
-		result = step(where or repo, *command)
-		if result.returncode == 0:
-			return
-		# A refusal on the supply-chain delay is press's own policy holding, and it lifts itself
-		# within the day. Reporting it as a failed run would make `update` red on any morning
-		# Cloudflare shipped, which teaches a person to stop reading the last line.
-		if IMMATURE in result.stdout:
-			immature.append(label(repo))
-		else:
-			failed.append((label(repo), " ".join(command)))
-
-	for repo in selected(name):
-		kinds = manifests(repo)
-		if not kinds:
-			continue
-		print(f"\n=== {label(repo)} ===")
-		before = {} if dry else resolved_files(repo)
-		# A dependency no resolver can move is the repository's own to move, first, so the
-		# resolvers and the verify below see what it wrote. rdm takes gpui at a Zed tag.
-		if declares(repo, "update"):
-			take(repo, "mise", "run", f"//repos/{repo.name}:update", *(["--dry-run"] if dry else []), where=ROOT)
-		if "cargo" in kinds:
-			if major and edit:
-				take(repo, "cargo", "upgrade", "--incompatible", *(["--dry-run"] if dry else []))
-			take(repo, "cargo", "update", *(["--dry-run"] if dry else []))
-		if "pnpm" in kinds:
-			if dry:
-				# pnpm update has no dry run, so the read-only question stands in for it. Its exit
-				# code says whether anything is outdated rather than whether it worked, so unlike
-				# the others it is not checked.
-				step(repo, "pnpm", "outdated", *recursive(repo))
-			else:
-				take(repo, "pnpm", "update", *recursive(repo), *(["--latest"] if major else []))
-		if dry:
-			continue
-		if all(path.read_bytes() == data for path, data in before.items() if path.is_file()):
-			continue
-		task = "//:verify" if repo == ROOT else f"//repos/{repo.name}:verify"
-		print()
-		result = step(ROOT, "mise", "run", task)
-		if result.returncode == 0:
-			continue
-		for path, data in before.items():
-			path.write_bytes(data)
-		# pnpm has already installed what it resolved, so the tree is brought back to the lockfile
-		# that was just restored. cargo needs nothing: it reads the lockfile at the next build.
-		if "pnpm" in kinds:
-			step(repo, "pnpm", "install", *recursive(repo))
-		reverted.append((label(repo), symptom(result.stdout)))
-
+def summary(verb: str, skipped: list[str], failed: list[str]) -> None:
+	"""The part a person acts on, after every repository's own log."""
+	if not (skipped or failed):
+		return
 	print("\n" + "-" * 72)
+	if skipped:
+		print(f"warning: no {verb} task of their own, so passed over: {', '.join(skipped)}")
+	if failed:
+		print(f"failed: {', '.join(failed)}")
+
+
+def command_dispatch(verb: str, name: str | None, dry: bool = False) -> int:
+	"""Each selected repository's own task for this verb, one after another and on past a failure.
+
+	**What a verb does is the repository's to say; this only decides where to look.** A
+	repository without the task is passed over and named, not failed: it has said nothing about
+	this verb, and a failure belongs to a task that ran. `--dry-run` is handed on, and every
+	project's task for a verb that writes takes it; `verify` writes nothing, so its dry run is this
+	printing the task it would run. See spec/architecture/repos.md, "One verb, optionally one name".
+	"""
+	skipped, failed = [], []
+	for repo in selected(name):
+		if not declares(repo, verb):
+			skipped.append(label(repo))
+			continue
+		task = own_task(repo, verb)
+		if dry and verb == "verify":
+			print(f"would run {task}")
+			continue
+		flags = ["--dry-run"] if dry else []
+		print(f"\n=== {' '.join([task, *flags])} ===")
+		if subprocess.run(["mise", "run", task, *flags], cwd=ROOT).returncode != 0:
+			failed.append(label(repo))
+	summary(verb, skipped, failed)
+	return 1 if failed else 0
+
+
+def snapshot(repo: pathlib.Path) -> str:
+	"""The working copy as a commit, as of now. jj snapshots on every command, so asking is enough."""
+	return jj("log", "-r", "@", "--no-graph", "-T", "commit_id", cwd=repo).stdout.strip()
+
+
+def restore(repo: pathlib.Path, before: str, paths: list[str]) -> None:
+	"""Put exactly these paths back as they were in `before`, and nothing else in the working copy.
+
+	By path rather than by operation: `jj op restore` would also take back whatever somebody
+	edited elsewhere in the working copy while the update ran. A path is quoted as a literal file,
+	so a bracket or a star in a name is not read as a pattern.
+	"""
+	literal = lambda path: 'root-file:"' + path.replace("\\", "\\\\").replace('"', '\\"') + '"'
+	jj("restore", "--from", before, *map(literal, paths), cwd=repo)
+
+
+def command_update(name: str | None, dry: bool = False, major: bool = False) -> int:
+	"""Each repository's own `update`, kept only where that repository's own `verify` still passes.
+
+	Moving is the repository's, because only it knows its resolvers, its pins and anything no
+	resolver can move. Keeping is decided here, the same way for every repository and without
+	knowing any of that: what the update changed is read from jj, and a verify that fails puts
+	exactly those files back. A failed update is put back the same way, since it may have stopped
+	halfway through a rewrite. The next `update` tries again from the top. See spec/toolchain.md,
+	"Dependency policy".
+	"""
+	skipped, failed, reverted = [], [], []
+	flags = (["--dry-run"] if dry else []) + (["--major"] if major else [])
+	for repo in selected(name):
+		if not declares(repo, "update"):
+			skipped.append(label(repo))
+			continue
+		task = own_task(repo, "update")
+		print(f"\n=== {' '.join([task, *flags])} ===")
+		if dry:
+			if subprocess.run(["mise", "run", task, *flags], cwd=ROOT).returncode != 0:
+				failed.append(label(repo))
+			continue
+		before = snapshot(repo)
+		code = subprocess.run(["mise", "run", task, *flags], cwd=ROOT).returncode
+		after = snapshot(repo)
+		paths = jj("diff", "--from", before, "--to", after, "--name-only", cwd=repo).stdout.splitlines()
+		if code != 0:
+			if paths:
+				restore(repo, before, paths)
+			failed.append(label(repo))
+			continue
+		if not paths:
+			continue
+		if not declares(repo, "verify"):
+			print(f"\n{label(repo)} has no verify, so what moved is kept unchecked")
+			continue
+		check = own_task(repo, "verify")
+		print(f"\n=== {check} ===")
+		result = step(ROOT, "mise", "run", check)
+		if result.returncode != 0:
+			restore(repo, before, paths)
+			reverted.append((label(repo), symptom(result.stdout), paths))
+
+	summary("update", skipped, failed)
 	if reverted:
-		print("Reverted, because verify failed with what moved; every manifest and lockfile is back:\n")
-		for place, lines in reverted:
-			print(f"  {place}")
+		print("\nReverted, because verify failed with what moved; these files are back as they were:\n")
+		for place, lines, paths in reverted:
+			print(f"  {place}: {', '.join(paths)}")
 			for line in lines:
 				print(f"      {line}")
-		print("\n  the full log is above; the next `update` tries the same ranges again\n")
-	if immature:
-		print(f"Held by the supply-chain delay, nothing moved: {', '.join(sorted(set(immature)))}")
-		print("  a version younger than minimumReleaseAge; run again once it has aged\n")
-	if failed:
-		print("Refused, and nothing moved in these:\n")
-		for place, command in failed:
-			print(f"  {place:<12} {command}")
-		print("\n  the resolver said why above; this reports it rather than passing over it")
-		return 1
-	if major:
-		# Only what was kept was moved. Printed after a revert, this line reported the one run that
-		# moved nothing as the one that moved everything, and exited 0 under it.
-		if not reverted:
-			print("Dependencies were moved across their ranges, and verify passed.\n")
-		return 1 if reverted else 0
-	print("Beyond the ranges each manifest declares:\n")
-	if not edit:
-		print("  cargo upgrade is missing, so no crate's major was checked")
-		print("  `cargo install cargo-edit` is what supplies it")
-	held = False
-	for repo in selected(name):
-		kinds = manifests(repo)
-		lines = []
-		if "cargo" in kinds and edit:
-			result = step(repo, "cargo", "upgrade", "--incompatible", "--dry-run", quiet=True)
-			lines += [line for line in result.stdout.splitlines() if line.strip()]
-		if "pnpm" in kinds:
-			result = step(repo, "pnpm", "outdated", *recursive(repo), quiet=True)
-			lines += [line for line in result.stdout.splitlines() if line.strip()]
-		if lines:
-			held = True
-			print(f"{label(repo)}:")
-			for line in lines:
-				print(f"    {line}")
-	if not held:
-		print("  nothing; every dependency is at the top of the range its manifest allows")
-	else:
-		print("\n  `mise run repos deps --major` rewrites the manifests; nothing else here does")
-	return 1 if reverted else 0
-
-
-def disposable(repo: pathlib.Path, path: pathlib.Path) -> bool:
-	"""Whether the repository's own version control says this path is output rather than record.
-
-	Two questions, because either alone deletes something somebody wanted. The path has to be
-	ignored -- a `dist/` that is committed is a decision, not an oversight -- and nothing tracked
-	may live under it. press is where both earn their place: `data/build/` holds five records the
-	site's build reads and cannot regenerate without a Rust toolchain, sitting inside a directory
-	whose name is on the sweep list, under a `data/**` ignore with the records named back in.
-
-	git rather than jj: `check-ignore` and `ls-files` answer exactly these two questions, every
-	repository here is colocated, and the ignore file they read is the one the project wrote.
-	"""
-	relative = str(path.relative_to(repo))
-	if subprocess.run(["git", "check-ignore", "-q", relative], cwd=repo).returncode != 0:
-		return False
-	tracked = subprocess.run(
-		["git", "ls-files", "--", relative], cwd=repo, capture_output=True, text=True
-	)
-	return not tracked.stdout.strip()
-
-
-def cargo_output(repo: pathlib.Path) -> pathlib.Path | None:
-	"""Where cargo writes, asked rather than guessed.
-
-	Asked because `[build] target-dir` moves it and because guessing was wrong in both directions
-	at once. The sweep list leaves `target` out on the grounds that cargo owns it -- and then the
-	walk went straight through it and matched every `target/debug/build` inside, reporting a
-	gigabyte of cargo's own output as though this command had found it. Pruning what cargo names
-	is the same rule the list was written for, applied where it actually decides something.
-	"""
-	result = subprocess.run(
-		["cargo", "metadata", "--format-version", "1", "--no-deps"],
-		cwd=repo,
-		capture_output=True,
-		text=True,
-	)
-	if result.returncode != 0:
-		return None
-	try:
-		return pathlib.Path(json.loads(result.stdout)["target_directory"])
-	except (ValueError, KeyError):
-		return None
-
-
-def artifacts(repo: pathlib.Path) -> list[pathlib.Path]:
-	"""Every candidate under one repository, stopping at each boundary that is not its own.
-
-	**A nested repository is not part of this one.** The workspace holds five of them under
-	`repos/`, so a sweep that walked through would make `clean workspace` mean `clean`, and press
-	lists `repos/*` among its pnpm workspace packages, so the same is true one level down. The walk
-	stops at anything carrying a `.git` or a `.jj` of its own.
-	"""
-	found = []
-	output = cargo_output(repo) if (repo / "Cargo.toml").is_file() else None
-	for current, directories, files in os.walk(repo):
-		here = pathlib.Path(current)
-		keep = []
-		for name in directories:
-			path = here / name
-			if name in (".git", ".jj") or is_repository(path):
-				continue
-			if output is not None and path == output:
-				continue
-			if name in NESTED:
-				found.extend(path / cache for cache in NESTED[name] if (path / cache).exists())
-				continue
-			if name in SWEPT:
-				found.append(path)
-				continue
-			keep.append(name)
-		# Pruned in place, which is what os.walk reads back to decide where it goes next. A match
-		# is not descended into either: what is inside something already being removed is not a
-		# second finding.
-		directories[:] = keep
-		found.extend(here / name for name in files if name.endswith(".tsbuildinfo"))
-	return [path for path in found if disposable(repo, path)]
-
-
-def weight(path: pathlib.Path) -> int:
-	"""Bytes under a path, counting a symlink as the link rather than as what it points at.
-
-	node_modules is a forest of links into pnpm's store, so following them would report a cache as
-	several gigabytes and report the same gigabytes again for the next repository.
-	"""
-	if path.is_file() or path.is_symlink():
-		return path.lstat().st_size
-	total = 0
-	for current, _, files in os.walk(path):
-		for name in files:
-			try:
-				total += (pathlib.Path(current) / name).lstat().st_size
-			except OSError:
-				continue
-	return total
-
-
-def size(count: float) -> str:
-	for unit in ("B", "KiB", "MiB", "GiB"):
-		if count < 1024 or unit == "GiB":
-			return f"{count:.0f} {unit}" if unit == "B" else f"{count:.1f} {unit}"
-		count /= 1024
-	return f"{count:.1f} GiB"
-
-
-def command_clean(name: str | None, dry: bool = False) -> int:
-	"""Build output and tool caches, and nothing a person would have to make again.
-
-	The line this draws is what makes it safe to run without thinking: **a cache is what a tool
-	wrote and can write again, from what is already on disk.** Dependencies are not caches --
-	`node_modules` and `Cargo.lock`'s downloads stay, and only what tools dropped inside them goes,
-	because a clean that ends in a reinstall is not a clean, it is a network bill. Local state is
-	not a cache either: `.wrangler/state` is a database somebody typed into.
-
-	pnpm's own store is pruned, but only on the run that names no repository. It is one store for
-	the whole machine, so pruning it from inside one project would be reaching a long way outside
-	what was asked for. It removes packages nothing references and never touches an installed tree.
-	"""
-	total = 0
-	for repo in selected(name):
-		print(f"\n=== {label(repo)} ===")
-		if (repo / "Cargo.toml").is_file():
-			# cargo's own, because the target directory is cargo's to name and a `[build]
-			# target-dir` anywhere up the chain moves it somewhere this sweep would never look.
-			result = step(repo, "cargo", "clean", *(["--dry-run"] if dry else []), quiet=True)
-			for line in (result.stdout + result.stderr).splitlines():
-				if line.strip():
-					print(f"    {line.strip()}")
-		for path in sorted(artifacts(repo)):
-			bytes_here = weight(path)
-			total += bytes_here
-			print(f"    {str(path.relative_to(repo)):<52} {size(bytes_here):>10}")
-			if not dry:
-				subprocess.run(["rm", "-rf", str(path)], check=True)
-
-	if name is None:
-		print("\n=== pnpm store ===")
-		if dry:
-			# No dry run of its own, and the honest stand-in for one is a sentence. Reporting a
-			# figure by running it would be the opposite of what the flag promises.
-			print("    would prune packages the store holds that nothing installed references")
-		else:
-			step(ROOT, "pnpm", "store", "prune")
-
-	print("\n" + "-" * 72)
-	# Two numbers rather than one sum. cargo reports its own removal per repository and reports it
-	# in its own units, and adding a parsed figure to a measured one would produce a total that is
-	# right only until cargo rewords the line.
-	verb = "would be freed" if dry else "freed"
-	swept = f"{size(total)} {verb} by the sweep" if total else "the sweep found nothing to free"
-	print(f"{swept}; cargo's own totals are the per-repository lines above")
-	print("  dependencies were not touched; a clean that ends in a reinstall is not a clean")
-	return 0
+		print("\n  the full log is above; the next `update` tries the same bounds again")
+	return 1 if failed or reverted else 0
 
 
 def shadowing(project: pathlib.Path) -> list[str]:
@@ -858,12 +535,12 @@ def main(argv: list[str]) -> int:
 		raise fail(f"one name at most; {' '.join(rest[2:])} would have been ignored")
 	if name and action in ("list", "check"):
 		raise fail(f"{action} reads the whole registry and takes no name")
-	if major and action != "deps":
-		raise fail("--major belongs to deps; crossing a boundary is that command's decision to take")
-	if action == "deps":
-		return command_deps(name, dry, major)
-	if action == "clean":
-		return command_clean(name, dry)
+	if major and action != "update":
+		raise fail("--major belongs to update; crossing a boundary is that command's decision to take")
+	if action == "update":
+		return command_update(name, dry, major)
+	if action in ("fmt", "clean", "verify"):
+		return command_dispatch(action, name, dry)
 	if action == "list":
 		return command_list()
 	if action == "clone":
@@ -872,15 +549,11 @@ def main(argv: list[str]) -> int:
 		return command_pull(name, dry)
 	if action == "push":
 		return command_push(name, dry)
-	if action == "fmt":
-		return command_fmt(name, dry)
-	if action == "verify":
-		return command_verify(name, dry)
 	if action == "check":
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
 	raise fail(
-		"usage: repos list | clone | pull | push | fmt | deps | clean | verify | publish | check"
+		"usage: repos list | clone | pull | push | fmt | update | clean | verify | publish | check"
 		"  [name] [--dry-run]"
 	)
 

@@ -1,0 +1,12 @@
+#!/bin/sh
+#MISE description="The workspace's own clean: the bytecode python leaves beside the task scripts"
+#MISE hide=true
+#USAGE flag "-n --dry-run" help="List what would go and remove nothing"
+# Everything else here is configuration or a dependency, and neither is a cache.
+set -e
+cd "$MISE_PROJECT_ROOT"
+found=$(find .mise hooks -type d -name __pycache__ -prune)
+[ -n "$found" ] || { echo "nothing to clean"; exit 0; }
+for dir in $found; do
+	if [ "${usage_dry_run:-}" = true ]; then echo "would remove $dir"; else rm -rf "$dir" && echo "removed $dir"; fi
+done
