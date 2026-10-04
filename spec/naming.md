@@ -85,7 +85,7 @@ thin layer that binds to that vendor. Everywhere else -- the module names, the d
 the types, the functions -- use the objective description of the technology or the function
 being performed.
 
-`apps/cdn` is a CDN whether Cloudflare, Fastly, or a box in a closet serves it. Naming it
+`apps/delivery/cdn` is a CDN whether Cloudflare, Fastly, or a box in a closet serves it. Naming it
 `apps/r2` or `apps/cloudflare` would describe the current bill, not the job.
 
 **Why.** A vendor name scattered through a codebase is a bet that the vendor is permanent,

@@ -309,7 +309,7 @@ line cannot get wrong is almost always one sentence.
 
 The pair worth keeping in mind is the one where both are right. web's
 `apps/site/site.config.yaml` cut its IndexNow block from seven body lines to three, because every
-sentence it lost was already in web's `indexing.md` word for word. The platform's `apps/cdn/wrangler.jsonc`
+sentence it lost was already in web's `indexing.md` word for word. The platform's `apps/delivery/cdn/wrangler.jsonc`
 stopped at five, because one of its lines carries a measured fact nothing else records -- dev
 serving `max-age=0` where production serves a year. **Length follows load, not file type.**
 
