@@ -96,7 +96,7 @@ when the sentence leads somewhere different under the two.
 
 **"Shared lib", "shared library" and "lib" mean the library as a whole**: the author's own code
 that depends on nothing else of theirs, kept in one repository, `lib`, and published as
-`canmi`, `@canmi/kit`, `@canmi/ui`, `@canmi/web` and `@canmi/response`, and as the crates
+`@canmi/me`, `@canmi/kit`, `@canmi/ui`, `@canmi/web` and `@canmi/response`, and as the crates
 `canmi`, `response` and the rest. It was briefly called the kit, which is why the word needed this
 section.
 
