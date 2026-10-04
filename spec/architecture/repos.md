@@ -344,6 +344,12 @@ citation by name reads correctly either way. Code citations are different: `refs
 cited `spec/*.md` by walking up, so it finds this repository's rules when nested and reports them
 dead when the project stands alone, which is the truth in both cases.
 
+**A citation that names its owner is checked there.** `platform's spec/...` resolves in the sibling
+of that name and `the workspace's spec/...` in the first directory above that holds the file, before
+the walk. Without the owner a path two repositories both hold -- every project has a
+`spec/repository.md` -- resolves to the citing one, and a section quoted from another repository's
+copy is reported missing from the wrong file, or worse, found in it.
+
 ## Cargo does not honor `.gitignore`
 
 git and jj stop at `repos/*/`. Cargo does not -- it walks the filesystem looking for a workspace:

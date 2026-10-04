@@ -50,6 +50,9 @@ SPACES = re.compile(r"\s+")
 NOT_WORD = re.compile(r"[^a-z0-9 ]")
 FENCE = re.compile(r"```.*?```", re.S)
 INLINE_CODE = re.compile(r"`[^`\n]+`")
+# Who a citation names as the owner, written just before it: `platform's spec/...`, or `the
+# workspace's spec/...`. Without it a path both repositories hold resolves to the citing one.
+OWNER = re.compile(r"\b(\w+)'s `?$")
 
 BODIES: dict[pathlib.Path, str] = {}
 
@@ -191,6 +194,21 @@ def dead_links(
 	return dead, absent
 
 
+def owned(root: pathlib.Path, before: str, cited: str) -> pathlib.Path | None:
+	"""The cited file in the repository the text before it names, or None when it names none.
+
+	`platform's` is the sibling of that name and `the workspace's` the first directory above that
+	holds the file. A name that is neither -- `GitHub's` -- leaves the citation to `resolve`.
+	"""
+	found = OWNER.search(before)
+	if found is None or found.group(1) == root.name:
+		return None
+	if found.group(1) == "workspace":
+		return next((d / cited for d in root.parents if (d / cited).is_file()), None)
+	sibling = root.parent / found.group(1) / cited
+	return sibling if sibling.is_file() else None
+
+
 def dead_anchors(
 	root: pathlib.Path,
 	sources: Iterable[tuple[pathlib.Path, re.Pattern[str], re.Pattern[str]]],
@@ -205,9 +223,12 @@ def dead_anchors(
 	dead: list[str] = []
 	seen = 0
 	for path, pattern, wrap in sources:
-		for match in pattern.finditer(wrap.sub(" ", read(path))):
+		text = wrap.sub(" ", read(path))
+		for match in pattern.finditer(text):
 			cited = match.group("target")
-			body = flattened(resolve(path, cited))
+			body = flattened(owned(root, text[max(0, match.start() - 40) : match.start()], cited))
+			if body is None:
+				body = flattened(resolve(path, cited))
 			if body is None:
 				continue
 			seen += 1
