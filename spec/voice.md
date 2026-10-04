@@ -87,8 +87,9 @@ needs a short name.
 When the user says **kit**, it is one of two, and both are everywhere:
 
 - SvelteKit, the framework the web projects are built on;
-- the shared library: the author's own code that knows nothing of any system built on top of it,
-  published as one package, `@canmi/kit`, with each part behind a subpath of its own.
+- the shared library: the author's own code that depends on nothing else of theirs -- a design
+  system, the addresses of their own sites -- published as one package, `@canmi/kit`, with each
+  part behind a subpath of its own, and as one crate, `canmi`, for the Rust side.
 
 As with _app_, infer which from what is being discussed: a route, a `load`, an adapter or `$app/*`
 is SvelteKit; a package, an import from `@canmi/kit` or a layer is the library. Ask only when the
