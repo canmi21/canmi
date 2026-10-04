@@ -162,6 +162,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | JSON and record contracts                      | [spec/json.md](spec/json.md)                             |
 | Path, query, body and header: what goes where  | [spec/addresses.md](spec/addresses.md)                   |
 | Vendored source: where, how taken, how treated | [spec/vendor.md](spec/vendor.md)                         |
+| robots.txt and security.txt on every host      | [spec/robots.md](spec/robots.md)                         |
 
 **Writing code**
 
