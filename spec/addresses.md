@@ -37,6 +37,13 @@ adjust the one thing, the lookup, rather than naming a thing of their own.
 
 **A required parameter in the query is a thing in the wrong place**, unless the route is a lookup.
 
+## An API spells its names out; a page may be short
+
+**A parameter or a key an API takes is written in full** -- `locale`, `latitude`, `resource` --
+since a program's caller reads it once and keeps it. **A page's own query is read by people**, in
+a link they share or type, and may be short: `?lang=`, `?ref=`. The page is the site asking its
+API on a reader's behalf; what it takes from its address it hands on under the API's full names.
+
 ## The body changes it, and a GET never does
 
 **What is written is in the body, sent by the method that says what the write is** -- `POST` to add
