@@ -9,7 +9,7 @@ cloned into `repos/` and ignored here. Nothing is a submodule.
 workspace/            this repository -- rules, hooks, formatter configuration, the list
   repos/lattice/        a repository of its own
   repos/still/        another
-  repos/governor/     and another, whose directory name is not its repository name
+  repos/lib/          and another
 ```
 
 They are nested on the filesystem so the shared rules sit one directory up, where the tools that
@@ -174,8 +174,9 @@ entries cannot claim one folder, and a duplicate is a parse error where it would
 surprise on clone. The user half is carried so an organisation's repository is an entry like any
 other, and so one repository name under two owners can sit side by side under different
 directories -- which is the case a bare `user:repo` list could not express at all.
-`governor = "canmi21:axum-governor"` is the everyday version of the same thing: the directory
-reads as what the project is here, and the remote keeps the name it is published under.
+A directory named apart from its repository is the everyday version of the same thing -- `governor`
+stood for `canmi21:axum-governor` until that repository became `lib` -- the directory reading as
+what the project is here, and the remote keeping the name it is published under.
 
 That key is also the name every command takes.
 

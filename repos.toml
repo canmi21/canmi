@@ -15,7 +15,7 @@
 [repos]
 lattice = "canmi21:lattice"
 still = "canmi21:still"
-governor = "canmi21:axum-governor"
+lib = "canmi21:lib"
 seam = "canmi21:seam"
 rdm = "canmi21:rdm"
 grok2api = "canmi21:grok2api"
