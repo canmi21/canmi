@@ -38,7 +38,9 @@ Mostly built for myself, but feel free to browse the code for reference.
 MIT License © 2026 [Canmi](https://canmi.net)
 ```
 
-- **The title is a name**, not the repository's slug: `Everything Behind`, `Library`.
+- **The title is a name, in Title Case**, never the lowercase slug as it stands: a name of its own,
+  `Everything Behind`, or the repository's made into one by what it means, `Library`, `Platform`,
+  `Infra`.
 - **The first line is the description**; the next say, in the first person, what the repository is
   for. Lines that belong together are joined by a hard break, two spaces at the end of the first.
 - **Nothing a spec would say**: no layout, no links into `spec/`, no "the author's". A library's
@@ -60,7 +62,10 @@ MIT License © 2026 [Canmi](https://canmi.net)
 ## A license year is when the idea began
 
 **The year on a README's license line is the year the package was first thought of**, which is
-the author's to say: `response` and `whereabouts` were 2024, `axum-governor` 2025. A package whose
+the author's to say: `response` and `whereabouts` were 2024, `axum-governor` 2025. It is the
+idea's year, not the code's: an idea tried before and given up, then built now, keeps the year it
+was first had, with no line of code connecting the two -- infra's panel and meter were 2024 and
+keeper 2025, though all three were written in 2026, and host is 2026. A package whose
 year nobody has said takes the year it was started in, and the question is asked rather than the
 year guessed.
 
