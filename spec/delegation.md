@@ -375,11 +375,10 @@ working directly, and is suspended for a spawned worker, which never commits, ne
 never moves the bookmark. With several workers in one working copy the alternative is a bare
 `jj commit` sweeping a neighbour's half-written files into somebody else's change, silently.
 
-**Pushing can be handed to the conversation, and then it pushes between waves.** Pushing is the
-user's by default ([toolchain.md](toolchain.md)); a user who says the conversation times it --
-as one did, so CI builds while the next topic is talked through -- has the conversation push each
-checked, committed wave with `mise run push <repo>` in the gap before the next, and say so in one
-line.
+**The conversation pushes between waves.** When to push is [commits.md](commits.md), "When a
+change is done, and when it is pushed"; with workers, a checked, committed wave is pushed with
+`mise run push <repo>` in the gap before the next, so CI builds while the next topic is talked
+through, and the conversation says so in one line.
 
 **Commit after the user's verdict, not before it.** The sequence is: wave lands, diffs read,
 checks run once, user clicks, then the commits are written. What the user rejects never becomes a

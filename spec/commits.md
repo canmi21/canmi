@@ -141,6 +141,27 @@ conversation that spawned them commits, by path list, after the user has said th
 right. See [delegation.md](delegation.md), "Commits separate concerns, not buildable states",
 which also records why a commit here is not required to build on its own.
 
+### When a change is done, and when it is pushed
+
+**A commit marks a change that is settled, and the user's intent says when that is.** Three
+situations, told apart by what the user is doing rather than by how much has changed:
+
+- **Something being built together, where a push is how it takes effect** -- a deploy, a release
+  another repository has to install, a page that only exists once it is served. Each step that
+  passes its checks is committed and pushed then, because the next step depends on it.
+- **A run of requests the user is still shaping.** While they are adjusting how something looks or
+  behaves and have not said it is right, every attempt is not a commit: a dozen commits of a
+  dozen tries record nothing anybody will look for. When they move on to the next request, the
+  one before is settled -- commit it then, and it may be pushed.
+- **A bug with a clear sign of being fixed**: the failure it is fixed against, or the behavior
+  it should have. When that holds, the fix is done, and done is the commit.
+
+**An agent pushes, at the right moment, without asking.** Not after every commit: when a piece of
+work is settled in one of the senses above, or when a push is what makes it take effect. The
+exception is the user's word -- one who says, in a session, not to push, or that pushing is
+theirs, has it so for that session. A push is `mise run push <repo>`, named, never the bare verb
+that pushes every repository, and is said in a line.
+
 ### Leave the working copy above `main`, not on it
 
 The last step is `jj new`. `main` ends on the commit that was written, and the working copy ends

@@ -112,8 +112,8 @@ allows it only inside the workspace, temp and caches, and refuses the rest.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
--- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on their own. Pushing is the user's to run;
-do not offer it. mise owns every tool version. Indentation is tabs at width 2 in every language,
+-- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on their own. An agent commits what is settled and
+pushes at the right moment, unless the user said not to -- see [spec/commits.md](spec/commits.md). mise owns every tool version. Indentation is tabs at width 2 in every language,
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
@@ -151,7 +151,8 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
 | Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [spec/delegation.md](spec/delegation.md)         |
 | Voice and communication                                                                                 | [spec/voice.md](spec/voice.md)                   |
-| Commit conventions and their enforcement                                                                | [spec/commits.md](spec/commits.md)               |
+| READMEs, repository descriptions and license years                                                      | [spec/readme.md](spec/readme.md)                 |
+| Commit conventions, when to commit and push, and their enforcement                                      | [spec/commits.md](spec/commits.md)               |
 
 **How the arrangement is shaped**
 

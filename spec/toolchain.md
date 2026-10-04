@@ -174,8 +174,8 @@ Auto-advance is available as an opt-in jj config -- `experimental-advance-branch
 for branches from before the rename -- and is deliberately not enabled. A bookmark that only
 moves when told to is a bookmark whose position means something.
 
-Pushing is the user's to run. Do not offer it at the end of a task and do not ask whether to
-push. Commit and move the bookmark; stop there.
+Commit and move the bookmark; when to push is [commits.md](commits.md), "When a change is done,
+and when it is pushed".
 
 ### Rejected: parallel workspaces
 
