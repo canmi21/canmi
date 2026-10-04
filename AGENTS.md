@@ -36,7 +36,7 @@ mise.toml      monorepo root, task roots, the shared toolchain
 repos.toml     which repositories this workspace is made of, as user:repo
 spec/          rules that follow the author
 hooks/         the agent hook entrypoint both vendors call
-.mcp.json      the MCP server that drives lattice's desktop window, pinned to its plugin
+.mcp.json      the MCP server that drives web's desktop window, pinned to its plugin
 repos/         one directory per project, each a separate repository
 ```
 
@@ -175,7 +175,9 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 | Project          | Rules                                                                                                                            |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `repos/lattice`  | the site, its workers, the CMS and the corpus -- [repos/lattice/spec/](repos/lattice/spec/)                                      |
+| `repos/web`      | the site, its API, the status page, the CMS and the corpus -- [repos/web/spec/](repos/web/spec/)                                 |
+| `repos/platform` | the services every site reads, the gateway and the Workers -- [repos/platform/spec/](repos/platform/spec/)                       |
+| `repos/infra`    | host, keeper and the node they run every app on -- [repos/infra/spec/](repos/infra/spec/)                                        |
 | `repos/still`    | a macOS application; no spec yet                                                                                                 |
 | `repos/lib`      | the author's own library, every package and crate they publish, `axum-governor` among them -- [repos/lib/spec/](repos/lib/spec/) |
 | `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                                          |

@@ -9,7 +9,7 @@
 
 All three break silently on rename, and AGENTS.md is the one file a zero-context agent reads, so
 a citation rotting there costs the most. The three rules themselves are in `refs_check.py` beside
-this file, which lattice's `refs` imports too; what stays here is what is this repository's alone.
+this file, which every project's `refs` imports too; what stays here is what is this repository's alone.
 
 Run with --json to emit the pair graph instead of validating.
 """

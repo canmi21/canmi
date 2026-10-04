@@ -36,7 +36,7 @@
 		// type checking with "Property 'notice.polised' does not exist ... Did you mean
 		// 'notice.polished'?", naming the typo the linter could only say it was unable to
 		// validate. Same duplication argument as the rules above. See
-		// repos/lattice/spec/locale/interface.md, "Keys are dotted, and read off the namespace".
+		// repos/web/spec/locale/interface.md, "Keys are dotted, and read off the namespace".
 		"import/namespace": "off",
 
 		// Side-effect imports are load-bearing here: `import '@canmi/tokens/colors.css'`

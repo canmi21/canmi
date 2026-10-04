@@ -519,7 +519,7 @@ def main(argv: list[str]) -> int:
 	action = rest[0] if rest else None
 	name = rest[1] if len(rest) > 1 else None
 	# A name means that repository and nothing else, so whatever the verb would not act on is
-	# refused rather than dropped: `check rdm lattice` checking rdm alone, or a mistyped flag doing
+	# refused rather than dropped: `check rdm web` checking rdm alone, or a mistyped flag doing
 	# nothing, reads as done. publish hands what follows the name to the project, unread.
 	if action == "publish":
 		tail, skipped = [], 0

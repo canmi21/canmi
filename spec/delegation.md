@@ -293,9 +293,9 @@ from a comparison that had not happened. This is [code.md](code.md), "A rule is 
 when breaking it fails loudly", pointed at the checker instead of at the code.
 
 **A project's task and the workspace's can share a name, and the wrong one passes.** `mise run
-refs` from the workspace runs the workspace's gate, which never reads `repos/lattice/spec`. A
-worker verified a lattice edit against it twice and reported a green count line that had not looked
-at the file it changed. **The path goes in the brief**: `mise run //repos/lattice:refs`.
+refs` from the workspace runs the workspace's gate, which never reads `repos/web/spec`. A
+worker verified a web edit against it twice and reported a green count line that had not looked
+at the file it changed. **The path goes in the brief**: `mise run //repos/web:refs`.
 
 ## Testing is the user's; checking is the conversation's
 

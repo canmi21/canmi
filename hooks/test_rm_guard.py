@@ -22,7 +22,7 @@ class VerdictTest(unittest.TestCase):
 	def test_inside_the_whitelist_passes(self) -> None:
 		for operand in (
 			"dist",
-			"repos/lattice/target",
+			"repos/web/target",
 			"/Users/me/workspace/node_modules/.cache",
 			"/tmp/claude-501/scratch/out.json",
 			"/Users/me/Library/Caches/mise",
@@ -41,11 +41,11 @@ class VerdictTest(unittest.TestCase):
 			"/Users/me/workspace",
 			".",
 			"repos",
-			"repos/lattice",
+			"repos/web",
 			"/Users/me/Library/Caches",
 			"/tmp",
 			".jj",
-			"repos/lattice/.jj/repo",
+			"repos/web/.jj/repo",
 		):
 			with self.subTest(operand=operand):
 				self.assertIsNotNone(judge(operand))

@@ -1,6 +1,6 @@
 """The reference rules two gates share: a link resolves, a citation resolves, a section exists.
 
-Both `refs` tasks -- this repository's and lattice's -- run those three over different trees, so
+The `refs` tasks -- this repository's and each project's -- run those three over different trees, so
 they live here once and each task states only what is its own: which files it reads, how a
 citation resolves from where it sits, and whatever else it checks. A project reaches this file by
 position, the way it already reaches `.editorconfig` and the `[tools]` pins -- see
@@ -105,7 +105,7 @@ def citing_files(files: Iterable[pathlib.Path], suffixes: Collection[str]) -> li
 	"""Code, plus the extensionless text lying beside it.
 
 	A suffix allowlist is blind to precisely the files a checker lives among, which is how nine
-	citations of a spec file that never existed survived in lattice's. In any of these a
+	citations of a spec file that never existed survived in a project's. In any of these a
 	path-shaped citation is a citation wherever it sits -- comment, docstring or printed message
 	alike, since a dead citation shown to whoever fails a check is still dead.
 	"""

@@ -373,7 +373,7 @@ was building on a node three patches from the one every local check ran against.
 
 So they are written rather than edited. `mise run update` rewrites each from the pin it mirrors,
 and `mise run verify` fails when something else has moved one. That is the same arrangement as
-the generated Rust URL mirror in lattice: a copy across a boundary a tool cannot see, plus a check
+the generated Rust URL mirrors in the platform and the lib repository: a copy across a boundary a tool cannot see, plus a check
 that fails the moment it stops agreeing.
 
 ### Inside the major, a version number is a bug report
@@ -445,13 +445,13 @@ still belongs in `mise.toml`.
 
 ## The desktop app is inspected through an MCP server pinned to its plugin
 
-`.mcp.json` at the root declares one project-scoped server, `tauri`. It drives lattice's CMS
+`.mcp.json` at the root declares one project-scoped server, `tauri`. It drives web's CMS
 window -- screenshots, a DOM snapshot, computed styles, JavaScript in the webview, any Tauri
 command the app exposes -- and it is the only way to see a desktop window from here. Chrome
 DevTools MCP reaches a browser tab, and the CMS is not one.
 
 **Its version is not free.** The server speaks to `tauri-plugin-mcp-bridge`, a Rust dependency of
-`repos/lattice/apps/cms/src-tauri`, over a WebSocket the plugin opens on port 9223; the two ship
+`repos/web/apps/cms/src-tauri`, over a WebSocket the plugin opens on port 9223; the two ship
 from one repository and are released together. So the pin in `.mcp.json` is exact and equals the
 crate's version, and moving one without the other is how a protocol change becomes a connection
 that opens and then answers nothing. It is fetched with `npx` rather than added to this
@@ -459,7 +459,7 @@ repository's `package.json`, because a repository that holds configuration and n
 not carry a package it has no build to verify it against -- and the exact version is already the
 whole claim.
 
-It reaches an app that is already running and nothing else: lattice's `base up cms` first. A server
+It reaches an app that is already running and nothing else: web's `base up cms` first. A server
 that starts cleanly and finds no window is the ordinary shape of a mistake here, and it reads as
 the server being broken rather than as the app being absent.
 
@@ -540,7 +540,7 @@ family, because which family broke is a question only a bisection answers.
 A reverted lockfile makes the same repair and forgets it on purpose. The next `mise run update`
 tries the range again from the top, and if the upstream has been fixed in the meantime the
 repository simply moves. Nobody has to remember to lift anything, which is the part a manifest pin
-gets wrong. This is lattice's Cargo rule -- a lockfile pin at the version that worked, no manifest
+gets wrong. This is web's Cargo rule -- a lockfile pin at the version that worked, no manifest
 constraint and no `[patch]` -- stated for every ecosystem here rather than for one.
 
 What carries across the gap is the user's own memory of what broke, and the retry is theirs: they
@@ -567,7 +567,7 @@ target-dir` can move it anywhere, so a sweep matching the word `target` would mi
 
 **What gets removed is decided twice, by a name and by version control.** A path a `clean` sweeps
 has to be one its tools write _and_ be ignored by the repository _and_ have nothing tracked
-underneath it. Neither half is enough on its own: lattice ignores `build/` and tracks five records
+underneath it. Neither half is enough on its own: web ignores `build/` and tracks five records
 under `data/build/` that a site-only CI job cannot regenerate, so a name alone would delete them --
 while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
 database. **A sweep stops at every repository boundary that is not its own**: a directory carrying

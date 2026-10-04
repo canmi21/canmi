@@ -7,7 +7,7 @@ cloned into `repos/` and ignored here. Nothing is a submodule.
 
 ```
 workspace/            this repository -- rules, hooks, formatter configuration, the list
-  repos/lattice/        a repository of its own
+  repos/web/            a repository of its own
   repos/still/        another
   repos/lib/          and another
 ```
@@ -63,7 +63,7 @@ repository and the one project you want, nested. Two clones, not all of them.
 **What decides whether a tool can live only here: does it need the project's module graph?**
 A self-contained binary can. `oxlint`, `rustfmt`, `jj`, `node` and `rust` are declared once, in
 this repository's `mise.toml`, and every project resolves the same one -- a project states a tool
-of its own only where it needs one this list does not carry, the way lattice names `rclone` for a
+of its own only where it needs one this list does not carry, the way web names `rclone` for a
 bucket nothing else touches. A tool that resolves its own plugins through node cannot: `oxfmt`
 with `svelte: true` reaches `svelte/compiler` through the module graph of wherever it is
 installed, so the copy here formats markdown and JSON and fails on a `.svelte` file, and the
@@ -92,15 +92,15 @@ project owns.
 
 The three reference rules -- a markdown link resolves, a cited spec file exists, a section quoted
 beside a citation exists -- are one implementation in
-[`.mise/tasks/refs_check.py`](../../.mise/tasks/refs_check.py), which lattice's
+[`.mise/tasks/refs_check.py`](../../.mise/tasks/refs_check.py), which each project's
 `.mise/tasks/refs` imports. Both entry points stay: `mise run refs` here and
-`mise run //repos/lattice:refs` there, each printing its own count. Lattice keeps what is its
-own -- the `libs/urls` single-sourcing rule, its skip sets, and the upward walk that resolves a
-citation from inside a project.
+`mise run //repos/web:refs` in a project, each printing its own count. A project keeps what is
+its own -- the single-sourcing of its URLs, its skip sets, the upward walk that resolves a citation
+from inside it, and the walk across to a sibling repository that resolves one of another's.
 
 **A file in `.mise/tasks/` is a library exactly when it is not executable.** mise offers only
 executable files as tasks, so a module sitting beside them adds no third gate and needs no
-opt-out. `hooks/` already has this shape with `jj_command.py`, and so does lattice's own task
+opt-out. `hooks/` already has this shape with `jj_command.py`, and so does each project's own task
 directory.
 
 **The importer resolves a fixed depth and fails loudly by name, rather than walking up.** A walk
@@ -113,7 +113,7 @@ less.
 checkers had drifted in two places before they were merged: one collapsed whitespace before
 stripping punctuation and the other after, and one matched a skipped file by its path while the
 other matched its basename. Both were measured to change nothing today -- each tree holds exactly
-one lockfile, at its root, and lattice's whole anchor list is byte-identical either way. They were
+one lockfile, at its root, and web's whole anchor list is byte-identical either way. They were
 invisible because the input that separates them had never been written, which is the argument for
 one implementation rather than two that look alike.
 
@@ -155,8 +155,8 @@ for by giving up jj at the level where jj does the most.
 `git add -A` runs:
 
 ```
-warning: adding embedded git repository: repos/lattice
-160000 31cfb453... 0	repos/lattice
+warning: adding embedded git repository: repos/web
+160000 31cfb453... 0	repos/web
 ```
 
 ## `repos.toml` lists them; `mise.toml` says it again
@@ -165,7 +165,7 @@ warning: adding embedded git repository: repos/lattice
 
 ```toml
 [repos]
-lattice = "canmi21:lattice"
+web = "canmi21:web"
 still = "canmi21:still"
 ```
 
@@ -290,11 +290,11 @@ The task itself belongs to the project, which is what decides that a release dep
 
 **And so do its flags.** Every other verb here means one thing everywhere and owns `--dry-run`;
 publishing does not, because what a publish is dry about -- and which way round the flag runs --
-is the project's own question. lattice's mirror is dry by default and takes `--live`, which is the
+is the project's own question. web's mirror is dry by default and takes `--live`, which is the
 safe polarity for something that deletes. So `publish` collects whatever follows the name and
 hands it on unread, rather than recognising a fixed list.
 
-It used to forward `--dry-run` and nothing else, which meant `publish lattice --live` ran a dry
+It used to forward `--dry-run` and nothing else, which meant `publish web --live` ran a dry
 mirror, exited 0 and printed a full report of what it had not done. The documented way to publish
 could not publish, and said it had. Two lessons, both cheap: **a dispatcher that translates flags
 is claiming to know the project's vocabulary**, and **a dry run that looks exactly like a real one
@@ -373,7 +373,7 @@ checkout that has `hooks/`. A fixed path was the alternative and is wrong: the w
 one entrypoint serve every project.
 
 This is why the commit conventions reach a project without anything being installed in it: a
-commit written inside `repos/lattice` is held to them, and a contributor's own clone is not, which
+commit written inside `repos/web` is held to them, and a contributor's own clone is not, which
 is the right split.
 
 **The walk starts from `pwd` when jj answers nothing.** Outside any repository `jj workspace

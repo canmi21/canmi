@@ -8,7 +8,16 @@ monorepo_root = true
 # .gitignore says about them. A missing entry is a warning and nothing more, so a machine that
 # has cloned only one project still runs that project's tasks. See spec/architecture/repos.md.
 [monorepo]
-config_roots = ["repos/lattice", "repos/still", "repos/lib", "repos/seam", "repos/rdm", "repos/grok2api"]
+config_roots = [
+	"repos/web",
+	"repos/infra",
+	"repos/platform",
+	"repos/still",
+	"repos/lib",
+	"repos/seam",
+	"repos/rdm",
+	"repos/grok2api",
+]
 
 # jj's own repo config lives outside the working copy and cannot be version controlled.
 # JJ_CONFIG merges a colon-separated list left to right, so this keeps the user's personal
@@ -83,7 +92,7 @@ description = "Run every repository's own clean, which never touches dependencie
 run = ".mise/tasks/repos clean"
 
 # The flags belong to the project, not to this verb. Everywhere else here `--dry-run` means one
-# thing; what publishing is dry about is the project's own question, and lattice's mirror is dry by
+# thing; what publishing is dry about is the project's own question, and web's mirror is dry by
 # default and takes `--live`. So anything after the name is handed on unread. See
 # spec/architecture/repos.md.
 [tasks.publish]

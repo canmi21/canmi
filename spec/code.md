@@ -81,8 +81,8 @@ modules makes the fallback a list, and a list has no knowable correct length -- 
 thought of is a crash in a reader's browser. One check gating everything has no such entry. It is
 affordable only because the import is dynamic and the payload is therefore reached by nobody who
 does not need it, which is a property of the bundler rather than of the polyfill; a static import
-of the same set is a tax on every reader. lattice measures both sides of that in
-[its own spec](../repos/lattice/spec/compat.md).
+of the same set is a tax on every reader. web measures both sides of that in
+[its own spec](../repos/web/spec/compat.md).
 
 ## Errors are types on the way up and one message at the edge
 
@@ -92,7 +92,7 @@ receives a string can only print it, and a caller that receives a panic cannot d
 
 The distinction that decides between an error and a panic is **whose mistake it is**. A person
 hand-writing frontmatter will mistype it, so unreadable frontmatter is an ordinary event and
-returns `Malformed` -- lattice's `apps/cms/src/i18n/segment.rs`. A panic is for the state that cannot
+returns `Malformed` -- web's `apps/cms/src/i18n/segment.rs`. A panic is for the state that cannot
 arise unless this code is already wrong. `cms i18n` used to abort on a stray colon in an article,
 with a message naming the fault and not the file, which left a binary search through the corpus
 as the way to find out which article it was.
@@ -144,7 +144,7 @@ Two members of the tree are there on exactly this basis:
   set of hues under one naming scheme, and deleting two of them leaves the next component wanting
   a green mark either inventing an `oklch` or borrowing a name that means something else.
 - The italic and bold cuts of Ioskeley Mono. Only the regular weight is reachable under the
-  current highlighting themes -- see lattice's `architecture/fonts.md` for the measurement -- and
+  current highlighting themes -- see web's `architecture/fonts.md` for the measurement -- and
   a monospace family cut down to one weight is a family that has to be re-cut the first time
   anything wants emphasis.
 
@@ -219,7 +219,7 @@ repository's `verify` runs it over every one: a project over the limit reddens t
 until it is under, which was decided over the alternative of each project adopting the gate once
 clean -- a gate nobody has to adopt is the one that gets adopted. A project may run the same check
 from its own `verify` as well, as seam does with `lines` in its `mise.toml`, so its own gate says
-so too. Measured the day the rule landed: seam under, and seventeen files over in lattice, rdm and
+so too. Measured the day the rule landed: seam under, and seventeen files over in web, rdm and
 governor, which is where the workspace's `verify` is red until they are split.
 
 **Why a file and not a function.** A reader, and an agent, reads a file whole: to change one
@@ -296,7 +296,7 @@ are punctuation, and a JSDoc block spends about two lines on them.
 
 Aim at one to three, and let five be the honest ceiling. Six is where a check fires, not where
 the writing should land, and the gap between the two is the point of it: prose aimed at three
-lands at three to five, and a limit with no slack reports that as a fault. Measured across lattice,
+lands at three to five, and a limit with no slack reports that as a fault. Measured across web,
 blocks over five body lines are 18.7% of the blocks and carry 49.8% of all comment prose -- half
 the weight in a fifth of the places, which is how a tree ends up annotated everywhere and legible
 nowhere. Six is also where the return falls off: five to six exempts another 3.5% of blocks, and
@@ -307,9 +307,9 @@ everywhere, but a config file has no surrounding code to carry the context, and 
 exactly what tempts a comment there into explaining the whole system. The thing a reader at that
 line cannot get wrong is almost always one sentence.
 
-The pair worth keeping in mind is the one where both are right. lattice's
+The pair worth keeping in mind is the one where both are right. web's
 `apps/site/site.config.yaml` cut its IndexNow block from seven body lines to three, because every
-sentence it lost was already in lattice's `indexing.md` word for word. `apps/cdn/wrangler.jsonc`
+sentence it lost was already in web's `indexing.md` word for word. The platform's `apps/cdn/wrangler.jsonc`
 stopped at five, because one of its lines carries a measured fact nothing else records -- dev
 serving `max-age=0` where production serves a year. **Length follows load, not file type.**
 
@@ -318,11 +318,11 @@ and rustfmt's `max_width` already give code. Neither formatter rewraps a comment
 held by hand.
 
 All three are counted rather than eyeballed. `mise run comments` measures every block in every
-language that carries one and is part of lattice's `verify`, which is where the percentages above
+language that carries one and is part of each project's `verify`, which is where the percentages above
 come from. A file a tool generated is exempt: its comments are nobody's to fix, and a check
 naming a line that may not be edited teaches its reader to skip the rest of the output. The
-limits are this repository's; the check is lattice's, because lattice is the project that needed one
-first and the only place it runs today.
+limits are this repository's; the check is each project's, because the site's repository needed one
+first and the platform and infra took it with them when they split from it.
 
 **A link is not length.** Only the plain text counts against either limit: a URL may sit in a block
 without spending a line of its budget, and a long one does not make the block too wide. Prose is
@@ -353,7 +353,7 @@ carrying the argument, which is how a file ends up holding a debate that was set
 
 Spelling follows what is here already: a bare URL after "See" in a comment, as
 `apps/site/src/lib/documents/llms.ts` has it, and a markdown link labeled `owner/repo#number` in a
-document, as lattice's `architecture/css/extraction.md` cites `facebook/stylex#1825`.
+document, as web's `architecture/css/extraction.md` cites `facebook/stylex#1825`.
 
 ### A comment that moves takes its coordinates with it
 
@@ -364,7 +364,7 @@ position, and name the thing rather than where it used to sit.**
 
 Nothing catches these. The reference check validates citations into `spec/` and the section names
 quoted beside them, and "the rule above" is neither -- it is a pointer, not a citation. A rule
-lifted out of lattice's `apps/site/src/styles/utilities.css` into a component's `<style>` block
+lifted out of web's `apps/site/src/styles/utilities.css` into a component's `<style>` block
 carried a comment ending "The rule above would then only answer to hover over the text", and the
 rule it meant stayed behind. It was caught by eye, in a diff, because somebody happened to read
 that paragraph.
@@ -390,7 +390,7 @@ Two markers, and the line between them is whether anything is **wrong**.
 **`FIXME` is a debt.** The code knowingly departs from a rule in `spec/`, or behaves in a way
 somebody would call a bug if they met it cold. It says which rule, why it stands, and what has to
 happen first. `cms tn` and `cms embed` carry one because their operations live inside the CLI
-adapter, which lattice's `architecture/cms.md` does not allow.
+adapter, which web's `architecture/cms.md` does not allow.
 
 **`TODO` is not a debt**, which is why it needs its own word rather than a softer `FIXME`. It
 marks something deliberately unfinished with no bad consequence while it waits -- a value

@@ -39,7 +39,7 @@ changed unless told `--include-unchanged-files`, and the commit hook leaves it a
 commit costs no more than its own files. `fmt` passes the flag. Without it a formatter upgrade left
 every file outside the changed set at whatever the previous version produced -- or, for a file
 predating the pattern that now matches it, at no version's output at all: five of this
-repository's twelve Markdown files and forty-seven files in lattice when oxfmt reached 0.68, and in
+repository's twelve Markdown files and forty-seven files in web when oxfmt reached 0.68, and in
 rdm twenty-five Rust files no commit had touched since before its rustfmt settings, found only
 because a formatter run on one file rewrote a hundred lines of it. `fmt` reported "nothing to fix"
 throughout, since it looked only at the working copy's changes. The formatters are trusted with
@@ -88,7 +88,7 @@ with no warning tier -- a test suite, a type check -- behaves identically. A str
 quietly ran a subset would be the same defect as a gate that passes while blind, which is what
 it exists to find.
 
-Measured against lattice when the mode landed: `check` was green while carrying 53 oxlint
+Measured against web when the mode landed: `check` was green while carrying 53 oxlint
 warnings, 162 clippy warnings and one svelte-check warning -- `a11y_media_has_caption` at
 `apps/site/src/lib/components/video.svelte:379`, which had stood through a green gate.
 
