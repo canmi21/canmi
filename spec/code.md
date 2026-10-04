@@ -212,7 +212,7 @@ failure into a loud one.
 
 ## A file is read whole, so it stays short
 
-**A source file of ours aims under five hundred lines, and one over a thousand fails the gate.**
+**A file of ours aims under five hundred lines, and one over a thousand fails the gate.**
 The soft limit is the warning tier -- advice until `mise run audit` -- and the hard one fails
 `verify`. `.mise/tasks/lines` measures it, over a repository or over every one, and this
 repository's `verify` runs it over every one: a project over the limit reddens the workspace's gate
@@ -229,17 +229,25 @@ one a place where a search stops at the first result that looks right because th
 thousand lines down. A limit on a file is the one a tool can hold objectively; where a function is
 the size of a file, it is the same problem one level in, and the file limit is where it shows.
 
-**What is measured is code of ours.** Only the files version control tracks are counted -- `jj
-file list`, or `git ls-files` where there is no jj -- so whatever a tool wrote and git ignores,
-paraglide's compiled messages among it, is out without a list to keep. **A file a tool writes and
-commits says so by `@generated` in its first five lines**, and that marker is the one thing that
-keeps it out: not a phrase like "do not edit", not a path list. It is rustfmt's convention, which
-skips such a file the same way, so a generator writes one header line and every check agrees. Vendored source is tracked
-and somebody else's, and is left out by its directory, `vendor/`, which is the only place it may
-sit (see [vendor.md](vendor.md)). Prose is out too: a `spec/` file is long because the reasoning
-is, and a test file's cases are code and counted -- a corpus of cases splits by topic as readily as a module
-does. The extensions and the directories skipped are listed in the task, and each argues its
-exemption.
+**What is measured is every file of ours, prose and data included.** The argument for the limit
+is that a file is read whole, and that holds for a spec an agent reads before it works as much as
+for code; a spec long because its reasoning is long is reasoning that splits by topic as readily as
+a module does. What is left out is what is not ours to shorten, in four steps:
+
+- what version control does not keep -- `jj file list`, or `git ls-files` where there is no jj --
+  so whatever a tool wrote and git ignores is out without a list;
+- a binary, by git's own test, a NUL in the first eight thousand bytes, and the machine output
+  common enough to name once in the task: lockfiles, minified bundles, source maps;
+- what a project's `.gitattributes` marks `linguist-generated` or `linguist-vendored`, the list
+  GitHub's language statistics read too, so one hand-kept list serves both and a long generated
+  file nobody marked fails the gate rather than skewing a statistic in silence;
+- any directory named `vendor` or starting with it, which is the only place somebody else's source
+  may sit (see [vendor.md](vendor.md)).
+
+**A file known to be over and owed a split is marked `lines=deferred`** in its project's
+`.gitattributes`, beside a comment naming where the split is written down. The check reports it on
+every run and passes, and reports the mark itself once the file is under the limit, so a deferral
+cannot outlive its reason.
 
 **Splitting is by the seams already there, never by count.** A long file has clusters that only
 call each other, and those are the modules; a split that lands on a line number rather than a

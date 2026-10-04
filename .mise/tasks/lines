@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-#MISE description="Hold every source file of ours under the line limits: `lines [root ...]`"
-"""A source file of ours is under five hundred lines, and one over a thousand fails the gate.
+#MISE description="Hold every file of ours under the line limits: `lines [root ...]`"
+"""A file of ours is under five hundred lines, and one over a thousand fails the gate.
 
 Given no root, checks this repository and every project cloned under `repos/`; given roots,
-checks those. Vendored source is somebody else's and is left out, as is anything a tool wrote:
-untracked output by asking version control, and a tracked file by the `@generated` marker in its
-first five lines, which rustfmt honors the same way.
-Prose is left out too: a `spec/` file is long because the reasoning is, and that is not the
-defect this measures. See spec/code.md, "A file is read whole, so it stays short".
+checks those. Every file version control keeps is measured, prose and data included, less what
+is not ours to shorten: a binary, a lockfile or anything as common, whatever a project's
+`.gitattributes` marks generated or vendored, and any directory named `vendor` or after it. See
+spec/code.md, "A file is read whole, so it stays short".
 
 The soft limit is a warning tier, so it is advice until `AUDIT` is set, when it fails the way
-every other warning does under `mise run audit`. The hard limit fails always.
+every other warning does under `mise run audit`. The hard limit fails always, except for a file
+its project defers by `lines=deferred` in `.gitattributes`, which is reported and passed.
 """
 
 from __future__ import annotations
 
+import fnmatch
 import os
 import pathlib
 import subprocess
@@ -23,37 +24,26 @@ import sys
 SOFT = 500
 HARD = 1000
 
-# What counts as a source file of ours. Prose (`.md`), data (`.json`, `.toml`, lockfiles) and
-# generated output are not code and are not measured.
-CODE = {".ts", ".tsx", ".js", ".mjs", ".cjs", ".rs", ".svelte", ".py", ".sh", ".fish"}
+# Machine output common enough to name here rather than in every project: lockfiles, minified
+# bundles and source maps. What only one project generates is marked in that project's
+# `.gitattributes` instead.
+COMMON = ("*.lock", "*.lockb", "pnpm-lock.yaml", "package-lock.json", "*.min.js", "*.min.css", "*.map")
 
-# The marker a tool writes into a file of its own it commits, and how far down it is looked for:
-# rustfmt's own convention, so one line keeps a file out of both. See spec/code.md.
-MARKER = b"@generated"
-MARKER_LINES = 5
+# What git reads as binary: a NUL in the first eight thousand bytes.
+SNIFF = 8000
 
-# Directories that hold somebody else's source or a tool's output, by name at any depth.
-SKIPPED = {
-	"node_modules",
-	"vendor",
-	"target",
-	"dist",
-	"build",
-	".git",
-	".jj",
-	".svelte-kit",
-	".wrangler",
-	".turbo",
-	".cache",
-}
+# Only for a root with no version control to ask, where untracked output is still on disk.
+SKIPPED = {"node_modules", "target", "dist", "build", ".git", ".jj", ".svelte-kit", ".wrangler"}
+
+# The attributes read: the two GitHub's statistics read as well, so one list serves both, and the
+# deferral, which says the file is known to be over and a split is owed.
+ATTRIBUTES = ("linguist-generated", "linguist-vendored", "lines")
 
 
-def tracked(root: pathlib.Path) -> set[pathlib.Path] | None:
-	"""The files version control keeps under `root`, or None where there is none to ask.
+def tracked(root: pathlib.Path) -> list[str] | None:
+	"""The files version control keeps under `root`, relative to it, or None with none to ask.
 
-	What it ignores is what a tool wrote or somebody else's source -- paraglide's compiled
-	messages, a vendored tree -- so asking it leaves those out without a list to keep. jj first,
-	because a jj workspace such as the sandbox has no `.git` of its own.
+	jj first, because a jj workspace such as the sandbox has no `.git` of its own.
 	"""
 	for command in (["jj", "file", "list"], ["git", "ls-files"]):
 		if command[0] == "jj" and not (root / ".jj").exists():
@@ -63,48 +53,94 @@ def tracked(root: pathlib.Path) -> set[pathlib.Path] | None:
 		except OSError:
 			continue
 		if result.returncode == 0:
-			return {(root / line).resolve() for line in result.stdout.splitlines() if line}
+			return [line for line in result.stdout.splitlines() if line]
 	return None
 
 
-def measured(root: pathlib.Path) -> list[tuple[pathlib.Path, int]]:
-	found: list[tuple[pathlib.Path, int]] = []
-	kept = tracked(root)
+def walked(root: pathlib.Path, workspace: bool) -> list[str]:
+	"""Every file under `root`, for a root no version control describes."""
+	found = []
 	for directory, names, files in os.walk(root):
 		here = pathlib.Path(directory)
-		# `repos/` under the workspace is every project's own checkout: measured by its own
-		# root below, or on its own gate, never twice.
-		names[:] = [
-			one
-			for one in names
-			if one not in SKIPPED and not one.startswith(".build") and not (here == root and one == "repos")
-		]
-		for name in files:
-			path = here / name
-			if path.suffix not in CODE and not _extensionless_script(path):
-				continue
-			if kept is not None and path.resolve() not in kept:
-				continue
-			try:
-				with path.open("rb") as handle:
-					lines = handle.readlines()
-			except OSError:
-				continue
-			if any(MARKER in line for line in lines[:MARKER_LINES]):
-				continue
-			found.append((path, len(lines)))
+		names[:] = [one for one in names if one not in SKIPPED and not (workspace and here == root and one == "repos")]
+		found.extend(str((here / name).relative_to(root)) for name in files)
 	return found
 
 
-def _extensionless_script(path: pathlib.Path) -> bool:
-	"""A task or hook script with no extension, which is code all the same."""
-	if path.suffix != "" or not path.is_file():
-		return False
-	try:
-		with path.open("rb") as handle:
-			return handle.read(2) == b"#!"
-	except OSError:
-		return False
+def attributes(root: pathlib.Path, paths: list[str]) -> dict[str, dict[str, str]]:
+	"""Each path's attributes of `ATTRIBUTES` that are set, as git reads `.gitattributes`.
+
+	Asked of git where there is one; otherwise the root's own `.gitattributes` is read, which is
+	the only one any project here keeps.
+	"""
+	found: dict[str, dict[str, str]] = {}
+	if (root / ".git").exists():
+		result = subprocess.run(
+			["git", "check-attr", "--stdin", *ATTRIBUTES],
+			cwd=root,
+			input="\n".join(paths),
+			capture_output=True,
+			text=True,
+		)
+		if result.returncode == 0:
+			for line in result.stdout.splitlines():
+				path, name, value = line.rsplit(": ", 2)
+				if value not in ("unspecified", "unset"):
+					found.setdefault(path, {})[name] = value
+			return found
+	rules = []
+	source = root / ".gitattributes"
+	for line in source.read_text().splitlines() if source.is_file() else []:
+		fields = line.split()
+		if not fields or fields[0].startswith("#"):
+			continue
+		pattern, settings = fields[0], fields[1:]
+		values = {}
+		for setting in settings:
+			name, _, value = setting.partition("=")
+			values[name] = value or "set"
+		rules.append((pattern, values))
+	for path in paths:
+		for pattern, values in rules:
+			subject = path if "/" in pattern else path.rsplit("/", 1)[-1]
+			if fnmatch.fnmatch(subject, pattern.lstrip("/")):
+				for name in ATTRIBUTES:
+					if name in values:
+						found.setdefault(path, {})[name] = values[name]
+	return found
+
+
+def measured(root: pathlib.Path, workspace: bool) -> tuple[list[tuple[str, int]], set[str]]:
+	"""Every file of ours under `root` with its line count, and the ones it defers."""
+	paths = tracked(root)
+	if paths is None:
+		paths = walked(root, workspace)
+	if workspace:
+		# `repos/` under the workspace is every project's own checkout, measured as its own root.
+		paths = [path for path in paths if not path.startswith("repos/")]
+	paths = [
+		path
+		for path in paths
+		if not any(part.startswith("vendor") for part in path.split("/")[:-1])
+		and not any(fnmatch.fnmatch(path.rsplit("/", 1)[-1], one) for one in COMMON)
+	]
+	marks = attributes(root, paths)
+	found = []
+	deferred = set()
+	for path in paths:
+		mark = marks.get(path, {})
+		if mark.get("linguist-generated") == "true" or mark.get("linguist-vendored") == "true":
+			continue
+		try:
+			data = (root / path).read_bytes()
+		except OSError:
+			continue
+		if b"\0" in data[:SNIFF]:
+			continue
+		if mark.get("lines") == "deferred":
+			deferred.add(path)
+		found.append((path, len(data.splitlines())))
+	return found, deferred
 
 
 def main(argv: list[str]) -> int:
@@ -114,25 +150,35 @@ def main(argv: list[str]) -> int:
 		*(one for one in (here / "repos").iterdir() if one.is_dir()),
 	]
 	strict = os.environ.get("AUDIT") is not None
-	over_hard: list[tuple[pathlib.Path, int]] = []
-	over_soft: list[tuple[pathlib.Path, int]] = []
+	over_hard: list[tuple[str, int]] = []
+	over_soft: list[tuple[str, int]] = []
+	postponed: list[tuple[str, int]] = []
+	stale: list[str] = []
 	total = 0
 	for root in roots:
-		for path, count in measured(root):
+		found, deferred = measured(root, root == here)
+		for path, count in found:
 			total += 1
-			if count > HARD:
-				over_hard.append((path, count))
+			shown = os.path.relpath(root / path, here)
+			if path in deferred:
+				(postponed if count > HARD else stale).append((shown, count) if count > HARD else shown)
+			elif count > HARD:
+				over_hard.append((shown, count))
 			elif count > SOFT:
-				over_soft.append((path, count))
-	show = lambda path: os.path.relpath(path, here)  # noqa: E731
+				over_soft.append((shown, count))
 	for path, count in sorted(over_soft, key=lambda one: -one[1]):
-		print(f"warning: {show(path)} is {count} lines, over the soft limit of {SOFT}")
+		print(f"warning: {path} is {count} lines, over the soft limit of {SOFT}")
+	for path, count in sorted(postponed, key=lambda one: -one[1]):
+		print(f"warning: {path} is {count} lines, over the hard limit of {HARD}, deferred")
+	for path in sorted(stale):
+		print(f"warning: {path} is under the hard limit; its `lines=deferred` can go")
 	for path, count in sorted(over_hard, key=lambda one: -one[1]):
-		print(f"error: {show(path)} is {count} lines, over the hard limit of {HARD}")
-	failed = bool(over_hard) or (strict and bool(over_soft))
+		print(f"error: {path} is {count} lines, over the hard limit of {HARD}")
+	warned = bool(over_soft) or bool(postponed) or bool(stale)
+	failed = bool(over_hard) or (strict and warned)
 	print(
-		f"lines: {total} files measured, {len(over_soft)} over {SOFT}, {len(over_hard)} over {HARD}"
-		+ (" (audit: warnings fail)" if strict else "")
+		f"lines: {total} files measured, {len(over_soft)} over {SOFT}, {len(over_hard)} over {HARD}, "
+		f"{len(postponed)} deferred" + (" (audit: warnings fail)" if strict else "")
 	)
 	return 1 if failed else 0
 
