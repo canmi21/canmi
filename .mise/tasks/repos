@@ -168,9 +168,14 @@ def command_list() -> int:
 
 
 def command_clone(name: str | None, dry: bool = False) -> int:
+	if name == "workspace":
+		raise fail("the workspace is this checkout; there is nothing to clone")
 	REPOS.mkdir(exist_ok=True)
 	listed = registry()
-	wanted = {name: listed[name]} if name and name in listed else listed
+	if name and name not in listed:
+		# A name it did not know used to clone every repository instead.
+		raise fail(f"{REGISTRY.name} does not list {name}; the names are {', '.join(listed)}")
+	wanted = {name: listed[name]} if name else listed
 	added = 0
 	for directory, (user, repo) in wanted.items():
 		target = REPOS / directory
@@ -508,8 +513,11 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		print("\n  the resolver said why above; this reports it rather than passing over it")
 		return 1
 	if major:
-		print("Dependencies were moved across their ranges, and verify passed wherever they were kept.\n")
-		return 0
+		# Only what was kept was moved. Printed after a revert, this line reported the one run that
+		# moved nothing as the one that moved everything, and exited 0 under it.
+		if not reverted:
+			print("Dependencies were moved across their ranges, and verify passed.\n")
+		return 1 if reverted else 0
 	print("Beyond the ranges each manifest declares:\n")
 	if not edit:
 		print("  cargo upgrade is missing, so no crate's major was checked")
@@ -533,7 +541,7 @@ def command_deps(name: str | None, dry: bool = False, major: bool = False) -> in
 		print("  nothing; every dependency is at the top of the range its manifest allows")
 	else:
 		print("\n  `mise run repos deps --major` rewrites the manifests; nothing else here does")
-	return 0
+	return 1 if reverted else 0
 
 
 def disposable(repo: pathlib.Path, path: pathlib.Path) -> bool:
@@ -833,6 +841,23 @@ def main(argv: list[str]) -> int:
 			rest.append(argument)
 	action = rest[0] if rest else None
 	name = rest[1] if len(rest) > 1 else None
+	# A name means that repository and nothing else, so whatever the verb would not act on is
+	# refused rather than dropped: `check rdm lattice` checking rdm alone, or a mistyped flag doing
+	# nothing, reads as done. publish hands what follows the name to the project, unread.
+	if action == "publish":
+		tail, skipped = [], 0
+		for argument in argv:
+			if skipped < 2 and not argument.startswith("-"):
+				skipped += 1
+				continue
+			tail.append("--dry-run" if argument == "-n" else argument)
+		return command_publish(name, tail)
+	if unknown:
+		raise fail(f"unknown option {unknown[0]}")
+	if len(rest) > 2:
+		raise fail(f"one name at most; {' '.join(rest[2:])} would have been ignored")
+	if name and action in ("list", "check"):
+		raise fail(f"{action} reads the whole registry and takes no name")
 	if major and action != "deps":
 		raise fail("--major belongs to deps; crossing a boundary is that command's decision to take")
 	if action == "deps":
@@ -851,10 +876,6 @@ def main(argv: list[str]) -> int:
 		return command_fmt(name, dry)
 	if action == "verify":
 		return command_verify(name, dry)
-	if action == "publish":
-		return command_publish(name, (["--dry-run"] if dry else []) + unknown)
-	if unknown:
-		raise fail(f"unknown option {unknown[0]}")
 	if action == "check":
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()

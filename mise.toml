@@ -99,17 +99,13 @@ run = ".mise/tasks/repos publish"
 # `--major` is deliberately not accepted: crossing a range belongs to `repos deps --major`, the
 # same way crossing a pin belongs to an edit of [tools]. One verb does not get to do both.
 #
-# A name narrows the dependency half and nothing else, which is the one place this verb does not
-# behave like its neighbours. The toolchain is the workspace's -- one set of pins every repository
-# reads by walking up -- so there is no per-repository version of it to upgrade, and `update lattice`
-# raising lattice's tools would be raising everyone's under a name that says otherwise. So the tools
-# half reports the same thing whatever is named. That reads exactly like an argument being ignored,
-# which is why the description says it out loud rather than leaving it to be discovered. So the
-# tools half is handed the flags alone: given the name too, `tools up` narrows to that project's
-# own mise.toml, and `update rdm` reported on watchexec and nothing the workspace pins.
+# A name means that repository and nothing else, in both halves. `update rdm` moves rdm's own
+# tools -- the ones its mise.toml declares, never the workspace's it reads by walking up -- and
+# rdm's dependencies, and writes nothing outside repos/rdm. Raising the workspace's toolchain is
+# `update workspace`, or `update` with no name. See spec/toolchain.md, "Dependency policy".
 [tasks.update]
-description = "Upgrade tools and dependencies within their bounds: `update [name] [--dry-run]`, a name narrowing deps only"
-run = 'update() { f=; for a; do case $a in -*) f="$f $a";; esac; done; .mise/tasks/tools up $f && .mise/tasks/repos deps "$@"; }; update'
+description = "Upgrade tools and dependencies within their bounds: `update [name] [--dry-run]`, a name meaning that repository alone"
+run = 'update() { .mise/tasks/tools up "$@" && .mise/tasks/repos deps "$@"; }; update'
 
 # Any task, in every repository that declares one, and silence from the rest -- mise's own
 # `//repos/...:<task>` does the matching. One at a time, so each project's log reads whole, and

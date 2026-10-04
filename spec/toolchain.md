@@ -481,13 +481,18 @@ This was missing rather than decided against. Lockfiles were nobody's job -- no 
 no project declared one, and nothing here said when or by whom they moved -- while `update` read
 as "bring this workspace current" and meant a third of it.
 
-**A name narrows the dependency half and nothing else, and that is the one place `update` does not
-behave like its neighbours.** `check lattice` runs lattice's verify and no other; `update lattice` moves
-lattice's dependencies and no other, and then reports on the toolchain exactly as it would have
-without the name. There is no per-repository toolchain to narrow to -- `[tools]` here is the one
-set of pins every repository reads by walking up, so raising lattice's tools would be raising
-everyone's under a name saying otherwise. The asymmetry is real and it reads like an ignored
-argument, which is why the task description says it rather than leaving it to be found.
+**A name means that repository and nothing else, in both halves.** `check lattice` runs lattice's
+verify and no other; `update rdm` moves the tools rdm's own `mise.toml` declares and rdm's
+dependencies, and writes nothing outside `repos/rdm`. The workspace's `[tools]` is the one set of
+pins every repository reads by walking up, so raising it is `update workspace`, or `update` with
+no name -- never a side effect of naming a project. The report beneath follows the same line: a
+named run speaks for the pins that repository owns.
+
+This replaced an asymmetry. `update <name>` used to narrow only its dependency half and run the
+workspace's toolchain half whatever was named -- `rustup update`, every pinned tool, and a rewrite
+of `rust-toolchain.toml` and `.node-version` at the root -- so asking for one project's upgrade
+changed the files of the repository holding all of them. A name that is honored by half of a verb
+is a name nobody can rely on.
 
 **What waits across a range is measured, not predicted.** Each resolver is asked what is still out
 of date _after_ the in-range pass has run, because whatever survives that is across a boundary by

@@ -122,9 +122,10 @@ and `--dry-run` to any of them to be told what it would do. `check` dispatches t
 repository's own `verify`. `audit` is the same run with every warning counted as a failure, which
 is not what routine work runs; a linter's warning tier is advice until somebody asks. `update` covers both halves of what has moved out there: tools within their pinned
 majors and dependencies within the ranges their manifests declare, ending by naming what waits
-across a boundary without crossing it, which is the only place that gets reported. A name narrows
-its dependency half alone -- the toolchain is the workspace's, so there is no per-repository one
-to narrow to. Crossing a boundary is an edit to `[tools]` or `mise run repos deps --major`, never
+across a boundary without crossing it, which is the only place that gets reported. A name means
+that repository alone, in both halves and in every verb: its own declared tools, its own
+dependencies, nothing in the workspace or a sibling -- the workspace's toolchain moves under
+`update workspace` or a bare `update`. Crossing a boundary is an edit to `[tools]` or `mise run repos deps --major`, never
 `update` itself. `clean` removes what a tool wrote and can write again; dependencies and
 local state are not caches and it never touches them. See [spec/toolchain.md](spec/toolchain.md).
 

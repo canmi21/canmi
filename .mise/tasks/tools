@@ -46,6 +46,10 @@ sys.stdout.reconfigure(line_buffering=True)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 REPOS = ROOT / "repos"
+REGISTRY = ROOT / "repos.toml"
+# The keys of repos.toml, which are the names every command here takes. The format is
+# `.mise/tasks/repos`'s to define; this reads only the key.
+ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"[A-Za-z0-9][\w.-]*:[\w.-]+"\s*$', re.MULTILINE)
 
 # Where a tool's stable channel is published, and how to read it. A tool absent from here has
 # no channel this can check; `outdated` says so rather than guessing from the highest tag.
@@ -193,15 +197,19 @@ def configured(name: str | None = None) -> list[pathlib.Path]:
 	"""Directories declaring tools of their own: one when named, the workspace first otherwise.
 
 	`workspace` names this repository, so a single tool can be upgraded without touching the
-	projects; any other name is a directory under repos/.
+	projects; any other name is a repository from repos.toml, and means its own mise.toml and
+	nothing it inherits. One that declares no tools is an empty list, not the workspace's.
 	"""
 	if name == "workspace":
 		return [ROOT]
 	if name:
+		names = ENTRY.findall(REGISTRY.read_text()) if REGISTRY.is_file() else []
+		if name not in names:
+			raise fail(f"{REGISTRY.name} does not list {name}; the names are {', '.join(['workspace', *names])}")
 		target = REPOS / name
-		if not (target / "mise.toml").is_file():
-			raise fail(f"repos/{name} declares no tools of its own")
-		return [target]
+		if not target.is_dir():
+			raise fail(f"repos/{name} is listed but not cloned -- `mise run repos clone` first")
+		return [target] if (target / "mise.toml").is_file() else []
 	found = [ROOT]
 	if REPOS.is_dir():
 		found.extend(sorted(p for p in REPOS.iterdir() if (p / "mise.toml").is_file()))
@@ -502,6 +510,11 @@ def beyond(where: pathlib.Path) -> list[tuple[str, str, str, str | None]]:
 		if version is None:
 			continue
 		owner = pathlib.Path(owner).expanduser()
+		# Asked from a repository, mise names the workspace's pins as well, which that repository
+		# reads by walking up and does not own. A named `up` reporting them spoke for every
+		# repository under one name; the workspace's own row comes from asking at the root.
+		if where != ROOT and not owner.is_relative_to(where):
+			continue
 		try:
 			owner = owner.relative_to(ROOT)
 		except ValueError:
@@ -517,6 +530,9 @@ def beyond(where: pathlib.Path) -> list[tuple[str, str, str, str | None]]:
 def command_up(name: str | None = None, dry: bool = False) -> int:
 	moved = []
 	waiting = []
+	if not configured(name):
+		print(f"repos/{name} declares no tools of its own; the workspace's are not touched")
+		return 0
 
 	# rust is the one tool `mise upgrade` cannot move. mise's rust is a symlink to rustup's
 	# toolchain rather than an install of its own, so inside the `stable` channel it is rustup that
@@ -619,6 +635,8 @@ def main(argv: list[str]) -> int:
 			raise fail(f"unknown option {argument}")
 		else:
 			rest.append(argument)
+	if len(rest) > 2:
+		raise fail(f"one name at most; {' '.join(rest[2:])} would have been ignored")
 	action = rest[0] if rest else None
 	name = rest[1] if len(rest) > 1 else None
 	# check and outdated read and report; there is nothing for a dry run to hold back.

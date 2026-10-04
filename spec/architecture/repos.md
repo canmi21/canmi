@@ -197,13 +197,21 @@ mise run pull            every repository
 mise run pull lattice      that one
 mise run check           each repository's own verify
 mise run audit           the same, with warnings failing
-mise run update still    that one's dependencies, and every tool
+mise run update still    that one's own tools and dependencies, and nothing else
 ```
 
 They are one-line aliases onto a single implementation, so the short form is what gets typed and
 the logic lives once. A name that is not in the registry is an error that lists the names that
 are, because the alternative -- doing nothing quietly, or doing everything -- are both worse than
 saying so.
+
+**A name is strict.** It means that repository and nothing else, in every half of every verb:
+nothing in the workspace or in a sibling is read for change, written or upgraded under it. What
+the command would not act on is refused rather than dropped -- a second name, an option the verb
+does not know, a name given to `list` or `check`, which read the whole registry -- because a
+dispatcher that ignores part of what was typed reports success on a request it did not carry out.
+`clone` with a name it did not know used to clone every repository; `update rdm` used to raise the
+workspace's toolchain. `publish` alone hands what follows the name on, unread, to the project.
 
 **This workspace is one of the repositories they act on**, under the name `workspace`. It has a
 remote, a working copy and files to format like any project, and the first version of these
