@@ -103,6 +103,25 @@ section.
 Written into a file, the bare word is never left to be read the same way: it is "SvelteKit", or
 `@canmi/kit`. A reader of a file has no conversation to infer from.
 
+## A figure in `spec/` is dated, or it is checked
+
+Numbers appear throughout these documents and two kinds of them are kept true by opposite means.
+
+**A figure describing a state that changes on its own is dated.** How large the corpus is, how far
+a migration has got, how many components still do something -- nothing holds these still, and
+writing one in the present tense promises that every change to the thing comes back and updates
+the sentence. That does not happen and will not. Dated, the figure stops being a claim that rots
+and becomes what it always was: a mark of how far something had got when somebody last counted.
+The spelling is "measured ... at the time", as web's `spec/architecture/media.md` uses for its 39
+records and its `spec/architecture/local.md` for its largest sidecar.
+
+**A figure that is a value the code uses is not dated.** A constant, a threshold, a declared width
+-- these have to match the code exactly, and the answer to one drifting is a check, not a hedge.
+Dating such a number would excuse the disagreement it exists to catch.
+
+The test is what keeps the number true. If the only thing that would is somebody noticing, date
+it.
+
 ## Tone
 
 - Terse and action-oriented. Skip pleasantries and pep talk.

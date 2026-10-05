@@ -23,6 +23,14 @@ macOS application that had no business seeing them, and its deploy tasks were ca
 inside it. Demoting the project to a sibling did not need a mechanism; the containment was the
 whole problem.
 
+## Grouping threshold
+
+A repository's `apps/` is flat until one category of its apps exceeds four members; then it is
+grouped by what each app does, and the growth forces it rather than a prediction. web's five apps
+do not need a taxonomy. The platform's passed the threshold and is grouped -- see platform's
+`spec/repository.md` -- and infra's seven are grouped the same way, so the two read alike; see
+infra's `spec/repository.md`.
+
 ## Configuration is inherited by position, not copied
 
 `.editorconfig`, `rustfmt.toml`, `rust-toolchain.toml`, `.oxlintrc.json`, `.oxfmtrc.json`, the
@@ -135,6 +143,23 @@ the Python that really is here.
 **A project sets its own, by its own logic.** A Rust application and a website have nothing to
 say to each other about what language they are written in, and the non-inheritance is what makes
 that work without any opt-out.
+
+## Machine output is marked, so the language statistics describe the repository
+
+A forge reads the tree and says what it is written in, and the workspace's line check measures
+every file in it. Both would answer for a repository's generators instead of its authors, so what
+the generators write is marked `linguist-generated=true` in that repository's `.gitattributes`,
+which both read.
+
+**A glob for a generated directory, not a list of its files.** Nothing in such a directory is
+hand-authored, so the glob is the honest shape and a list would be a maintenance obligation bought
+for nothing. **Every other file stays counted**: the mark is for output, not for files that are
+merely long; a file that is long and owed a split is marked `lines=deferred` instead, which the line
+check reports and passes.
+
+A generator writing code also opens it with `@generated` in its first five lines, which rustfmt and
+the comment check read, and a reader opening the file sees before editing it. A generated file over
+the hard limit that nobody marked fails the line check.
 
 ## Why not a submodule
 
@@ -299,6 +324,37 @@ mirror, exited 0 and printed a full report of what it had not done. The document
 could not publish, and said it had. Two lessons, both cheap: **a dispatcher that translates flags
 is claiming to know the project's vocabulary**, and **a dry run that looks exactly like a real one
 has to be checked against the thing it was supposed to change** -- the bucket, not the log.
+
+### verify runs what a change reaches
+
+**`mise run verify` checks the gates a change can affect, not the whole repository.** A repository
+holding several apps and libraries would otherwise compile, lint and test every one of them for an
+edit to one -- web did, before the split, for the platform and infra too, and an edit to a
+stylesheet built every crate. So what a change touched decides what runs.
+
+What it touched is the working copy's own change -- what is about to be committed -- or, with
+`--since REV`, everything after that revision. `--all` runs every gate, and so does `mise run
+audit`, which asks about the whole tree by definition. `--dry-run` prints the choice; `--files`
+names files to ask about without changing them. Each repository's `.mise/tasks/verify` is its
+mapping, and these are the rules every one keeps:
+
+- **Three gates always run** -- secrets, references, comment lengths. Each is
+  whole-tree and takes seconds, and a reference can break from anywhere.
+- **A Rust change reaches its crate and every crate that depends on it**, read from
+  `cargo metadata` rather than listed, and clippy and the tests run over those alone. A test that
+  reads another crate's file through `include_str!` depends on it without its manifest saying so;
+  those paths are read out of the source, so changing a record a crate's tests read reaches
+  that crate. `Cargo.lock`, the workspace manifest and the toolchain file reach every crate.
+- **A TypeScript, Svelte or style change reaches its package and every package that imports it**,
+  read from the `workspace:` dependencies. Any of them runs the three whole-program gates -- the
+  type check, the linter, the test suite -- and a package with gates of its own runs them only when
+  it is reached: an app's checks when the app or anything under it moved.
+- **A change to the gates reaches every gate.** `mise.toml` and `.mise/tasks/` are how everything
+  is checked, so a change there is checked against everything.
+
+**What the graph cannot see is named in the repository's own spec, and kept short.** A dependency
+the graph misses is a gate that silently does not run, which is the failure [../code.md](../code.md)
+describes, so a second such entry is worth a structural fix before it is worth a line in the list.
 
 ## `each` is the verb for everything else
 

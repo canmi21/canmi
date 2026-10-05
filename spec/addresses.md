@@ -64,3 +64,84 @@ Credentials, the formats a client accepts, what a cache may do: these are about 
 the thing, and two requests that differ only in them ask for the same thing. A version is the
 exception: it is in the path, where every layer -- a cache's key, a firewall, a log, a reader --
 sees it without parsing anything.
+
+## Every URL is declared once
+
+The address packages are the only place a URL, hostname, or dev port may be written down:
+`@canmi/me/urls` (crate `canmi`) for the author's own and the world's, `@monoflake/urls` for infra's
+and `@monoflake/sdk` for the platform's, each declaring what its owner owns -- see the workspace's `spec/architecture/layers.md`, "Addresses
+are split by who owns the name". Everything else imports from them, and above infra from the sdk,
+which composes the three into one map. This covers third-party endpoints too, not just our own
+hosts -- a CDN we forward images through is as much a URL as a domain we own.
+
+The composed map is grouped by role:
+
+- `apps`: every deployable app of the system, the site's and the platform's, with development and
+  production entries.
+- `internal`: domains the owner controls that are not apps.
+- `external`: third-party endpoints and hostnames.
+
+**The test: who resolves this URL?**
+
+- _The software_ -- it is fetched, linked against, or served from. It goes in its owner's address
+  package, with
+  no exceptions for app code, libraries, stylesheets, or config.
+- _A person reading_ -- a link to a standard, a `# see <url>` note. It stays where it is useful.
+  Nothing breaks if it rots except somebody's curiosity.
+
+The earlier version of this rule banned every `https://` outside the library, full stop. That
+was wrong on the day it was written: this spec cites four external standards, so the rule was
+already broken four times by the document stating it. A rule nobody can follow is not a strict
+rule, it is a dead one -- it gets ignored wholesale rather than in the one place it should be.
+
+An identity is not an address. A social handle, an email local part, a feed's tag URI --
+these say who someone is, and they live in `site.config.yaml` beside the author's name. What
+the address packages own is where to reach them. The two compose: `URLS.external.social.x` plus the
+handle is the profile URL, assembled at the point of use rather than stored a second time as
+a whole. Putting the handle in the URL library would make the library the owner of a fact
+about a person, and the config the owner of nothing.
+
+Names RFC 2606 reserves -- `.test`, `.example`, `.invalid`, `.localhost`, `example.com` and
+its siblings -- are exempt as well, and for a stronger reason than convention: the standard
+guarantees they never resolve. A placeholder an API needs because it demands an absolute URL,
+or a hostname a test supplies precisely so it gets rejected, cannot become a real endpoint by
+accident. Exempting them as a class is what stops the check from accumulating one-off
+exceptions.
+
+`mise run refs` enforces the first case and skips the second, treating comments, markdown
+links, and `$schema` keys as citations. `$schema` has to be a URL precisely because these tools
+come from mise and there is no `node_modules` to point at -- see [toolchain.md](toolchain.md). JSON-LD `@context` values and XML namespaces are exempt for a
+different reason: each is a namespace identifier, not an endpoint -- changing one changes what
+the document means rather than where anything points.
+
+Generated dependency lockfiles are vendor metadata, not an application address source. A package
+manager may copy a dependency's deprecation or funding URL into `pnpm-lock.yaml`; the software does
+not resolve it, and the next install owns that line. The reference check therefore skips the
+lockfile rather than asking an address package to duplicate metadata no repository here controls.
+
+The measure this exists to protect: **moving a domain costs one edit to one file.** Every
+literal written elsewhere adds one more place that has to be found, and the ones that get
+missed do not fail loudly -- they keep resolving to the old host until someone notices the
+traffic. This has already happened once, in web: a `cdn.canmi.net` literal survived inside a
+library long after that host stopped being part of the URL map, invisible because nothing
+referenced it by name.
+
+**Rust reads the map through a generated mirror.** A Rust process cannot import a TypeScript
+library, so each owner renders its own: the platform's `mise run urls` writes its `libs/sdk/src/lib.rs`,
+the `monoflake` crate, and the lib repository's writes the `canmi` crate, which infra reads since
+it may not read the platform's; web's `local` reads both from crates.io. Each is committed beside
+its map, so a checkout compiles without Node having run first. A mirror is never edited by hand:
+each package's `rust.test.ts` fails its `verify` the moment it disagrees with its map, so the
+one-edit measure survives the language boundary. The
+alternative, exempting Rust from the rule, would have left half the repo carrying literals
+that the check answers for everywhere else.
+
+### What the reference check will not flag
+
+Path-shaped strings in prose are ignored on purpose. These documents use invented names as
+examples -- `apps/r2`, `user-profile.ts`, `libs/canvas` as a name that was rejected -- and a
+check that flagged those would be wrong far more often than right.
+
+The convention is what makes the distinction mechanical rather than a judgment the checker has
+to make: an illustration stays in inline code, a real reference is a markdown link. So the
+check reads links and leaves backticks alone, and neither half has to guess.

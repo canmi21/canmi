@@ -17,6 +17,44 @@ The rule it implies: **guard against the values the code uses, not against a cou
 first, then guard on the names. Never reach for `!` or a cast to silence this class of error --
 the error is describing a real gap, and silencing it keeps the gap while removing the warning.
 
+## A runtime's globals decide which program checks a file
+
+Type checking runs as many times as a repository has runtimes, one program each. web runs three:
+`tsconfig.json` for the browser and anything indifferent to a runtime, `tsconfig.workers.json` for
+the site's API in `apps/site/api`, a Worker, and `tsconfig.scripts.json` for the node programs under
+an app's `scripts/`. The platform keeps the same three, its workers program holding its five
+Workers and `libs/sdk/store`; infra needs two, having no Worker.
+
+The split is forced rather than chosen. `@cloudflare/workers-types` declares its own
+`ReadableStream`, `Response` and `Cache`, and the DOM library declares those names too. Nothing
+tells TypeScript they describe the same things, so with both in scope every worker value crossing
+a shared boundary is a type error. Two workarounds had grown from that one cause, both in what is now
+the platform, and neither looked related to the other: `as unknown as ReadableStream` across the
+store's public surface, and a hand-written structural declaration of `caches.default` in the CDN
+because importing the real one would have made every Hono handler disagree about `Response`. Both are gone; nothing
+casts across that boundary now.
+
+**A file belongs to the program whose globals it actually runs against**, which is not always the
+directory it sits in. An app's `scripts/` is node, and is checked as node -- by the third
+program, which exists because saying so was not the same as arranging it. web's `tsconfig.json`
+excludes `apps/site` wholesale, since SvelteKit generates the `$lib` aliases that only svelte-check sees;
+svelte-check in turn reads SvelteKit's own generated file list, which stops at `src`. Every
+`scripts/` directory fell through the gap between those two and was checked by nothing at all --
+found by putting `const x: number = 'not a number'` in one and watching `verify` pass, which is
+also the check worth repeating on any program claimed to cover something. It carries the browser's
+lib beside node's, and that is not the collision this section warns about: what forced the split is
+DOM against `@cloudflare/workers-types`, and no script imports those.
+
+A worker's tests are checked _with the worker_, because they exercise worker code and mock worker bindings
+-- putting them elsewhere pulls the whole worker into a program that has the browser's globals,
+which is the thing being avoided.
+
+What the separation exposed is the argument for it. The platform's `apps/delivery/cdn` polyfills `ImageData` because
+workerd has none, and the polyfill needed a `@ts-expect-error` to install itself -- it was being
+checked against a browser's `ImageData`, which it is not. The type now lives in
+`apps/delivery/cdn/worker-runtime.d.ts` and describes what the polyfill supplies, so the declaration and
+the implementation are one claim instead of two that happened to agree.
+
 ## Dependency budgets differ by destination
 
 Where the code runs decides how much a dependency is allowed to cost.
@@ -131,6 +169,23 @@ failed inside a batch that finished -- and `Err` only when it could not run at a
 the two would make `local alt` over a library where one description failed indistinguishable from
 `local alt` in a directory that is not a repository, and the second is worth a different reaction
 from whoever typed it.
+
+## Extraction threshold
+
+Code moves into `libs/` when it acquires a second consumer, not when someone predicts one.
+A library written for a single caller is a guess about what the second caller will need, and
+the guess is made at the moment least is known. Waiting means the shared shape is derived from
+two real uses instead of one real use and one imagined one.
+
+The counterpart matters as much: once the second consumer exists, extract rather than copy.
+The API -- then `apps/api` -- read its metadata straight out of R2 while `apps/delivery/cdn` read the same bucket through
+a store that also knew how to read the local tree, so the API had no local development at all
+-- every lookup was a 404 until `--remote` reached a bucket that only production writes. The
+copy was not a duplicated function, it was a capability one side silently lacked.
+
+Extraction is also the moment to write the tests that only make sense for shared code. A
+private helper is covered by its one caller; a library is not, because the behavior each
+consumer depends on is no longer visible from any single one of them.
 
 ## Unused is not the same as dead
 
@@ -344,8 +399,8 @@ constant states its own number here and points at `spec/` for why that number.
 The rule above sends the full argument to `spec/` and leaves the comment naming the file. This is
 that rule in the other state: **where a comment would otherwise have to argue a decision nobody has
 made, it links to an issue instead.** An issue is an entry in a spec's `issues.md`, where every
-open question lives -- see [planning.md](planning.md) -- and the link is the whole comment, cited
-like any section: `spec/issues.md, "<heading>"`. The argument is had there, and not in a file that
+open question lives -- see [planning.md](planning.md) -- and the link is the whole comment, cited like any section, by
+the file and the entry's heading in quotes. The argument is had there, and not in a file that
 merely happens to be where somebody noticed.
 
 The link is a waypoint, not an end state. Once the decision is made the entry leaves `issues.md`

@@ -467,6 +467,43 @@ than as the app being absent.
 A project-scoped server is approved once, by the user, in an interactive session. An agent cannot
 approve one and should not try; `claude mcp list` says which state it is in.
 
+## Workers answer on custom domains only
+
+`workers_dev` and `preview_urls` are off everywhere. Every generated hostname is another route
+to the same worker, reached without whatever sits in front of the custom domain, and nobody
+watches those addresses. A route under a custom domain of our own is not a generated address, and
+is allowed, but none is left. A more specific route wins over the domain's Worker only for a request
+from outside: another Worker's `fetch` passing through a route does not run that route's Worker,
+which is how the alias layer found `api.ffoni.com/site/*` answering it with nothing while the
+gateway held the path by a route. A scope of the API host is reached by binding.
+
+How the platform's gateway declares its hosts and zones is platform's
+`spec/architecture/gateway.md`, "The gateway declares its hosts in its `wrangler.jsonc`".
+
+The cost is real and accepted: there is no URL to open between uploading a version and
+promoting it, so a deploy is the first time the code meets production. What replaces that
+check is `wrangler dev`, which runs the same code against the same bindings, plus the fact
+that a worker with no route configured serves nothing until a domain is pointed at it by
+hand.
+
+That last point is what makes replacing a worker safe. A first deploy under a new name is
+inert -- it creates the worker and attracts no traffic. Deploying over an existing worker of
+the same name replaces it in place and keeps its routes and custom domains attached, so
+replacing one never requires deleting it first. Nothing is deleted until whatever supersedes
+it has been seen serving real traffic.
+
+## Dev ports are pinned
+
+Every dev server binds a fixed port and **fails when that port is taken**. Vite gets
+`strictPort: true`; anything else refuses to fall back. Auto-incrementing to the next free
+port is never acceptable.
+
+The reason is not tidiness. A tool that drifts to the next port starts a second instance
+silently, and a second instance of something that writes to a project's data means two processes
+fetching and overwriting in the same directory. The port collision is the cheapest mutex
+available -- the operating system provides it for free, and it fails loudly at the only moment
+anyone can act on it.
+
 ## Dependency policy
 
 ### Dependencies move the way tools do
@@ -573,6 +610,20 @@ under `data/build/` that a site-only CI job cannot regenerate, so a name alone w
 while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
 database. **A sweep stops at every repository boundary that is not its own**: a directory carrying
 a `.git` or a `.jj` is somebody else's to clean.
+
+### A package at two majors is a warning unless it is allowed
+
+**Out of date is judged by the newest copy the workspace holds, not by each package's.** `update
+--dry-run` asks pnpm what is outdated and what every package holds directly, and calls a package
+behind only when its newest copy anywhere here is older than the registry's latest. One already on
+the latest somewhere while another package keeps an older major is not behind: it is two majors at
+once, which is reported apart, as a warning.
+
+**`versions.toml` allows a pair, with the reason.** Its `[several]` names each package that may
+hold two majors and why, as a transition somebody chose; the report then lists it without the
+warning, and `update --major` crosses only what the report calls behind, so an allowed pair is
+never collapsed by it. A line the workspace no longer needs -- one major left -- is reported for
+removal. Each repository's `.mise/tasks/outdated` is the report.
 
 ### A package version waits a day before it can be installed
 
