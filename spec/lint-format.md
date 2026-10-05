@@ -127,21 +127,35 @@ goes in that project's `spec/`, because it is about that project's code. The wor
 what is true of every project, which is why `no-await-in-loop` is not off here: its premise, that
 the iterations are independent, fails in seam's loops and nowhere has it been counted elsewhere.
 
-**An oxlint disable comment takes no reason suffix.** ESLint 9 allows
-`// eslint-disable-next-line rule -- why`, and oxlint does not: the ` -- why` is read as part of
-the rule list, matches no rule, and the whole directive is silently ignored. Nothing is
-reported, so the only symptom is the original warning still being there. Write the reason as an
-ordinary comment on the line above and keep the directive bare:
+**An oxlint disable comment carries its reason on the same line**, after `--`:
 
 ```ts
-// Reason the rule does not apply here.
-// eslint-disable-next-line no-new
+// oxlint-disable-next-line no-await-in-loop -- each page needs the last one's cursor
 ```
 
-The suffix form used to survive in the tree on `svelte/` rules, where the broken syntax never
-surfaced because those rules can never fire -- see the section below. Every such directive has
-since been replaced by a plain comment stating the reason, which is also the only correct form
-for a `svelte/*` rule name: a directive naming a rule that does not exist is decoration.
+This used to be refused: an older oxlint read the ` -- why` as part of the rule list, matched no
+rule, and silently dropped the whole directive. Measured again on oxlint 1.84.0, the suffix is
+honored -- the line under it goes quiet and an identical line without it still warns. A
+`svelte/*` rule name is the exception that remains: it names nothing oxlint has, so a directive
+naming one is decoration and its reason is a plain comment -- see the section below.
+
+**A warning is answered where it stands.** Some rules are right
+about most code and wrong about some: `no-await-in-loop` and `no-map-spread` are the two found so
+far. Each site is decided on its own:
+
+- **When the iterations are independent and nothing depends on their order, the loop becomes
+  parallel** -- `Promise.all`, with the results reassembled in the order they were asked for. That
+  is the outcome the rule wants and the best one when it is safe.
+- **When the order is the point** -- a poll, a cursor, a retry, a write the next one reads, a
+  global the step configures -- the directive goes above the line with its reason, and the reason
+  is one line. The order is the code's; the comment only names it.
+- `no-map-spread` the same way: a fresh object built in the callback takes `Object.assign`, and a
+  copy that has to stay a copy, because the original belongs to a cache or to somebody else's
+  module, keeps its spread and says so in one line.
+
+Turning the rule off is the wrong tool for this: it silences the sites where the warning was right
+along with the ones where it was not. A rule off for a whole project, as in the paragraph above, is
+for one that is wrong about that project's code as a whole.
 
 **clippy carries no style lints.** When Rust code lands, clippy stays on `correctness`,
 `suspicious`, and `complexity`. The `style` group overlaps rustfmt and stays off unless a
