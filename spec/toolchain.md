@@ -443,25 +443,26 @@ outside an activated shell.
 This exception covers hook scripts only. Everything a human or an agent invokes on purpose
 still belongs in `mise.toml`.
 
-## The desktop app is inspected through an MCP server pinned to its plugin
+## A Tauri app is inspected through an MCP server pinned to its plugin
 
-`.mcp.json` at the root declares one project-scoped server, `tauri`. It drives web's CMS
-window -- screenshots, a DOM snapshot, computed styles, JavaScript in the webview, any Tauri
-command the app exposes -- and it is the only way to see a desktop window from here. Chrome
-DevTools MCP reaches a browser tab, and the CMS is not one.
+`.mcp.json` at the root of this workspace declares one server, `tauri`, kept here as the record of
+a setup that took getting wrong to get right. It drove web's desktop CMS while there was one --
+screenshots, a DOM snapshot, computed styles, JavaScript in the webview, any Tauri command the app
+exposes -- and it is the way to see a Tauri window from here, which Chrome DevTools MCP, reaching a
+browser tab, cannot. No project here is a Tauri app today; the configuration is the workspace's, so
+the next one starts from it rather than from a search.
 
 **Its version is not free.** The server speaks to `tauri-plugin-mcp-bridge`, a Rust dependency of
-`repos/web/apps/cms/src-tauri`, over a WebSocket the plugin opens on port 9223; the two ship
-from one repository and are released together. So the pin in `.mcp.json` is exact and equals the
-crate's version, and moving one without the other is how a protocol change becomes a connection
-that opens and then answers nothing. It is fetched with `npx` rather than added to this
-repository's `package.json`, because a repository that holds configuration and nothing else should
-not carry a package it has no build to verify it against -- and the exact version is already the
-whole claim.
+the app, over a WebSocket the plugin opens on port 9223; the two ship from one repository and are
+released together. So the pin in `.mcp.json` is exact and equals the crate's version, and moving
+one without the other is how a protocol change becomes a connection that opens and then answers
+nothing. It is fetched with `npx` rather than added to this repository's `package.json`, because a
+repository that holds configuration and nothing else should not carry a package it has no build to
+verify it against -- and the exact version is already the whole claim.
 
-It reaches an app that is already running and nothing else: web's `base up cms` first. A server
-that starts cleanly and finds no window is the ordinary shape of a mistake here, and it reads as
-the server being broken rather than as the app being absent.
+It reaches an app that is already running and nothing else. A server that starts cleanly and finds
+no window is the ordinary shape of a mistake here, and it reads as the server being broken rather
+than as the app being absent.
 
 A project-scoped server is approved once, by the user, in an interactive session. An agent cannot
 approve one and should not try; `claude mcp list` says which state it is in.

@@ -82,11 +82,11 @@ already gone wrong: a globally installed oxfmt formatted this repository at 0.28
 formatted at 0.65, one rule set through two formatters. So the version is pinned here in
 `package.json` as well, matching the projects, and that pin is the second copy to keep an eye on.
 
-**A project may carry configuration only it can use.** `.mcp.json` is the case: one project needs
-a Tauri MCP server and the others have no use for it, so it stays with that project rather than
-becoming everyone's. It resolves relative to where an agent starts, so it reaches that server
-when the agent starts in that project and not otherwise, which is the right shape for a tool one
-project owns.
+**A project may carry configuration only it can use**, and a setup worth keeping that no project
+uses stays here instead. `.mcp.json` was a project's while web had a Tauri window and is the
+workspace's now: no project is a Tauri app, and the pinned server is kept as the record of what it
+took to make one work -- see [../toolchain.md](../toolchain.md), "A Tauri app is inspected through
+an MCP server pinned to its plugin".
 
 ### A rule that is code inherits the same way, as a module the projects import
 
