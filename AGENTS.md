@@ -54,6 +54,9 @@ Every rule the user states gets written down. Never leave one in chat only.
 - Anything narrower gets its own topic file in `spec/`, split by aspect, linked from the index.
 - A rule that belongs to one project goes in that project's `spec/`, not here.
 - Never restate spec content here. Link to it.
+- What is not done yet has three places in every `spec/`: `roadmap.md` for the direction, `todo.md`
+  for what is decided and waiting, `issues.md` for every open question. See
+  [spec/planning.md](spec/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `spec/` and this file instead, then verify a zero-memory agent could recover the arrangement
   from `AGENTS.md` alone. See [spec/agent-protocol.md](spec/agent-protocol.md).
@@ -75,7 +78,8 @@ goes to `spec/` or beside the code, where somebody is looking for it -- a log ca
 is the mistake this rule exists to stop. See [spec/commits.md](spec/commits.md).
 
 **Comments** -- a comment points rather than argues. The settled argument lives in `spec/` and the
-comment names the file; **a decision nobody has made yet goes to an issue**, linked in one line.
+comment names the file; **a decision nobody has made yet goes to an issue** in the spec's
+`issues.md`, linked in one line.
 Once it is made it becomes a `spec/` rule plus the change that implements it, never a comment
 carrying the debate. See [spec/code.md](spec/code.md), "spec/ holds what is settled; an issue holds
 what is not".
@@ -151,6 +155,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
 | Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [spec/delegation.md](spec/delegation.md)         |
 | Voice and communication                                                                                 | [spec/voice.md](spec/voice.md)                   |
+| Roadmap, todo and issues: where direction, decided work and open questions live                         | [spec/planning.md](spec/planning.md)             |
 | READMEs, repository descriptions and license years                                                      | [spec/readme.md](spec/readme.md)                 |
 | Commit conventions, when to commit and push, and their enforcement                                      | [spec/commits.md](spec/commits.md)               |
 

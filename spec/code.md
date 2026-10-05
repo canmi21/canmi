@@ -343,17 +343,19 @@ constant states its own number here and points at `spec/` for why that number.
 
 The rule above sends the full argument to `spec/` and leaves the comment naming the file. This is
 that rule in the other state: **where a comment would otherwise have to argue a decision nobody has
-made, it links to an issue instead.** An issue is where an open question lives, and the link is the
-whole comment -- the argument is had there, by the people having it, and not in a file that merely
-happens to be where somebody noticed.
+made, it links to an issue instead.** An issue is an entry in a spec's `issues.md`, where every
+open question lives -- see [planning.md](planning.md) -- and the link is the whole comment, cited
+like any section: `spec/issues.md, "<heading>"`. The argument is had there, and not in a file that
+merely happens to be where somebody noticed.
 
-The link is a waypoint, not an end state. Once the decision is made it stops being an issue and
-becomes a rule in `spec/` plus the change that implements it. What it never becomes is a comment
-carrying the argument, which is how a file ends up holding a debate that was settled elsewhere.
+The link is a waypoint, not an end state. Once the decision is made the entry leaves `issues.md`
+and becomes a rule in `spec/` plus the change that implements it. What it never becomes is a
+comment carrying the argument, which is how a file ends up holding a debate that was settled
+elsewhere.
 
-Spelling follows what is here already: a bare URL after "See" in a comment, as
-`apps/site/src/lib/documents/llms.ts` has it, and a markdown link labeled `owner/repo#number` in a
-document, as web's `architecture/css/extraction.md` cites `facebook/stylex#1825`.
+An upstream project's own issue is cited where it lives: a bare URL after "See" in a comment, and a
+markdown link labeled `owner/repo#number` in a document, as web's `architecture/css/extraction.md`
+cites `facebook/stylex#1825`.
 
 ### A comment that moves takes its coordinates with it
 
