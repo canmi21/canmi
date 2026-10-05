@@ -139,9 +139,13 @@ honored -- the line under it goes quiet and an identical line without it still w
 `svelte/*` rule name is the exception that remains: it names nothing oxlint has, so a directive
 naming one is decoration and its reason is a plain comment -- see the section below.
 
-**A warning is answered where it stands.** Some rules are right
-about most code and wrong about some: `no-await-in-loop` and `no-map-spread` are the two found so
-far. Each site is decided on its own:
+**A warning is answered where it stands**, by every linter -- oxlint, clippy, svelte-check alike.
+What a tool can rewrite without judgment is rewritten (`cargo clippy --fix`, a rename, a hoist);
+what is left is read one site at a time, and the answer is whatever that site turns out to need:
+the change the rule asks for, a deeper fix the warning only pointed at -- a parameter nothing
+reads any more, a helper whose callers left -- or a one-line suppression saying why the rule does
+not apply there. Some rules are right about most code and wrong about some: `no-await-in-loop`
+and `no-map-spread` are the two found so far, and they are decided this way:
 
 - **When the iterations are independent and nothing depends on their order, the loop becomes
   parallel** -- `Promise.all`, with the results reassembled in the order they were asked for. That
@@ -153,9 +157,11 @@ far. Each site is decided on its own:
   copy that has to stay a copy, because the original belongs to a cache or to somebody else's
   module, keeps its spread and says so in one line.
 
-Turning the rule off is the wrong tool for this: it silences the sites where the warning was right
-along with the ones where it was not. A rule off for a whole project, as in the paragraph above, is
-for one that is wrong about that project's code as a whole.
+**A rule is turned off only after every one of its sites has been read** and it is wrong about
+nearly all of them. Short of that, each site is answered on its own, because a rule off silences
+the sites where it was right along with the ones where it was not. That is what the paragraph
+above records for seam: a rule off for a whole project is one found wrong about that project's
+code as a whole, and the finding is written beside it.
 
 **clippy carries no style lints.** When Rust code lands, clippy stays on `correctness`,
 `suspicious`, and `complexity`. The `style` group overlaps rustfmt and stays off unless a
