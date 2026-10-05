@@ -12,6 +12,12 @@ measured in each language here (Rust, TypeScript, Svelte), whether a gate holds 
 once it gets there or only reports, and the order the repositories are brought up in. There is no
 time for it yet, which is why it is a question and not a todo entry.
 
+How `axum-governor` reads the number is the one reading written down so far: a function that
+orchestrates tested functions is covered by testing its orchestration -- call order,
+short-circuits, data threading -- not by re-testing every branch of what it calls; and an I/O-heavy
+module may fall below where the uncovered branches are error paths with no observable behavior,
+saying so in the module.
+
 ## robots.txt and security.txt are owed by every page, and declared in many places
 
 Every independent page a project deploys answers both files -- [robots.md](robots.md) -- and today

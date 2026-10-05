@@ -343,6 +343,11 @@ site, product or design is written as the value -- `64.5rem`, `510` -- with no n
 used it first, in a comment or in a commit message. Where it came from is chat, and it ages the
 moment the code is edited to be our own.
 
+**No separator lines.** `// ---`, `// ===`, `/* === */` or any divider of repeated characters says
+a file carries too many responsibilities, or a name does not say its intent; the function
+signature or the module boundary is the separator. A section that needs a comment gets the comment
+itself.
+
 ### How long, and where the rest of it goes
 
 A comment block is at most **six body lines**. The block that opens a file and introduces the
