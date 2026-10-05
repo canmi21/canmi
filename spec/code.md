@@ -48,7 +48,7 @@ reach one small corner of what it does. Not a regex over the shape that usually 
 `split_once` that covers the cases seen so far.
 
 The cost of refusing is not a bug so much as a _disagreement_, and disagreements in a parser are
-the quiet kind. `cms og` read article frontmatter with a hand-rolled split while the segment
+the quiet kind. web's `local og` read article frontmatter with a hand-rolled split while the segment
 layout read the same frontmatter with `serde_yaml_ng`, and the card looks its translation up by
 the title string the first one produced. A folded scalar -- `title: >-` across two lines -- gives
 the hand-rolled reader `>-`, so the card is titled with the fold marker and, worse, finds no
@@ -92,8 +92,8 @@ receives a string can only print it, and a caller that receives a panic cannot d
 
 The distinction that decides between an error and a panic is **whose mistake it is**. A person
 hand-writing frontmatter will mistype it, so unreadable frontmatter is an ordinary event and
-returns `Malformed` -- web's `apps/cms/src/i18n/segment.rs`. A panic is for the state that cannot
-arise unless this code is already wrong. `cms i18n` used to abort on a stray colon in an article,
+returns `Malformed` -- web's `apps/local/src/i18n/segment.rs`. A panic is for the state that cannot
+arise unless this code is already wrong. `local i18n` used to abort on a stray colon in an article,
 with a message naming the fault and not the file, which left a binary search through the corpus
 as the way to find out which article it was.
 
@@ -128,8 +128,8 @@ cause; converting them to `thiserror` is worth doing as its own work.
 
 A command returns `Ok(ExitCode::FAILURE)` when it ran and has something to report -- items that
 failed inside a batch that finished -- and `Err` only when it could not run at all. Collapsing
-the two would make `cms alt` over a library where one description failed indistinguishable from
-`cms alt` in a directory that is not a repository, and the second is worth a different reaction
+the two would make `local alt` over a library where one description failed indistinguishable from
+`local alt` in a directory that is not a repository, and the second is worth a different reaction
 from whoever typed it.
 
 ## Unused is not the same as dead
@@ -389,8 +389,8 @@ Two markers, and the line between them is whether anything is **wrong**.
 
 **`FIXME` is a debt.** The code knowingly departs from a rule in `spec/`, or behaves in a way
 somebody would call a bug if they met it cold. It says which rule, why it stands, and what has to
-happen first. `cms tn` and `cms embed` carry one because their operations live inside the CLI
-adapter, which web's `architecture/cms.md` does not allow.
+happen first. web's `local tn` and `local embed` carry one because their operations live inside the
+CLI adapter, which web's `spec/architecture/local.md` does not allow.
 
 **`TODO` is not a debt**, which is why it needs its own word rather than a softer `FIXME`. It
 marks something deliberately unfinished with no bad consequence while it waits -- a value

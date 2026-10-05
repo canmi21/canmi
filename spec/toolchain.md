@@ -122,11 +122,11 @@ Only genuinely secret values go in. Facts like `RCLONE_CONFIG_R2_TYPE = "s3"` st
 **A value the browser must have cannot be a secret.** Anything compiled into a client bundle
 -- an analytics token, a Sentry DSN, a publishable API key -- is readable from devtools by
 anyone who loads the page. Storing it encrypted does not hide it; it only hides from the
-reader of this repository that it is already public. Those go in `libs/urls` or plain config,
-labeled for what they are.
+reader of this repository that it is already public. Those go in an address package --
+`@canmi/me/urls` holds every app's Sentry DSN -- or plain config, labeled for what they are.
 
-The same credential can be secret elsewhere. The API worker's Sentry DSN is a different
-project that never reaches a browser, so it stays a wrangler secret. What decides is exposure,
+The same kind of credential can be secret elsewhere. A token a Worker calls another service with
+never reaches a browser, so it stays a wrangler secret. What decides is exposure,
 not the kind of thing it is.
 
 ### Three things that will bite
@@ -540,8 +540,8 @@ family, because which family broke is a question only a bisection answers.
 A reverted lockfile makes the same repair and forgets it on purpose. The next `mise run update`
 tries the range again from the top, and if the upstream has been fixed in the meantime the
 repository simply moves. Nobody has to remember to lift anything, which is the part a manifest pin
-gets wrong. This is web's Cargo rule -- a lockfile pin at the version that worked, no manifest
-constraint and no `[patch]` -- stated for every ecosystem here rather than for one.
+gets wrong. For Cargo that is a lockfile pin at the version that worked, no manifest constraint
+and no `[patch]`; the rule is the same in every ecosystem here.
 
 What carries across the gap is the user's own memory of what broke, and the retry is theirs: they
 come back to it after a few days and run the same flow again. An agent's part is to say what
@@ -567,7 +567,7 @@ target-dir` can move it anywhere, so a sweep matching the word `target` would mi
 
 **What gets removed is decided twice, by a name and by version control.** A path a `clean` sweeps
 has to be one its tools write _and_ be ignored by the repository _and_ have nothing tracked
-underneath it. Neither half is enough on its own: web ignores `build/` and tracks five records
+underneath it. Neither half is enough on its own: web ignores `build/` and tracks four records
 under `data/build/` that a site-only CI job cannot regenerate, so a name alone would delete them --
 while "everything git ignores" is `node_modules`, `.env`, a photograph library and that local
 database. **A sweep stops at every repository boundary that is not its own**: a directory carrying
@@ -609,7 +609,7 @@ belongs to the user -- see [agent-protocol.md](agent-protocol.md).
 
 Arguments are declared as types with clap's derive API rather than read out of `std::env::args`
 by hand. The property being bought is refusal: a hand-rolled loop matches the flags it knows and
-ignores the rest, so a typo is silence. `cms` had five commands where that silence spent money --
+ignores the rest, so a typo is silence. web's `local`, then called `cms`, had five commands where that silence spent money --
 `--limit` was read with `.parse().ok()`, and an unparsed limit is no limit, so `--limit 2x` and
 `--lmit 2` both bought the whole library. Derive fixes both at once because the flag set _is_ the
 type; there is no second list of known names to keep in step.
