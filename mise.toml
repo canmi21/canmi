@@ -16,7 +16,6 @@ config_roots = [
 	"repos/lib",
 	"repos/seam",
 	"repos/rdm",
-	"repos/grok2api",
 ]
 
 # jj's own repo config lives outside the working copy and cannot be version controlled.

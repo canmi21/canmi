@@ -54,12 +54,12 @@ holds that rule now.
 
 ## Who owns what
 
-| Repository           | apps                                                                                                      | libs                                                               |
-| -------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `canmi21/lib`        | --                                                                                                        | me and canmi, ui, kit, web, response, whereabouts, axum-governor   |
-| `monoflake/infra`    | host, keeper, panel, meter, caddy, tunnel, resolver                                                       | deploy, urls                                                       |
-| `monoflake/platform` | gateway, quota, cdn, aka, hook, geo, objects, postgres, ledger, cron, apt, shot, probe, telemetry, gemini | sdk, probe, ledger                                                 |
-| `canmi21/web`        | site and its API, cms, local, status, landing                                                             | prose, compile, collection, messages, social, hints, fonts, robots |
+| Repository           | apps                                                                                                            | libs                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `canmi21/lib`        | --                                                                                                              | me and canmi, ui, kit, web, response, whereabouts, axum-governor   |
+| `monoflake/infra`    | host, keeper, panel, meter, caddy, tunnel, resolver                                                             | deploy, urls                                                       |
+| `monoflake/platform` | gateway, quota, cdn, aka, hook, geo, objects, postgres, ledger, cron, apt, shot, probe, telemetry, gemini, grok | sdk, probe, ledger                                                 |
+| `canmi21/web`        | site and its API, cms, local, status, landing                                                                   | prose, compile, collection, messages, social, hints, fonts, robots |
 
 `geocode` took `geo`'s address lookup in beside the coordinate one and is published as
 `whereabouts`: one crate answering where something is, each lookup behind a feature, the data
