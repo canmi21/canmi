@@ -79,8 +79,8 @@ and each task that has a warning tier appends its own tool's flag:
 
 `-D warnings` on clippy's command line outranks the lint table, so `complexity = "warn"` fails
 under audit without `Cargo.toml` being touched. It also reaches what that table never named --
-rustc's own `unused-imports`, `unused-variables` and `dead-code`, and the clippy `style` group
-this file says is off and no manifest actually turns off.
+rustc's own `unused-imports`, `unused-variables` and `dead-code`, and the clippy `style` group,
+which no manifest names because it is on by default.
 
 **The mode covers every gate, not only the three that have a warning tier.** `audit` runs the
 same dispatch, the same repository list and the same tasks in the same order as `check`; a gate
@@ -163,9 +163,12 @@ the sites where it was right along with the ones where it was not. That is what 
 above records for seam: a rule off for a whole project is one found wrong about that project's
 code as a whole, and the finding is written beside it.
 
-**clippy carries no style lints.** When Rust code lands, clippy stays on `correctness`,
-`suspicious`, and `complexity`. The `style` group overlaps rustfmt and stays off unless a
-specific rule is shown to cover something rustfmt does not touch.
+**clippy keeps its `style` group on.** The manifests name `correctness` and `suspicious` as
+`deny` and `complexity` as `warn`; `style` is left at clippy's own default, a warning. It was once
+meant to be off, on the reasoning that it overlaps rustfmt. It does not: the 2026-10 cleanup read
+every site it reported -- 133 needless borrows, `then` where `then_some` reads, `if`s that nest
+for nothing -- and none of them was layout. A `style` rule that does turn out to restate rustfmt
+is answered the way any rule is, above.
 
 **oxfmt never touches `contents/`.** An article's bytes are load-bearing in a way code's are
 not: `data/build/segments.json` fingerprints byte ranges of each article, and the translation
