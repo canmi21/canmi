@@ -18,7 +18,7 @@
   not the British spelling of any of them. This is not a preference between two correct forms:
   the platform is already American and half of it is identifiers. `color` is a CSS property, a
   StyleX key and a token name; `license` is a route, a file and a record type. An author writing
-  `colour` in the prose beside `color:` has put two spellings of one word in one file, and the
+  `color` in the prose beside `color:` has put two spellings of one word in one file, and the
   one that is a reader's search term is the one that loses. The rule removes the choice so the
   file does not have to keep making it.
 - **A name is quoted, not written, and English-only does not reach it.** The rule above governs

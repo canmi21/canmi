@@ -12,7 +12,7 @@ out, no wave -- the conversation reads, edits, checks and commits on its own, un
 session, and says so in words: "this session dispatches", "use agents", or the like.
 
 **Once they have, every section below applies, and it holds until they say otherwise.** It is not
-re-asked each turn, and it does not lapse into a judgement about which tasks seem worth a worker
+re-asked each turn, and it does not lapse into a judgment about which tasks seem worth a worker
 -- "When not to delegate" still governs the individual edit, but it never turns delegation back
 on in a session that has not been told to, nor off in one that has.
 
@@ -78,7 +78,7 @@ and none of them is legible.
   "File ownership is the whole of the concurrency control" doing its job. Say so before the idea
   is designed around a file that is being rewritten underneath it.
 
-**Reading which of these applies is judgement, and nothing in the notification carries it.** If
+**Reading which of these applies is judgment, and nothing in the notification carries it.** If
 the user's last message was about something else, they are on something else. If they ask how it
 is going, they want the result. The signal is what they are doing, not what has arrived.
 
@@ -106,11 +106,11 @@ first wave's one worker, and the workers depending on it are the next wave, brie
 landed. The conversation's own edits are `spec/`, the registrations only it may touch -- a
 workspace member list, a URL table entry -- and a one-line fix a brief would be longer than.
 
-**Judgement.** Working out _why_ something is broken, and what the fix has to be, stays here. It
+**Judgment.** Working out _why_ something is broken, and what the fix has to be, stays here. It
 is made on text a worker quoted back rather than on a worker's conclusion, which is the subject
 of the next section.
 
-## Reading is delegated; the judgement on what comes back is not
+## Reading is delegated; the judgment on what comes back is not
 
 **In a delegating session, reading the code is delegated too, not only searching it.** Both halves of the cost are
 worth avoiding: a file read into the conversation stays there for the rest of the session, and
@@ -136,7 +136,7 @@ one message and must not be weighed the same.
 **A line cap is not tidiness.** A worker that returns the file has returned the problem: the
 context was spent, just later and by somebody else.
 
-**Choosing which ten lines to quote is itself a judgement, and it can be wrong.** Asking for the
+**Choosing which ten lines to quote is itself a judgment, and it can be wrong.** Asking for the
 enclosing structure makes a badly framed snippet visible sometimes, and not always. The reliable
 signal is the other one: **an answer that surprises is read again by hand.** A finding that does
 not fit what the rest of the tree implies is either a discovery or a mis-framed quotation, and
@@ -230,7 +230,7 @@ that looks finished and is not.
 - **Do not run the test suite, the type checker, the formatter or the linter.** The reason is in
   "Testing is the user's; checking is the conversation's" below.
 - **Do not touch `spec/` or `AGENTS.md`**, and do not reformat or tidy code the brief did not
-  name. A neighbouring improvement is indistinguishable from a mistake in a diff, and it lands in
+  name. A neighboring improvement is indistinguishable from a mistake in a diff, and it lands in
   a commit about something else.
 - **Stop and report rather than improvise.** A brief that turns out to be wrong, a file it needs
   and does not own, a rule it cannot satisfy and follow at once: all of these come back as a
@@ -373,7 +373,7 @@ afternoon in which two things were being done at once.
 "Completion", which has an agent commit its own completed work: that rule holds for an agent
 working directly, and is suspended for a spawned worker, which never commits, never describes and
 never moves the bookmark. With several workers in one working copy the alternative is a bare
-`jj commit` sweeping a neighbour's half-written files into somebody else's change, silently.
+`jj commit` sweeping a neighbor's half-written files into somebody else's change, silently.
 
 **The conversation pushes between waves.** When to push is [commits.md](commits.md), "When a
 change is done, and when it is pushed"; with workers, a checked, committed wave is pushed with

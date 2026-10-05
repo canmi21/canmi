@@ -84,7 +84,7 @@ Measured, after one session that had not been watching: 25 orphaned `workerd` pr
 
 **The signal has to reach the process that owns the child, not a wrapper above it.** That is the
 half this rule was missing, and it was missing because it had only been tried the easy way. A
-`mise run dev-api` is a shell running a node process running `workerd`; signalling the shell ends
+`mise run dev-api` is a shell running a node process running `workerd`; signaling the shell ends
 the shell, and what it was supervising is orphaned with its exit hook unrun. The same session that
 measured four children reaped cleanly went on to signal three wrappers and leave 22 behind, 1.4 GB
 -- the rule had been written from the one case that worked.
@@ -132,7 +132,7 @@ not the kind of thing it is.
 ### Three things that will bite
 
 **JSON, not dotenv.** mise parses a `.env` as plain dotenv before looking for sops metadata
-and fails on the age block. JSON puts that metadata under a `sops` key it recognises.
+and fails on the age block. JSON puts that metadata under a `sops` key it recognizes.
 
 **No empty placeholders.** sops leaves `""` untouched, and mise then rejects the whole file
 because a value lacks the `ENC[` prefix. Write `"unset"` instead of `""`.
@@ -657,7 +657,7 @@ that, its comment says what was verified afterwards.
 These are defaults, not a whitelist. Reaching outside them is a structural decision and
 belongs to the user -- see [agent-protocol.md](agent-protocol.md).
 
-### A Rust CLI parses with clap, and wears cargo's colours
+### A Rust CLI parses with clap, and wears cargo's colors
 
 Arguments are declared as types with clap's derive API rather than read out of `std::env::args`
 by hand. The property being bought is refusal: a hand-rolled loop matches the flags it knows and

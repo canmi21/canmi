@@ -12,7 +12,7 @@ Stop is that moment, stated as an event. This is the only hook here that is not 
 tool call.
 
 **It refuses; it never moves the bookmark itself.** Doing the move here would be the same
-behaviour spec/toolchain.md turns off on purpose -- jj ships auto-advance as
+behavior spec/toolchain.md turns off on purpose -- jj ships auto-advance as
 `experimental-advance-branches`, and the reason it stays disabled is that a bookmark which only
 moves when told to is a bookmark whose position means something. A hook that advanced `main`
 would restore auto-advance under another name, and worse, without a record: the position would

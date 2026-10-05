@@ -39,7 +39,7 @@ below carries no copy and needs none.
 
 That is what decides the split. **A rule that holds for everything the author writes goes here;
 a rule about one project goes in that project.** The position is the mechanism, so there is no
-setting to keep in step and nothing to synchronise -- which is why an earlier design that copied
+setting to keep in step and nothing to synchronize -- which is why an earlier design that copied
 these files into each project, and checked the copies, is gone.
 
 **The rule is mechanical, not remembered.** `mise run check` fails when a project carries a
@@ -196,7 +196,7 @@ still = "canmi21:still"
 
 **The directory is the key, so uniqueness comes from the format rather than from a check.** Two
 entries cannot claim one folder, and a duplicate is a parse error where it would otherwise be a
-surprise on clone. The user half is carried so an organisation's repository is an entry like any
+surprise on clone. The user half is carried so an organization's repository is an entry like any
 other, and so one repository name under two owners can sit side by side under different
 directories -- which is the case a bare `user:repo` list could not express at all.
 A directory named apart from its repository is the everyday version of the same thing -- `governor`
@@ -317,7 +317,7 @@ The task itself belongs to the project, which is what decides that a release dep
 publishing does not, because what a publish is dry about -- and which way round the flag runs --
 is the project's own question. web's mirror is dry by default and takes `--live`, which is the
 safe polarity for something that deletes. So `publish` collects whatever follows the name and
-hands it on unread, rather than recognising a fixed list.
+hands it on unread, rather than recognizing a fixed list.
 
 It used to forward `--dry-run` and nothing else, which meant `publish web --live` ran a dry
 mirror, exited 0 and printed a full report of what it had not done. The documented way to publish

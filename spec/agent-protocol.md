@@ -177,7 +177,7 @@ accepted the item before it.
 The ordinary calibration above is not enough here, for two reasons a backlog has and ordinary
 work does not.
 
-**Every item on the list was already judged once, by whoever wrote the list, and that judgement
+**Every item on the list was already judged once, by whoever wrote the list, and that judgment
 is the thing least worth trusting.** The findings that survive review are rarely the ones that
 looked most obvious in it -- three separate items in the audit this rule came out of were
 overturned by the user: a color token that read as dead was a deliberate reservation, an emoji
@@ -187,7 +187,7 @@ is the author's, not the reader's.
 
 **A list also carries momentum.** Having done four items unaided makes the fifth feel
 pre-approved, and nothing in the list marks which entry is the structural one. The rule removes
-the judgement call rather than asking for it to be made well four times running.
+the judgment call rather than asking for it to be made well four times running.
 
 Read-only investigation is exempt and needs no approval: searching, reading, type-checking,
 running the test suite, taking a screenshot. That is the material a proposal is made of, and
@@ -282,7 +282,7 @@ any of it.
 
 **So the first three things to look at are the ones no program will tell you**: how many processes
 of the kind you started are alive, what they hold, and what the machine's total resident size is.
-A tool reports on itself and cannot see its neighbours, which is exactly the blindness this order
+A tool reports on itself and cannot see its neighbors, which is exactly the blindness this order
 of investigation exists to cover.
 
 **When the machine comes back clean, the next suspect is your own concurrency, not the code under
@@ -356,7 +356,7 @@ convention triggers the same review on its own:
 
 - Does a future agent need a rule to use this correctly, or is the config file
   self-explanatory?
-- Did resolving this require a judgement that is invisible in the resulting file? Judgements
+- Did resolving this require a judgment that is invisible in the resulting file? Judgments
   leave no trace unless written down -- a config value looks arbitrary six months later.
 - Does an existing `spec/` file now contradict what was just added?
 

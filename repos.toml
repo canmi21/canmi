@@ -4,7 +4,7 @@
 #
 # The directory is the key, so it is unique by the format rather than by a check -- two entries
 # cannot claim one folder, and a duplicate is a parse error rather than a surprise on clone. The
-# user half is carried so an organisation's repository is an entry like any other, and so the
+# user half is carried so an organization's repository is an entry like any other, and so the
 # same repository name under two owners can live side by side under different directories.
 #
 # Every command that takes a name takes one of these keys: `mise run pull web`, `mise run

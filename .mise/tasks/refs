@@ -83,7 +83,7 @@ def docs() -> list[pathlib.Path]:
 def resolve(path: pathlib.Path, cited: str) -> pathlib.Path | None:
 	"""Where a citation points, or None when nothing holds it.
 
-	A doc names a neighbour -- `toolchain.md` from inside `spec/` -- which resolves against its
+	A doc names a neighbor -- `toolchain.md` from inside `spec/` -- which resolves against its
 	own directory. Code names `spec/<f>.md`, or a project's `repos/<name>/<f>.md`, from wherever
 	it sits, and that means the root: this repository is the top of the rule hierarchy, with
 	nothing above to walk up into. Trying both in turn reads each shape the way its author meant.

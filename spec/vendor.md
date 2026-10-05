@@ -53,8 +53,8 @@ reported as something this repository is behind on: SvelteKit holds cookie at 0.
 kept and run under a config of their own from the vendor directory, and `VENDOR.md` says which
 command runs them and which are excluded, and why.
 
-**They are not a condition of `verify`.** Upstream's tests carry upstream's judgement, which of
-them to skip included, and a count of them carries that judgement into ours unread: a count cannot
+**They are not a condition of `verify`.** Upstream's tests carry upstream's judgment, which of
+them to skip included, and a count of them carries that judgment into ours unread: a count cannot
 see a test move from passing into a skip, or out of the suite. Where a project's gate runs the
 upstream's tests at all, it holds them to a list the project keeps outside `vendor/` -- every test
 by name, the state it has to come out as, and for a skip whose reason it is -- and fails on any

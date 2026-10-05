@@ -30,7 +30,7 @@ carries is checked somewhere else. The opener knows the envelope and nothing abo
 caller knows its own payload and nothing about transport. A reader that reaches through an
 envelope to a field is a reader that has to be changed when the envelope does.
 
-## The payload inside an envelope is not standardised
+## The payload inside an envelope is not standardized
 
 Only the envelope is uniform. What a route answers with is that route's business, and forcing
 every answer into one shape produces a lowest common denominator that fits nothing -- a `data`

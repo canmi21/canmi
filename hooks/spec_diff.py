@@ -10,7 +10,7 @@ lines, exactly the rules that moved, at the one moment they matter: the agent's 
 about to land beside them.
 
 Never blocks, and reads nothing when nothing changed. Whether a changed rule affects the task
-at hand is the agent's judgement; this only guarantees the change is seen.
+at hand is the agent's judgment; this only guarantees the change is seen.
 
 The "before" state comes from jj's operation log, which is why no hook has to remember it: the
 newest run of rebase operations is found, and the working copy as of the operation just before

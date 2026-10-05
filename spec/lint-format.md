@@ -27,7 +27,7 @@ no "check formatting" step to pass and nothing for an agent to decide.
 
 So: **never hand-format, never argue with the formatter, never turn a rule off to make a
 file pass.** If the formatter and the linter want different bytes, that is a broken
-configuration, not a judgement call. Fix the config and record why, per the section below.
+configuration, not a judgment call. Fix the config and record why, per the section below.
 An agent that finds itself reasoning about whitespace has already gone wrong.
 
 Because `jj fix` repairs history rather than guarding a commit, formatting can never be

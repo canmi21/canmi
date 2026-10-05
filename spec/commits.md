@@ -136,7 +136,7 @@ not required. Partial or blocked work stays uncommitted, and unrelated changes a
 working copy are never swept into the task's commit merely to make the tree clean.
 
 **A spawned worker is the exception, and never commits at all.** Several of them share one
-working copy, so a commit taken by one sweeps up whatever its neighbours have half-written. The
+working copy, so a commit taken by one sweeps up whatever its neighbors have half-written. The
 conversation that spawned them commits, by path list, after the user has said the change is
 right. See [delegation.md](delegation.md), "Commits separate concerns, not buildable states",
 which also records why a commit here is not required to build on its own.
@@ -186,7 +186,7 @@ the agent took, which is the whole of the difference and the whole of the reason
 `main` can be ahead of where the task started -- a fetch, or the same repository worked on
 another machine. There are no sibling workspaces to race with; see
 [toolchain.md](toolchain.md), "Rejected: parallel workspaces". When it has advanced,
-`jj bookmark move` refuses to move it sideways, and that refusal is the synchronisation point:
+`jj bookmark move` refuses to move it sideways, and that refusal is the synchronization point:
 `jj rebase -d main`, run `mise run verify` again on the rebased result, then move. The order
 matters. The change was verified against the tree it was written on; the rebased commit is the
 first place the two changes meet, and it is what `main` is about to claim.
@@ -227,7 +227,7 @@ The behavior has one home under `hooks/`. `.claude/settings.json` and `.codex/ho
 thin adapters with the same event table, each calling the one `hooks/run.py` entrypoint. That
 entrypoint owns routing, command selection, and combining output from policies that can both
 apply to one event. A vendor adapter never owns policy: if the harness payloads diverge later,
-the shared entrypoint normalises their common meaning rather than growing two implementations
+the shared entrypoint normalizes their common meaning rather than growing two implementations
 that only appear equivalent.
 
 `hooks/spec_check.py` runs _after_ the commit lands and asks the question the diff

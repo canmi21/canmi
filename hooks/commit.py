@@ -48,7 +48,7 @@ SUBCOMMANDS = {
 	"squash",
 	"metaedit",
 }
-# Whether an assistant co-authored a change is a judgement no script can make, so only the
+# Whether an assistant co-authored a change is a judgment no script can make, so only the
 # shape is checked here: if a trailer is present at all, it has to be one of the two agreed
 # forms. See spec/commits.md for when to add one.
 COAUTHOR = re.compile(r"^Co-Authored-By:", re.IGNORECASE)

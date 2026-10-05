@@ -501,7 +501,7 @@ def main(argv: list[str]) -> int:
 	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise.
 
 	`publish` is the exception: its flags belong to the project being published, so anything this
-	does not recognise is collected rather than refused, and handed on unread.
+	does not recognize is collected rather than refused, and handed on unread.
 	"""
 	dry = False
 	major = False

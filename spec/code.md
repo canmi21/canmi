@@ -59,7 +59,7 @@ the implementation are one claim instead of two that happened to agree.
 
 Where the code runs decides how much a dependency is allowed to cost.
 
-|                                        | Optimise for            | Budget                                               |
+|                                        | Optimize for            | Budget                                               |
 | -------------------------------------- | ----------------------- | ---------------------------------------------------- |
 | Runs locally (CLI, CMS, build tooling) | correctness, then speed | dependency count and binary size are not constraints |
 | Ships to the edge or a browser         | payload                 | every dependency is argued for                       |
@@ -437,7 +437,7 @@ the rest of it.
 
 **A phrase describing the rendered page is not a coordinate.** In that same comment "the box's
 bottom", "2.5px below the anchor's", "in the same sentence" and "measured on the error page" all
-travelled intact, and one of them reads better after the move than before. The rule is about
+traveled intact, and one of them reads better after the move than before. The rule is about
 positions in a file, never about the word "below".
 
 ### `FIXME` is a problem; `TODO` is a plan
