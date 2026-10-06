@@ -440,6 +440,18 @@ bottom", "2.5px below the anchor's", "in the same sentence" and "measured on the
 traveled intact, and one of them reads better after the move than before. The rule is about
 positions in a file, never about the word "below".
 
+### An applied migration is never edited, its comments included
+
+**Once a migration has run against a database, its file is frozen byte for byte.** A migrator
+records each one's checksum and refuses a file that no longer matches, and the checksum is of the
+whole file -- a comment is bytes like any other. A stale citation in one stays stale: the fix is a
+new migration, or nothing.
+
+It happened. A spec audit retargeted the citations in two of the probe's migrations, which changed
+nothing they did, and the next build of the probe refused to open the status database: sqlx said
+the first migration "was previously applied but has been modified", and the status page went stale
+until both files were put back.
+
 ### `FIXME` is a problem; `TODO` is a plan
 
 Two markers, and the line between them is whether anything is **wrong**.
