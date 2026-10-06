@@ -28,6 +28,26 @@ fail away is a cycle, and the rule forbids it. From the bottom:
 The status page is a service and not the platform's, though it shows the platform: it is a page
 built from the site's own libraries, and the probe and the schema it reads stay in the platform.
 
+## Cloudflare is under the platform, and an app binds only the platform
+
+**An app depends on the platform, and the platform on Cloudflare** -- never an app on Cloudflare
+beside the platform, which is the diamond the site stands in today. An app is deployed through the
+platform and handed its bindings by it: some are Workers' own, some the platform's, all of them the
+platform's to give.
+
+**Workers carry what holds no state, and nothing else.** A stateless function, a page rendered at
+the edge, static assets and the edge cache -- what can be computed again if lost -- run on Workers,
+because nothing is nearer a reader. What holds state comes from the platform: a database is its
+Postgres, not D1; something that holds connections or coordinates is a WebSocket service on the
+nodes, not a Durable Object; files are its buckets; timers and queues its scheduler. A Worker
+reaches all of them over Workers VPC, which carries HTTP, TCP and WebSockets to the nodes.
+
+**Cloudflare's stateful products may stand behind the platform, never in front of an app.** A
+platform bucket may keep a copy in R2, which is then one of its stores; an app binds the bucket and
+never R2. So an app does not change when the platform changes a provider, nor the platform when an
+app moves. The direction is platform's `spec/roadmap.md`; what is open, its
+`spec/issues/scheduling.md`.
+
 ## The directory is the layer
 
 **Each layer is a repository, and each keeps `apps/` for what is deployed and `libs/` for what is
