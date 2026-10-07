@@ -9,9 +9,10 @@ it is every repository's; each cites it rather than keep a copy.
 ## Four places, and which way they lean
 
 **A layer depends on the ones below it and never on one above** -- except where it works without
-the one above, and only leans on it when it is there. infra's panel may let somebody in with the
-platform's accounts, but keeps a sign-in of its own that needs nothing above it, so the layer that
-brings everything back can be reached when what it brings back is down. A dependency that cannot
+the one above, and only leans on it when it is there. The console a node runs may let somebody in with
+the platform's accounts, but keeps a sign-in of its own and reads only its host, needing nothing
+above infra, so the layer that brings everything back can be reached when what it brings back is
+down -- it is a services app built here for that, as web's roadmap says, and today infra's panel. A dependency that cannot
 fail away is a cycle, and the rule forbids it. From the bottom:
 
 - **lib** is the author's own code that depends on nothing else of theirs: the design system,
