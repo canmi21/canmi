@@ -182,7 +182,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 | Project          | Rules                                                                                                                                                                   |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `repos/web`      | the site, its API, the status page, the service domains' pages, the CMS, `local` and the corpus -- [repos/web/spec/](repos/web/spec/)                                   |
+| `repos/web`      | the site, its API, the status page, the service domains' pages, the CMS, the console, `local` and the corpus -- [repos/web/spec/](repos/web/spec/)                      |
 | `repos/platform` | the services every site reads, the gateway, the Workers and the model APIs -- [repos/platform/spec/](repos/platform/spec/)                                              |
 | `repos/infra`    | host, keeper and the node they run every app on -- [repos/infra/spec/](repos/infra/spec/)                                                                               |
 | `repos/still`    | a macOS application; no spec yet                                                                                                                                        |
