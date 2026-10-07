@@ -19,7 +19,7 @@ fail away is a cycle, and the rule forbids it. From the bottom:
   generic browser and server utilities, the addresses of their own sites and the world's addresses
   anyone could use. It is not a layer of the system, and it is under every layer of it.
 - **infra** is what bootstraps the rest and so cannot be managed by it: host and keeper, which
-  deploy each other, the panel over them, the meter, Caddy, the tunnel and the resolver.
+  deploy each other, the meter, Caddy, the tunnel and the resolver.
 - **platform** is the services infra runs for everything above: the gateway and `quota`, the CDN
   and the alias layer, storage and databases, the scheduler, the ledger, capture, probing,
   telemetry, and `apt`, the Linux machine's own capabilities offered as a service.
@@ -86,7 +86,7 @@ holds that rule now.
 | Repository           | apps                                                                                                            | libs                                                               |
 | -------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `canmi21/lib`        | --                                                                                                              | me and canmi, ui, kit, web, response, whereabouts, axum-governor   |
-| `monoflake/infra`    | host, keeper, panel, meter, caddy, tunnel, resolver                                                             | deploy, urls                                                       |
+| `monoflake/infra`    | host, keeper, meter, caddy, tunnel, resolver                                                                    | deploy, urls                                                       |
 | `monoflake/platform` | gateway, quota, cdn, aka, hook, geo, objects, postgres, ledger, cron, apt, shot, probe, telemetry, gemini, grok | sdk, probe, ledger                                                 |
 | `canmi21/web`        | site and its API, cms, local, status, landing                                                                   | prose, compile, collection, messages, social, hints, fonts, robots |
 
@@ -138,7 +138,7 @@ name, not with whoever reads it: `canmi.net` is the author's even where the plat
 | ----------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@canmi/me/urls`  | `canmi`     | the author's sites and identity; the world's addresses -- GitHub, the registries, SPDX, the social bases, analytics and fonts; the path and loopback functions            |
 | `@monoflake/sdk`  | `monoflake` | the API host on both sides, the gateway's names, the CDN, the alias hosts, `canmi.app`, the ledger, cron and capture, the status page's names, the platform's own mirrors |
-| `@monoflake/urls` | --          | the panel, keeper, host's own address and the private suffix                                                                                                              |
+| `@monoflake/urls` | --          | host's door, keeper, host's own address and the private suffix                                                                                                            |
 
 The sdk composes the three into the one map everything above infra reads, so a caller asks one
 place and the Rust mirror keeps its names; infra reads `@canmi/me` and its own package directly,
@@ -155,14 +155,12 @@ A dependency through an address or a name written into code is invisible to `pac
 1. ~~host knows the platform's apps by name.~~ It knows roles: an app asks for one in its
    declaration and the node grants it in `GRANTS`. See infra's `spec/architecture/host.md`, "A
    role is asked for by the app and granted by the node".
-2. ~~host renders Caddy's routes and the resolver from the platform's `GATEWAY_*`.~~ The gateway
-   claims its names in its declaration's `[edge]`, written there from the sdk by the platform's
-   `mise run scopes`, and host renders the names of whichever app the node grants `hosts`.
-3. ~~The panel reads `cron`'s and the ledger's addresses to show them.~~ It reads them from its
-   environment, `CRON_API` and `LEDGER_API`, which the node sets in the panel's `config.env`;
-   unset, their pages are not offered. A stopgap: infra and the platform each get a dashboard of
-   their own, the platform's showing its own services, since a layer above may read the one below
-   and the reverse is what this list exists to end.
+2. ~~host renders Caddy's routes and the resolver from the platform's `GATEWAY_*`.~~ Neither names
+   the gateway's hosts at all: the house stopped being an entrance -- platform's
+   `spec/architecture/gateway.md`, "Inside a node, its own services answer locally".
+3. ~~The panel reads `cron`'s and the ledger's addresses to show them.~~ The panel retired; the
+   console, a layer above, shows the platform's services, since a layer above may read the one
+   below and the reverse is what this list exists to end.
 4. ~~The deploy crate reads `URLS.source`.~~ A node deploys from the repositories its
    `DEPLOY_SOURCES` lists, and each notice names its own. See infra's `spec/architecture/host.md`,
    "The machine pulls; nothing pushes into it".
