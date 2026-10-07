@@ -29,6 +29,38 @@ fail away is a cycle, and the rule forbids it. From the bottom:
 The status page is a service and not the platform's, though it shows the platform: it is a page
 built from the site's own libraries, and the probe and the schema it reads stay in the platform.
 
+## Managed from above, restored from below
+
+**Every day goes through the top, and a disaster through the bottom.** A layer may be managed from
+the one above it -- the platform schedules a backup, lists it, shows it in the console -- since
+that leans on the layer above only while it is there. What restores a layer may not: a restore is
+needed precisely when what is above is gone. So a backup is kept beside its layer or below it,
+never above, and what is above holds at most a pointer to it.
+
+- **Configuration is git.** What is declared -- the nodes, every `service.toml`, these specs -- is
+  in repositories no layer of ours runs, with its history.
+- **Secrets are git too**, encrypted by sops to an age key the author holds outside every machine.
+- **Infra is rebuilt, not restored**: `mise run node` and what CI built bring a node back.
+- **State is in databases and buckets, backed up to a provider's store directly**, never through a
+  bucket of the platform's, whose index is in the database being backed up -- platform's
+  `spec/architecture/databases.md`, "Backups are the data, kept off the cluster".
+
+**So a disaster is undone from the bottom, each step needing only the ones before it**: the age
+key opens the secrets; the nodes are set up from git; the platform is deployed from CI; the
+database is restored from its store; the buckets' indexes come back with it, their bytes already in
+their stores; every scope runs again.
+
+**The way back is kept walkable.** Its pieces -- the age key, the secrets, SSH over the tailnet, a
+provider's console when the tailnet is down, the raw backups -- are few and plain on purpose, and a
+backup counts once it has been restored, not once it was uploaded.
+
+**A copy kept above for looking at is not a backup.** An export of a layer's state, encrypted to the
+author's key, may be kept anywhere -- the author's own scope included -- to read how something was
+configured long after, while everything works; nothing restores from it. It is open -- platform's
+`spec/issues/scheduling.md`, "Exports to look at, kept apart from backups".
+
+Decided on 2026-10-07.
+
 ## Cloudflare is under the platform, and an app binds only the platform
 
 **An app depends on the platform, and the platform on Cloudflare** -- never an app on Cloudflare
