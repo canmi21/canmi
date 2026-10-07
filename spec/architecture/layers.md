@@ -33,20 +33,24 @@ built from the site's own libraries, and the probe and the schema it reads stay 
 
 **An app depends on the platform, and the platform on Cloudflare** -- never an app on Cloudflare
 beside the platform, which is the diamond the site stands in today. An app is deployed through the
-platform and handed its bindings by it: some are Workers' own, some the platform's, all of them the
-platform's to give.
+platform and handed its bindings by it, and **the platform exports everything a binding can be, at
+one level**: every capability Workers already have -- a Durable Object, KV, R2, D1, a queue --
+passed through, and its own services beside them, an IP lookup or a capture as much a binding as a
+Durable Object. An app declares to the platform what it wants, both kinds alike, and never names
+Cloudflare; the platform resolves each to Cloudflare's product or its own.
 
-**Workers carry what holds no state, and nothing else.** A stateless function, a page rendered at
-the edge, static assets and the edge cache -- what can be computed again if lost -- run on Workers,
-because nothing is nearer a reader. What holds state comes from the platform: a database is its
-Postgres, not D1; something that holds connections or coordinates is a WebSocket service on the
-nodes, not a Durable Object; files are its buckets; timers and queues its scheduler. A Worker
-reaches all of them over Workers VPC, which carries HTTP, TCP and WebSockets to the nodes.
+**A Worker's own code holds no state; what holds it is a binding.** A stateless function, a page
+rendered at the edge, static assets and the edge cache -- what can be computed again if lost -- run
+on Workers, because nothing is nearer a reader. What holds state is something the app binds through
+the platform: its Postgres, its buckets, its scheduler, a WebSocket service on the nodes, or one of
+Cloudflare's own passed through. Where the platform has its own, the app's own data goes there --
+a database is Postgres rather than D1 -- and a Worker reaches the nodes over Workers VPC, which
+carries HTTP, TCP and WebSockets.
 
-**Cloudflare's stateful products may stand behind the platform, never in front of an app.** A
-platform bucket may keep a copy in R2, which is then one of its stores; an app binds the bucket and
-never R2. So an app does not change when the platform changes a provider, nor the platform when an
-app moves. The direction is platform's `spec/roadmap.md`; what is open, its
+**Cloudflare's products reach an app only through the platform.** A binding is the platform's to
+resolve: a bucket may keep a copy in R2, a declared Durable Object may be Cloudflare's or a service
+of the platform's that answers as one. So an app does not change when the platform changes a
+provider, nor the platform when an app moves. The direction is platform's `spec/roadmap.md`; what is open, its
 `spec/issues/scheduling.md`.
 
 ## The directory is the layer
