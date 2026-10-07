@@ -129,6 +129,30 @@ The same kind of credential can be secret elsewhere. A token a Worker calls anot
 never reaches a browser, so it stays a wrangler secret. What decides is exposure,
 not the kind of thing it is.
 
+### A secret is typed in, never written down
+
+**A value goes into `secrets.json` by `mise run secret <repo> <NAME>...` and no other way.** It asks
+for each name in turn, reads what is typed without echoing it, and hands it to `sops set
+--value-stdin`, so the value is in no argument, no process listing, no shell history and no plain
+file. A name already set is replaced only when answered `y`; nothing typed leaves it as it was. It
+reports each value by its length alone, and the file it changed stays encrypted and is committed as
+it is. It reads one line a value; a secret of several lines would need a file of its own.
+
+```
+$ mise run secret platform BACKUP_S3_ENDPOINT BACKUP_S3_REGION
+secret: /Users/canmi/workspace/repos/platform/secrets.json
+  BACKUP_S3_ENDPOINT: ••••••••••••••••••••••••••••••••••••••
+  BACKUP_S3_ENDPOINT set, 38 characters
+  BACKUP_S3_REGION is set already; replace it? [y/N] y
+  BACKUP_S3_REGION: ••••••••••••
+  BACKUP_S3_REGION set, 12 characters
+secret: 2 set in /Users/canmi/workspace/repos/platform/secrets.json, still encrypted; it is committed as it is
+```
+
+**So an agent that needs a secret asks for this command, never for the value.** It names the
+repository and the names, the author runs it in their own terminal, and the agent reads only that
+the names now exist. A value pasted into a chat is in a transcript, and that is not undone.
+
 ### Three things that will bite
 
 **JSON, not dotenv.** mise parses a `.env` as plain dotenv before looking for sops metadata
