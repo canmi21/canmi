@@ -244,6 +244,12 @@ own already, went on to 2.0.0 on its own line, the same envelope with the design
   publishing, crates through `rust-lang/crates-io-auth-action`, each first version by hand -- is
   lib's `spec/repository.md`, "Versions and publishing"; infra and the platform publish theirs the
   same way, each from its own `release.yml`.
+- **A publish is read from the run, not from the registry, for its first minutes.** npm answers
+  for a new version only once its CDN has caught up, a minute or two after `npm publish` returned:
+  until then `npm view` says the old version and the new one is a 404, though it is published.
+  The run's own lines are the evidence -- `+ <package>@<version>` from npm and the tag the release
+  pushed after it -- and a check that waits on the registry gives it a few minutes before calling
+  anything lost. Twice on 2026-10-08 a successful release looked failed this way.
 - **A consumer of the author's takes every package from its registry, never from git**: what a
   stranger installs is what runs here first, so a package published broken breaks here before
   anywhere else, and nothing is built in the consumer. The author's own scopes, `@canmi/*` and
