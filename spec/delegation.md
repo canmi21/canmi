@@ -229,6 +229,10 @@ that looks finished and is not.
   until they are all declared, and a worker that does not know that will try to fix it.
 - **Do not run the test suite, the type checker, the formatter or the linter.** The reason is in
   "Testing is the user's; checking is the conversation's" below.
+- **Docker used for a test is taken down when the test is done** -- its containers, networks and
+  volumes, every image built for it, and any large or once-used pulled image -- as
+  [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", says.
+  The report says what was removed.
 - **Do not touch `spec/` or `AGENTS.md`**, and do not reformat or tidy code the brief did not
   name. A neighboring improvement is indistinguishable from a mistake in a diff, and it lands in
   a commit about something else.

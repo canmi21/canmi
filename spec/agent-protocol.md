@@ -259,6 +259,15 @@ Four consequences:
   CPU and closed and reopened the user's window all day, and the user found it before the agent
   that started it did. Stop it when the work it was for is done, or end the reply by saying it is
   still up and how to stop it.
+- **Docker is left as it was found.** Whoever runs a test in Docker on the author's Mac -- the
+  conversation or a worker -- takes it down when the test is done: its containers stopped and
+  removed (`docker compose down -v` for a project, `docker rm -f` for a container run alone), and
+  the networks and volumes it made removed with them. Every image built locally for the test is
+  removed once the test has used it, and so is any image pulled that is large -- past a few hundred
+  megabytes -- or used once. One or two small pulled images that the next test will want again, a
+  pinned `postgres` say, may stay. Docker Desktop is quit again if the agent started it. Before the
+  reply ends, `docker ps -a` lists nothing of the test's and `docker images` nothing it built.
+  Stated by the author on 2026-10-08, after test containers and images had piled up on the Mac.
 - **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** web's
   `base down` kills its tmux session and leaves `workerd` behind: after an afternoon of restarting
   the dev servers and running the migration's snapshot harness, forty-nine of them were alive
