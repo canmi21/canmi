@@ -155,8 +155,9 @@ what a package drags in, where it can run, and whether a Rust crate has to move 
 
 `@canmi/me` is what the platform reads when it needs the author's sites, so it carries no
 dependency a Worker would mind. `@canmi/kit` brings `motion`, the library that was Framer Motion,
-and it is the only thing anything here animates with -- Svelte's own motion is not used; see lib's
-`spec/kit/motion.md`. `@canmi/web` is the heaviest and the least shared, so a page that
+and it is what the site and the apps around it animate with -- Svelte's own motion is not used;
+see lib's `spec/kit/motion.md`. The library is chosen per project, and the console's is GSAP --
+web's `spec/console/design.md`, "Motion is GSAP". `@canmi/web` is the heaviest and the least shared, so a page that
 only wants the design does not install Sentry. How each is built, versioned and published is lib's
 `spec/repository.md`.
 
