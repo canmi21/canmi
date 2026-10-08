@@ -188,4 +188,5 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | `repos/still`    | a macOS application; no spec yet                                                                                                                                        |
 | `repos/lib`      | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/lib/spec/](repos/lib/spec/) |
 | `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                                                                                 |
+| `repos/cue`      | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/cue/spec/](repos/cue/spec/)                                          |
 | `repos/seam`     | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                  |
