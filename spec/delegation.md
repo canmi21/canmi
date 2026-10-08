@@ -415,6 +415,15 @@ overridable without their having to ask what is outstanding.
 
 ## When not to delegate
 
+**A look being shaped with the user is edited in the conversation, even in a delegating session.**
+Styling a page the user is looking at is a loop of one change, one glance and the next word, and a
+worker puts a brief, a cold start and a diff read into every turn of it: the user waits on all
+three to learn what one line would have shown. So the conversation edits the page it and the user
+are tuning, looks at it itself, and hands it back; the workers take what runs beside that loop --
+a failing CI, a release, a read, a change in another repository. Stated by the author on
+2026-10-08, after two rounds of a sidebar went through workers while they waited.
+
+
 **If the brief would be as long as the edit, make the edit.** One line, one constant, a rename
 already known, a comment. The overhead of a cold worker is real and it is not always smaller than
 the work.
