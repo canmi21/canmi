@@ -331,6 +331,18 @@ change was made and might in principle be wrong. Reaching a desktop window is ne
 is not therefore newly worth doing; the restraint is the same one, and it was written for the
 browser only because the browser was the only thing reachable.
 
+**A change to how traffic moves is proven on every path traffic takes, before it reaches a node.**
+The restraint above is about a UI the user will look at anyway; a network change is the opposite
+case, since what it breaks is invisible until everything stops. On 2026-10-08 the nodes' `edge`
+network went dual-stack after a local proof that the tunnel still dialed Caddy over IPv4 -- true for
+the public ingress, the one path the proof exercised, and false for Workers VPC, which resolved
+`caddy` to its IPv6 and was refused by a Caddy that trusts the tunnel's IPv4 alone. The console
+answered 502 from every node and the hook's deploy notices stopped, for about twenty minutes,
+across all eight. So before such a change ships: list every way traffic enters and crosses what is
+changing -- public ingress, Workers VPC, the tailnet, the app networks, the node itself -- and
+prove each, on a canary node first, the next node only once the canary still answers on all of
+them; a rollout script's check is each of those paths, not that the process came back up.
+
 The cost is not the tool call. It is the round trip: booting a browser, waiting on a dev
 server, screenshotting, reading pixels back, all to restate what the diff already says. That
 time is the user's, and confirming the obvious spends it to reach a conclusion the next message
