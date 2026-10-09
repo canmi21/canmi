@@ -9,9 +9,11 @@
   English, and then the reply did, and nothing from inside the drift notices it. So
   [hooks/language.py](../hooks/language.py) reads the turn when it ends and holds it open while any
   block of prose written to the user since they last spoke is English with no Chinese in it -- code,
-  paths and short lines excepted, and a user who wrote English themselves answered in English. The
-  hold asks for the reply restated in Chinese; the check is a backstop, and the rule is still to
-  write in Chinese from the first line.
+  paths and short lines excepted, and a user who wrote English themselves answered in English. Only
+  the person counts as the user: another session's message arrives in the user's place in English,
+  and until 2026-10-09 every turn one started went unchecked, a whole afternoon of reports to
+  workers' messages written to the user in English. The hold asks for the reply restated in Chinese;
+  the check is a backstop, and the rule is still to write in Chinese from the first line.
 - **File content, including code comments**: English only. No Chinese.
 - **Commit messages**: English only.
 - **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` --

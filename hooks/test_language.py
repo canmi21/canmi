@@ -73,6 +73,16 @@ class LanguageTest(unittest.TestCase):
 		]
 		self.assertEqual(self.decide(records)["decision"], "block")
 
+	def test_another_sessions_message_is_not_the_user_asking_for_english(self) -> None:
+		teammate = claude("user", "Another Claude session sent a message:\n<teammate-message>Done.</teammate-message>")
+		records = [claude("user", "拖动分割线", origin={"kind": "human"}), teammate, claude("assistant", ENGLISH)]
+		self.assertEqual(self.decide(records)["decision"], "block")
+		# Where the harness marks who spoke, only a human's English is a request for English.
+		marked = claude("user", "Done.", origin={"kind": "task-notification"})
+		self.assertEqual(self.decide([claude("user", "拖动分割线"), marked, claude("assistant", ENGLISH)])["decision"], "block")
+		human = claude("user", "Answer in English, please.", origin={"kind": "human"})
+		self.assertEqual(self.decide([human, claude("assistant", ENGLISH)]), {})
+
 	def test_code_and_short_lines_are_not_prose(self) -> None:
 		fenced = "```sh\n" + ENGLISH + "\n```"
 		self.assertEqual(self.decide([claude("user", "给我命令"), claude("assistant", fenced)]), {})

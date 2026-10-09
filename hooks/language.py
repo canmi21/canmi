@@ -32,6 +32,8 @@ INLINE = re.compile(r"`[^`\n]*`")
 LATIN = re.compile(r"[A-Za-z]")
 # Fewer letters than this is a word, a path or a command, not a reply written in a language.
 PROSE_LETTERS = 60
+# What the harness writes in the user's place: injected context, and another session's message.
+HARNESS = ("<", "Another Claude session sent a message")
 
 
 def english(text: str) -> bool:
@@ -78,7 +80,14 @@ def entry(line: str) -> tuple[str, list[str], bool] | None:
 		parts = texts(content, ("text",))
 		if not parts:
 			return None  # a tool result, which is neither side speaking
-		spoken = not record.get("isMeta") and not parts[0].lstrip().startswith("<")
+		# Claude Code marks a person's own message `origin: {"kind": "human"}`; another session's
+		# message arrives in the user's place without it, in English, and was read as the user
+		# asking for English, which let every turn it started go unchecked.
+		origin = record.get("origin")
+		if isinstance(origin, dict) and "kind" in origin:
+			spoken = origin["kind"] == "human"
+		else:
+			spoken = not record.get("isMeta") and not parts[0].lstrip().startswith(HARNESS)
 		return ("user", parts, spoken)
 
 	payload = record.get("payload")
