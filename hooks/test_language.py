@@ -44,16 +44,12 @@ class LanguageTest(unittest.TestCase):
 	def test_a_chinese_reply_with_english_nouns_passes(self) -> None:
 		self.assertEqual(self.decide([claude("user", "拖动分割线"), claude("assistant", CHINESE)]), {})
 
-	def test_an_english_status_line_mid_turn_is_held_too(self) -> None:
-		result = self.decide(
-			[
-				claude("user", "拖动分割线"),
-				claude("assistant", ENGLISH),
-				claude("tool", ""),
-				claude("assistant", CHINESE),
-			]
-		)
-		self.assertEqual(result["decision"], "block")
+	def test_only_the_reply_that_ends_the_turn_is_judged(self) -> None:
+		# A line between tool calls is the work's own; the author reads the reply it ends with.
+		status = [claude("user", "拖动分割线"), claude("assistant", ENGLISH), claude("tool", "")]
+		self.assertEqual(self.decide([*status, claude("assistant", CHINESE)]), {})
+		held = self.decide([claude("user", "拖动分割线"), claude("tool", ""), claude("assistant", ENGLISH)])
+		self.assertEqual(held["decision"], "block")
 
 	def test_a_turn_that_was_held_is_judged_on_what_it_wrote_afterwards(self) -> None:
 		feedback = claude("user", "Stop hook feedback:\nThis turn spoke to the user in English.")

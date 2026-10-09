@@ -6,9 +6,10 @@ rule was written down, loaded at every start, and still broken twice in one sess
 drifts into English after a stretch of reading English specs and English tool output, and the
 drift is invisible from inside it. So it is checked where a turn ends rather than remembered.
 
-What is checked is every block of prose the assistant wrote since the user last spoke, or since
-this hook last held the turn -- so a turn that was held is judged on what it wrote afterwards, and
-restating the reply in Chinese is what releases it. A block is English when, once code is taken
+What is checked is the reply that ends the turn: the prose the assistant wrote after its last
+tool call, since the user last spoke or this hook last held the turn. The lines between tool calls
+are the work's own and the author does not read them, so they are left alone; a turn that was
+held is judged on the reply it ends with afterwards, and restating it in Chinese releases it. A block is English when, once code is taken
 out, it has a sentence's worth of Latin letters and no Chinese at all; a short block, a path or a
 command alone, is not prose and is left alone.
 
@@ -79,7 +80,8 @@ def entry(line: str) -> tuple[str, list[str], bool] | None:
 			return ("assistant", texts(content, ("text",)), False)
 		parts = texts(content, ("text",))
 		if not parts:
-			return None  # a tool result, which is neither side speaking
+			# A tool's result: neither side speaking, and the end of whatever was written before it.
+			return ("tool", [], False)
 		# Claude Code marks a person's own message `origin: {"kind": "human"}`; another session's
 		# message arrives in the user's place without it, in English, and was read as the user
 		# asking for English, which let every turn it started go unchecked.
@@ -92,6 +94,8 @@ def entry(line: str) -> tuple[str, list[str], bool] | None:
 
 	payload = record.get("payload")
 	if record.get("type") == "response_item" and isinstance(payload, dict):
+		if payload.get("type") in ("function_call_output", "custom_tool_call_output"):
+			return ("tool", [], False)
 		if payload.get("type") != "message":
 			return None
 		role = payload.get("role")
@@ -105,7 +109,7 @@ def entry(line: str) -> tuple[str, list[str], bool] | None:
 
 
 def turn(transcript: str) -> tuple[str | None, list[str]]:
-	"""What the user last said, and what the assistant has written since anything last spoke to it."""
+	"""What the user last said, and the reply the assistant wrote after its last tool call."""
 	asked: str | None = None
 	written: list[str] = []
 	with open(transcript, encoding="utf-8") as source:

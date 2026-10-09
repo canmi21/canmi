@@ -3,17 +3,19 @@
 ## Language
 
 - **Chat / spoken reply**: simplified Chinese mixed with English technical nouns. Don't translate established English terminology (e.g., "fetchpriority", "viewBox", "Hono", "OKLCH", "preset") — keep them as proper nouns inside Chinese sentences.
-- **The chat language holds for the whole turn, status lines included, and a hook holds it.** The
-  rule above was loaded at every start and still broken twice in one session: after a stretch of
-  reading English specs and English tool output, the one-line updates between tool calls turned
-  English, and then the reply did, and nothing from inside the drift notices it. So
-  [hooks/language.py](../hooks/language.py) reads the turn when it ends and holds it open while any
-  block of prose written to the user since they last spoke is English with no Chinese in it -- code,
-  paths and short lines excepted, and a user who wrote English themselves answered in English. Only
-  the person counts as the user: another session's message arrives in the user's place in English,
-  and until 2026-10-09 every turn one started went unchecked, a whole afternoon of reports to
-  workers' messages written to the user in English. The hold asks for the reply restated in Chinese;
-  the check is a backstop, and the rule is still to write in Chinese from the first line.
+- **The reply that ends a turn is in the chat language, and a hook holds it.** The rule above was
+  loaded at every start and still broken twice in one session: after a stretch of reading English
+  specs and English tool output, the one-line updates between tool calls turned English, and then
+  the reply did, and nothing from inside the drift notices it. So
+  [hooks/language.py](../hooks/language.py) reads the turn when it ends and holds it open while the
+  reply it ends with -- the prose after its last tool call -- is English with no Chinese in it --
+  code, paths and short lines excepted, and a user who wrote English themselves answered in English.
+  Only the person counts as the user: another session's message arrives in the user's place in
+  English, and until 2026-10-09 every turn one started went unchecked, a whole afternoon of reports
+  to workers' messages written to the user in English. The lines between tool calls are the work's
+  own and are not checked: the author reads the reply a turn ends with, decided on 2026-10-09. The
+  hold asks for the reply restated in Chinese; the check is a backstop, and the rule is still to
+  write it in Chinese from the start.
 - **File content, including code comments**: English only. No Chinese.
 - **Commit messages**: English only.
 - **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` --
