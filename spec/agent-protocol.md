@@ -348,6 +348,12 @@ server, screenshotting, reading pixels back, all to restate what the diff alread
 time is the user's, and confirming the obvious spends it to reach a conclusion the next message
 would have delivered for free.
 
+**A browser the agent drives that misbehaves once is refreshed, not reported.** The user shares the
+machine and its browser, so a background tab that comes back zoomed, blank or stale is most often
+the user's hand, not the page: reload it, or open a fresh one, and carry on measuring. Only a fault
+that comes back after a fresh tab is worth the user's attention. Decided with the author on
+2026-10-10.
+
 [delegation.md](delegation.md), "Testing is the user's; checking is the conversation's", narrows
 this by one turn: even where reading the code cannot answer the question, the answer has to be a
 number -- geometry, timing, drift, a count -- before the round trip is worth what it costs.
