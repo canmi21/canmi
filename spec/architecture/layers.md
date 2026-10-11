@@ -2,8 +2,7 @@
 
 The author's system is three layers and the author's shared library under all of them, each its
 own repository: `canmi21/lib`, `monoflake/infra`, `monoflake/platform` and `canmi21/web`. They
-were one repository, `canmi21/lattice`, until the split recorded in web's
-`spec/todo/milestones.md`, F. This file is the picture of all four, kept in the workspace because
+were one repository, `canmi21/lattice`, until the split recorded in web's `spec/architecture/collection.md`. This file is the picture of all four, kept in the workspace because
 it is every repository's; each cites it rather than keep a copy.
 
 ## Four places, and which way they lean
@@ -56,8 +55,7 @@ backup counts once it has been restored, not once it was uploaded.
 
 **A copy kept above for looking at is not a backup.** An export of a layer's state, encrypted to the
 author's key, may be kept anywhere -- the author's own scope included -- to read how something was
-configured long after, while everything works; nothing restores from it. It is open -- platform's
-`spec/issues/scheduling.md`, "Exports to look at, kept apart from backups".
+configured long after, while everything works; nothing restores from it. It is open -- RFC fwozy.
 
 Decided on 2026-10-07.
 
@@ -82,8 +80,8 @@ carries HTTP, TCP and WebSockets.
 **Cloudflare's products reach an app only through the platform.** A binding is the platform's to
 resolve: a bucket may keep a copy in R2, a declared Durable Object may be Cloudflare's or a service
 of the platform's that answers as one. So an app does not change when the platform changes a
-provider, nor the platform when an app moves. The direction is platform's `spec/roadmap.md`; what is open, its
-`spec/issues/scheduling.md`.
+provider, nor the platform when an app moves. The direction is platform's `spec/roadmap.md`; what is open, the RFCs filed
+under `data` and `deploy`.
 
 ## The directory is the layer
 
