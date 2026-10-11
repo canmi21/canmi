@@ -18,10 +18,13 @@ web is cloned beside it. In `repos/rfcs`, `mise run new-rfc <name> <scope>` star
 slug of its name and picking its id and its place in the day; `mise run check rfcs` holds every
 file to the format.
 
-**An open question's argument is a draft RFC, and its issue a line citing it** -- RFC qp9l1. A
-draft is what `new-rfc` starts unless told otherwise, edited while the question moves, and in the end decided in
-place or `declined`, either way frozen from then. An issue a line long, or one not for publishing,
-stays an issue. The issues are dried into drafts one at a time, as the specs are dried into RFCs.
+**Everything not done is an RFC too, by its status** -- RFC p992n and [planning.md](planning.md):
+`draft` for an open question or a finding, `accepted` for decided work or a milestone, `landed`
+once built and pushed, naming its commits, or `declined`. A draft or an accepted RFC is edited as
+the work moves; a landed or declined one is frozen. **`blocked-by` names the RFCs that must land
+first, by id**, the graph held acyclic by `check rfcs`; `mise run plan` in `repos/rfcs` lists what
+nothing open blocks, then each of the rest behind the chain it waits on. `new-rfc` starts a draft
+unless given `--status`, and takes `--day` for a question older than its RFC.
 
 **Its license is CC BY-NC-SA 4.0**, the one repository that is not MIT -- [readme.md](readme.md),
 "A license year is when the idea began".
