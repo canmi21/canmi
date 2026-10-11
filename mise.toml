@@ -17,6 +17,7 @@ config_roots = [
 	"repos/seam",
 	"repos/rdm",
 	"repos/cue",
+	"repos/rfcs",
 ]
 
 # jj's own repo config lives outside the working copy and cannot be version controlled.

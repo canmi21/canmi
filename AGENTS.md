@@ -157,6 +157,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Voice and communication                                                                                 | [spec/voice.md](spec/voice.md)                   |
 | Roadmap, todo and issues: where direction, decided work and open questions live                         | [spec/planning.md](spec/planning.md)             |
 | READMEs, repository descriptions and license years                                                      | [spec/readme.md](spec/readme.md)                 |
+| Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [spec/rfcs.md](spec/rfcs.md)                     |
 | Commit conventions, when to commit and push, and their enforcement                                      | [spec/commits.md](spec/commits.md)               |
 
 **How the arrangement is shaped**
@@ -190,4 +191,5 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | `repos/lib`      | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/lib/spec/](repos/lib/spec/) |
 | `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                                                                                 |
 | `repos/cue`      | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/cue/spec/](repos/cue/spec/)                                          |
+| `repos/rfcs`     | why each decision was made, one file per decision; documents only, no spec -- [spec/rfcs.md](spec/rfcs.md)                                                              |
 | `repos/seam`     | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                  |

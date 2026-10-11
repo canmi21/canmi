@@ -15,7 +15,8 @@ going, the todo what has been agreed and is waiting to be built, and the issues 
 decided. None of them carries the argument: an entry is a sentence or two and a link to the
 ordinary spec file where the detail is written once. The same file may be cited by an issue and by
 a todo entry -- that is the point of keeping the detail out of both. What is defined twice is
-pulled out into one file and cited from both places.
+pulled out into one file and cited from both places. **An entry whose argument is a question of its
+own cites a draft RFC instead**, which holds that argument until it is decided -- [rfcs.md](rfcs.md).
 
 **An entry moves as the thing it names moves.** An issue that is decided leaves `issues.md`: as a
 todo entry if it is work, or as a rule in an ordinary file if deciding it was the whole of it. A

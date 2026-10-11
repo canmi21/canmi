@@ -77,3 +77,8 @@ not a new year, not a tidy-up.
 packages' READMEs say. A package that needs the file beside it links it -- `ln -s ../../LICENSE
 LICENSE` -- rather than keeping a copy; `cargo package` and `pnpm pack` both follow the link and
 publish the text, so no two copies can differ.
+
+**That license is MIT, except in `rfcs`**, which is CC BY-NC-SA 4.0: it holds documents and the
+few settings that check them, no source, and a license written for code fits prose badly. Its
+README's line reads `CC BY-NC-SA 4.0 © 2026 [Canmi](https://canmi.net)`. Decided with the author
+on 2026-10-11.
