@@ -562,6 +562,18 @@ does not ship it and mise's registry does not carry it, so a repository uses it 
 Vendored source is filtered out of all of this, by the repository that holds it. See
 [vendor.md](vendor.md).
 
+### A dependency is added with `pnpm add`, and a new workspace package checked in the lockfile
+
+**`pnpm add -D <name>@<range> --filter <package>` adds a dependency**, never an edit to a
+`package.json` followed by `pnpm install`. pnpm 12 answered that install "Already up to date" and
+left the lockfile without the new entry, on 2026-10-10 in web: `add` resolves it every time.
+
+**A new workspace package is confirmed in `pnpm-lock.yaml` before it is pushed**: an importer
+under its path, `pkgs/<name>: {}` for one with no dependencies. The same install skipped it in lib,
+and so did `pnpm install --lockfile-only`; a local `--frozen-lockfile` install passed without it,
+and CI's refused, so the release failed before publishing anything. With none written, the entry
+goes in by hand, beside its neighbors.
+
 ### A dependency that moved while you were working is the user's upgrade
 
 Manifests and lockfiles that changed under an agent mid-task were not changed by the task. The

@@ -245,6 +245,14 @@ Four consequences:
 - **A poll loop is bounded in seconds, not minutes.** `for i in 1 2 3; do ...; sleep 5; done` is a
   poll; `until <cond>; do sleep 20; done` with a nine-minute ceiling is a wait wearing a poll's
   clothes, and it was what the user interrupted.
+- **The ceiling is on the whole wait, two or three times what the job should take, and is not a
+  forecast of how it can fail.** A release that takes two minutes gets five; when it fires, that is
+  where looking starts. No loop can be written to foresee every way it will go wrong -- on
+  2026-10-10 a wait for lib's release polled a run id that was empty, since the push touched no
+  path the workflow watches and no run started; every read failed, none matched `completed`, and
+  the loop spent its counted retries, seven minutes, before the user asked what had hung. The
+  ceiling would have reported it in five and was the only guard that could. macOS has no
+  `timeout`; `perl -e 'alarm 300; exec @ARGV' sh -c '...'` is one.
 - **A wait needs a trigger it can name.** Before waiting for a rebuild, a restart or a file to
   appear, the agent checks that something it did will cause it -- a source edit under the
   watcher's filter, a job it started -- and does not wait otherwise. Waiting for an event that

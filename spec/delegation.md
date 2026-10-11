@@ -423,7 +423,6 @@ are tuning, looks at it itself, and hands it back; the workers take what runs be
 a failing CI, a release, a read, a change in another repository. Stated by the author on
 2026-10-08, after two rounds of a sidebar went through workers while they waited.
 
-
 **If the brief would be as long as the edit, make the edit.** One line, one constant, a rename
 already known, a comment. The overhead of a cold worker is real and it is not always smaller than
 the work.
