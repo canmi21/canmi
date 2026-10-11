@@ -16,7 +16,7 @@ slug of its name and picking its id and its place in the day; `mise run check rf
 file to the format.
 
 **An open question's argument is a draft RFC, and its issue a line citing it** -- RFC qp9l1. A
-draft is started with `new-rfc --draft`, edited while the question moves, and in the end decided in
+draft is what `new-rfc` starts unless told otherwise, edited while the question moves, and in the end decided in
 place or `declined`, either way frozen from then. An issue a line long, or one not for publishing,
 stays an issue. The issues are dried into drafts one at a time, as the specs are dried into RFCs.
 
