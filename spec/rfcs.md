@@ -9,6 +9,9 @@ development alone until their pages are drawn by the settled design system -- RF
 `repos/rfcs/*/*-2ut6h.md`, whatever its area and slug became. An RFC names no page and no spec, so
 which rules it settled is read off the citations.
 
+**An RFC is plain Markdown**, CommonMark with GFM, and calls no component of the design system it
+decides, so a frozen record never changes when the system does -- RFC ejy85.
+
 **The repository is documents and a few settings, nothing else.** The code that holds the files
 to the format and draws their pages is web's `apps/space/rfcs`, run on the sibling checkout, so
 web is cloned beside it. In `repos/rfcs`, `mise run new-rfc <name> <scope>` starts one, making its
