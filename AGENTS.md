@@ -54,8 +54,9 @@ Every rule the user states gets written down. Never leave one in chat only.
 - Anything narrower gets its own topic file in `spec/`, split by aspect, linked from the index.
 - A rule that belongs to one project goes in that project's `spec/`, not here.
 - Never restate spec content here. Link to it.
-- What is not done yet has three places in every `spec/`: `roadmap.md` for the direction, `todo.md`
-  for what is decided and waiting, `issues.md` for every open question. See
+- What is not done yet is an RFC in `repos/rfcs`: a `draft` for an open question, an `accepted`
+  one for decided work, blocked by others by id. **To know what is left, run `mise run plan` in
+  `repos/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
   [spec/planning.md](spec/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `spec/` and this file instead, then verify a zero-memory agent could recover the arrangement
@@ -78,10 +79,9 @@ goes to `spec/` or beside the code, where somebody is looking for it -- a log ca
 is the mistake this rule exists to stop. See [spec/commits.md](spec/commits.md).
 
 **Comments** -- a comment points rather than argues. The settled argument lives in `spec/` and the
-comment names the file; **a decision nobody has made yet goes to an issue** in the spec's
-`issues.md`, linked in one line.
+comment names the file; **a decision nobody has made yet is a draft RFC**, cited by id in one line.
 Once it is made it becomes a `spec/` rule plus the change that implements it, never a comment
-carrying the debate. See [spec/code.md](spec/code.md), "spec/ holds what is settled; an issue holds
+carrying the debate. See [spec/code.md](spec/code.md), "spec/ holds what is settled; an RFC holds
 what is not".
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
@@ -155,7 +155,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
 | Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [spec/delegation.md](spec/delegation.md)         |
 | Voice and communication                                                                                 | [spec/voice.md](spec/voice.md)                   |
-| Roadmap, todo and issues: where direction, decided work and open questions live                         | [spec/planning.md](spec/planning.md)             |
+| Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [spec/planning.md](spec/planning.md)             |
 | READMEs, repository descriptions and license years                                                      | [spec/readme.md](spec/readme.md)                 |
 | Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [spec/rfcs.md](spec/rfcs.md)                     |
 | Commit conventions, when to commit and push, and their enforcement                                      | [spec/commits.md](spec/commits.md)               |

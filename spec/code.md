@@ -399,17 +399,17 @@ nine" survives that file being rewritten; "the index is one because ..." does no
 links the two, so nobody finds out. The exception is a value this file's own code uses: a
 constant states its own number here and points at `spec/` for why that number.
 
-### `spec/` holds what is settled; an issue holds what is not
+### `spec/` holds what is settled; an RFC holds what is not
 
 The rule above sends the full argument to `spec/` and leaves the comment naming the file. This is
 that rule in the other state: **where a comment would otherwise have to argue a decision nobody has
-made, it links to an issue instead.** An issue is an entry in a spec's `issues.md`, where every
-open question lives -- see [planning.md](planning.md) -- and the link is the whole comment, cited like any section, by
-the file and the entry's heading in quotes. The argument is had there, and not in a file that
-merely happens to be where somebody noticed.
+made, it cites an RFC instead**, `RFC 7m5v0`, a draft in the `rfcs` repository, where every open
+question lives -- see [planning.md](planning.md). The citation is the whole comment. The argument is
+had there, and not in a file that merely happens to be where somebody noticed.
 
-The link is a waypoint, not an end state. Once the decision is made the entry leaves `issues.md`
-and becomes a rule in `spec/` plus the change that implements it. What it never becomes is a
+The citation is a waypoint, not an end state. Once the decision is made the RFC is accepted, then
+landed with a rule in `spec/` and the change that implements it; the comment may keep citing it, or
+cite the rule. What it never becomes is a
 comment carrying the argument, which is how a file ends up holding a debate that was settled
 elsewhere.
 

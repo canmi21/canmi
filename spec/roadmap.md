@@ -1,7 +1,7 @@
 # Roadmap
 
-The direction every project shares. Each project's own is its `spec/roadmap.md`; how the three
-planning files divide the work is [planning.md](planning.md).
+The direction every project shares. Each project's own is its `spec/roadmap.md`; what is not done
+is an RFC -- [planning.md](planning.md).
 
 - **Ship Cloud: the platform its author runs and uses, then lends to friends** -- three layers, the
   platform abstracting every provider, organizations and their bound accounts, nodes handed over
