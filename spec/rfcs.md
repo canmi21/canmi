@@ -2,8 +2,9 @@
 
 **A rule in any `spec/` says what is done now; the reasons it was decided that way are an RFC**,
 one file in the `rfcs` repository, cloned at `repos/rfcs`. Its format, and why there is one, is the
-first of them, RFC 2ut6h; why they have a repository of their own is RFC 7f4xx. They are read in
-development alone until their pages are drawn by the settled design system -- RFC 43im3.
+first of them, RFC 2ut6h; why they have a repository of their own is RFC 7f4xx. They are read as
+files, found by id, until their pages are drawn by the settled design system, which no address
+reaches before then -- RFC ggry5.
 
 **A rule cites the RFC behind it by its id alone**, `RFC 2ut6h`, and the RFC is found by it,
 `repos/rfcs/*/*-2ut6h.md`, whatever its area and slug became. An RFC names no page and no spec, so
