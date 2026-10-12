@@ -372,14 +372,22 @@ dropping its digit. Nobody dropped it, and the pin outlived its reason by two st
 
 **`rust-toolchain.toml` is generated too, and rustup is what reads it.** mise's rust is a
 symlink to the rustup toolchain rather than one mise installs, so the file at the workspace root
-is the thing that actually decides which compiler every crate below builds with. It carries a
-concrete version rather than the word `stable`, for the reason every pin here does: a channel
-name records nothing, and two machines set up a month apart would build with different compilers
-from the same file and neither would say so.
+is the thing that actually decides which compiler every crate below builds with. It names the
+`stable` channel, mirroring `rust = "stable"` in `mise.toml`, rather than the release that channel
+holds today.
 
-`update` writes it and `verify` checks it, the same as `.node-version`. The version is read with
-`rustup run stable rustc --version` rather than plain `rustc --version`, which would return the
-version the file itself pins -- comparing the file against itself, a check that could never fail.
+A concrete version is a toolchain of its own to rustup: `1.99.0` installs a second full compiler
+beside `stable` even when the two are the same release, and every later release adds another that
+nothing removes. The author's crates outside this workspace build on `stable` too, so a number
+here bought a duplicate toolchain and nothing else. The drift it was meant to record is what
+`tools outdated` already reports as `holds 1.98.0, the channel is 1.98.1`, and what `update`
+closes with `rustup update stable`. Two machines can still build with different releases from
+the same file; that is the trade `rust = "stable"` accepts below, and `verify` is what catches a
+release that breaks something.
+
+`update` writes it from the pin and `verify` checks it, the same as `.node-version`. The release
+the channel holds is read with `rustup run stable rustc --version`, which asks the channel by name
+rather than whatever a nearby `rust-toolchain.toml` resolves to.
 
 **Node follows the current release line, never LTS.** `node = "26"` is the Current line, and
 26 is not an LTS -- that is the intended state and not something to correct. Cloudflare serves

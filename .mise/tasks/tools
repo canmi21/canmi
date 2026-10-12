@@ -278,9 +278,8 @@ def active(where: pathlib.Path, tool: str) -> str | None:
 def rust_channel(where: pathlib.Path) -> str | None:
 	"""What rustup's stable toolchain currently is, with rust-toolchain.toml stepped around.
 
-	`rustc --version` would answer with the version that file pins, which is comparing the file
-	against itself: it could never drift and the check could never fail. `rustup run stable` asks
-	the channel instead, which is the thing the file is supposed to be a record of.
+	`rustup run stable` asks the channel by name, so the answer is the release it holds rather than
+	whatever a rust-toolchain.toml near `where` resolves to.
 
 	mise is not asked because its rust is a symlink to the rustup toolchain rather than one it
 	installs, so it has no version of its own to report.
@@ -313,7 +312,7 @@ def derived(where: pathlib.Path) -> list[tuple[pathlib.Path, str, str]]:
 
 	toolchain = where / "rust-toolchain.toml"
 	if toolchain.is_file():
-		running = rust_channel(where)
+		running = active(where, "rust")
 		written = re.search(r'channel\s*=\s*"([^"]+)"', toolchain.read_text())
 		if running and written and written.group(1) != running:
 			found.append((toolchain, written.group(1), running))
