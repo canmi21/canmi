@@ -84,7 +84,9 @@ producer generates from its own type**, committed beside it. The producer's type
 a Rust service's answer is its `serde` type, and `schemars` writes the schema from it. A check
 generates the schema again and fails on any difference, so a type changed without its schema is
 caught where it changed. Every reader in another language is derived from the schema -- TypeScript
-types generated from it, a Python reader's tests validated against it -- and never copied by hand,
-since a copy agrees with the producer only until the producer's next change. Decided with the author
-on 2026-10-13, first for the registry's catalog, then for what the relay sends the console, which
-was copied by hand into the console's `wire.ts`.
+types generated from it -- and never copied by hand, since a copy agrees with the producer only
+until the producer's next change. Where a reader's tests need an example of what the producer
+answers, the producer commits that answer too, generated and checked the same way, and the tests
+read it: a schema holds the shape, and only the producer's own answer holds the values, a choice's
+choices among them. Decided with the author on 2026-10-13, first for the registry's catalog, then
+for what the relay sends the console, which was copied by hand into the console's `wire.ts`.
