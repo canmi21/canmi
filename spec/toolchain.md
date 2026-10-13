@@ -389,6 +389,12 @@ release that breaks something.
 the channel holds is read with `rustup run stable rustc --version`, which asks the channel by name
 rather than whatever a nearby `rust-toolchain.toml` resolves to.
 
+**An image pins the release, since the channel names none.** A build's compiler is a rust image by
+digest, so a tag pushed again cannot change what a node runs, and a digest is of one release. So
+infra's `image` task names the release and its digest, and moves with the channel only when
+somebody moves it, adding the new digest; a checkout reading `stable` from the file found no image
+for it and stopped every build, which is how this was found on 2026-10-12.
+
 **Node follows the current release line, never LTS.** `node = "26"` is the Current line, and
 26 is not an LTS -- that is the intended state and not something to correct. Cloudflare serves
 both lines, so the safety an LTS buys is availability this does not need, and what it costs is
