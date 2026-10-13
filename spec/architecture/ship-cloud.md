@@ -36,6 +36,10 @@ platform's command on it, which reinstalls the system, joins it to the tailnet a
 password; from then on the machine is the platform's, not its former owner's. A friend may also
 run on nodes the author grants them.
 
+**Nobody but the author, and no node but the author's, is let in until what a node is told to run
+is signed** -- RFC 8vy7x. The platform is closed while it learns to change itself, since its own
+author is the quickest feedback it has.
+
 **The control plane runs only on the author's own nodes**, three of them -- the core in infra's
 `spec/architecture/nodes.md` -- and a node brought by anybody else is a worker and never more, so
 what a former owner could recover from its disk holds no keys to the rest. That, and inviting only
