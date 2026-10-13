@@ -83,10 +83,23 @@ number. Those three are where a unit gets assumed and never written down.
 producer generates from its own type**, committed beside it. The producer's type is the one source:
 a Rust service's answer is its `serde` type, and `schemars` writes the schema from it. A check
 generates the schema again and fails on any difference, so a type changed without its schema is
-caught where it changed. Every reader in another language is derived from the schema -- TypeScript
-types generated from it -- and never copied by hand, since a copy agrees with the producer only
-until the producer's next change. Where a reader's tests need an example of what the producer
-answers, the producer commits that answer too, generated and checked the same way, and the tests
-read it: a schema holds the shape, and only the producer's own answer holds the values, a choice's
-choices among them. Decided with the author on 2026-10-13, first for the registry's catalog, then
-for what the relay sends the console, which was copied by hand into the console's `wire.ts`.
+caught where it changed. Every reader in another language is derived from the schema and never
+copied by hand, since a copy agrees with the producer only until the producer's next change. Where a
+reader's tests need an example of what the producer answers, the producer commits that answer too,
+generated and checked the same way, and the tests read it: a schema holds the shape, and only the
+producer's own answer holds the values, a choice's choices among them. Decided with the author on
+2026-10-13, first for the registry's catalog, then for what the relay sends the console, which was
+copied by hand into the console's `wire.ts`.
+
+**A TypeScript reader is generated twice from the schema: its types, and its valibot validator**,
+both committed and checked for drift as the schema is. valibot is what the TypeScript code already
+validates with, so a contract read across languages is checked the way every other input there is.
+The generator is the workspace's own and covers the part of JSON Schema the producers write --
+objects, enumerations, arrays, optional keys and references -- refusing anything else rather than
+guessing at it.
+
+**Both languages run one set of examples.** Beside each schema sit `valid/` examples, the producer's
+committed answers among them, and `invalid/` ones -- a key missing, a choice outside its list, a key
+unknown where the type forbids one. The producer's tests and every reader's tests run all of them
+and must agree on each, so a reader that accepts what the producer would refuse, or the reverse, is
+caught as surely as a type that changed.
