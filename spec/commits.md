@@ -145,7 +145,8 @@ which also records why a commit here is not required to build on its own.
 agent may be working in the same repository at the same time; its changes in the working copy are
 its own, and so is a check that fails in its area. A session commits the files it changed, by path
 list, once the check passes on everything it touched, and names any failure it left in its
-report; it neither fixes the other's work nor waits on it.
+report; it neither fixes the other's work nor waits on it, and does not ask the user first -- the
+user has said that someone else is working there, and that is the answer.
 
 ### When a change is done, and when it is pushed
 
