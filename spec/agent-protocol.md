@@ -344,6 +344,10 @@ registry or a database is run with `--dry-run` alone, its output compared with w
 how many writes, which keys, which targets -- and only then run for real, as a separate command. On
 2026-10-13 a `registry import --dry-run` chained to the import showed 27 writes where 26 were
 expected, and the import wrote an app that was only another session's uncommitted files.
+**A real run is never run again to read its output.** What it printed is read from where it was
+kept; a run that kept nothing is answered by reading what it changed, never by writing again. On
+2026-10-13 an import was run a second time, with no dry run before it, only to count the apps it had
+left unchanged; it wrote nothing that time, which nothing had guaranteed.
 
 **A change to how traffic moves is proven on every path traffic takes, before it reaches a node.**
 The restraint above is about a UI the user will look at anyway; a network change is the opposite
