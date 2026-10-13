@@ -96,7 +96,9 @@ both committed and checked for drift as the schema is. valibot is what the TypeS
 validates with, so a contract read across languages is checked the way every other input there is.
 The generator is the workspace's own and covers the part of JSON Schema the producers write --
 objects, enumerations, arrays, optional keys and references -- refusing anything else rather than
-guessing at it.
+guessing at it. It lives in web, `apps/console/scripts/contracts.ts`, and is never copied: another
+repository runs it from there with `--schema`, `--reader` and `--again`, the command its own task
+regenerates with, as the platform's `mise run catalog` does, and commits what it writes.
 
 **Both languages run one set of examples.** Beside each schema sit `valid/` examples, the producer's
 committed answers among them, and `invalid/` ones -- a key missing, a choice outside its list, a key
