@@ -76,3 +76,15 @@ value whose meaning shifts gets a new key rather than a quiet reinterpretation.
 
 Dates are ISO 8601 with an offset, durations are seconds as a number, and sizes are bytes as a
 number. Those three are where a unit gets assumed and never written down.
+
+## A contract across languages is the producer's type, and every other reader is derived from it
+
+**Within one language a shared contract is a library; across languages it is a JSON Schema the
+producer generates from its own type**, committed beside it. The producer's type is the one source:
+a Rust service's answer is its `serde` type, and `schemars` writes the schema from it. A check
+generates the schema again and fails on any difference, so a type changed without its schema is
+caught where it changed. Every reader in another language is derived from the schema -- TypeScript
+types generated from it, a Python reader's tests validated against it -- and never copied by hand,
+since a copy agrees with the producer only until the producer's next change. Decided with the author
+on 2026-10-13, first for the registry's catalog, then for what the relay sends the console, which
+was copied by hand into the console's `wire.ts`.
