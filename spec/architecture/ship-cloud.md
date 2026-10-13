@@ -40,6 +40,9 @@ run on nodes the author grants them.
 is signed** -- RFC 8vy7x. The platform is closed while it learns to change itself, since its own
 author is the quickest feedback it has.
 
+**Its repositories are private until then**, opened once accounts exist and a security scan the
+platform schedules on itself finds them clean -- RFC 7mg9f.
+
 **The control plane runs only on the author's own nodes**, three of them -- the core in infra's
 `spec/architecture/nodes.md` -- and a node brought by anybody else is a worker and never more, so
 what a former owner could recover from its disk holds no keys to the rest. That, and inviting only
