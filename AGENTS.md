@@ -117,7 +117,7 @@ allows it only inside the workspace, temp and caches, and refuses the rest.
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
 -- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on their own. An agent commits what is settled and
-pushes at the right moment, unless the user said not to -- see [spec/commits.md](spec/commits.md). mise owns every tool version. Indentation is tabs at width 2 in every language,
+pushes at the right moment, unless the user said not to -- see [spec/commits.md](spec/commits.md). mise owns every tool version. **A new script or task is TypeScript, run by node as it is written**, never Python; the hooks keep Python. Indentation is tabs at width 2 in every language,
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 

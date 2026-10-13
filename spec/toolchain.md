@@ -703,9 +703,22 @@ that, its comment says what was verified afterwards.
 | ------------------------- | -------------------------- |
 | Binaries and applications | Rust + Cargo               |
 | Web                       | TypeScript + pnpm + Svelte |
+| Scripts and tasks         | TypeScript, run by node    |
 
 These are defaults, not a whitelist. Reaching outside them is a structural decision and
 belongs to the user -- see [agent-protocol.md](agent-protocol.md).
+
+### A script is TypeScript, run by node as it is written
+
+**A task or a tool run on the author's machine is TypeScript, and node runs the file itself**:
+node 26 strips the types, so there is no build step and no second runtime to keep. A script that
+speaks to an API whose TypeScript reader is generated -- [json.md](json.md) -- imports that
+reader's types and validator rather than restating the shape. Decided with the author on
+2026-10-13, when the command line for the registry, the console's other face, was written in Python
+while the console reading the same API was TypeScript, so what was generated for one could not serve
+the other. **No new script is written in Python.** The hook scripts keep it, for the reason below,
+and the Python tasks already written stay until a change gives them a reason to move; one that
+speaks to an API a TypeScript reader also reads is moved, beginning with that command line.
 
 ### A Rust CLI parses with clap, and wears cargo's colors
 
