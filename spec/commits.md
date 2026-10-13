@@ -141,6 +141,12 @@ conversation that spawned them commits, by path list, after the user has said th
 right. See [delegation.md](delegation.md), "Commits separate concerns, not buildable states",
 which also records why a commit here is not required to build on its own.
 
+**Beside another session, a session commits its own files by path and leaves the rest.** Another
+agent may be working in the same repository at the same time; its changes in the working copy are
+its own, and so is a check that fails in its area. A session commits the files it changed, by path
+list, once the check passes on everything it touched, and names any failure it left in its
+report; it neither fixes the other's work nor waits on it.
+
 ### When a change is done, and when it is pushed
 
 **A commit marks a change that is settled, and the user's intent says when that is.** Three
