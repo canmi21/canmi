@@ -6,7 +6,7 @@ The version a tool runs at here has to be the version an outside build resolves.
 reads `.node-version` and `packageManager`; it has never heard of mise. So those files and the
 mise pins are one fact in several places, and they are checked against each other.
 
-  check      offline: the files an outside build reads agree with what mise resolves
+  check      offline: the files an outside build reads rewritten to what mise resolves
   outdated   online: what is behind its publisher's stable channel, and what waits across a pin
   up         upgrade within the pins, then name the majors it would not cross
 
@@ -298,8 +298,8 @@ def derived(where: pathlib.Path) -> list[tuple[pathlib.Path, str, str]]:
 
 	These restate a version whose home is a mise.toml. They exist because Cloudflare and every
 	other outside build reads them and has never heard of mise, so they are written from that
-	pin rather than maintained -- `up` rewrites them, `check` fails when something else moved
-	one. Same shape as any other generated mirror here.
+	pin rather than maintained -- `up` and `check` rewrite them when something else moved one.
+	Same shape as any other generated mirror here.
 	"""
 	found = []
 
@@ -363,29 +363,32 @@ def redundant(where: pathlib.Path, provided: dict[str, str]) -> list[str]:
 
 
 def command_check(name: str | None = None) -> int:
-	"""The files an outside build reads must name the version mise resolves."""
-	# Two kinds, counted apart because only one of them has a command that fixes it. Printing
-	# "`mise run update` rewrites them" under a redundant declaration would be advice that does
-	# not work: update installs and regenerates, and never edits a [tools] table.
-	drifted = shadowed = 0
+	"""The files an outside build reads are rewritten to the version mise resolves.
+
+	A pin inside a major floats, so mise installing the next patch moves what it resolves with no
+	edit anywhere; the copies follow it here, on the next verify, rather than failing it. See
+	spec/toolchain.md, "The files an outside build reads are generated, not maintained".
+	"""
+	# A redundant declaration still fails: nothing rewrites a [tools] table for you.
+	rewritten = shadowed = 0
 	provided = dict(installed(ROOT))
 	for where in configured(name):
 		for path, written, resolved in derived(where):
-			print(f"{label(where)}: {path.name} says {written}, mise resolves {resolved}")
-			drifted += 1
+			write_derived(path, resolved)
+			print(f"{label(where)}: {path.name} rewritten from {written} to {resolved}")
+			rewritten += 1
 		if where != ROOT:
 			for complaint in redundant(where, provided):
 				print(f"{label(where)} {complaint}")
 				shadowed += 1
-	if drifted:
-		print("    an outside build reads these; nothing out there has heard of mise")
-		print("    `mise run update` rewrites them")
+	if rewritten:
+		print("    an outside build reads these; commit them with the next change")
 	if shadowed:
 		print("    a project declares a tool only where the workspace does not carry one")
 		print("    edit the project's [tools]; nothing rewrites it for you")
-	if not drifted and not shadowed:
+	if not rewritten and not shadowed:
 		print("the versions an outside build reads agree with mise")
-	return 1 if drifted or shadowed else 0
+	return 1 if shadowed else 0
 
 
 def resolved(where: pathlib.Path, tool: str, version: str) -> str | None:

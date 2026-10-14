@@ -410,9 +410,13 @@ fact drifts, which it had: `.node-version` said 26.5.0 while mise resolved 26.8.
 was building on a node three patches from the one every local check ran against.
 
 So they are written rather than edited. `mise run update` rewrites each from the pin it mirrors,
-and `mise run verify` fails when something else has moved one. That is the same arrangement as
-the generated Rust URL mirrors in the platform and the lib repository: a copy across a boundary a tool cannot see, plus a check
-that fails the moment it stops agreeing.
+and **`mise run verify` rewrites one that something else has moved**, rather than failing: a pin
+inside a major floats, so mise installing the next patch moves what it resolves with nothing edited,
+and the copies follow on the next verify, to be committed with the change it ran for -- decided with
+the author on 2026-10-14, after three repositories' `.node-version` fell to 26.10.0 behind 26.11.1. It is a
+copy across a boundary a tool cannot see, as the generated Rust URL mirrors in the platform and the
+lib repository are, except that a mirror of a hand-written source fails its check, while this one
+follows a version nobody wrote.
 
 ### Inside the major, a version number is a bug report
 
