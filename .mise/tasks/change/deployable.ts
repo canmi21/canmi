@@ -321,11 +321,43 @@ export function needed(
 		const crate = crateDirs.get(owner(file, crateDirs.keys()) ?? '');
 		if (crate && (file.endsWith('.rs') || file.endsWith('/Cargo.toml'))) crates.add(crate);
 	}
+	for (const app of imported(layout, moving, declared, binary)) chosen.add(app);
 	const moved = resolution(layout.root, files, declared, crateDirs, revisions);
 	if (moved === undefined) return [...declared.keys()].toSorted();
 	const reached = dependents(new Set([...crates, ...moved]), crateEdges);
 	for (const [app, crate] of declared) if (crate !== null && reached.has(crate)) chosen.add(app);
 	return [...chosen].toSorted();
+}
+
+/**
+ * The apps of `declared` built from their package rather than a crate's binary, the executor and
+ * the deployer, whose package imports a package of the repository that `moving` changed: its
+ * code is bundled into the image as much as the app's own. RFC l6r4u.
+ */
+function imported(
+	layout: Layout,
+	moving: readonly string[],
+	declared: Declared,
+	binary: ReadonlySet<string>,
+): Set<string> {
+	const { directories, edges } = nodeGraph(layout);
+	const changedPackages = new Set<string>();
+	for (const file of moving) {
+		// A declaration is host's to read, never bundled, as an app's own is above.
+		if (declaration(layout, file)) continue;
+		const found = directories.get(owner(file, directories.keys()) ?? '');
+		if (found) changedPackages.add(found);
+	}
+	const chosen = new Set<string>();
+	if (!changedPackages.size) return chosen;
+	const reached = dependents(changedPackages, edges);
+	for (const [directory, name] of directories) {
+		const app = appOf(layout, `${directory}/package.json`);
+		if (app !== undefined && declared.has(app) && !binary.has(app) && reached.has(name)) {
+			chosen.add(app);
+		}
+	}
+	return chosen;
 }
 
 /**
