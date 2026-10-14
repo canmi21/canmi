@@ -254,10 +254,17 @@ own already, went on to 2.0.0 on its own line, the same envelope with the design
   anywhere else, and nothing is built in the consumer. The author's own scopes, `@canmi/*` and
   `@monoflake/*`, are exempt from the day's wait `minimumReleaseAge` imposes, which would hold back
   a change made in another repository and released there.
-- **Across repositories during development** a dependency comes from Verdaccio, as a local
-  prerelease `-local.N` so it never shares a version with the registry's copy, and a crate through
-  `[patch]` in a `.cargo/config.toml`. The lib repository serves it, `mise run registry`, and
-  publishes to it, `mise run release --local`; `mise run lib-local` in a consumer pins every
-  `@canmi/*` package to its newest local version and patches each crate to `../lib`, copying each
-  file it rewrites to `.local/lib/` first. `--off` puts them back, and `verify` refuses to pass
-  between the two, so a local version never reaches a commit.
+- **Across repositories during development** a dependency comes from the lib checkout beside the
+  consumer, in one of two modes. `mise run lib-local --link`, for iterating, points each `@canmi/*`
+  package at its directory in `../lib` by a `link:` override in the consumer's
+  `pnpm-workspace.yaml`, its `package.json` files untouched, while `mise run build --watch` in lib
+  keeps every `dist/` current; each app's Vite config dedupes `svelte`, `@sveltejs/kit` and
+  `@sentry/sveltekit`, so a linked package does not bring a second copy from lib's `node_modules`.
+  `mise run lib-local`, for checking what a release would publish, pins each to its newest version
+  in Verdaccio, a local prerelease `-local.N` so it never shares a version with the registry's
+  copy, served by lib's `mise run registry` and published by `mise run release --local`. Either way
+  each crate comes through `[patch]` in a `.cargo/config.toml`, every file rewritten is copied to
+  `.local/lib/` first, a switch between the modes waits for `--off`, which puts them back, and
+  `verify` refuses to pass between the two, so neither a local version nor a `link:` reaches a
+  commit. The task is written once, lib's `.mise/tasks/consumer/lib-local.ts`, and each consumer's
+  `.mise/tasks/lib-local` is a shim that runs it with the consumer's root.
