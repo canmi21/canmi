@@ -30,6 +30,11 @@ export interface Config {
 	readonly tasks: readonly string[];
 	/** Rust files whose only check is a TypeScript test, as a generated mirror is. */
 	readonly nodeCheckedRust?: readonly string[];
+	/**
+	 * Files no package owns that the whole-program gates still read -- a crate's `scripts/` the
+	 * scripts' tsconfig and the vitest suite take in -- so a change to one runs those gates.
+	 */
+	readonly nodeRead?: (path: string) => boolean;
 	/** What a file reaches that no graph shows: packages or crates read rather than imported. */
 	readonly reaches?: (path: string) => { packages?: readonly string[]; crates?: readonly string[] };
 }
@@ -89,6 +94,7 @@ export function plan(config: Config, files: readonly string[]): Plan {
 	const gates = [...config.always];
 	let allCrates = false;
 	let allPackages = false;
+	let read = false;
 
 	for (const file of files) {
 		const suffix = extname(file);
@@ -106,12 +112,13 @@ export function plan(config: Config, files: readonly string[]): Plan {
 		if (found && (NODE_SUFFIXES.has(suffix) || config.nodeCheckedRust?.includes(file))) {
 			packages.add(found);
 		}
+		if (!found && NODE_SUFFIXES.has(suffix) && config.nodeRead?.(file)) read = true;
 	}
 
 	const reachedPackages = allPackages
 		? new Set(packageDirs.values())
 		: dependents(packages, packageEdges);
-	if (reachedPackages.size) {
+	if (reachedPackages.size || read) {
 		gates.push(...config.node);
 		for (const [name, owned] of Object.entries(config.packageGates)) {
 			if (reachedPackages.has(name)) gates.push(...owned);
