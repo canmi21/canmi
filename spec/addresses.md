@@ -136,6 +136,12 @@ one-edit measure survives the language boundary. The
 alternative, exempting Rust from the rule, would have left half the repo carrying literals
 that the check answers for everywhere else.
 
+**A Python task reads it through a generated mirror too**, a module beside its map that `mise run
+urls` writes and a test holds to it as `rust.test.ts` holds the crate, and **the reference check
+reads an extensionless task by its shebang** as it reads a file by its extension: infra's `node`
+and `tunnel` carried a bucket's and Cloudflare's API addresses unseen until a split moved one into
+a `.py` file on 2026-10-14. New tasks are TypeScript and import the map itself.
+
 ### What the reference check will not flag
 
 Path-shaped strings in prose are ignored on purpose. These documents use invented names as
