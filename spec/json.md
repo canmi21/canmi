@@ -39,6 +39,12 @@ that is sometimes a list, sometimes an object, always documented in prose becaus
 The same applies downward: a record's contents are its own. Two records sharing a `version` key
 does not mean their bodies should rhyme.
 
+**An error's code is the producer's too.** The envelope's library keeps the shapes and only the
+few codes any HTTP API answers whatever it does; a service declares the rest in a `codes.json`
+beside its schema, each with its status and default message, its own code typed from that file
+and every reader's derived from it as from the schema below. A new code is a change to the
+service, never a release of the envelope's library. RFC v7g2p.
+
 ## A fact appears in exactly one place
 
 If a value can be derived from another in the same document, it is derived rather than stored. Two
