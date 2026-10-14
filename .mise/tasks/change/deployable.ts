@@ -26,6 +26,7 @@ import {
 	owner,
 	rustGraph,
 } from './graph.ts';
+import { movedImporters } from './lockfile.ts';
 import { lockMoved, manifestMoved, treeMoved } from './resolved.ts';
 
 /** How every image is built: a change here is a change to all of them. */
@@ -37,6 +38,8 @@ const EVERY_IMAGE = new Set(['.dockerignore', '.mise/tasks/image']);
 const RESOLUTION = new Set(['Cargo.toml', 'Cargo.lock']);
 /** What a Dockerfile copies from the context when its image is its crate's binary and nothing else. */
 const WORKSPACE = new Set(['Cargo.toml', 'Cargo.lock', 'apps', 'libs']);
+/** What every Node image installs from, read by importer; see ./lockfile.ts. */
+const LOCKFILE = 'pnpm-lock.yaml';
 /** How every Worker is packaged, the same. */
 const EVERY_WORKER = new Set([
 	'package.json',
@@ -321,7 +324,7 @@ export function needed(
 		const crate = crateDirs.get(owner(file, crateDirs.keys()) ?? '');
 		if (crate && (file.endsWith('.rs') || file.endsWith('/Cargo.toml'))) crates.add(crate);
 	}
-	for (const app of imported(layout, moving, declared, binary)) chosen.add(app);
+	for (const app of imported(layout, moving, declared, binary, revisions)) chosen.add(app);
 	const moved = resolution(layout.root, files, declared, crateDirs, revisions);
 	if (moved === undefined) return [...declared.keys()].toSorted();
 	const reached = dependents(new Set([...crates, ...moved]), crateEdges);
@@ -332,16 +335,27 @@ export function needed(
 /**
  * The apps of `declared` built from their package rather than a crate's binary, the executor and
  * the deployer, whose package imports a package of the repository that `moving` changed: its
- * code is bundled into the image as much as the app's own. RFC l6r4u.
+ * code is bundled into the image as much as the app's own. A lockfile change counts for the
+ * packages whose importer it moved, and for every one where `revisions` cannot tell. RFC l6r4u.
  */
 function imported(
 	layout: Layout,
 	moving: readonly string[],
 	declared: Declared,
 	binary: ReadonlySet<string>,
+	revisions: Revisions,
 ): Set<string> {
 	const { directories, edges } = nodeGraph(layout);
 	const changedPackages = new Set<string>();
+	if (moving.includes(LOCKFILE)) {
+		const before = revisions?.[0].read(LOCKFILE);
+		const after = revisions?.[1].read(LOCKFILE);
+		const moved =
+			before === undefined || after === undefined ? undefined : movedImporters(before, after);
+		for (const [directory, name] of directories) {
+			if (moved === undefined || moved.has(directory)) changedPackages.add(name);
+		}
+	}
 	for (const file of moving) {
 		// A declaration is host's to read, never bundled, as an app's own is above.
 		if (declaration(layout, file)) continue;
