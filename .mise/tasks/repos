@@ -239,7 +239,10 @@ def declares(repo: pathlib.Path, verb: str) -> bool:
 	config = repo / "mise.toml"
 	text = config.read_text() if config.is_file() else ""
 	inline = f"[tasks.{task}]" in text or f'[tasks."{task}"]' in text
-	return inline or (repo / ".mise" / "tasks" / task.replace(":", "/")).is_file()
+	# A file task is named for its file without the extension, as mise names `verify.ts` `verify`.
+	place = repo / ".mise" / "tasks" / task.replace(":", "/")
+	files = place.parent.glob(f"{place.name}*") if place.parent.is_dir() else ()
+	return inline or any(path.is_file() and path.name.split(".")[0] == place.name for path in files)
 
 
 def step(where: pathlib.Path, *command: str, quiet: bool = False) -> subprocess.CompletedProcess:

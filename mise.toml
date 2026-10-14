@@ -140,9 +140,16 @@ run = ".mise/tasks/repos check"
 description = "Exercise the shared agent-hook entrypoint with macOS system Python"
 run = "/usr/bin/python3 -m unittest discover -s hooks -p 'test_*.py'"
 
+# The task libraries every repository's tasks and CI run, type-checked and tested here, since no
+# repository below holds them. See spec/architecture/repos.md, "A rule that is code inherits the same
+# way, as a module the projects import".
+[tasks.check-tasks]
+description = "Type-check and test the shared task libraries under .mise/tasks"
+run = ["pnpm exec tsc -p tsconfig.json", "pnpm exec vitest run"]
+
 [tasks.verify]
 description = "Everything a change to this repository has to pass"
 # `lines` measures every repository from here, so a project over the limit reddens this gate
 # until it is under; a project may run the same check from its own verify as well, as seam does.
 # See spec/code.md, "A file is read whole, so it stays short".
-depends = ["check-tools", "check-repos", "check-hooks", "lines"]
+depends = ["check-tools", "check-repos", "check-hooks", "check-tasks", "lines"]

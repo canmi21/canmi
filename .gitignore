@@ -4,7 +4,8 @@
 # See spec/architecture/repos.md.
 repos/*/
 
-# The one dependency this repository has: the formatter `jj fix` runs.
+# The formatter `jj fix` runs, the TOML reader the shared task libraries parse with, and the tools
+# that check those libraries.
 node_modules/
 
 # OS

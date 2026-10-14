@@ -2,8 +2,14 @@
 	"name": "workspace",
 	"private": true,
 	"type": "module",
+	"dependencies": {
+		"smol-toml": "1.9.1"
+	},
 	"devDependencies": {
+		"@types/node": "26.6.5",
 		"oxfmt": "^0.68.0",
-		"svelte": "^5.57.0"
+		"svelte": "^5.57.0",
+		"typescript": "7.0.2",
+		"vitest": "5.0.4"
 	}
 }

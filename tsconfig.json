@@ -1,0 +1,24 @@
+{
+	// The workspace's own TypeScript: the task libraries under .mise/tasks every repository's tasks
+	// and CI run. Node runs each file as written, stripping its types, so nothing is emitted. See
+	// spec/toolchain.md, "A script is TypeScript, run by node as it is written".
+	"compilerOptions": {
+		"target": "es2023",
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"strict": true,
+		"allowImportingTsExtensions": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"noFallthroughCasesInSwitch": true,
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"erasableSyntaxOnly": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"lib": ["es2023"],
+		"types": ["node"]
+	},
+	"include": [".mise/tasks/**/*.ts", "vitest.config.ts"]
+}
