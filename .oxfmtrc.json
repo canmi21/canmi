@@ -5,7 +5,9 @@
 	"printWidth": 100,
 	"svelte": true,
 	"ignorePatterns": [
-		"**/data/",
+		"repos/web/data/",
+		"repos/platform/apps/data/registry/scripts/",
+		"repos/platform/apps/data/secrets/",
 		"**/.claude/",
 		"**/contents/",
 		"**/corpus/cases/",

@@ -677,7 +677,8 @@ once, which is reported apart, as a warning.
 hold two majors and why, as a transition somebody chose; the report then lists it without the
 warning, and `update --major` crosses only what the report calls behind, so an allowed pair is
 never collapsed by it. A line the workspace no longer needs -- one major left -- is reported for
-removal. Each repository's `.mise/tasks/outdated` is the report.
+removal. The report is each repository's `outdated` task, run from the workspace's
+`.mise/tasks/gates/outdated.ts`.
 
 ### A package version waits a day before it can be installed
 
