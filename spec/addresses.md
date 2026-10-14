@@ -142,6 +142,17 @@ reads an extensionless task by its shebang** as it reads a file by its extension
 and `tunnel` carried a bucket's and Cloudflare's API addresses unseen until a split moved one into
 a `.py` file on 2026-10-14. New tasks are TypeScript and import the map itself.
 
+**What a running app dials, and might move, is given to it at run time, not compiled in.** Our own
+hosts, the artifact bucket and the public hosts the probe and the alias layer reach are infra's
+`libs/urls` `RUN_TIME`, keyed by dotted path (`internal.api.private`). An app reads one as an
+environment variable it declares under `[urls]` in its `service.toml`, and host writes the value
+from the map it is built with. An image carries no default: a missing variable stops it at start
+rather than let it dial an old address. Moving one of these hosts is one commit to infra, host
+rolled out, and the apps given it restarted. Everything else -- a third party's API, a link, an
+identity, a development port -- stays a compiled constant, since it changes only with a rename,
+which is a change to code anyway. The platform's sdk constants for the run-time entries stay one
+release, marked deprecated. See RFC zvrk7.
+
 ### What the reference check will not flag
 
 Path-shaped strings in prose are ignored on purpose. These documents use invented names as
