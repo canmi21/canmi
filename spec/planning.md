@@ -26,6 +26,12 @@ is struck through and kept.
 RFC, leaving the rule it concerns citing it. Comments cite one the same way -- [code.md](code.md),
 "`spec/` holds what is settled; an RFC holds what is not".
 
+**A design is worked out top down, one layer at a time, every area together.** It starts from what
+its users need, numbered layer 0 at the face, and goes down a layer only once every area of the layer
+above has come down to it: no area is followed to the bottom while another is still open higher up.
+Where a layer finds an area unsettled above, the discussion goes back up to it first. Each layer is
+written into its draft before the next is begun.
+
 **An RFC is filed by what it is about, never by repository**, so a question or a piece of work
 every project shares is filed once, in its area, and a project's own planning does not copy it.
 
