@@ -19,6 +19,12 @@ on in a session that has not been told to, nor off in one that has.
 **The agent does not propose it either.** A task that looks parallel is not a reason to ask; the
 user knows this file exists and turns it on when they want it.
 
+**Work that cannot run in parallel is taken back, even in a delegating session.** When the next
+step waits on the one before it -- a foundation being laid, one piece at a time -- the
+conversation stops its workers and does the work itself rather than idling while one finishes.
+Workers return once there are independent pieces to run side by side; the user said so on
+2026-10-14.
+
 ## The point is the user testing while the conversation builds
 
 **The user is the fastest test this project has.** They click in two seconds what a browser
