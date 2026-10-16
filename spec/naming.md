@@ -14,6 +14,11 @@ Name for responsibility, never for deployment shape or product. `cdn` describes 
 candidates of all -- they change. A domain that was a content site can become a redirect
 without a single line of its code changing.
 
+**A name chosen in design is chosen for how exactly it fits, and need only be unique here.** While
+an architecture is worked out, whether a package registry or a domain has the name free is not
+asked; the most technically fitting word wins, so long as nothing else in the project uses it.
+Availability is a question for publishing, met when something is published.
+
 ## Default
 
 Lowercase English, hyphen-separated:
