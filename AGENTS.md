@@ -174,11 +174,11 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 **Writing code**
 
-| Topic                                   | File                                       |
-| --------------------------------------- | ------------------------------------------ |
-| Type checking, tests, comments          | [spec/code.md](spec/code.md)               |
-| Linting and formatting                  | [spec/lint-format.md](spec/lint-format.md) |
-| Shell, addresses, secrets, versions, jj | [spec/toolchain.md](spec/toolchain.md)     |
+| Topic                                                | File                                       |
+| ---------------------------------------------------- | ------------------------------------------ |
+| Type checking, tests, comments, a UI that only draws | [spec/code.md](spec/code.md)               |
+| Linting and formatting                               | [spec/lint-format.md](spec/lint-format.md) |
+| Shell, addresses, secrets, versions, jj              | [spec/toolchain.md](spec/toolchain.md)     |
 
 **The projects**
 

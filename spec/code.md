@@ -211,6 +211,15 @@ export or an unreachable branch, each of which is paid on every build, every aud
 So the test has two halves, and both must hold: **would the set be incoherent without it, and is
 its cost paid by nobody?** Where the answer to either is no, it is dead and goes.
 
+## A UI draws what an API gives
+
+**A UI computes nothing; it draws what its API returns, and may only format it.** Agreed with the
+author on 2026-10-18. Whether a warning stands, which choices are offered, whether something was
+dismissed -- each is a field the API returns, and a dismissal is state the API keeps. A UI may
+reshape a value for display -- a date in the viewer's zone, a byte count as `1.2 GB` -- and derives
+no fact of its own. So every client of one API, a dashboard, a desktop app or a command line, shows
+the same thing, and a rule lives once, where the API answers, rather than once in every client.
+
 ## Tests
 
 Colocated with source as `src/*.test.ts`, run by vitest from the repo root.
