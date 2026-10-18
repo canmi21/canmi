@@ -22,6 +22,12 @@ an architecture is worked out, whether a package registry or a domain has the na
 asked; the most technically fitting word wins, so long as nothing else in the project uses it.
 Availability is a question for publishing, met when something is published.
 
+**One concept is one word, and where it varies is a dimension of it, never a second word.** Agreed
+with the author on 2026-10-18: a control of the platform and a control of an organization are both
+a control, of one half or the other, never `platform` beside `control`; a word coined only to tell
+two places of one thing apart makes a reader learn two names for one meaning and ask how they
+differ, when they do not.
+
 ## Default
 
 Lowercase English, hyphen-separated:
