@@ -244,7 +244,8 @@ commit to `.jj/verified`, and the hook compares contents with `jj diff`, so desc
 afterwards keeps it verified and editing a file does not. A run of named parts, `check workspace
 words`, verifies nothing and writes nothing. The hook reads the working copy before the command
 runs, so an edit chained into it -- `printf x >> f && jj commit` -- is not seen, which was found by
-trying it: a commit is a command of its own.
+trying it: a commit is a command of its own. A `cd` before it is followed, so `cd repos/seam && jj
+commit` is held to seam's verify and not the workspace's.
 
 **The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
 `SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;

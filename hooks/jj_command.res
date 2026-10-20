@@ -81,31 +81,34 @@ let isCommand = (segment: array<string>, at) =>
       )
     }
 
+/** The jj subcommand one segment runs and the arguments after it, if it runs jj. */
+let invocationOf = (segment: array<string>): option<(string, array<string>)> => {
+  let at =
+    segment->Array.findIndexWithIndex((word, index) =>
+      Node.basename(word) == "jj" && isCommand(segment, index)
+    )
+  if at < 0 {
+    None
+  } else {
+    let next = ref(at + 1)
+    let found = ref(None)
+    while found.contents == None && next.contents < segment->Array.length {
+      let candidate = segment->Array.getUnsafe(next.contents)
+      if valued->Array.includes(candidate) {
+        next := next.contents + 2
+      } else if candidate->String.startsWith("-") {
+        next := next.contents + 1
+      } else {
+        found := Some((candidate, segment->Array.slice(~start=next.contents + 1)))
+      }
+    }
+    found.contents
+  }
+}
+
 /** Each jj subcommand and the arguments after it. */
 let invocations = (command): array<(string, array<string>)> =>
-  segments(command)->Array.filterMap(segment => {
-    let at =
-      segment->Array.findIndexWithIndex((word, index) =>
-        Node.basename(word) == "jj" && isCommand(segment, index)
-      )
-    if at < 0 {
-      None
-    } else {
-      let next = ref(at + 1)
-      let found = ref(None)
-      while found.contents == None && next.contents < segment->Array.length {
-        let candidate = segment->Array.getUnsafe(next.contents)
-        if valued->Array.includes(candidate) {
-          next := next.contents + 2
-        } else if candidate->String.startsWith("-") {
-          next := next.contents + 1
-        } else {
-          found := Some((candidate, segment->Array.slice(~start=next.contents + 1)))
-        }
-      }
-      found.contents
-    }
-  })
+  segments(command)->Array.filterMap(invocationOf)
 
 /** The gates a jj invocation's own assignments skip, `SKIP=verify jj commit`, comma-separated. */
 let skipped = (command): array<string> =>
@@ -128,27 +131,51 @@ let skipped = (command): array<string> =>
         )
   })
 
-/** The repository a jj invocation names with -R or --repository before its subcommand, if any. */
-let repository = (command): option<string> =>
-  segments(command)->Array.reduce(None, (found, segment) =>
-    found->Option.isSome
-      ? found
-      : {
-          let at = segment->Array.findIndex(word => Node.basename(word) == "jj")
-          let named = ref(None)
-          if at >= 0 {
-            segment
-            ->Array.slice(~start=at + 1)
-            ->Array.forEachWithIndex((word, index) =>
-              if named.contents == None {
-                if word == "-R" || word == "--repository" {
-                  named := segment[at + 2 + index]
-                } else if word->String.startsWith("--repository=") {
-                  named := Some(word->String.slice(~start="--repository="->String.length))
-                }
-              }
-            )
-          }
-          named.contents
+/** The repository one segment's jj names with -R or --repository, if it names one. */
+let repositoryOf = (segment: array<string>): option<string> => {
+  let at =
+    segment->Array.findIndexWithIndex((word, index) =>
+      Node.basename(word) == "jj" && isCommand(segment, index)
+    )
+  let named = ref(None)
+  if at >= 0 {
+    segment
+    ->Array.slice(~start=at + 1)
+    ->Array.forEachWithIndex((word, index) =>
+      if named.contents == None {
+        if word == "-R" || word == "--repository" {
+          named := segment[at + 2 + index]
+        } else if word->String.startsWith("--repository=") {
+          named := Some(word->String.slice(~start="--repository="->String.length))
         }
+      }
+    )
+  }
+  named.contents
+}
+
+/** The repository a jj invocation names with -R or --repository before its subcommand, if any. */
+let repository = (command): option<string> => segments(command)->Array.findMap(repositoryOf)
+
+/** Where each invocation of `subcommands` runs: `cwd`, moved by each `cd` before it, then by -R. */
+let placed = (command, ~cwd, subcommands): array<string> => {
+  let at = ref(cwd)
+  let found = []
+  segments(command)->Array.forEach(segment =>
+    switch segment {
+    | ["cd"] => at := Node.env->Dict.get("HOME")->Option.getOr(at.contents)
+    | ["cd", target] => at := Node.resolve([at.contents, target])
+    | _ =>
+      switch invocationOf(segment) {
+      | Some((subcommand, _)) if subcommands->Array.includes(subcommand) =>
+        found->Array.push(
+          repositoryOf(segment)->Option.mapOr(at.contents, named =>
+            Node.resolve([at.contents, named])
+          ),
+        )
+      | _ => ()
+      }
+    }
   )
+  found
+}

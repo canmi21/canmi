@@ -20,6 +20,20 @@ describe("a jj command line", () => {
   })
 })
 
+describe("where a commit runs", () => {
+  test("follows each cd before it, then -R", () => {
+    expect(
+      Jj_command.placed(
+        "cd a && jj commit -m x && cd ../b && jj -R c ci",
+        ~cwd="/w",
+        ["commit", "ci"],
+      ),
+    )->toEqual(["/w/a", "/w/b/c"])
+    expect(Jj_command.placed("jj log", ~cwd="/w", ["commit"]))->toEqual([])
+    expect(Jj_command.placed("echo 'jj commit -m x'", ~cwd="/w", ["commit"]))->toEqual([])
+  })
+})
+
 describe("the verify gate", () => {
   let root = temporaryRoot("verified-")
   test(
