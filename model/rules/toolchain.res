@@ -7,19 +7,6 @@ let scriptHomes = ["scripts/", "hooks/", ".mise/tasks/"]
 let scripts = [".res", ".resi"]
 let kept = ["hooks/bin/rm", "hooks/rm_guard.py", "hooks/test_rm_guard.py", ".mise/tasks/secret"]
 
-/** Written before the rule and not yet moved, each one a violation the day its port lands. */
-let porting = [
-  "hooks/bookmark.py",
-  "hooks/commit.py",
-  "hooks/jj_command.py",
-  "hooks/language.py",
-  "hooks/run.py",
-  "hooks/spec_check.py",
-  "hooks/spec_diff.py",
-  "hooks/test_language.py",
-  "hooks/test_run.py",
-]
-
 /** Local development is this name; a literal loopback address never is. */
 let loopback = /\b127\.0\.0\.1\b/
 

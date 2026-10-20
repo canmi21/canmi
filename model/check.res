@@ -35,6 +35,7 @@ let parts: array<(string, part)> = [
         ),
     ),
   ),
+  // The rm guard's tests, under macOS's own Python, which is what runs the guard.
   (
     "hooks",
     Script(
@@ -61,11 +62,7 @@ let parts: array<(string, part)> = [
     "comments",
     Script(
       () => {
-        let ours =
-          Comments.files(root, [])->Array.filter(path =>
-            !(Toolchain.porting->Array.includes(Node.relative(root, path)))
-          )
-        let measured = Comments.main(~root, ~given=ours)
+        let measured = Comments.main(~root, ~given=[])
         report(Notes.main(~root)) + measured > 0 ? 1 : 0
       },
     ),

@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f \"$d/hooks/run.py\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/hooks/run.py\" ] && exec /usr/bin/python3 \"$d/hooks/run.py\" || exit 0",
+						"command": "d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f \"$d/hooks/run.res\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/hooks/run.res\" ] || exit 0; e=\"$d/hooks/run.res.mjs\"; r=\"$d/node_modules/.bin/rescript\"; [ -f \"$e\" ] || { \"$r\" build >&2; [ -f \"$e\" ] || { \"$r\" clean >&2; \"$r\" build >&2; }; }; [ -f \"$e\" ] || { echo \"hooks: $e is not built and building did not make it; run mise run build in $d\" >&2; exit 1; }; exec node \"$e\"",
 						"timeout": 120,
 						"statusMessage": "Applying repository policy"
 					}
@@ -19,7 +19,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f \"$d/hooks/run.py\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/hooks/run.py\" ] && exec /usr/bin/python3 \"$d/hooks/run.py\" || exit 0",
+						"command": "d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f \"$d/hooks/run.res\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/hooks/run.res\" ] || exit 0; e=\"$d/hooks/run.res.mjs\"; r=\"$d/node_modules/.bin/rescript\"; [ -f \"$e\" ] || { \"$r\" build >&2; [ -f \"$e\" ] || { \"$r\" clean >&2; \"$r\" build >&2; }; }; [ -f \"$e\" ] || { echo \"hooks: $e is not built and building did not make it; run mise run build in $d\" >&2; exit 1; }; exec node \"$e\"",
 						"timeout": 30,
 						"statusMessage": "Applying repository policy"
 					}
@@ -31,7 +31,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f \"$d/hooks/run.py\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/hooks/run.py\" ] && exec /usr/bin/python3 \"$d/hooks/run.py\" || exit 0",
+						"command": "d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f \"$d/hooks/run.res\" ] && [ \"$d\" != / ]; do d=$(dirname \"$d\"); done; [ -f \"$d/hooks/run.res\" ] || exit 0; e=\"$d/hooks/run.res.mjs\"; r=\"$d/node_modules/.bin/rescript\"; [ -f \"$e\" ] || { \"$r\" build >&2; [ -f \"$e\" ] || { \"$r\" clean >&2; \"$r\" build >&2; }; }; [ -f \"$e\" ] || { echo \"hooks: $e is not built and building did not make it; run mise run build in $d\" >&2; exit 1; }; exec node \"$e\"",
 						"timeout": 30,
 						"statusMessage": "Applying repository policy"
 					}

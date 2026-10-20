@@ -8,6 +8,9 @@
 		{
 			"dir": "model",
 			"subdirs": true
+		},
+		{
+			"dir": "hooks"
 		}
 	],
 	"dependencies": [],

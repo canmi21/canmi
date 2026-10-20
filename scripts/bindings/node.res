@@ -5,6 +5,7 @@ type spawnOptions = {
   encoding?: string,
   maxBuffer?: int,
   input?: string,
+  timeout?: int,
 }
 
 type spawned = {
@@ -52,6 +53,7 @@ type removal = {recursive: bool, force: bool}
 
 @module("node:fs") external existsSync: string => bool = "existsSync"
 @module("node:fs") external readFileSync: (string, @as("utf8") _) => string = "readFileSync"
+@module("node:fs") external readStdin: (@as(0) _, @as("utf8") _) => string = "readFileSync"
 @module("node:fs") external writeFileSync: (string, string) => unit = "writeFileSync"
 @module("node:fs") external readdir: string => array<string> = "readdirSync"
 @module("node:fs") external readdirTyped: (string, withTypes) => array<dirent> = "readdirSync"

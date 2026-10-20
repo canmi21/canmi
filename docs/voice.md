@@ -7,7 +7,7 @@
   loaded at every start and still broken twice in one session: after a stretch of reading English
   specs and English tool output, the one-line updates between tool calls turned English, and then
   the reply did, and nothing from inside the drift notices it. So
-  [hooks/language.py](../hooks/language.py) reads the turn when it ends and holds it open while the
+  [hooks/language.res](../hooks/language.res) reads the turn when it ends and holds it open while the
   reply it ends with -- the prose after its last tool call -- is English with no Chinese in it --
   code, paths and short lines excepted, and a user who wrote English themselves answered in English.
   Only the person counts as the user: another session's message arrives in the user's place in

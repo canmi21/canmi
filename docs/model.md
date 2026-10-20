@@ -39,9 +39,3 @@ and the plant is removed. A check never seen to fail is a name, not a check.
 **What only judgment can keep is not modeled.** How to work with the user, when to ask, how to
 delegate, what a commit body should say -- those are `docs/` alone, read rather than enforced.
 Forcing one into a record would turn it into a string a program cannot read either.
-
-## In transition
-
-`Toolchain.porting` lists the scripts written before the rule that every script is ReScript, which
-the settings part passes and the comments part does not measure; each comes off the list the day
-its port lands, and the settings part names one left on after its file is gone.

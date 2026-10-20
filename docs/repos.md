@@ -449,7 +449,7 @@ no `--ignore-workspace` to write an outward lockfile with.
 The hooks are found through `jj workspace root`, which answers about the nearest repository -- so
 inside a project it answers about the project. The command in
 [`.claude/settings.json`](../.claude/settings.json) walks up from there until it finds a
-checkout that has `hooks/`. A fixed path was the alternative and is wrong: the walk is what lets
+checkout that has `hooks/run.res`. A fixed path was the alternative and is wrong: the walk is what lets
 one entrypoint serve every project.
 
 This is why the commit conventions reach a project without anything being installed in it: a

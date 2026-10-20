@@ -208,7 +208,7 @@ commit after `Commits.since` against the same rules the hook applies, from one f
 `model/checks/history.res`. The hook sees only what an agent types with `-m`; the history sees
 everything, an editor's message and a human's included, after the fact.
 
-`hooks/commit.py` runs before any jj subcommand that can write a description and does two
+`hooks/commit.res` runs before any jj subcommand that can write a description and does two
 things: it runs `jj fix` so the content being committed is already formatted, then it checks
 the message. A malformed message is refused with the specific reason, which the agent reads
 and corrects on the spot.
@@ -227,13 +227,13 @@ command 'commit'`). The moment a message is written is inside the agent's tool c
 is where the check has to sit.
 
 The behavior has one home under `hooks/`. `.claude/settings.json` and `.codex/hooks.json` are
-thin adapters with the same event table, each calling the one `hooks/run.py` entrypoint. That
+thin adapters with the same event table, each calling the one `hooks/run.res` entrypoint. That
 entrypoint owns routing, command selection, and combining output from policies that can both
 apply to one event. A vendor adapter never owns policy: if the harness payloads diverge later,
 the shared entrypoint normalizes their common meaning rather than growing two implementations
 that only appear equivalent.
 
-`hooks/spec_check.py` runs _after_ the commit lands and asks the question the diff
+`hooks/decision.res` runs _after_ the commit lands and asks the question the diff
 cannot: was a decision made here that nobody wrote down? It fires when a `feat`, `refactor`,
 `build`, or `perf` commit touched no rules, and injects a reminder to record the reasoning
 while it is still in context.
@@ -245,7 +245,7 @@ moment when the answer is still cheap to write -- before the conversation that p
 gone. Bug fixes are excluded on purpose: a fix records its cause at the regression test, not
 in the rules.
 
-`hooks/bookmark.py` runs at the end of a turn and refuses to hand the result back while `main`
+`hooks/bookmark.res` runs at the end of a turn and refuses to hand the result back while `main`
 does not cover what was committed. It is the only hook here bound to something other than a tool
 call, and it has to be: the other two watch the Bash tool, and the moment the completion rule
 above talks about is the moment the agent _stops_ calling tools. A turn that ends on its last
@@ -264,8 +264,8 @@ the shape partial work is supposed to have -- the rule above says it stays uncom
 firing on those would turn a rule that protects unfinished work into one that demands it be
 published.
 
-`hooks/spec_diff.py` runs after a `jj rebase` and hands back the diff of `spec/` and
-`AGENTS.md` between the working copy before the rebase and after it. It reads the previous
+`hooks/delta.res` runs after a `jj rebase` and hands back the diff of the rules -- `docs/`,
+`model/`, a project's `spec/` -- and `AGENTS.md` between the working copy before the rebase and after it. It reads the previous
 state out of jj's operation log rather than remembering anything, and prints nothing when no
 rule moved. It exists because a rule written elsewhere -- another machine, an earlier session --
 reaches this checkout only through `main`, and the moment it does is otherwise invisible: the

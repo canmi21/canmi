@@ -30,7 +30,7 @@ let shortened = [("CF", "Cloudflare"), ("DB", "database"), ("DBs", "databases")]
 let foreign = RegExp.fromString("[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\uff00-\uffef]")
 
 /** Files whose job is to read or measure another language, so they quote it. */
-let quoting = ["hooks/language.py", "hooks/test_language.py", "scripts/lints/lints_test.res"]
+let quoting = ["hooks/language.res", "hooks/language_test.res", "scripts/lints/lints_test.res"]
 
 let doc = "docs/voice.md"
 let rules: array<Rule.t> = [

@@ -50,13 +50,9 @@ let main = (~root): array<string> => {
   ->Array.filter(path =>
     Toolchain.scriptHomes->Array.some(home => path->String.startsWith(home)) &&
     scriptLike->Array.includes(Node.extname(path)) &&
-    !(Toolchain.kept->Array.includes(path)) &&
-    !(Toolchain.porting->Array.includes(path))
+    !(Toolchain.kept->Array.includes(path))
   )
   ->Array.forEach(path => say(`${path} is a script outside ReScript, and not one kept`))
-  Toolchain.porting
-  ->Array.filter(path => !(tracked->Array.includes(path)))
-  ->Array.forEach(path => say(`${path} is ported; take it out of Toolchain.porting`))
 
   let editorconfig = read(".editorconfig")
   Toolchain.indentation->Array.forEach(((key, value)) =>
