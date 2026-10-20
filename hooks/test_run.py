@@ -15,7 +15,7 @@ ENTRYPOINT = ROOT / "hooks" / "run.py"
 SYSTEM_PYTHON = "/usr/bin/python3"
 # jj answers about the nearest repository, which is a sub-repo whenever the shell sits inside
 # one, so the entrypoint is found by walking up to the checkout that has hooks/.
-# See spec/architecture/repos.md.
+# See docs/repos.md.
 COMMAND = (
 	'd=$(jj workspace root 2>/dev/null || pwd); '
 	'while [ ! -f "$d/hooks/run.py" ] && [ "$d" != / ]; do d=$(dirname "$d"); done; '
@@ -85,7 +85,7 @@ class SharedEntrypointTest(unittest.TestCase):
 		self.assertEqual(result.stdout, "")
 
 	def test_adapter_command_resolves_from_a_repository_subdirectory(self) -> None:
-		self.assert_resolves_from(ROOT / "spec" / "architecture")
+		self.assert_resolves_from(ROOT / "docs")
 
 	def test_adapter_command_resolves_from_inside_a_nested_repository(self) -> None:
 		"""The case the walk exists for: jj answers about the project, not about this repo."""
@@ -95,7 +95,7 @@ class SharedEntrypointTest(unittest.TestCase):
 		self.assert_resolves_from(nested)
 
 	def test_adapter_command_exits_cleanly_outside_any_repository(self) -> None:
-		"""Nothing to run is not a failure, and must not be a hang: see spec/architecture/repos.md."""
+		"""Nothing to run is not a failure, and must not be a hang: see docs/repos.md."""
 		result = subprocess.run(
 			COMMAND,
 			input="{}",

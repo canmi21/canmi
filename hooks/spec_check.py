@@ -18,7 +18,7 @@ rule for background -- which is most edits. Citation is not co-evolution. The pa
 still built, in .mise/tasks/refs, where it backs a check that has no false positives at all:
 a reference pointing at a file that does not exist is unambiguously broken.
 
-Dependencies are limited to the standard library, for the reason given in spec/toolchain.md.
+Dependencies are limited to the standard library, for the reason given in docs/toolchain.md.
 """
 
 from __future__ import annotations
@@ -35,7 +35,8 @@ from jj_command import invocations
 # Types that usually carry a decision. Absent by design: docs, test, style, chore, fix, ci --
 # a bug fix records its cause at the test, not in the rules.
 DECISION_TYPES = ("feat", "refactor", "build", "perf")
-RULE_PATHS = ("spec/", "AGENTS.md")
+# The workspace keeps its rules in docs/ and model/, a project in spec/.
+RULE_PATHS = ("spec/", "docs/", "model/", "AGENTS.md")
 
 
 def run(args: list[str]) -> str:
@@ -74,13 +75,13 @@ def context(payload: dict) -> str:
 		return ""
 
 	lines = [
-		f"Committed `{subject.strip()}` without touching spec/ or AGENTS.md.",
+		f"Committed `{subject.strip()}` without touching the rules -- docs/, model/, a project's spec/ -- or AGENTS.md.",
 		"If this change settled a question -- chose one option over another, accepted a "
 		"tradeoff, added a tool, established a convention -- record the decision and its "
 		"reasoning now, while it is still in context. Put it in the commit itself rather than a "
 		"follow-up, so the rule and the change it came from stay together. If it settled "
-		"nothing, say so briefly and move on. spec/agent-protocol.md defines what belongs in "
-		"spec and what belongs in a code comment instead.",
+		"nothing, say so briefly and move on. docs/agent-protocol.md defines what belongs in "
+		"the rules and what belongs in a code comment instead.",
 	]
 
 	return "\n".join(lines)

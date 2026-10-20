@@ -4,7 +4,7 @@
 #USAGE flag "-n --dry-run" help="Say what would move and write nothing"
 #USAGE flag "--major" help="Cross the ranges package.json declares; a tool pin is crossed by editing [tools], never here"
 # The workspace is a repository like the others, and this is its `update`; `mise run update`
-# reaches it as `workspace`. See spec/toolchain.md, "Dependency policy".
+# reaches it as `workspace`. See docs/toolchain.md, "Dependency policy".
 set -e
 cd "$MISE_PROJECT_ROOT"
 
@@ -21,7 +21,7 @@ fi
 echo
 echo "\$ pnpm update${usage_major:+ --latest}"
 # A version younger than minimumReleaseAge is the supply-chain delay holding, not a failure; it
-# lifts itself within the day. See spec/toolchain.md.
+# lifts itself within the day. See docs/toolchain.md.
 if ! out=$(pnpm update ${usage_major:+--latest} 2>&1); then
 	echo "$out"
 	if echo "$out" | grep -q ERR_PNPM_NO_MATURE_MATCHING_VERSION; then

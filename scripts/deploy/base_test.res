@@ -11,7 +11,7 @@ let always = _ => true
 
 describe("the base a push plans against", () => {
   test("is the last commit built, not its before", () => {
-    // The cancelled pending run's commit is `before`; the last run that succeeded built `built`.
+    // The canceled pending run's commit is `before`; the last run that succeeded built `built`.
     let (chosen, why) = Base.base(answering(Some(built)), before, head, always)
     expect(chosen)->toBe(built)
     expect(why)->toContain(built)

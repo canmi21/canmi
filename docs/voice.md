@@ -16,10 +16,12 @@
   own and are not checked: the author reads the reply a turn ends with, decided on 2026-10-09. The
   hold asks for the reply restated in Chinese; the check is a backstop, and the rule is still to
   write it in Chinese from the start.
-- **File content, including code comments**: English only. No Chinese.
+- **File content, including code comments**: English only. No Chinese. The words part holds it,
+  outside the files `Voice.quoting` names, whose job is to read another language.
 - **Commit messages**: English only.
 - **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` --
-  not the British spelling of any of them. This is not a preference between two correct forms:
+  not the British spelling of any of them; `Voice.british` in
+  [model/rules/voice.res](../model/rules/voice.res) is the list the words part holds the tree to. This is not a preference between two correct forms:
   the platform is already American and half of it is identifiers. `color` is a CSS property, a
   StyleX key and a token name; `license` is a route, a file and a record type. An author writing
   `color` in the prose beside `color:` has put two spellings of one word in one file, and the
@@ -70,7 +72,7 @@ under two of them. Guessing wrong is cheap to correct in conversation and expens
 reaches a file, so the reading matters most right before writing something down.
 
 What this rules out is renaming a directory to disambiguate the user's speech. `apps/` holds
-deployables and `repos/` holds separate repositories -- see [repos.md](architecture/repos.md)
+deployables and `repos/` holds separate repositories -- see [repos.md](repos.md)
 -- and neither name is the place to record which sense a sentence used.
 
 ## "Base" means this workspace
@@ -107,7 +109,7 @@ section.
 Written into a file, the bare word is never left to be read the same way: it is "SvelteKit", or
 `@canmi/kit`. A reader of a file has no conversation to infer from.
 
-## A figure in `spec/` is dated, or it is checked
+## A figure in the rules is dated, or it is checked
 
 Numbers appear throughout these documents and two kinds of them are kept true by opposite means.
 

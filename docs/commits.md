@@ -19,29 +19,21 @@ already makes the area clear.
 
 ## Types
 
-| Type       | Use for                                   |
-| ---------- | ----------------------------------------- |
-| `feat`     | New user-facing capability                |
-| `fix`      | Bug fix                                   |
-| `docs`     | Documentation only                        |
-| `refactor` | Behavior-preserving restructure           |
-| `perf`     | Performance work                          |
-| `test`     | Tests only                                |
-| `build`    | Build system, dependencies, toolchain     |
-| `ci`       | CI configuration                          |
-| `chore`    | Everything else, including repo bootstrap |
-| `revert`   | Reverting a previous commit               |
+`Commits.types` in [model/rules/commits.res](../model/rules/commits.res) is the list, and each
+means what its name says: `feat` a new capability, `fix` a bug fixed, `refactor` a restructure that
+keeps behavior, `build` the build, dependencies or toolchain, `chore` everything else, including a
+repository's bootstrap.
 
 ## Subject line
 
 - Starts lowercase.
 - Imperative mood: `add`, not `added` or `adds`.
 - No trailing period.
-- 96 characters max, including the `type: ` prefix.
+- `Commits.subjectWidth` characters at most, the `type: ` prefix included.
 
 ## Body
 
-Optional. Wrap at 96 characters.
+Optional. Wrapped at the subject's width.
 
 Plain text. No Markdown: no backticks, no asterisks, no headings, no bullet syntax, no links.
 A commit message is read in terminals, logs and blame views that render none of it, where the
@@ -57,7 +49,7 @@ What it is not:
 - Not self-referential. "This change", "this commit", "here we" -- the commit is the thing being
   read; it does not introduce itself.
 
-Reasoning that is worth keeping belongs in `spec/` or beside the code, where the next reader is
+Reasoning that is worth keeping belongs in the rules -- `docs/` here, a project's `spec/` -- or beside the code, where the next reader is
 looking when they need it. The log answers what changed.
 
 **A body is optional, and the default is not to have one.** A subject line that already says
@@ -65,7 +57,7 @@ what changed needs nothing after it. Where a trailer is owed, the body is that t
 nothing else; where no trailer is owed either, the message is one line. An empty body is not a
 message somebody neglected to finish.
 
-**When there is a body, three lines. Five is the ceiling, not the target.** Longer than that and
+**When there is a body, three lines. `Commits.bodyLines` is the ceiling, not the target.** Longer than that and
 it has stopped saying what changed and started explaining why, which is the failure the list
 above describes and which no length limit alone prevents -- but a body that will not fit in
 three lines is the reliable sign of it.
@@ -73,7 +65,7 @@ three lines is the reliable sign of it.
 The rule is here because it was broken at scale. Seven commits written in one afternoon carried
 bodies of fifteen to twenty-five lines each, every one of them recounting the alternatives
 weighed, the measurements taken and the reasoning behind the choice -- and every one of them
-duplicating a `spec/` section or a code comment written in the same change, which is where a
+duplicating a section of the rules or a code comment written in the same change, which is where a
 reader goes looking for exactly that. The log was left carrying a second copy of the argument,
 in the one place this file says it must not be.
 
@@ -103,10 +95,10 @@ Co-Authored-By: Codex GPT-5 <codex@openai.com>
 Co-Authored-By: Grok 4.6 <noreply@x.ai>
 ```
 
-Claude models use the first address, GPT models the second, Grok the third. Fill in the actual
-model short name rather than copying the example -- the point of the trailer is to record which
-model, so a stale version defeats it. A new vendor needs a decision here first, which is one line
-in this list.
+Each vendor and its one address is `Commits.trailers`. Fill in the actual model short name rather
+than copying the example -- the point of the trailer is to record which
+model, so a stale version defeats it. A new vendor needs a decision here first, which is one entry
+in that list.
 
 **The address identifies a vendor, not a mailbox.** None of the three reaches anybody, and that is
 not a defect. A trailer here answers "which model wrote this" so a later reader knows how much
@@ -206,10 +198,15 @@ and will refuse, but the rule holds one commit earlier than the refusal does: a 
 has seen and accepted is a claim they made, and rebasing it to tidy the history edits their
 record of the afternoon.
 
-The rebase is also where rule changes arrive: `spec/` moves with `main` like everything else,
+The rebase is also where rule changes arrive: the rules move with `main` like everything else,
 and [agent-protocol.md](agent-protocol.md) says what to do with the delta.
 
 ## Enforcement
+
+**What reached `main` is checked again, by the commits part of `check workspace`**: every described
+commit after `Commits.since` against the same rules the hook applies, from one function in
+`model/checks/history.res`. The hook sees only what an agent types with `-m`; the history sees
+everything, an editor's message and a human's included, after the fact.
 
 `hooks/commit.py` runs before any jj subcommand that can write a description and does two
 things: it runs `jj fix` so the content being committed is already formatted, then it checks
@@ -221,8 +218,7 @@ most of the messages. It was `commit` and `describe` alone, and `jj split -m` ca
 malformed co-author trailer straight past it -- caught only because a later `describe` in the
 same session was checked and rejected the identical text. A gap of that kind is silent by
 construction: the hook cannot report a command it never looked at. So when jj grows another
-way to set a message, the list grows with it -- currently `commit`, `ci`, `describe`, `desc`,
-`split`, `new`, `squash`, `metaedit`.
+way to set a message, the list grows with it -- `Commits.describing`.
 
 The hook lives at the agent-harness layer rather than in jj, because jj offers no hook point
 at all: it has no commit hook, and it explicitly refuses aliases that shadow built-in

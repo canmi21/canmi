@@ -6,7 +6,7 @@ Given no root, checks this repository and every project cloned under `repos/`; g
 checks those. Every file version control keeps is measured, prose and data included, less what
 is not ours to shorten: a binary, a lockfile or anything as common, whatever a project's
 `.gitattributes` marks generated or vendored, and any directory named `vendor` or after it. See
-spec/code.md, "A file is read whole, so it stays short".
+docs/code.md, "A file is read whole, so it stays short".
 
 The soft limit is a warning tier, so it is advice until `AUDIT` is set, when it fails the way
 every other warning does under `mise run audit`. The hard limit fails always, except for a file

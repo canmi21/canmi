@@ -265,7 +265,10 @@ let moduleFile = (source, name) => {
 
 let testModule = /#\[cfg\(test\)\]\s*(?:#\[[^\]]*\]\s*)*(?:pub(?:\([^)]*\))?\s+)?mod\s+(\w+)\s*;/g
 
-/** The files of `sources` that are test modules declared out of line, and all beneath one's directory. */
+/**
+ * The files of `sources` that are test modules declared out of line, and all beneath one's
+ * directory.
+ */
 let testModules = (sources: array<string>) => {
   let tests = Set.make()
   sources->Array.forEach(source =>
@@ -317,7 +320,9 @@ let embedded = (root, directories: Map.t<string, string>): edges => {
 
 let buildLiteral = /"(\.\.?\/[^"]+)"/g
 
-/** Path -> crates whose build script reads it: a relative literal in a `build.rs`, from its crate. */
+/**
+ * Path -> crates whose build script reads it: a relative literal in a `build.rs`, from its crate.
+ */
 let buildInputs = (root, directories: Map.t<string, string>): edges => {
   let real = resolved(root)
   let inputs = Map.make()

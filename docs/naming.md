@@ -14,7 +14,7 @@ Name for responsibility, never for deployment shape or product. `cdn` describes 
 candidates of all -- they change. A domain that was a content site can become a redirect
 without a single line of its code changing.
 
-**A database is a database, never a DB**, in prose, names and identifiers alike; the word is short
+**A database is a database, never a `DB`**, in prose, names and identifiers alike; the word is short
 enough already, and an abbreviation is one more spelling to search for.
 
 **A name chosen in design is chosen for how exactly it fits, and need only be unique here.** While
@@ -40,12 +40,13 @@ api-client/
 
 No uppercase, no spaces, no underscores by default.
 
-### Nothing checks the case, and the failure falls on the other machine
+### The workspace checks its own names, and the failure falls on the other machine
 
-The rule above is enforced by nobody. `mise run refs` resolves a cited path with an existence
-test, and the file system here is case-insensitive, so a citation of `spec/VENDOR.md` finds
-`spec/vendor.md` and passes; checking the case would mean listing the directory rather than
-asking whether something is there.
+`Naming.shape` in [model/rules/naming.res](../model/rules/naming.res) is the rule as data, and the
+names part of `check workspace` holds every name this repository tracks to it. A project below is
+checked by nobody yet. The reference check is no help there: it resolves a cited path with an
+existence test, and the file system here is case-insensitive, so a citation of `docs/VENDOR.md`
+finds `docs/vendor.md` and passes.
 
 The failure therefore runs the unusual way round. A miscased name does not fail here and pass
 elsewhere; it passes here and stops resolving on a case-sensitive file system. The only person
@@ -61,6 +62,9 @@ files in that language. The default above applies to everything else in the repo
 | Rust     | Underscores, matching the module name   | `user_profile.rs` |
 | Python   | Underscores, matching the module name   | `user_profile.py` |
 | Go       | Underscores where a separator is needed | `user_profile.go` |
+| ReScript | Underscores, as the module name reads   | `graph_test.res`  |
+
+`Naming.underscored` lists them.
 
 Rust file naming is independent of crate naming. A crate is still `my-crate` with a hyphen in
 `Cargo.toml`; only its source files use underscores, because a module name is a Rust
@@ -69,8 +73,8 @@ identifier and cannot contain a hyphen.
 ## Framework exceptions
 
 Some frameworks assign meaning to a filename. Follow the framework -- a renamed file simply
-stops working. Examples: `Cargo.toml`, `Dockerfile`, `README.md`, `AGENTS.md`, Next.js
-`[slug]/page.tsx`.
+stops working. `Naming.assigned` lists the ones this repository holds; Next.js's
+`[slug]/page.tsx` is another.
 
 ### Docker's files take Docker's plain names
 

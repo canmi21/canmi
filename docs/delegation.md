@@ -97,9 +97,9 @@ level's value. The user says the indicator feels wrong; the brief says which fun
 which property, in which of the rail's two layouts, and which one it should have been reading. A
 worker handed the first sentence goes and rediscovers the codebase, and is paid for by the token.
 
-**Decisions, and `spec/`.** Who decides what is [agent-protocol.md](agent-protocol.md),
+**Decisions, and the rules.** Who decides what is [agent-protocol.md](agent-protocol.md),
 "Decision authority", unchanged. What delegation adds is that **a spawned agent never writes
-`spec/` or `AGENTS.md`**: the rules are the shared decision record, two workers editing them
+the rules or `AGENTS.md`**: the rules are the shared decision record, two workers editing them
 concurrently conflict by construction, and a rule is a decision, which was never the worker's to
 take. A worker that believes a rule is wrong says so in its report, which is the same thing it
 does with a brief it believes is wrong.
@@ -109,7 +109,7 @@ does with a brief it believes is wrong.
 **The conversation writes no code in a delegating session, a shared contract included.** A type
 two workers build against, a client both call, a skeleton that lets the tree compile: each is the
 first wave's one worker, and the workers depending on it are the next wave, briefed with what it
-landed. The conversation's own edits are `spec/`, the registrations only it may touch -- a
+landed. The conversation's own edits are the rules, the registrations only it may touch -- a
 workspace member list, a URL table entry -- and a one-line fix a brief would be longer than.
 
 **Judgment.** Working out _why_ something is broken, and what the fix has to be, stays here. It
@@ -229,7 +229,7 @@ that looks finished and is not.
   whole arrangement rests on.
 - **A short name**, because a worker that cannot be referred to cannot be parked, reported on in
   one line, or asked after by the user.
-- **Which `spec/` sections bind this change**, cited by name so it reads them rather than
+- **Which sections of the rules bind this change**, cited by name so it reads them rather than
   inferring the convention from the code around it.
 - Whether the tree is expected to compile. Parts written in parallel against a contract will not
   until they are all declared, and a worker that does not know that will try to fix it.
@@ -239,7 +239,7 @@ that looks finished and is not.
   volumes, every image built for it, and any large or once-used pulled image -- as
   [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", says.
   The report says what was removed.
-- **Do not touch `spec/` or `AGENTS.md`**, and do not reformat or tidy code the brief did not
+- **Do not touch the rules or `AGENTS.md`**, and do not reformat or tidy code the brief did not
   name. A neighboring improvement is indistinguishable from a mistake in a diff, and it lands in
   a commit about something else.
 - **Stop and report rather than improvise.** A brief that turns out to be wrong, a file it needs
@@ -249,7 +249,7 @@ that looks finished and is not.
   broken files it did not own.
 
 **Every decision reached in a message is written into the tree before the work is called done**
--- into a comment where the next reader meets it, a `spec/` section, or a commit body. A message
+-- into a comment where the next reader meets it, a section of the rules, or a commit body. A message
 is where a decision is _reached_; it is never where one _lives_. This is what answers the
 objection in [agent-protocol.md](agent-protocol.md), "Working beside other agents": a decision
 made in a conversation between two agents is otherwise recorded nowhere, and the arrangement here
@@ -352,7 +352,7 @@ Four things are being looked for, and a worker's own report is evidence for none
 - it changed the files it was given, and no others;
 - it did the thing, rather than something adjacent that was easier;
 - it left nothing half-finished behind a plausible summary;
-- it did not walk past a `spec/` rule the brief had cited.
+- it did not walk past a rule the brief had cited.
 
 **A read has a timestamp, and a report is a read somebody else took.** That distinction was
 learned expensively: a supervisor once answered which of two landed shapes was right from two
@@ -363,7 +363,7 @@ is. Checking is half of it; checking that the check is still fresh when the sent
 is the other half.
 
 There is a second reason, and it is not about trust. **The conversation writes the commit message
-and the `spec/` entry, and neither can be written from somebody else's summary.** A commit body
+and the rule's entry, and neither can be written from somebody else's summary.** A commit body
 says what changed; a rule says what was decided and why. Both are claims about a tree that has to
 have been read.
 

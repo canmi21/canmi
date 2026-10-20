@@ -352,7 +352,7 @@ def redundant(where: pathlib.Path, provided: dict[str, str]) -> list[str]:
 	mise resolves the nearest declaration, so a project restating one takes over the version for
 	that directory -- silently while the two agree, and invisibly once they stop. A project states
 	a tool of its own only where it needs one the workspace does not carry, the way press names
-	rclone. See spec/architecture/repos.md.
+	rclone. See docs/repos.md.
 	"""
 	found = []
 	for tool, version in installed(where):
@@ -370,7 +370,7 @@ def command_check(name: str | None = None) -> int:
 
 	A pin inside a major floats, so mise installing the next patch moves what it resolves with no
 	edit anywhere; the copies follow it here, on the next verify, rather than failing it. See
-	spec/toolchain.md, "The files an outside build reads are generated, not maintained".
+	docs/toolchain.md, "The files an outside build reads are generated, not maintained".
 	"""
 	# A redundant declaration still fails: nothing rewrites a [tools] table for you.
 	rewritten = shadowed = 0

@@ -1,6 +1,6 @@
 # RFCs: why, kept apart from what
 
-**A rule in any `spec/` says what is done now; the reasons it was decided that way are an RFC**,
+**A rule in any repository's rules says what is done now; the reasons it was decided that way are an RFC**,
 one file in the `rfcs` repository, cloned at `repos/rfcs`. Its format, and why there is one, is the
 first of them, RFC 2ut6h; why they have a repository of their own is RFC 7f4xx. They are read as
 files, found by id, until their pages are drawn by the settled design system, which no address

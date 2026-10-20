@@ -276,9 +276,10 @@ failure into a loud one.
 
 ## A file is read whole, so it stays short
 
-**A file of ours aims under five hundred lines, and one over a thousand fails the gate.**
-The soft limit is the warning tier -- advice until `mise run audit` -- and the hard one fails
-`verify`. `.mise/tasks/lines` measures it, over a repository or over every one, and this
+**A file of ours aims under `Code.softLines`, and one over `Code.hardLines` fails the gate** --
+[model/rules/code.res](../model/rules/code.res), five hundred and a thousand. The soft limit is the
+warning tier -- advice until `mise run audit` -- and the hard one fails `verify`.
+`scripts/workspace/lines.res` measures it, over a repository or over every one, and this
 repository's `verify` runs it over every one: a project over the limit reddens the workspace's gate
 until it is under, which was decided over the alternative of each project adopting the gate once
 clean -- a gate nobody has to adopt is the one that gets adopted. A project may run the same check
@@ -330,7 +331,7 @@ line does.
 The specific comment worth writing more often than feels natural: the one next to a value that
 looks arbitrary. A config number, a strictness flag, a rule turned off. Those are the ones a
 future reader will "clean up" unless the reason is sitting right there. Larger decisions go in
-`spec/` instead -- see [agent-protocol.md](agent-protocol.md) for which is which.
+the rules instead -- see [agent-protocol.md](agent-protocol.md) for which is which.
 
 ### Few, short, and only where the reason is not recoverable
 
@@ -344,7 +345,7 @@ keep it accurate. A file where everything is annotated is one where nothing stan
 the same as having annotated nothing.
 
 Write for someone scanning, not reading. Lead with the point; if the first line does not carry
-it, cut down to the line that does. The full argument belongs in `spec/`, with the comment
+it, cut down to the line that does. The full argument belongs in the rules, with the comment
 naming the file rather than repeating it.
 
 **A comment states what the code is, never where the idea came from.** A value taken from another
@@ -359,8 +360,8 @@ itself.
 
 ### How long, and where the rest of it goes
 
-A comment block is at most **six body lines**. The block that opens a file and introduces the
-whole of it gets **ten**. A body line is one carrying text: `/**`, `*/` and a blank `*` separator
+A comment block is at most **`Code.blockLines` body lines**, six. The block that opens a file and
+introduces the whole of it gets **`Code.openingLines`**, ten. A body line is one carrying text: `/**`, `*/` and a blank `*` separator
 are punctuation, and a JSDoc block spends about two lines on them.
 
 Aim at one to three, and let five be the honest ceiling. Six is where a check fires, not where
@@ -382,12 +383,13 @@ sentence it lost was already in web's `indexing.md` word for word. The platform'
 stopped at five, because one of its lines carries a measured fact nothing else records -- dev
 serving `max-age=0` where production serves a year. **Length follows load, not file type.**
 
-Every comment line stays inside **100 columns** with tabs at two, the width oxfmt's `printWidth`
+Every comment line stays inside **`Code.columns`**, 100, with tabs at two, the width oxfmt's `printWidth`
 and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so this one is
 held by hand.
 
-All three are counted rather than eyeballed. `mise run comments` measures every block in every
-language that carries one and is part of each project's `verify`, which is where the percentages above
+All three are counted rather than eyeballed. `scripts/lints/comments.res` measures every block in
+every language that carries one, is part of each project's `verify` and is the comments part of the
+workspace's own, which is where the percentages above
 come from. A file a tool generated is exempt: its comments are nobody's to fix, and a check
 naming a line that may not be edited teaches its reader to skip the rest of the output. The
 limits are this repository's; the check is each project's, because the site's repository needed one
@@ -399,25 +401,25 @@ read and therefore rationed; an address is followed once and never reread, and a
 for it would push a comment into paraphrasing the page rather than pointing at it.
 
 **What decides where a fact lives is who needs it, not how long it is.** If a second file would
-have to know it, it is a rule and belongs in `spec/`. If only this file does, it stays here
+have to know it, it is a rule and belongs in the rules. If only this file does, it stays here
 however long it runs -- moving it sends the reader out for something nothing else uses. Length is
 the symptom that makes the question worth asking, never the answer to it.
 
 **A pointer names the question, not the answer.** "See spec/search.md for why it is one and not
 nine" survives that file being rewritten; "the index is one because ..." does not, and nothing
 links the two, so nobody finds out. The exception is a value this file's own code uses: a
-constant states its own number here and points at `spec/` for why that number.
+constant states its own number here and points at the rules for why that number.
 
-### `spec/` holds what is settled; an RFC holds what is not
+### The rules hold what is settled; an RFC holds what is not
 
-The rule above sends the full argument to `spec/` and leaves the comment naming the file. This is
+The rule above sends the full argument to the rules and leaves the comment naming the file. This is
 that rule in the other state: **where a comment would otherwise have to argue a decision nobody has
 made, it cites an RFC instead**, `RFC 7m5v0`, a draft in the `rfcs` repository, where every open
 question lives -- see [planning.md](planning.md). The citation is the whole comment. The argument is
 had there, and not in a file that merely happens to be where somebody noticed.
 
 The citation is a waypoint, not an end state. Once the decision is made the RFC is accepted, then
-landed with a rule in `spec/` and the change that implements it; the comment may keep citing it, or
+landed with a rule and the change that implements it; the comment may keep citing it, or
 cite the rule. What it never becomes is a
 comment carrying the argument, which is how a file ends up holding a debate that was settled
 elsewhere.
@@ -433,7 +435,7 @@ comment was, and a comment that moves keeps it. On arrival it stays grammatical 
 true, which is the worst of the two pairs available. **Re-read every positional word against the new
 position, and name the thing rather than where it used to sit.**
 
-Nothing catches these. The reference check validates citations into `spec/` and the section names
+Nothing catches these. The reference check validates citations into the rules and the section names
 quoted beside them, and "the rule above" is neither -- it is a pointer, not a citation. A rule
 lifted out of web's `apps/site/src/styles/utilities.css` into a component's `<style>` block
 carried a comment ending "The rule above would then only answer to hover over the text", and the
@@ -465,12 +467,12 @@ until both files were put back.
 
 Two markers, and the line between them is whether anything is **wrong**.
 
-|         | Means                                                    | Deleted when                            |
-| ------- | -------------------------------------------------------- | --------------------------------------- |
-| `FIXME` | Something is wrong here and is waiting on something else | the code is fixed, or `spec/` adopts it |
-| `TODO`  | Nothing is wrong; something is planned and not built yet | it is built, or the plan is dropped     |
+|         | Means                                                    | Deleted when                             |
+| ------- | -------------------------------------------------------- | ---------------------------------------- |
+| `FIXME` | Something is wrong here and is waiting on something else | the code is fixed, or the rules adopt it |
+| `TODO`  | Nothing is wrong; something is planned and not built yet | it is built, or the plan is dropped      |
 
-**`FIXME` is a debt.** The code knowingly departs from a rule in `spec/`, or behaves in a way
+**`FIXME` is a debt.** The code knowingly departs from a rule, or behaves in a way
 somebody would call a bug if they met it cold. It says which rule, why it stands, and what has to
 happen first. web's `local tn` and `local embed` carry one because their operations live inside the
 CLI adapter, which web's `spec/architecture/local.md` does not allow.
@@ -486,7 +488,7 @@ has revisited, which makes every marker in the tree worth a little less.
 
 **Why mark at all, rather than fix or forget.** An unmarked departure gets rediscovered by every
 review as though it were new, and each rediscovery costs the same conversation about whether it
-was a decision or an oversight. The other way out -- writing an exemption into `spec/` -- is
+was a decision or an oversight. The other way out -- writing an exemption into the rules -- is
 worse for a `FIXME`: an exemption reads as settled, so the thing stops being a departure and the
 code quietly becomes the rule. The debt stays where the code is, visible to a plain search.
 

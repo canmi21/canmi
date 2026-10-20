@@ -6,7 +6,7 @@
 		"correctness": "error",
 		"suspicious": "warn",
 		"perf": "warn",
-		// style overlaps oxfmt; pedantic and nursery are opinion. See spec/lint-format.md.
+		// style overlaps oxfmt; pedantic and nursery are opinion. See docs/lint-format.md.
 		"style": "off",
 		"pedantic": "off",
 		"nursery": "off"
@@ -18,7 +18,7 @@
 		"**/.svelte-kit/**",
 		"**/.wrangler/**",
 		"**/worker-configuration.d.ts",
-		// Vendored source is its authors' to lint, spec/vendor.md.
+		// Vendored source is its authors' to lint, docs/vendor.md.
 		"**/vendor/**",
 		"data/**"
 	],

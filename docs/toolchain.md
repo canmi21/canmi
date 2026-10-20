@@ -62,7 +62,7 @@ of the text could have seen.
 Outside an agent the shim execs `/bin/rm` untouched, so the user's own shell never meets it; an
 agent is recognized by `CLAUDECODE`, `AI_AGENT` or a `CODEX_` variable. Only `/bin/rm` by its
 absolute path skips the shim, which is why that alone is on the harness's ask list. The policy
-is `hooks/rm_guard.py` and its tests run under `mise run check-hooks`.
+is `hooks/rm_guard.py` and its tests run under `check workspace hooks`.
 
 The shim reaches an agent only through the environment mise gave the shell that launched it --
 a harness started before this entry existed, or outside mise, runs the plain `rm`.
@@ -172,7 +172,7 @@ plaintext credential reaching the remote is not undone by deleting the file.
 
 Local development is `localhost`. Every URL typed, configured or written down for a service
 running on this machine uses that name, at every layer: the browser, the config file, the health
-check, the test fixture.
+check, the test fixture. The words part refuses a literal loopback address in this repository.
 
 A literal IP is what a machine on the local network is reached by, and only that. `localhost` on
 another device is that device, so an address handed across the network has to name a host rather
@@ -227,7 +227,7 @@ history. See [commits.md](commits.md), "Completion", for what a commit is theref
 
 Projects are separate repositories, so this is a question about concurrency inside one project
 and never about two. Two projects are two directories and always were. See
-[architecture/repos.md](architecture/repos.md).
+[repos.md](repos.md).
 
 ## Tool versions
 
@@ -266,7 +266,8 @@ can see, so tmux is installed by Homebrew and named nowhere in `[tools]`.
 
 ### A tool is pinned to its major, and crossing one is a decision
 
-`[tools]` names a major -- `node = "26"`, `pnpm = "11"` -- rather than `latest`. Inside that
+`[tools]` names a major -- `node = "26"`, `pnpm = "11"` -- rather than `latest`; `Toolchain.pin` is
+the shape, and the pins part holds this repository's `[tools]` to it. Inside that
 number `mise run tools up` moves freely; outside it nothing moves until the number is edited, so
 crossing a major arrives as a diff with a commit message rather than as a surprise on a machine.
 A major is where a lockfile format or a runtime behavior changes, which is exactly the class of
@@ -563,7 +564,7 @@ upgrade` for the majors, the supply-chain delay read out of pnpm's output -- and
 only add a step in front. That made every new stack a change to the workspace, and split what one
 repository needed between two places: rdm's Zed tag in rdm, its cargo half here. Now each
 repository's `update` is the whole of how it moves, and what it owes is the contract in
-[architecture/repos.md](architecture/repos.md), "What a repository's task owes the verb".
+[repos.md](repos.md), "What a repository's task owes the verb".
 
 **A name means that repository and nothing else.** `update rdm` runs rdm's `update` and writes
 nothing outside `repos/rdm`. The workspace's `[tools]` is the one set of pins every repository
@@ -708,22 +709,20 @@ that, its comment says what was verified afterwards.
 | ------------------------- | -------------------------- |
 | Binaries and applications | Rust + Cargo               |
 | Web                       | TypeScript + pnpm + Svelte |
-| Scripts and tasks         | TypeScript, run by node    |
+| Scripts and tasks         | ReScript                   |
 
 These are defaults, not a whitelist. Reaching outside them is a structural decision and
 belongs to the user -- see [agent-protocol.md](agent-protocol.md).
 
-### A script is TypeScript, run by node as it is written
+### A script is ReScript, compiled before it runs
 
-**A task or a tool run on the author's machine is TypeScript, and node runs the file itself**:
-node 26 strips the types, so there is no build step and no second runtime to keep. A script that
-speaks to an API whose TypeScript reader is generated -- [json.md](json.md) -- imports that
-reader's types and validator rather than restating the shape. Decided with the author on
-2026-10-13, when the command line for the registry, the console's other face, was written in Python
-while the console reading the same API was TypeScript, so what was generated for one could not serve
-the other. **No new script is written in Python.** The hook scripts keep it, for the reason below,
-and the Python tasks already written stay until a change gives them a reason to move; one that
-speaks to an API a TypeScript reader also reads is moved, beginning with that command line.
+**A task, a tool or a hook of the workspace's is ReScript**, under `scripts/`, `hooks/` and
+`model/`, compiled to `.res.mjs` beside its source by `mise run build`, which every task running one
+depends on, and never committed -- RFC 17b3o. A mise task is the entry, and the script behind it
+decides the order. It replaced TypeScript run by node, the rule from 2026-10-13, on 2026-10-20.
+**No script is written in Python**, and the settings part holds the tree to it: `Toolchain.kept`
+names the exceptions, `hooks/bin/rm` and its guard among them, which is a command an agent types
+rather than a script, and stays as it is.
 
 ### A Rust CLI parses with clap, and wears cargo's colors
 

@@ -1,6 +1,6 @@
 /**
  * The gates a change has to pass, chosen by what it touched, each repository calling it with its
- * own gates. See spec/architecture/repos.md, "verify runs what a change reaches".
+ * own gates. See docs/repos.md, "verify runs what a change reaches".
  */
 /** What a file reaches that no graph shows: packages or crates read rather than imported. */
 type reach = {packages?: array<string>, crates?: array<string>}

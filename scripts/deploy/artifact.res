@@ -1,6 +1,6 @@
 /**
- * One Deploy run's artifact into the bucket, RFC q28g5: `node artifact.res.mjs <name> <dir> [--store]
- * [--hidden] [--dry-run]`, from the workspace's checkout in a repository's CI. Zipped as
+ * One Deploy run's artifact into the bucket, RFC q28g5: `node artifact.res.mjs <name> <dir>
+ * [--store] [--hidden] [--dry-run]`, from the workspace's checkout in a repository's CI. Zipped as
  * actions/upload-artifact zipped it, put at `<owner>/<repo>/<run>/<name>.zip`, then `<name>.json`
  * beside it; a `deploy-*` or `worker-*` then prunes the repository's runs. Reached by the S3 API
  * alone, signed here, from ARTIFACTS_ENDPOINT, _REGION, _BUCKET, _WRITE_KEY_ID and _WRITE_SECRET,
@@ -269,7 +269,10 @@ let authorization = (signable: signable, region: string, keyId: string, secret: 
 
 type address = {host: string, name: string, path: string}
 
-/** Where `key` is in the bucket, path-style or by virtual host: the Host, the name to dial, the path. */
+/**
+ * Where `key` is in the bucket, path-style or by virtual host: the Host, the name to dial, the
+ * path.
+ */
 let address = (bucket: bucket, key: string): address => {
   let encoded = key != "" ? `/${key->String.split("/")->Array.map(encode)->Array.join("/")}` : ""
   let host = bucket.endpoint->Net.host

@@ -52,7 +52,9 @@ let importers = (lock: string): Map.t<string, string> => {
   ->Map.fromArray
 }
 
-/** The importer paths whose sections differ between two lockfiles, one absent in either among them. */
+/**
+ * The importer paths whose sections differ between two lockfiles, one absent in either among them.
+ */
 let movedImporters = (before: string, after: string): Set.t<string> => {
   let was = importers(before)
   let now = importers(after)

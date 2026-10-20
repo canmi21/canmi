@@ -9,7 +9,9 @@
 let everyImage = [".dockerignore", ".mise/tasks/image"]
 /** What every image is resolved from, read at both revisions; given files alone, every image. */
 let resolution_ = ["Cargo.toml", "Cargo.lock"]
-/** What a Dockerfile copies from the context when its image is its crate's binary and nothing else. */
+/**
+ * What a Dockerfile copies from the context when its image is its crate's binary and nothing else.
+ */
 let workspaceInputs = ["Cargo.toml", "Cargo.lock", "apps", "libs"]
 /** What every Node image installs from, read by importer; see lockfile.res. */
 let lockfile = "pnpm-lock.yaml"
@@ -289,7 +291,10 @@ let copied = (dockerfile: string): option<Set.t<string>> => {
   unknown.contents ? None : Some(sources)
 }
 
-/** The apps whose image is their crate's binary alone, copying nothing from the context but the workspace. */
+/**
+ * The apps whose image is their crate's binary alone, copying nothing from the context but the
+ * workspace.
+ */
 let cargoBuilt = (layout: Graph.layout, declared: declared, crateDirs: Map.t<string, string>) => {
   let crates = crateDirs->Map.values->Iterator.toArray->Set.fromArray
   let found = Set.make()
@@ -310,7 +315,10 @@ let cargoBuilt = (layout: Graph.layout, declared: declared, crateDirs: Map.t<str
   found
 }
 
-/** Those of `files` that change a build: not ignored and, with revisions, not the same as a build reads them. */
+/**
+ * Those of `files` that change a build: not ignored and, with revisions, not the same as a build
+ * reads them.
+ */
 let changes = (files: array<string>, crateDirs: array<string>, revisions: revisions) => {
   let kept = files->Array.filter(file => !Fingerprint.ignored(file, ~crateDirectories=crateDirs))
   switch revisions {
@@ -330,9 +338,9 @@ let declaration = (layout: Graph.layout, path: string) =>
   }
 
 /**
- * The apps of `declared` built from their package rather than a crate's binary whose package imports
- * a package of the repository that `moving` changed. A lockfile change counts for the packages whose
- * importer it moved, and for every one where `revisions` cannot tell. RFC l6r4u.
+ * The apps of `declared` built from their package rather than a crate's binary whose package
+ * imports a package of the repository that `moving` changed. A lockfile change counts for the
+ * packages whose importer it moved, and for every one where `revisions` cannot tell. RFC l6r4u.
  */
 let imported = (
   layout: Graph.layout,

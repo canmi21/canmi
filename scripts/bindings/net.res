@@ -1,4 +1,6 @@
-/** Node's buffers, hashes, compression, file descriptors and HTTP, as the deploy scripts call them. */
+/**
+ * Node's buffers, hashes, compression, file descriptors and HTTP, as the deploy scripts call them.
+ */
 type bytes = Node.bytes
 
 @val @scope("Buffer") external alloc: int => bytes = "alloc"

@@ -4,6 +4,10 @@
 		{
 			"dir": "scripts",
 			"subdirs": true
+		},
+		{
+			"dir": "model",
+			"subdirs": true
 		}
 	],
 	"dependencies": [],

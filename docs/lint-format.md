@@ -12,12 +12,10 @@ re-triggers the formatter. Deleting the overlap is the only stable arrangement.
 
 ## Assignment
 
-| Language                       | Formatter (layout) | Linter (semantics) |
-| ------------------------------ | ------------------ | ------------------ |
-| TypeScript, JavaScript, Svelte | oxfmt              | oxlint             |
-| Rust                           | rustfmt            | clippy             |
-
-All four are installed and versioned by mise; see [toolchain.md](toolchain.md).
+`Format.owners` in [model/rules/format.res](../model/rules/format.res) names each language's
+formatter and linter: oxfmt and oxlint for TypeScript, JavaScript and Svelte, rustfmt and clippy for
+Rust, and ReScript's own compiler for both halves of ReScript. Each is versioned by mise or by the
+package manager whose resolution it takes part in; see [toolchain.md](toolchain.md).
 
 ## Formatting is applied, never negotiated
 
@@ -113,21 +111,23 @@ block may be Svelte. `jj fix` reports that as a warning and still exits zero, so
 passes while formatting nothing. Any repository whose files reach oxfmt therefore declares svelte
 next to it, this one included, where nothing else has a use for it.
 
-**`no-irregular-whitespace` is off in oxlint.** Verified by writing a U+00A0 into a `.ts`
+**`no-irregular-whitespace` is off in oxlint**, listed in `Format.overlapping` and held by the
+settings part. Verified by writing a U+00A0 into a `.ts`
 file: oxfmt rewrites it to a plain space unprompted. Leaving the rule on would report a
 problem the formatter has already solved.
 
 **A rule one project turns off is turned off in that project.** A project whose code makes an
 oxlint rule wrong more often than right carries its own `.oxlintrc.json` that `extends` the
 workspace's and states the difference, and nothing else -- see
-[architecture/repos.md](architecture/repos.md), "Configuration is inherited by position, not
+[repos.md](repos.md), "Configuration is inherited by position, not
 copied". oxlint reads the nearest configuration for each file, and does so whether it is run from
 the workspace or from inside the project; measured both ways. The reason for the rule being off
 goes in that project's `spec/`, because it is about that project's code. The workspace file keeps
 what is true of every project, which is why `no-await-in-loop` is not off here: its premise, that
 the iterations are independent, fails in seam's loops and nowhere has it been counted elsewhere.
 
-**An oxlint disable comment carries its reason on the same line**, after `--`:
+**An oxlint disable comment carries its reason on the same line**, after `--`, which the comments
+part holds:
 
 ```ts
 // oxlint-disable-next-line no-await-in-loop -- each page needs the last one's cursor
@@ -210,7 +210,8 @@ runs; it answers a type question rather than a lint one, and that is the coverag
 
 ## Indentation
 
-Tabs, width 2, in every language including Rust and TypeScript.
+Tabs, width 2, in every language including Rust and TypeScript -- `Toolchain.indentation`, which
+the settings part holds `.editorconfig` and `rustfmt.toml` to.
 
 `.editorconfig` is the single source of truth. oxfmt reads it directly, so `.oxfmtrc.json`
 deliberately sets no indentation keys. rustfmt does not read it, so `rustfmt.toml` restates

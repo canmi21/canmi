@@ -32,7 +32,7 @@ pnpm = "12.5" # npm's latest-12, as mise also sees pnpm's next line
 jj = "0.45" # pre-1.0, where a minor is the breaking release
 oxlint = "1"
 
-# One verb: the workspace alone, a path from repos/registry.toml for that one, or --all for every one.
+# One verb: the workspace alone, a path from repos/registry.toml for that one, --all for every one.
 [tasks.pull]
 description = "Fetch the workspace, every repository with --all, or one: `pull [name | --all] [--dry-run]`"
 run = ".mise/tasks/repos pull"
@@ -84,30 +84,12 @@ each'''
 
 # What the scripts compile to, never committed: every task running one depends on it.
 [tasks.build]
-description = "Compile the scripts under scripts/"
+description = "Compile the scripts under scripts/ and the model under model/"
 run = "rescript build"
-sources = ["scripts/**/*.res", "rescript.json"]
+sources = ["scripts/**/*.res", "model/**/*.res", "rescript.json"]
 outputs = { auto = true }
 
-[tasks.check-tools]
-description = "Check the versions an outside build reads, and that no project redeclares a workspace tool"
-run = ".mise/tasks/tools check"
-
-[tasks.check-repos]
-description = "Check the registry, the task roots, and that no project copies what it inherits"
-run = ".mise/tasks/repos check"
-
-[tasks.check-hooks]
-description = "Exercise the shared agent-hook entrypoint with macOS system Python"
-run = "/usr/bin/python3 -m unittest discover -s hooks -p 'test_*.py'"
-
-# The shared task libraries, which no repository below holds.
-[tasks.check-tasks]
-description = "Type-check and test the shared scripts and task libraries"
-depends = ["build"]
-run = ["pnpm exec tsc -p tsconfig.json", "pnpm exec vitest run"]
-
 [tasks.verify]
-description = "Everything a change to this repository has to pass"
-# lines measures every repository from here.
-depends = ["check-tools", "check-repos", "check-hooks", "check-tasks", "lines"]
+description = "Everything a change to this repository has to pass: `verify [part ...] [--pending]`"
+depends = ["build"]
+run = "node model/check.res.mjs"

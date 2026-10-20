@@ -4,9 +4,11 @@
  * files it reads, how a citation resolves from where it sits.
  */
 let mdLink = /\[[^\]]*\]\(([^)]+)\)/g
-/** A path as a doc writes one, lowercase throughout, as spec/naming.md asks. */
+/** A path as a doc writes one, lowercase throughout, as docs/naming.md asks. */
 let docPath = "[a-z0-9-]+(?:/[a-z0-9-]+)*\\.md"
-/** A citation's tail past its prefix: directories lowercase, the basename as a framework names it. */
+/**
+ * A citation's tail past its prefix: directories lowercase, the basename as a framework names it.
+ */
 let docTail = "(?:[a-z0-9-]+/)*[A-Za-z0-9-]+\\.md"
 /** The entry point every tree carries, citable by anchor and by nothing else. */
 let rootDocs = "AGENTS\\.md"

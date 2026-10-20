@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shared Stop hook: refuse to hand back a task with commits `main` has not been moved over.
 
-spec/commits.md requires an agent that finished a task to commit it *and* move the `main`
+docs/commits.md requires an agent that finished a task to commit it *and* move the `main`
 bookmark before handing the result back. The two existing hooks cannot see that moment. Both
 are scoped to the Bash tool, and a turn ends wherever the agent stops calling tools -- often
 straight after the last `jj describe`, with nothing running afterwards to be inspected. So the
@@ -12,18 +12,18 @@ Stop is that moment, stated as an event. This is the only hook here that is not 
 tool call.
 
 **It refuses; it never moves the bookmark itself.** Doing the move here would be the same
-behavior spec/toolchain.md turns off on purpose -- jj ships auto-advance as
+behavior docs/toolchain.md turns off on purpose -- jj ships auto-advance as
 `experimental-advance-branches`, and the reason it stays disabled is that a bookmark which only
 moves when told to is a bookmark whose position means something. A hook that advanced `main`
 would restore auto-advance under another name, and worse, without a record: the position would
 no longer be a claim anybody made. Refusing keeps the claim, and the claim keeps the meaning.
 
 What counts is a commit that is **described and not empty**. Undescribed working-copy changes
-are the shape partial or blocked work is supposed to have, and spec/commits.md says it stays
+are the shape partial or blocked work is supposed to have, and docs/commits.md says it stays
 uncommitted -- so this must not fire on it, or the rule that protects unfinished work would
 start demanding it be published.
 
-Dependencies are limited to the standard library, for the reason given in spec/toolchain.md.
+Dependencies are limited to the standard library, for the reason given in docs/toolchain.md.
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ def response(payload: dict) -> dict:
 	reason = (
 		f"`{BOOKMARK}` does not cover {len(ahead)} commit(s) on the way to the working copy:\n"
 		f"{listed}\n\n"
-		f"spec/commits.md: a finished task is committed *and* the bookmark is moved before the "
+		f"docs/commits.md: a finished task is committed *and* the bookmark is moved before the "
 		f"result is handed back. Committed work is finished work -- partial work is meant to "
 		f"stay uncommitted -- so anything listed above belongs under the bookmark.\n\n"
 		f"Run `jj bookmark move {BOOKMARK} --to @-`, or `--to @` followed by `jj new` when the "
@@ -96,8 +96,8 @@ def response(payload: dict) -> dict:
 		f"and not on it, or the user's next push finds it immutable and moves it for them. Then "
 		f"finish the turn. If the move is refused as sideways, another "
 		f"workspace advanced `{BOOKMARK}` meanwhile: `jj rebase -d {BOOKMARK}`, re-run `mise run "
-		f"verify`, then move -- see spec/commits.md. Do not push: that is the user's to run, per "
-		f"spec/toolchain.md."
+		f"verify`, then move -- see docs/commits.md. Do not push: that is the user's to run, per "
+		f"docs/toolchain.md."
 	)
 
 	return {"decision": "block", "reason": reason}

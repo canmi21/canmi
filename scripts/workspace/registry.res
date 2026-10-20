@@ -1,8 +1,8 @@
 /**
- * The repositories this workspace is made of: `repos/registry.toml`, each path under `repos/` to the
- * `user:repo` it is cloned from, a path any depth; the directories between are groups, which mean
- * nothing. mise cannot read the registry, so `mise.toml`'s `config_roots` states the set again, and
- * `check` holds the two, and the disk, to one.
+ * The repositories this workspace is made of: `repos/registry.toml`, each path under `repos/` to
+ * the `user:repo` it is cloned from, a path any depth; the directories between are groups, which
+ * mean nothing. mise cannot read the registry, so `mise.toml`'s `config_roots` states the set
+ * again, and `check` holds the two, and the disk, to one.
  */
 let root = Node.resolve([Node.dirname(Node.fileURLToPath(Node.importMetaUrl)), "..", ".."])
 let repos = Node.join([root, "repos"])
@@ -104,7 +104,9 @@ let discovered = (): array<string> => {
   found
 }
 
-/** The repositories a command applies to: the one named, every one with `--all`, else the workspace. */
+/**
+ * The repositories a command applies to: the one named, every one with `--all`, else the workspace.
+ */
 let selected = (name: option<string>, ~everything=false): array<string> => {
   let listed = paths()
   switch (name, everything) {
@@ -139,14 +141,7 @@ let selected = (name: option<string>, ~everything=false): array<string> => {
  * difference shadows it: `.editorconfig` stops the walk outright, and rustfmt takes the first file
  * it finds. An `.oxlintrc.json` that `extends` the workspace's states a difference, and passes.
  */
-let inherited = [
-  ".editorconfig",
-  "rustfmt.toml",
-  "rust-toolchain.toml",
-  ".oxlintrc.json",
-  ".oxfmtrc.json",
-  "jj.toml",
-]
+let inherited = Layout.inherited
 
 let extendsOf = /"extends"\s*:\s*\[\s*"([^"]+)"/
 

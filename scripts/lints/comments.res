@@ -1,14 +1,17 @@
 /**
- * The gate holding every comment block in a repository to the limits in spec/code.md: at most six
+ * The gate holding every comment block in a repository to the limits in docs/code.md: at most six
  * body lines, ten for the block opening a file, and 100 columns with tabs at two -- the width oxfmt
  * and rustfmt give code, which neither rewraps. A body line is one carrying text: a block's own
- * markers, a blank star, a docstring's quotes and a link are punctuation. Paths given are measured instead of
- * the tree. A Python file's docstrings are found by Python's own parser, asked once for them all.
+ * markers, a blank star, a docstring's quotes and a link are punctuation. Paths given are measured
+ * instead of the tree. A Python file's docstrings are found by Python's own parser, asked once for
+ * them all.
  */
-let width = 100
-let bodyLimit = 6
-let openingLimit = 10
-/** A fenced block in a document illustrates code rather than being it, so prose files are skipped. */
+let width = Code.columns
+let bodyLimit = Code.blockLines
+let openingLimit = Code.openingLines
+/**
+ * A fenced block in a document illustrates code rather than being it, so prose files are skipped.
+ */
 let skipped = [".md"]
 /** Tried in order, `///` before `//`; `#` opens a comment only before a space or the line's end. */
 let openers = ["///", "//!", "//", "/**", "/*", "*/", "<!--", "\"\"\"", "'''", "#"]
@@ -16,7 +19,7 @@ let closers = ["*/", "-->", "\"\"\"", "'''"]
 /** Read by a tool rather than a person: a shebang and mise's task header lead and are not prose. */
 let directives = ["#!", "#MISE", "#USAGE", "//MISE"]
 let preamble = ["set -"]
-/** A link, as spec/code.md's "A link is not length" means it, stopping before punctuation. */
+/** A link, as docs/code.md's "A link is not length" means it, stopping before punctuation. */
 let link = /https?:\/\/(?:[^\s`'"]*[^\s`'".,;:!?)\]}])?/g
 /** A letter or a digit, in any script. What a link leaves behind is punctuation. */
 let letter = /[\p{L}\p{N}]/u
@@ -285,17 +288,19 @@ let main = (~root=Node.cwd(), ~given=Node.args()) => {
     over->Array.forEach(problem => Console.error(`  ${problem}`))
     Console.error(
       "\nCut to the line that carries the point. A fact a second file would need is a rule and " ++
-      "belongs in spec/; one only this file needs stays here, in fewer words. See spec/code.md, " ++ "\"How long, and where the rest of it goes\".",
+      "belongs in the rules; one only this file needs stays here, in fewer words. See the " ++ "workspace's docs/code.md, \"How long, and where the rest of it goes\".",
     )
-    Node.exit(1)
+    1
+  } else {
+    Console.log(
+      `comments OK: ${Int.toString(counted.contents)} blocks inside ${Int.toString(
+          bodyLimit,
+        )}/${Int.toString(openingLimit)} body lines and ${Int.toString(width)} columns`,
+    )
+    0
   }
-  Console.log(
-    `comments OK: ${Int.toString(counted.contents)} blocks inside ${Int.toString(
-        bodyLimit,
-      )}/${Int.toString(openingLimit)} body lines and ${Int.toString(width)} columns`,
-  )
 }
 
 if Node.isMain {
-  main()
+  Node.exit(main())
 }

@@ -7,7 +7,7 @@ nothing vendor-specific owns policy or output composition. The policy modules st
 responsibility; this entrypoint is the one place that routes and combines them.
 
 Dependencies are limited to the standard library, and annotations stay deferred, for the system
-Python compatibility required by spec/toolchain.md.
+Python compatibility required by docs/toolchain.md.
 """
 
 from __future__ import annotations

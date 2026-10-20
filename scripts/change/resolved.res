@@ -11,7 +11,9 @@ let imageProfile = "container"
 /** What every image is built for: `$arch-unknown-linux-musl` in each Dockerfile. */
 let targets = ["aarch64-unknown-linux-musl", "x86_64-unknown-linux-musl"]
 
-/** Parts of `[workspace]` no image is built from as such; each is read apart, or changes no output. */
+/**
+ * Parts of `[workspace]` no image is built from as such; each is read apart, or changes no output.
+ */
 let unbuilt = ["members", "exclude", "default-members", "lints", "metadata"]
 
 type table = Dict.t<JSON.t>
@@ -172,7 +174,9 @@ let builtFrom = (tree: string, crate: string, cwd: string): option<Set.t<string>
   }
 }
 
-/** The crates cargo builds from something else in `head` than in `base`; any it cannot read moved. */
+/**
+ * The crates cargo builds from something else in `head` than in `base`; any it cannot read moved.
+ */
 let treeMoved = (base: string, head: string, crates: array<string>, cwd: string): Set.t<string> =>
   crates
   ->Array.filter(crate =>

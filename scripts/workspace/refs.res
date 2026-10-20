@@ -1,6 +1,6 @@
 /**
  * How this workspace refers to its own files, `refs [--json]`: a markdown link in a doc resolves,
- * a doc under `spec/`, or under a project's `repos/<path>/`, cited from code exists -- unless it is
+ * a doc under `docs/`, or under a project's `repos/<path>/`, cited from code exists -- unless it is
  * in a project not cloned, a note and no failure -- and a section quoted beside it exists. With
  * `--json`, the pair graph instead.
  */
@@ -20,8 +20,8 @@ let codeSuffixes = [
 /** Generated, enormous, and citing nothing. */
 let skipFiles = ["pnpm-lock.yaml"]
 
-/** This workspace's rules and, below it, a project's, both resolving at the root. */
-let cited = `(?:repos/[a-z0-9-]+/${References.docTail}|spec/${References.docTail})`
+/** This workspace's docs and, below it, a project's, both resolving at the root. */
+let cited = `(?:repos/[a-z0-9-]+/${References.docTail}|docs/${References.docTail})`
 let codeRef = RegExp.fromString(cited, ~flags="g")
 let codeAnchor = References.codeAnchor(`${cited}|${References.rootDocs}`)
 

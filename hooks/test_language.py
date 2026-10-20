@@ -39,7 +39,7 @@ class LanguageTest(unittest.TestCase):
 	def test_an_english_reply_to_a_chinese_message_is_held(self) -> None:
 		result = self.decide([claude("user", "把分割线做成可以拖动"), claude("assistant", ENGLISH)])
 		self.assertEqual(result["decision"], "block")
-		self.assertIn("spec/voice.md", result["reason"])
+		self.assertIn("docs/voice.md", result["reason"])
 
 	def test_a_chinese_reply_with_english_nouns_passes(self) -> None:
 		self.assertEqual(self.decide([claude("user", "拖动分割线"), claude("assistant", CHINESE)]), {})

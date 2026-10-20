@@ -21,7 +21,7 @@ pull, push and clone are jj's and the same in every repository, so they live her
 update, clean and verify do depends on what a repository is built with, so each runs the
 repository's own task, and one without it is passed over and named. Every command that changes
 something takes `--dry-run` (`-n`), and every repository task it reaches takes it as well.
-See spec/architecture/repos.md, "One verb, optionally one name".
+See docs/repos.md, "One verb, the workspace unless told otherwise".
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ CONFIG = ROOT / "mise.toml"
 # carries `root = true`, whose whole meaning is to stop that walk -- and rustfmt likewise stops
 # at the first file it finds. An `.oxlintrc.json` that `extends` this repository's is the one
 # exception, since it is a difference rather than a copy; see `extends_workspace`.
-# See spec/architecture/repos.md.
+# See docs/repos.md.
 #
 # `.gitattributes` is deliberately absent: git resolves attributes only within one worktree, so
 # it never inherits and a project setting its own is correct.
@@ -314,7 +314,7 @@ def command_dispatch(verb: str, name: str | None, dry: bool = False, everything:
 	repository without the task is passed over and named, not failed: it has said nothing about
 	this verb, and a failure belongs to a task that ran. `--dry-run` is handed on, and every
 	project's task for a verb that writes takes it; `verify` writes nothing, so its dry run is this
-	printing the task it would run. See spec/architecture/repos.md, "One verb, optionally one name".
+	printing the task it would run. See docs/repos.md, "One verb, the workspace unless told otherwise".
 	"""
 	skipped, failed = [], []
 	for repo in selected(name, everything):
@@ -356,7 +356,7 @@ def command_update(name: str | None, dry: bool = False, major: bool = False, eve
 	resolver can move. Keeping is decided here, the same way for every repository and without
 	knowing any of that: what the update changed is read from jj, and a verify that fails puts
 	exactly those files back. A failed update is put back the same way, since it may have stopped
-	halfway through a rewrite. The next `update` tries again from the top. See spec/toolchain.md,
+	halfway through a rewrite. The next `update` tries again from the top. See docs/toolchain.md,
 	"Dependency policy".
 	"""
 	skipped, failed, reverted = [], [], []
@@ -413,7 +413,7 @@ def shadowing(project: pathlib.Path) -> list[str]:
 	spec/ can make it correct.
 
 	Vendored source is skipped, on the rule that already excludes it from the linter and the
-	formatter -- see spec/vendor.md. Svelte ships two runtime-legacy test samples that carry an
+	formatter -- see docs/vendor.md. Svelte ships two runtime-legacy test samples that carry an
 	`.editorconfig` of their own, and those are fixtures whose whole point is a local override:
 	reading them as this repository being shadowed failed `verify` over files nobody here may edit.
 	"""
@@ -442,7 +442,7 @@ def extends_workspace(path: pathlib.Path, provided: pathlib.Path) -> bool:
 	workspace's there and carries only what differs is the tool's own way of stating a project's
 	rule, and repeats nothing it could drift from. Read by pattern rather than parsed: the file
 	carries comments, which no JSON parser here takes, and the question is one string. Only this
-	name has such a mechanism. See spec/architecture/repos.md, "A copy is forbidden; a difference
+	name has such a mechanism. See docs/repos.md, "A copy is forbidden; a difference
 	that says what it extends is not".
 	"""
 	if path.name != ".oxlintrc.json":
@@ -488,7 +488,7 @@ def command_publish(name: str | None, passed: list[str]) -> int:
 	# what it is dry about, and which way round the flag runs, is the project's. press's mirror is
 	# dry by default and takes `--live`; this used to forward `--dry-run` and nothing else, so
 	# `publish press --live` ran a dry mirror and reported success -- the documented way to publish
-	# could not publish. See spec/architecture/repos.md.
+	# could not publish. See docs/repos.md.
 	print(f"=== {task}{' ' + ' '.join(passed) if passed else ''} ===")
 	return subprocess.run(["mise", "run", task, *passed], cwd=ROOT).returncode
 

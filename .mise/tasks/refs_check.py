@@ -4,7 +4,7 @@ The `refs` tasks -- this repository's and each project's -- run those three over
 they live here once and each task states only what is its own: which files it reads, how a
 citation resolves from where it sits, and whatever else it checks. A project reaches this file by
 position, the way it already reaches `.editorconfig` and the `[tools]` pins -- see
-spec/architecture/repos.md, "Configuration is inherited by position, not copied".
+docs/repos.md, "Configuration is inherited by position, not copied".
 
 A library, not a task: no entry point and no `#MISE` header, so mise never offers it as a third
 gate and the two that exist stay two, each printing its own count.
@@ -18,11 +18,11 @@ import subprocess
 from collections.abc import Callable, Collection, Iterable
 
 MD_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
-# A path as a doc writes one, lowercase throughout, which is what spec/naming.md asks of a name
+# A path as a doc writes one, lowercase throughout, which is what docs/naming.md asks of a name
 # this author's trees carry.
 DOC_PATH = r"[a-z0-9-]+(?:/[a-z0-9-]+)*\.md"
 # The tail of a citation that already carries its prefix. Only the basename widens, for the names
-# a framework fixes; directories stay lowercase, which is spec/naming.md restated rather than a
+# a framework fixes; directories stay lowercase, which is docs/naming.md restated rather than a
 # convenience. Kept apart from DOC_PATH, which feeds DOC_ANCHOR and has no prefix to hold it down:
 # widening it there reads an uppercase word before `.md` anywhere in prose as a target.
 DOC_TAIL = r"(?:[a-z0-9-]+/)*[A-Za-z0-9-]+\.md"

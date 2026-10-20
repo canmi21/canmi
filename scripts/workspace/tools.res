@@ -79,7 +79,9 @@ let get = async url => {
   response->ok ? Some(await response->json) : None
 }
 
-/** What an outside build would resolve as `tool`'s current release, of `line` where one is named. */
+/**
+ * What an outside build would resolve as `tool`'s current release, of `line` where one is named.
+ */
 let ask = async (tool, line: option<string>): option<string> =>
   try {
     switch channels->Dict.get(tool) {
@@ -90,7 +92,8 @@ let ask = async (tool, line: option<string>): option<string> =>
         let latest = textField(tags, "latest")
         switch line {
         | None => latest
-        // The publisher's per-line tag where it keeps one; else `latest` answers for its own line alone.
+        // The publisher's per-line tag where it keeps one; else `latest` answers for its own line
+        // alone.
         | Some(line) =>
           switch textField(tags, `latest-${line}`) {
           | Some(tagged) => Some(tagged)
@@ -108,7 +111,8 @@ let ask = async (tool, line: option<string>): option<string> =>
           textField(release, "tag_name")->Option.map(tag => tag->String.replaceRegExp(leadingV, ""))
         | _ => None
         }
-      // No endpoint answers a line's latest, so the list is walked, newest first, past drafts and prereleases.
+      // No endpoint answers a line's latest, so the list is walked, newest first, past drafts and
+      // prereleases.
       | Some(line) =>
         switch await get(`https://api.github.com/repos/${where}/releases?per_page=100`) {
         | Some(Array(releases)) =>
@@ -218,7 +222,9 @@ let rustChannel = where =>
 
 let channelLine = /channel\s*=\s*"([^"]+)"/
 
-/** (file, written, resolved) for the files an outside build reads, where they disagree with mise. */
+/**
+ * (file, written, resolved) for the files an outside build reads, where they disagree with mise.
+ */
 let derived = (where): array<(string, string, string)> => {
   let found = []
   let nodeVersion = Node.join([where, ".node-version"])
@@ -278,7 +284,10 @@ let writeDerived = (path, resolved) =>
     )
   }
 
-/** The directories declaring tools of their own: the one named, every one with `--all`, else the workspace. */
+/**
+ * The directories declaring tools of their own: the one named, every one with `--all`, else the
+ * workspace.
+ */
 let configured = (name, everything) =>
   Registry.selected(name, ~everything)->Array.filter(where =>
     Node.existsSync(Node.join([where, "mise.toml"]))
@@ -449,7 +458,9 @@ let pairs = (pattern: RegExp.t, text) => {
   found
 }
 
-/** What `mise upgrade --bump` would take in this directory, against its own line's stable release. */
+/**
+ * What `mise upgrade --bump` would take in this directory, against its own line's stable release.
+ */
 let beyond = async where => {
   let said = Node.output(~cwd=where, "mise", ["upgrade", "--bump", "--dry-run"])
   let installs = pairs(installLine, said)->Dict.fromArray
@@ -565,7 +576,8 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
         await each(rest)
       }
     await each(List.fromArray(places))
-    // Written from the pins: whatever the toolchain moved to, the files an outside build reads follow.
+    // Written from the pins: whatever the toolchain moved to, the files an outside build reads
+    // follow.
     let rewritten = places->Array.flatMap(where =>
       derived(where)->Array.map(((path, _, current)) => {
         if !dry {

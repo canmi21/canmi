@@ -15,7 +15,7 @@ Dependencies are deliberately limited to the Python standard library -- no jq, n
 mise lookup. A hook that fails to start fails silently, and a silent hook is worse than no
 hook, so it must not depend on the environment being set up correctly.
 
-See spec/commits.md and spec/lint-format.md.
+See docs/commits.md and docs/lint-format.md.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ SUBCOMMANDS = {
 }
 # Whether an assistant co-authored a change is a judgment no script can make, so only the
 # shape is checked here: if a trailer is present at all, it has to be one of the two agreed
-# forms. See spec/commits.md for when to add one.
+# forms. See docs/commits.md for when to add one.
 COAUTHOR = re.compile(r"^Co-Authored-By:", re.IGNORECASE)
 COAUTHOR_OK = re.compile(
 	r"^Co-Authored-By: (?:Claude [A-Za-z0-9.-]+ <noreply@anthropic\.com>"
@@ -122,7 +122,7 @@ def handle(payload: dict) -> int:
 			print(f"  - {problem}\n", file=sys.stderr)
 		print(
 			"Fix the message and run the command again. Scope is omitted in most cases.\n"
-			"Full rules: spec/commits.md",
+			"Full rules: docs/commits.md",
 			file=sys.stderr,
 		)
 		return 2

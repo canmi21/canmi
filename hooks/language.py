@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Hold a turn open while what it said to the user is not in the language they are spoken to in.
 
-spec/voice.md: the chat is simplified Chinese with English technical nouns left as they are. The
+docs/voice.md: the chat is simplified Chinese with English technical nouns left as they are. The
 rule was written down, loaded at every start, and still broken twice in one session -- the reply
 drifts into English after a stretch of reading English specs and English tool output, and the
 drift is invisible from inside it. So it is checked where a turn ends rather than remembered.
@@ -13,13 +13,13 @@ held is judged on the reply it ends with afterwards, and restating it in Chinese
 out, it has a sentence's worth of Latin letters and no Chinese at all; a short block, a path or a
 command alone, is not prose and is left alone.
 
-The user may ask for another language, and spec/voice.md lets them. The one form of that the
+The user may ask for another language, and docs/voice.md lets them. The one form of that the
 transcript can show is the user writing English themselves, so a turn answering an English message
 is not checked.
 
 Both harnesses are read: the payload's `last_assistant_message` where there is no transcript, and
 either transcript format where there is. Dependencies are limited to the standard library, for the
-reason given in spec/toolchain.md.
+reason given in docs/toolchain.md.
 """
 
 from __future__ import annotations
@@ -147,7 +147,7 @@ def response(payload: dict) -> dict:
 	return {
 		"decision": "block",
 		"reason": (
-			"This turn spoke to the user in English. spec/voice.md: the chat is simplified Chinese, "
+			"This turn spoke to the user in English. docs/voice.md: the chat is simplified Chinese, "
 			"with English technical nouns kept as they are; only file content is English. Restate "
 			"what you told the user in Chinese -- the result, what is pending, what to check -- and "
 			"then finish the turn."

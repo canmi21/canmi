@@ -17,7 +17,7 @@ Read this file, then the `spec/` files covering your task -- this directory's fo
 follow the author everywhere, and `repos/<project>/spec/` for the ones belonging to the project
 you are about to touch. If neither answers a decision you are about to make, ask the user.
 Decisions belong to the user, not to you -- unless their described approach already implies the
-answer. See [spec/agent-protocol.md](spec/agent-protocol.md).
+answer. See [docs/agent-protocol.md](docs/agent-protocol.md).
 
 ## What this repository is
 
@@ -44,7 +44,7 @@ Formatting configuration lives here and is found by walking up: `.editorconfig`,
 `rust-toolchain.toml` and `.oxlintrc.json` are read from a project below without being copied
 into it. So is the
 toolchain in `mise.toml`, and so are the hooks. See
-[spec/architecture/repos.md](spec/architecture/repos.md).
+[docs/repos.md](docs/repos.md).
 
 ## How rules are recorded
 
@@ -57,10 +57,10 @@ Every rule the user states gets written down. Never leave one in chat only.
 - What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an `accepted`
   one for decided work, blocked by others by id. **To know what is left, run `mise run plan` in
   `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
-  [spec/planning.md](spec/planning.md).
+  [docs/planning.md](docs/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `spec/` and this file instead, then verify a zero-memory agent could recover the arrangement
-  from `AGENTS.md` alone. See [spec/agent-protocol.md](spec/agent-protocol.md).
+  from `AGENTS.md` alone. See [docs/agent-protocol.md](docs/agent-protocol.md).
 
 ## Core rules
 
@@ -70,18 +70,18 @@ work is split between this conversation and the agents it spawns: the conversati
 the user's intent, decides, owns `spec/`, reads every worker's diff, runs the one type check per
 wave and writes every commit; the workers edit, each owning a declared set of files and touching
 nothing else. Testing belongs to the user -- they are faster than any verification loop -- so a
-turn ends with something to click, not with a report. See [spec/delegation.md](spec/delegation.md).
+turn ends with something to click, not with a report. See [docs/delegation.md](docs/delegation.md).
 
 **Commits** -- Conventional Commits. Omit the scope in most cases. Subject starts lowercase,
 imperative mood, 96 characters max. Plain text throughout, never Markdown. **A body is optional
 and usually absent**: it says what changed, in three lines or so, and never why. The reasoning
 goes to `spec/` or beside the code, where somebody is looking for it -- a log carrying it twice
-is the mistake this rule exists to stop. See [spec/commits.md](spec/commits.md).
+is the mistake this rule exists to stop. See [docs/commits.md](docs/commits.md).
 
 **Comments** -- a comment points rather than argues. The settled argument lives in `spec/` and the
 comment names the file; **a decision nobody has made yet is a draft RFC**, cited by id in one line.
 Once it is made it becomes a `spec/` rule plus the change that implements it, never a comment
-carrying the debate. See [spec/code.md](spec/code.md), "spec/ holds what is settled; an RFC holds
+carrying the debate. See [docs/code.md](docs/code.md), "The rules hold what is settled; an RFC holds
 what is not".
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
@@ -93,16 +93,16 @@ owner spells it rather than translated. An explicit user request overrides the r
 a standalone application, a deployed service, or a desktop client depending on context -- read
 which from the sentence rather than asking every time. "Base", unqualified, is this workspace.
 **"Kit" is either SvelteKit or the design package `@canmi/kit`** -- read which from the context;
-"shared lib" is the whole library, the `lib` repository. See [spec/voice.md](spec/voice.md).
+"shared lib" is the whole library, the `lib` repository. See [docs/voice.md](docs/voice.md).
 
 **Naming** -- Files and directories are lowercase English, hyphens allowed. A language with
 its own convention wins locally: Rust source files use underscores. Identifiers inside code
 always follow the language's own convention. Vendor names stay at the binding edge -- name a
-module for what it does, not for who supplies it. See [spec/naming.md](spec/naming.md).
+module for what it does, not for who supplies it. See [docs/naming.md](docs/naming.md).
 
 **Lint vs format** -- a linter owns semantics, a formatter owns layout. Whatever the formatter
 rewrites, the linter must not report; disable the overlap on the linter side. Holds for every
-language. See [spec/lint-format.md](spec/lint-format.md).
+language. See [docs/lint-format.md](docs/lint-format.md).
 
 ## Toolchain
 
@@ -117,9 +117,9 @@ allows it only inside the workspace, temp and caches, and refuses the rest.
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
 -- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on their own. An agent commits what is settled and
-pushes at the right moment, unless the user said not to -- see [spec/commits.md](spec/commits.md). mise owns every tool version. **A new script or task is TypeScript, run by node as it is written**, never Python; the hooks keep Python. Indentation is tabs at width 2 in every language,
+pushes at the right moment, unless the user said not to -- see [docs/commits.md](docs/commits.md). mise owns every tool version. **A new script or task is TypeScript, run by node as it is written**, never Python; the hooks keep Python. Indentation is tabs at width 2 in every language,
 YAML excepted; `.editorconfig` is the source of truth.
-See [spec/toolchain.md](spec/toolchain.md).
+See [docs/toolchain.md](docs/toolchain.md).
 
 **One verb, the workspace unless told otherwise.** `mise run pull|push|fmt|check|update|clean|audit`
 alone runs on this workspace; add a path from `repos/registry.toml` -- `mise run check apps/rdm` --
@@ -127,20 +127,20 @@ to run on that repository, or `--all` to run on every one, and `--dry-run` to an
 told what it would do. A name means that repository alone, in every verb, and never with `--all`. `pull` and `push` are jj's and live here; the rest run each repository's own task --
 `verify` for `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository
 without one, naming it. What such a task owes the verb, `--dry-run` first, is in
-[spec/architecture/repos.md](spec/architecture/repos.md). `audit` is `check` with every warning
+[docs/repos.md](docs/repos.md). `audit` is `check` with every warning
 counted as a failure, which is not what routine work runs. `update` moves within declared bounds
 and keeps a repository's move only where its own verify still passes; crossing a range is
 `update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes what a tool wrote and
 can write again; dependencies and local state are not caches. The workspace's own half of a verb
-is `self:<verb>`. See [spec/toolchain.md](spec/toolchain.md).
+is `self:<verb>`. See [docs/toolchain.md](docs/toolchain.md).
 
 **`each` is every other task.** `mise run each <task> [args]` runs it in every repository that
 declares it, one at a time and on past a failure; the rest are passed over. See
-[spec/architecture/repos.md](spec/architecture/repos.md).
+[docs/repos.md](docs/repos.md).
 
 **`publish` is the one verb that refuses to mean everything.** `mise run publish <name>` runs
 that project's own publish task and a missing name is an error, because a release cannot be
-taken back. See [spec/architecture/repos.md](spec/architecture/repos.md).
+taken back. See [docs/repos.md](docs/repos.md).
 
 **A project's tasks are reached by path.** `mise tasks ls` shows only this repository's; the
 projects' are `//repos/<name>:<task>` and need `mise tasks ls --all` to be listed. A project
@@ -152,33 +152,29 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 | Topic                                                                                                   | File                                             |
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [spec/agent-protocol.md](spec/agent-protocol.md) |
-| Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [spec/delegation.md](spec/delegation.md)         |
-| Voice and communication                                                                                 | [spec/voice.md](spec/voice.md)                   |
-| Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [spec/planning.md](spec/planning.md)             |
-| READMEs, repository descriptions and license years                                                      | [spec/readme.md](spec/readme.md)                 |
-| Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [spec/rfcs.md](spec/rfcs.md)                     |
-| Commit conventions, when to commit and push, and their enforcement                                      | [spec/commits.md](spec/commits.md)               |
+| Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [docs/agent-protocol.md](docs/agent-protocol.md) |
+| Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [docs/delegation.md](docs/delegation.md)         |
+| Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                   |
+| Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [docs/planning.md](docs/planning.md)             |
+| READMEs, repository descriptions and license years                                                      | [docs/readme.md](docs/readme.md)                 |
+| Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [docs/rfcs.md](docs/rfcs.md)                     |
+| Commit conventions, when to commit and push, and their enforcement                                      | [docs/commits.md](docs/commits.md)               |
 
 **How the arrangement is shaped**
 
-| Topic                                          | File                                                     |
-| ---------------------------------------------- | -------------------------------------------------------- |
-| Separate repositories, nested and shared       | [spec/architecture/repos.md](spec/architecture/repos.md) |
-| Naming conventions                             | [spec/naming.md](spec/naming.md)                         |
-| JSON and record contracts                      | [spec/json.md](spec/json.md)                             |
-| Path, query, body and header: what goes where  | [spec/addresses.md](spec/addresses.md)                   |
-| Vendored source: where, how taken, how treated | [spec/vendor.md](spec/vendor.md)                         |
-| robots.txt and security.txt on every host      | [spec/robots.md](spec/robots.md)                         |
-| Serving a vendor's subscription as an API      | [spec/subscriptions.md](spec/subscriptions.md)           |
+| Topic                                          | File                             |
+| ---------------------------------------------- | -------------------------------- |
+| Separate repositories, nested and shared       | [docs/repos.md](docs/repos.md)   |
+| Naming conventions                             | [docs/naming.md](docs/naming.md) |
+| Vendored source: where, how taken, how treated | [docs/vendor.md](docs/vendor.md) |
 
 **Writing code**
 
 | Topic                                                | File                                       |
 | ---------------------------------------------------- | ------------------------------------------ |
-| Type checking, tests, comments, a UI that only draws | [spec/code.md](spec/code.md)               |
-| Linting and formatting                               | [spec/lint-format.md](spec/lint-format.md) |
-| Shell, addresses, secrets, versions, jj              | [spec/toolchain.md](spec/toolchain.md)     |
+| Type checking, tests, comments, a UI that only draws | [docs/code.md](docs/code.md)               |
+| Linting and formatting                               | [docs/lint-format.md](docs/lint-format.md) |
+| Shell, addresses, secrets, versions, jj              | [docs/toolchain.md](docs/toolchain.md)     |
 
 **The projects**
 
@@ -190,5 +186,5 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | `repos/canmi/lib`  | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
 | `repos/apps/rdm`   | a GPUI download manager for macOS -- [repos/apps/rdm/spec/](repos/apps/rdm/spec/)                                                                                                   |
 | `repos/apps/cue`   | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/apps/cue/spec/](repos/apps/cue/spec/)                                            |
-| `repos/canmi/rfcs` | why each decision was made, one file per decision; documents only, no spec -- [spec/rfcs.md](spec/rfcs.md)                                                                          |
+| `repos/canmi/rfcs` | why each decision was made, one file per decision; documents only, no spec -- [docs/rfcs.md](docs/rfcs.md)                                                                          |
 | `repos/seam`       | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                              |

@@ -93,14 +93,14 @@ formatted at 0.65, one rule set through two formatters. So the version is pinned
 **A project may carry configuration only it can use**, and a setup worth keeping that no project
 uses stays here instead. `.mcp.json` was a project's while web had a Tauri window and is the
 workspace's now: no project is a Tauri app, and the pinned server is kept as the record of what it
-took to make one work -- see [../toolchain.md](../toolchain.md), "A Tauri app is inspected through
+took to make one work -- see [toolchain.md](toolchain.md), "A Tauri app is inspected through
 an MCP server pinned to its plugin".
 
 ### A rule that is code inherits the same way, as a module the projects import
 
 The three reference rules -- a markdown link resolves, a cited spec file exists, a section quoted
 beside a citation exists -- are one implementation in
-[`.mise/tasks/refs_check.py`](../../.mise/tasks/refs_check.py), which each project's
+[`.mise/tasks/refs_check.py`](../.mise/tasks/refs_check.py), which each project's
 `.mise/tasks/refs` imports. Both entry points stay: `mise run refs` here and
 `mise run //repos/web:refs` in a project, each printing its own count. A project keeps what is
 its own -- the single-sourcing of its URLs, its skip sets, the upward walk that resolves a citation
@@ -261,7 +261,7 @@ anything else underneath. A workspace that carried the implementations had to be
 stack, which is the opposite of defining a verb once. **What is the same in every repository
 stays here**: `pull`, `push` and `clone` are jj's, and every repository is a jj repository; so is
 `update`'s revert-on-failure, which reads what changed through jj rather than through a resolver.
-See [toolchain.md](../toolchain.md), "Dependency policy".
+See [toolchain.md](toolchain.md), "Dependency policy".
 
 **A repository without the task is passed over, and named.** It has said nothing about the verb,
 so it has nothing to fail; the run goes on and ends with a warning listing who was passed over. A
@@ -312,9 +312,9 @@ flag "--major" help="Cross the ranges the manifest declares"
 
 | Verb     | Takes                       | Owes                                                                                                                                                                                                                             |
 | -------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verify` | nothing; reads `AUDIT`      | everything a change has to pass, warnings failing under `AUDIT=1`. See [lint-format.md](../lint-format.md)                                                                                                                       |
+| `verify` | nothing; reads `AUDIT`      | everything a change has to pass, warnings failing under `AUDIT=1`. See [lint-format.md](lint-format.md)                                                                                                                          |
 | `update` | `--dry-run`, `--major` opt. | moves within declared bounds -- ranges, its own `[tools]`, a tag no resolver moves -- and names what waits beyond them; `--major` crosses the ranges or is refused; writes only inside the repository; never verifies or reverts |
-| `clean`  | `--dry-run`                 | removes only what a tool wrote and can write again, never a dependency or local state; see [toolchain.md](../toolchain.md), "A cache is what a tool can write again"                                                             |
+| `clean`  | `--dry-run`                 | removes only what a tool wrote and can write again, never a dependency or local state; see [toolchain.md](toolchain.md), "A cache is what a tool can write again"                                                                |
 | `fmt`    | `--dry-run`                 | formats the files `jj.toml` names for its stack, with the same formatters, so `fmt` and the formatting a commit gets agree; the dry run lists what would change                                                                  |
 
 **A dry run writes nothing, and exits 0 when it has reported.** Whatever was found is the answer,
@@ -376,7 +376,7 @@ its mapping, over the workspace's engine in `scripts/change/verify.res`, and the
   is checked, so a change there is checked against everything.
 
 **What the graph cannot see is named in the repository's own spec, and kept short.** A dependency
-the graph misses is a gate that silently does not run, which is the failure [../code.md](../code.md)
+the graph misses is a gate that silently does not run, which is the failure [code.md](code.md)
 describes, so a second such entry is worth a structural fix before it is worth a line in the list.
 
 ## `each` is the verb for everything else
@@ -453,7 +453,7 @@ no `--ignore-workspace` to write an outward lockfile with.
 
 The hooks are found through `jj workspace root`, which answers about the nearest repository -- so
 inside a project it answers about the project. The command in
-[`.claude/settings.json`](../../.claude/settings.json) walks up from there until it finds a
+[`.claude/settings.json`](../.claude/settings.json) walks up from there until it finds a
 checkout that has `hooks/`. A fixed path was the alternative and is wrong: the walk is what lets
 one entrypoint serve every project.
 

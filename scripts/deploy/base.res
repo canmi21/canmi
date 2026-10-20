@@ -3,7 +3,8 @@
  * base.res.mjs` in CI, from the repository's checkout. It is the head commit of the last Deploy run
  * on main that a push started and that succeeded, so every change since what was last built is
  * built now; `github.event.before` is the base only where the API cannot answer, since GitHub
- * cancels a pending run when another push queues. Reads `GITHUB_REPOSITORY`, `GH_TOKEN` and `BEFORE`.
+ * cancels a pending run when another push queues. Reads `GITHUB_REPOSITORY`, `GH_TOKEN` and
+ * `BEFORE`.
  */
 let workflow = "deploy.yml"
 let branch = "main"
@@ -37,7 +38,9 @@ let run: run = (command, args) => {
 
 let unreadable = why => throw(Unanswered(`an answer it cannot read: ${why}`))
 
-/** That run's head commit; None when there is none. Throws Unanswered when the API does not answer. */
+/**
+ * That run's head commit; None when there is none. Throws Unanswered when the API does not answer.
+ */
 let lastBuilt = (repository: string, ~ask: run=run): option<string> => {
   if repository == "" {
     throw(Unanswered("GITHUB_REPOSITORY is not set"))

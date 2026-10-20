@@ -3,36 +3,41 @@
 How an agent operates in this repo: how to start, who decides what, and how to keep this
 ruleset trustworthy over time.
 
-## What spec is for
+## What the rules are for
 
-`spec/` records **decisions and the reasoning behind them**. It is not documentation of the
-code, and it does not restate implementation.
+The workspace's rules are two halves. **`model/` holds every rule a program can decide**, in
+ReScript: the values -- a width, a list of types, the files a repository inherits -- and the check
+that holds each one, so a rule that can be broken fails the moment it is. **`docs/` holds the
+why**, and the rules only judgment can keep: how to work with the user, what to ask, when to
+delegate. A project keeps its own `spec/` as before; a citation names which it means.
 
 - **Write down**: what was decided, why, what the alternative was, and what it costs. Anything
   a future reader could not recover by reading the source.
 - **Leave out**: how a function is written, what a config file currently contains, anything
   the code already states plainly. Point at the file instead of copying it.
 
-The test for a spec sentence: if someone changed the code, would this sentence need editing?
-If yes, it is describing implementation and belongs in a comment next to that code. If it
-would still be true, it is a decision and belongs here.
+The test for a sentence in `docs/`: if someone changed the code, would this sentence need editing?
+If yes, it is describing implementation and belongs in a comment next to that code. If it would
+still be true, it is a decision and belongs here. **A value the decision fixes is the model's**,
+and the doc names the file that holds it rather than the number -- see [model.md](model.md).
 
 ## One fact, one home, linked from everywhere else
 
 Nothing is written down twice. Every fact has exactly one home, and everything that needs it
 links there.
 
-| Layer         | Holds                     | Points at                        |
-| ------------- | ------------------------- | -------------------------------- |
-| `AGENTS.md`   | one line per topic        | the full `spec/*.md`             |
-| `spec/*.md`   | the decision and why      | the code file that implements it |
-| code comments | why this line is this way | back to `spec/*.md` for the rule |
+| Layer          | Holds                                    | Points at                        |
+| -------------- | ---------------------------------------- | -------------------------------- |
+| `AGENTS.md`    | one line per topic                       | the full `docs/*.md`             |
+| `docs/*.md`    | the decision and why                     | the model file, or the code      |
+| `model/rules/` | a decidable rule's values, and its check | back to `docs/*.md` for the why  |
+| code comments  | why this line is this way                | back to `docs/*.md` for the rule |
 
-Spec and code are not two descriptions of one thing -- they are **one description with two
-halves**. Spec holds the decision, code holds the implementation, and each names the other so a
-reader can cross the gap in one hop. A spec file that restates what the code does will drift
-away from it; a code comment that re-argues a decision makes the decision editable in two
-places, and then it is editable in neither.
+The rules and the code are not two descriptions of one thing -- they are **one description with
+two halves**. The rules hold the decision, code holds the implementation, and each names the other
+so a reader can cross the gap in one hop. A doc that restates what the code does will drift away
+from it; a code comment that re-argues a decision makes the decision editable in two places, and
+then it is editable in neither.
 
 When you catch yourself writing something that already exists elsewhere, delete it and link
 instead. The duplicate is not redundancy, it is a second thing to keep in sync, and it will
@@ -52,35 +57,35 @@ the reason a rule exists, measured once, and it stays true of the day it describ
 the next run could make the sentence false while nobody edits it, the number is state and belongs
 to the command.
 
-`mise run refs` checks that the links resolve -- markdown links in docs, and `spec/*.md`
-citations in code. It is part of `mise run verify`, because a reference that points nowhere
+`check workspace refs` checks that the links resolve -- markdown links in docs, and `docs/*.md`
+citations in code. It is part of the workspace's check, because a reference that points nowhere
 fails silently: nothing breaks, the reader just follows a dead path. It deliberately ignores
 path-shaped strings in prose, since the rules use invented names as examples on purpose. In code
 it ignores nothing, which is the rule below.
 
-Spec exists to be the place an argument gets settled. When code, an agent, or a later opinion
+The rules exist to be the place an argument gets settled. When code, an agent, or a later opinion
 disagrees about how something should work, this is the reference that decides it -- which only
 works if it carries the _why_. A rule with no recorded reason loses every argument against a
 plausible-sounding alternative, because nobody can tell whether it was considered or just
 inherited.
 
-## In code a spec path is a citation, so an illustration is spelled to fail
+## In code a doc path is a citation, so an illustration is spelled to fail
 
 The exemption above is prose's alone. In code -- and in the extensionless scripts lying beside
-it -- a path-shaped `spec/` string is a citation wherever it sits: a comment, a docstring, a
+it -- a path-shaped `docs/` string, or a project's `repos/<path>/spec/`, is a citation wherever it sits: a comment, a docstring, a
 string literal, a message a program prints. Narrowing the check to comment lines was considered
 and does not hold: three live citations sit outside them, two in messages a check prints and one
 in a test asserting an error text, and a dead path shown to a reader is dead wherever it sat.
 
-So **spell a real file, and spell an illustration so it cannot resolve** -- `spec/<f>.md`, or a
-glob like `spec/**/*.md`. Only a plausible-looking invented name trips this, and in the whole tree
+So **spell a real file, and spell an illustration so it cannot resolve** -- `docs/<f>.md`, or a
+glob like `docs/**/*.md`. Only a plausible-looking invented name trips this, and in the whole tree
 exactly one file has ever needed the escape, which is what the rule costs.
 
 ## A citation may name a section, and then the heading is an interface
 
-Cite a section by quoting its heading beside the file: `spec/x.md, "Section name"`, or
-`spec/x.md ("Section name")`. Both spellings are checked -- from a code comment, and from one
-spec file citing another -- and the check is the same one above, one level further down: a file
+Cite a section by quoting its heading beside the file: `docs/x.md, "Section name"`, or
+`docs/x.md ("Section name")`. Both spellings are checked -- from a code comment, and from one
+doc citing another -- and the check is the same one above, one level further down: a file
 still existing does not mean the section named inside it does.
 
 **So renaming a heading is a change with references to update**, exactly like moving a file.
@@ -97,8 +102,8 @@ worth being told about.
 Starting a conversation with no context about this project:
 
 1. Read `AGENTS.md` at the workspace root. It is the only entry point.
-2. Read the `spec/` files that cover the task: this repository's for the rules that hold
-   everywhere, and `repos/<project>/spec/` for the project you are about to touch.
+2. Read the rules that cover the task: this repository's `docs/` and `model/rules/` for the
+   ones that hold everywhere, and `repos/<project>/spec/` for the project you are about to touch.
 3. Know which repository you are in, and start from its current `main`.
 4. Only then act.
 
@@ -110,7 +115,7 @@ another. `jj workspace root` says which repository the working directory belongs
 `repos/web` it answers about web, not about this one, which is the same fact the hook
 resolver depends on. A task begins with `jj new main` in whichever repository is being changed,
 so the rules read in step 2 are the ones `main` currently holds rather than the ones a previous
-task left the working copy on. See [architecture/repos.md](architecture/repos.md).
+task left the working copy on. See [repos.md](repos.md).
 
 ## Working beside other agents
 
@@ -120,12 +125,12 @@ cross-session messaging, or any equivalent -- and no side channel invented for t
 Two reasons, each sufficient. A session list on this machine has shown sessions that were on
 other machines, so a message has no reliable boundary and can land somewhere with nothing to do
 with the work. And a decision made in a conversation between two agents is recorded nowhere: not
-in a `spec/`, not in a commit, not where the user can see it -- which is the failure this whole
+in the rules, not in a commit, not where the user can see it -- which is the failure this whole
 file exists to prevent.
 
 There is no longer an arrangement for two agents inside one repository; projects are separate
 repositories, so two pieces of work are two directories. What crosses between them is a commit
-and nothing else. See [architecture/repos.md](architecture/repos.md).
+and nothing else. See [repos.md](repos.md).
 
 ### A supervisor and the agents it spawns are the exception
 
@@ -151,13 +156,13 @@ Decisions belong to the user. An agent implements them.
 
 Ask the user when:
 
-- The task needs a choice `spec/` does not already answer.
+- The task needs a choice the rules do not already answer.
 - The choice is structural: architecture, dependency, data model, public API, naming scope.
 - The choice is expensive or awkward to reverse.
 
 Do not ask when:
 
-- `spec/` already answers it. Follow the spec.
+- The rules already answer it. Follow them.
 - The user's described approach implies the answer. An implication carried in the user's own
   wording counts as their decision -- honor it rather than re-asking.
 - The choice is local, reversible, and leaves no trace in the result.
@@ -384,7 +389,9 @@ shape.
 Do not write to agent memory or any agent-private store. That content does not survive into
 the next session's view of this project and is invisible to every other agent. Instead:
 
-1. Decide where the rule belongs: an existing `spec/` file, or a new one named for its aspect.
+1. Decide where the rule belongs: an existing `docs/` file, or a new one named for its aspect;
+   and, when a program can decide it, its values and check in `model/rules/` -- see
+   [model.md](model.md). A project's rule goes in its own `spec/`.
 2. Write it there.
 3. Re-read `AGENTS.md` and check it still holds. Are the rules it promotes still the most
    important ones? Is the index complete? Has anything drifted, duplicated, or gone stale?
@@ -403,7 +410,7 @@ convention triggers the same review on its own:
   self-explanatory?
 - Did resolving this require a judgment that is invisible in the resulting file? Judgments
   leave no trace unless written down -- a config value looks arbitrary six months later.
-- Does an existing `spec/` file now contradict what was just added?
+- Does an existing doc or model rule now contradict what was just added?
 
 Write the rule in the same change as the tool. A tool that lands without its rule is a tool
 the next agent will misuse.
