@@ -62,7 +62,7 @@ Every rule the user states gets written down. Never leave one in chat only.
 - Never restate the rules here. Link to them.
 - What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an
   `accepted` one for decided work, blocked by others by id. **To know what is left, run `mise run
-plan` in `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
+  plan` in `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
   [docs/planning.md](docs/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `docs/`, `model/rules/` and this file instead, then verify a zero-memory agent could recover the

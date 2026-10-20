@@ -1,7 +1,8 @@
 # The root of a mise monorepo: a repository's tasks are `//repos/<path>:<task>`.
 monorepo_root = true
 
-# repos/registry.toml again, since mise cannot read it; check-repos holds the two to one set.
+# repos/registry.toml again, since mise cannot read it; `check workspace repos` holds the two to
+# one set.
 [monorepo]
 config_roots = [
 	"repos/canmi/web",
@@ -29,8 +30,8 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 [tools]
 node = "26"
 rust = "stable"
-pnpm = "12.5" # npm's latest-12, as mise also sees pnpm's next line
-jj = "0.45" # pre-1.0, where a minor is the breaking release
+pnpm = "12"
+jj = "0.46" # pre-1.0, where a minor is the breaking release
 oxlint = "1"
 
 # One verb: the workspace alone, a path from repos/registry.toml for that one, --all for every one.

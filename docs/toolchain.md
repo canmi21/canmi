@@ -273,8 +273,8 @@ crossing a major arrives as a diff with a commit message rather than as a surpri
 A major is where a lockfile format or a runtime behavior changes, which is exactly the class of
 change worth stopping for.
 
-Below 1.0 the minor is the breaking release, so jj is pinned at `0.45` rather than `0`. The
-distance from jj 0.44 to 0.45 is the distance from node 26 to 27, and a pin that could not see
+Below 1.0 the minor is the breaking release, so jj is pinned at `0.46` rather than `0`. The
+distance from jj 0.45 to 0.46 is the distance from node 26 to 27, and a pin that could not see
 it would be a pin in name only. `rust` is a channel rather than a version and has no major to
 cross.
 
@@ -364,11 +364,11 @@ edited to `11.25` because the command said to, one line below the command saying
 already current. A tool that reports a rule and repeats advice contrary to it has not reported
 the rule.
 
-`pnpm = "12.5"` carries a minor for exactly this reason, which is the kind of reason the rule
-below asks a narrow pin to have: `next-12` is 12.6.0 while npm's `latest-12` is 12.5.1. The digit
-follows `latest-12` when `up` reports the pin holding a stable release back, and comes off when the two lines converge, and the 11 line shows that they do -- `next-11` and
-`latest-11` are now the same release, which was the condition the note on `11.24` gave for
-dropping its digit. Nobody dropped it, and the pin outlived its reason by two stable releases.
+`pnpm = "12.5"` carried a minor for exactly this reason, which is the kind of reason the rule
+below asks a narrow pin to have: `next-12` was 12.6.0 while npm's `latest-12` was 12.5.1. It came
+off once the two lines converged, as they did at 12.14.0. Its 11 predecessor did not: `next-11`
+and `latest-11` had become the same release, the condition the note on `11.24` gave for dropping
+its digit, and the pin outlived its reason by two stable releases because nobody checked.
 **A narrow pin's note names the fact that would let it go, and somebody has to check that fact.**
 
 **`rust-toolchain.toml` is generated too, and rustup is what reads it.** mise's rust is a
@@ -656,7 +656,7 @@ safe to run without thinking first:
 - **Local state is not a cache.** `.wrangler/state` is a local D1, KV and R2 emulation -- rows
   somebody typed, not output somebody built -- so only `.wrangler/tmp` goes.
 - **cargo owns its own output.** `cargo clean` is what empties the target directory. `[build]
-target-dir` can move it anywhere, so a sweep matching the word `target` would miss the real one
+  target-dir` can move it anywhere, so a sweep matching the word `target` would miss the real one
   and find somebody else's -- and did, reporting a gigabyte of `target/debug/build` as its own.
 
 **What gets removed is decided twice, by a name and by version control.** A path a `clean` sweeps
