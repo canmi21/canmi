@@ -204,14 +204,15 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 **The projects**
 
-| Project            | Rules                                                                                                                                                                               |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `repos/canmi/web`  | the site, its API, the status page, the service domains' pages, the CMS, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                                   |
-| `repos/monoflake`  | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/monoflake/AGENTS.md) and [docs/](repos/monoflake/docs/)                              |
-| `repos/apps/still` | a macOS application; no spec yet                                                                                                                                                    |
-| `repos/canmi/lib`  | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
-| `repos/apps/rdm`   | a GPUI download manager for macOS -- [repos/apps/rdm/spec/](repos/apps/rdm/spec/)                                                                                                   |
-| `repos/apps/cue`   | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/apps/cue/spec/](repos/apps/cue/spec/)                                            |
-| `repos/canmi/rfcs` | why each decision was made, one file per decision; documents only, no spec -- [docs/rfcs.md](docs/rfcs.md)                                                                          |
-| `repos/seam`       | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                              |
-| `repos/console`    | an archive of what was web's console, kept until it is pushed and this copy deleted; nothing in it builds                                                                           |
+| Project                    | Rules                                                                                                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `repos/canmi/web`          | the site, its API, the status page, the service domains' pages, the CMS, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                                   |
+| `repos/monoflake/platform` | the platform's design and every component a user runs, MIT OR Apache-2.0 -- its own [AGENTS.md](repos/monoflake/platform/AGENTS.md) and [docs/](repos/monoflake/platform/docs/)     |
+| `repos/monoflake/cloud`    | private: what runs the platform as the hosted one -- its control, anchor, console and the two deployments' configuration                                                            |
+| `repos/apps/still`         | a macOS application; no spec yet                                                                                                                                                    |
+| `repos/canmi/lib`          | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
+| `repos/apps/rdm`           | a GPUI download manager for macOS -- [repos/apps/rdm/spec/](repos/apps/rdm/spec/)                                                                                                   |
+| `repos/apps/cue`           | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/apps/cue/spec/](repos/apps/cue/spec/)                                            |
+| `repos/canmi/rfcs`         | why each decision was made, one file per decision; documents only, no spec -- [docs/rfcs.md](docs/rfcs.md)                                                                          |
+| `repos/seam`               | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                              |
+| `repos/console`            | an archive of what was web's console, kept until it is pushed and this copy deleted; nothing in it builds                                                                           |
