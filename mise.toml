@@ -1,71 +1,35 @@
-# This directory is the root of a mise monorepo: each repository under repos/ carries its own
-# mise.toml, and its tasks are reached from here as `//repos/<name>:<task>`. Namespacing by path
-# is what keeps two projects' `check` from being one task.
+# The root of a mise monorepo: a repository's tasks are `//repos/<path>:<task>`.
 monorepo_root = true
 
-# Stated rather than discovered. Automatic discovery is deprecated, and it also defaults to
-# respecting .gitignore -- which would hide every repository here, since that is exactly what
-# .gitignore says about them. A missing entry is a warning and nothing more, so a machine that
-# has cloned only one project still runs that project's tasks. See spec/architecture/repos.md.
+# repos/registry.toml again, since mise cannot read it; check-repos holds the two to one set.
 [monorepo]
 config_roots = [
-	"repos/web",
-	"repos/infra",
-	"repos/platform",
-	"repos/still",
-	"repos/lib",
+	"repos/canmi/web",
+	"repos/canmi/lib",
+	"repos/canmi/rfcs",
 	"repos/seam",
-	"repos/rdm",
-	"repos/cue",
-	"repos/rfcs",
+	"repos/monoflake",
+	"repos/apps/rdm",
+	"repos/apps/cue",
+	"repos/apps/still",
 ]
 
-# jj's own repo config lives outside the working copy and cannot be version controlled.
-# JJ_CONFIG merges a colon-separated list left to right, so this keeps the user's personal
-# settings and layers the shared rules on top. Set here rather than per project: `jj fix`
-# applies the formatters, and those rules are the same everywhere. See jj.toml.
 [env]
-# oxfmt is what `jj fix` runs over markdown and JSON here, and it is pinned in package.json
-# rather than [tools] for the reason the projects pin it that way: a mise-installed binary
-# cannot reach `svelte/compiler` through node's module graph. Sharing the rules is not enough
-# on its own -- a globally installed oxfmt formatted this repository at 0.28 while a project
-# used 0.65, which is one rule set and two formatters.
-#
-# hooks/bin goes first so an agent's `rm` is the guarded one; outside an agent it is /bin/rm.
-# See spec/toolchain.md, "rm is guarded, not banned".
+# hooks/bin first, so an agent's rm is the guarded one; oxfmt from package.json, to reach svelte.
 _.path = ["{{config_root}}/hooks/bin", "{{config_root}}/node_modules/.bin"]
 
+# The user's jj config, then the shared rules in jj.toml.
 JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 
-# The toolchain every project here is built with. A repository states a version of its own only
-# where it needs one this list does not carry.
-# Pinned to a major, not to `latest`. Within the pin `tools up` moves freely; crossing it is a
-# decision with a diff and a commit message behind it, because a major is where a lockfile
-# format or a runtime behavior changes. `tools up` prints what is available across each pin
-# and refuses to take it -- edit the number here to accept one.
-#
-# jj is pinned at minor precision because it is pre-1.0, where a minor is the breaking release.
-# rust is a channel rather than a version and has no major to cross.
-#
-# pnpm carries a minor for a different reason, and it is the kind of reason a narrow pin is
-# supposed to have: mise resolves against every published release, and pnpm publishes its `next`
-# line there, so a bare major takes whatever `next` has reached. `next-12` is 12.6.0 while npm's
-# `latest-12` is 12.5.1, so `12.5` is what holds it to the release an outside build resolves.
-# The digit follows `latest-12` and moves when `up` reports the pin holding a stable release back.
-# Drop it when the two lines converge -- which is what happened on the 11 line, where
-# `next-11` and `latest-11` are now the same release. That the digit outlived its reason is how
-# this sat at 11.24.0 with 11.26.0 stable and every report saying the only thing waiting was 12.
+# The toolchain every repository resolves, each pinned to a major that `tools up` moves within.
 [tools]
 node = "26"
 rust = "stable"
-pnpm = "12.5"
-jj = "0.45"
+pnpm = "12.5" # npm's latest-12, as mise also sees pnpm's next line
+jj = "0.45" # pre-1.0, where a minor is the breaking release
 oxlint = "1"
 
-# The short forms. Each takes an optional name from repos.toml and means every repository
-# without one: `mise run pull` is all of them, `mise run pull rdm` is that one. pull and push are
-# jj's and live here; fmt, check, audit, update and clean run each repository's own task, and pass
-# over one that has none. See spec/architecture/repos.md, "One verb, optionally one name".
+# One verb, optionally one path from repos/registry.toml; the rest run each repository's own task.
 [tasks.pull]
 description = "Fetch every repository, or one: `pull [name] [--dry-run]`"
 run = ".mise/tasks/repos pull"
@@ -82,8 +46,7 @@ run = ".mise/tasks/repos fmt"
 description = "Run every repository's own verify, or one: `check [name] [--dry-run]`"
 run = ".mise/tasks/repos verify"
 
-# `check` with every warning counted. AUDIT reaches each task through the environment, and the
-# ones with a warning tier read it there. See spec/lint-format.md.
+# check, with every warning a failure.
 [tasks.audit]
 description = "Run every repository's verify with warnings failing, or one: `audit [name] [--dry-run]`"
 run = "AUDIT=1 .mise/tasks/repos verify"
@@ -92,29 +55,17 @@ run = "AUDIT=1 .mise/tasks/repos verify"
 description = "Run every repository's own clean, which never touches dependencies: `clean [name] [--dry-run]`"
 run = ".mise/tasks/repos clean"
 
-# The flags belong to the project, not to this verb. Everywhere else here `--dry-run` means one
-# thing; what publishing is dry about is the project's own question, and web's mirror is dry by
-# default and takes `--live`. So anything after the name is handed on unread. See
-# spec/architecture/repos.md.
+# What follows the name is the project's own, handed on unread.
 [tasks.publish]
 description = "Publish one repository, which must be named: `publish <name> [flags]`"
 run = ".mise/tasks/repos publish"
 
-# Each repository's own update, kept only where its own verify still passes, and put back where
-# it does not. What moving means is the repository's -- its resolvers, its pins, a tag no resolver
-# moves -- and the workspace's own is `self:update`. `--major` is handed on: crossing a range is a
-# repository's to do, and one that cannot refuses it. See spec/toolchain.md, "Dependency policy".
+# Kept only where the repository's own verify still passes; --major is handed on.
 [tasks.update]
 description = "Run every repository's own update, reverting what its verify rejects: `update [name] [--dry-run] [--major]`"
 run = ".mise/tasks/repos update"
 
-# Any task, in every repository that declares one, and silence from the rest -- mise's own
-# `//repos/...:<task>` does the matching. One at a time, so each project's log reads whole, and
-# on past a failure, so one broken repository does not hide what the others would have said.
-# `//repos/...` rather than `//...`: the workspace's own `check` fans out to every verify itself.
-# `--dry-run` is the verb's, as everywhere here, and is taken out before the rest reaches the task;
-# passed through, it ran every lint with `-n` on the end of clippy's arguments.
-# See spec/architecture/repos.md.
+# One repository at a time and on past a failure; --dry-run is taken out before the task sees it.
 [tasks.each]
 description = "Run a task in every repository that declares it, one after another: `each <task> [args] [--dry-run]`"
 run = '''
@@ -140,16 +91,12 @@ run = ".mise/tasks/repos check"
 description = "Exercise the shared agent-hook entrypoint with macOS system Python"
 run = "/usr/bin/python3 -m unittest discover -s hooks -p 'test_*.py'"
 
-# The task libraries every repository's tasks and CI run, type-checked and tested here, since no
-# repository below holds them. See spec/architecture/repos.md, "A rule that is code inherits the same
-# way, as a module the projects import".
+# The shared task libraries, which no repository below holds.
 [tasks.check-tasks]
 description = "Type-check and test the shared task libraries under .mise/tasks"
 run = ["pnpm exec tsc -p tsconfig.json", "pnpm exec vitest run"]
 
 [tasks.verify]
 description = "Everything a change to this repository has to pass"
-# `lines` measures every repository from here, so a project over the limit reddens this gate
-# until it is under; a project may run the same check from its own verify as well, as seam does.
-# See spec/code.md, "A file is read whole, so it stays short".
+# lines measures every repository from here.
 depends = ["check-tools", "check-repos", "check-hooks", "check-tasks", "lines"]

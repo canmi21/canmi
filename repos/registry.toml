@@ -13,12 +13,11 @@
 # mise needs the same set as task roots and cannot read this file, so [monorepo].config_roots in
 # mise.toml states it a second time; `check-repos` fails when the two disagree.
 [repos]
-web = "canmi21:web"
-infra = "monoflake:infra"
-platform = "monoflake:platform"
-still = "canmi21:still"
-lib = "canmi21:lib"
+"canmi/web" = "canmi21:web"
+"canmi/lib" = "canmi21:lib"
+"canmi/rfcs" = "canmi21:rfcs"
 seam = "canmi21:seam"
-rdm = "canmi21:rdm"
-cue = "canmi21:cue"
-rfcs = "canmi21:rfcs"
+monoflake = "monoflake:platform"
+"apps/rdm" = "canmi21:rdm"
+"apps/cue" = "canmi21:cue"
+"apps/still" = "canmi21:still"

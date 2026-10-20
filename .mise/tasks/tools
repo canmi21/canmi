@@ -46,10 +46,13 @@ sys.stdout.reconfigure(line_buffering=True)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 REPOS = ROOT / "repos"
-REGISTRY = ROOT / "repos.toml"
-# The keys of repos.toml, which are the names every command here takes. The format is
+REGISTRY = REPOS / "registry.toml"
+# The keys of repos/registry.toml, which are the names every command here takes. The format is
 # `.mise/tasks/repos`'s to define; this reads only the key.
-ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"[A-Za-z0-9][\w.-]*:[\w.-]+"\s*$', re.MULTILINE)
+ENTRY = re.compile(
+	r'^\s*(?:"([\w.-]+(?:/[\w.-]+)*)"|([\w.-]+))\s*=\s*"[A-Za-z0-9][\w.-]*:[\w.-]+"\s*$',
+	re.MULTILINE,
+)
 
 # Where a tool's stable channel is published, and how to read it. A tool absent from here has
 # no channel this can check; `outdated` says so rather than guessing from the highest tag.
@@ -197,13 +200,13 @@ def configured(name: str | None = None) -> list[pathlib.Path]:
 	"""Directories declaring tools of their own: one when named, the workspace first otherwise.
 
 	`workspace` names this repository, so a single tool can be upgraded without touching the
-	projects; any other name is a repository from repos.toml, and means its own mise.toml and
+	projects; any other name is a repository from repos/registry.toml, and means its own mise.toml and
 	nothing it inherits. One that declares no tools is an empty list, not the workspace's.
 	"""
 	if name == "workspace":
 		return [ROOT]
 	if name:
-		names = ENTRY.findall(REGISTRY.read_text()) if REGISTRY.is_file() else []
+		names = [q or b for q, b in ENTRY.findall(REGISTRY.read_text())] if REGISTRY.is_file() else []
 		if name not in names:
 			raise fail(f"{REGISTRY.name} does not list {name}; the names are {', '.join(['workspace', *names])}")
 		target = REPOS / name
@@ -211,8 +214,8 @@ def configured(name: str | None = None) -> list[pathlib.Path]:
 			raise fail(f"repos/{name} is listed but not cloned -- `mise run repos clone` first")
 		return [target] if (target / "mise.toml").is_file() else []
 	found = [ROOT]
-	if REPOS.is_dir():
-		found.extend(sorted(p for p in REPOS.iterdir() if (p / "mise.toml").is_file()))
+	listed = [q or b for q, b in ENTRY.findall(REGISTRY.read_text())] if REGISTRY.is_file() else []
+	found.extend(REPOS / d for d in listed if (REPOS / d / "mise.toml").is_file())
 	return found
 
 

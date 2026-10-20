@@ -2,7 +2,7 @@
 #MISE description="The repositories: `repos list|clone|pull|push|fmt|update|clean|verify [name]`"
 """Every command here takes an optional repository name and means all of them without one.
 
-The name is a key from repos.toml, which is the local directory: `repos pull rdm` is rdm,
+The name is a key from repos/registry.toml, which is the local directory: `repos pull rdm` is rdm,
 `repos pull` is everything, and `workspace` is this repository. The top-level verbs are one-line
 aliases onto this, so the short form is what gets typed and this file is where it lives once.
 
@@ -36,10 +36,13 @@ sys.stdout.reconfigure(line_buffering=True)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 REPOS = ROOT / "repos"
-REGISTRY = ROOT / "repos.toml"
+REGISTRY = REPOS / "registry.toml"
 CONFIG = ROOT / "mise.toml"
 
-# `directory = "user:repo"` inside the [repos] table. Read by pattern rather than with a TOML
+# `directory = "user:repo"` inside the [repos] table, the directory a path under repos/ quoted
+# where it holds a slash: `"canmi/web" = "canmi21:web"`. A directory between repos/ and a
+# repository is a group, which is no repository and means nothing; where a repository sits is
+# the author's to choose, and nothing is read from it. Read by pattern rather than with a TOML
 # parser: this is one flat table, and which parser is available depends on the python mise
 # happens to resolve, which is not a dependency worth taking for a line of this shape.
 # Configuration this repository provides and every project below resolves by walking up. A
@@ -61,7 +64,10 @@ INHERITED = (
 	"jj.toml",
 )
 
-ENTRY = re.compile(r'^\s*([\w.-]+)\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$', re.MULTILINE)
+ENTRY = re.compile(
+	r'^\s*(?:"([\w.-]+(?:/[\w.-]+)*)"|([\w.-]+))\s*=\s*"([A-Za-z0-9][\w.-]*):([\w.-]+)"\s*$',
+	re.MULTILINE,
+)
 
 def fail(message: str) -> "SystemExit":
 	return SystemExit(f"error: {message}")
@@ -73,7 +79,8 @@ def registry() -> dict[str, tuple[str, str]]:
 		raise fail(f"{REGISTRY.name} does not exist")
 	table = re.search(r"^\[repos\]\n((?:.*\n)*)", REGISTRY.read_text(), re.MULTILINE)
 	found = {}
-	for directory, user, repo in ENTRY.findall(table.group(1) if table else ""):
+	for quoted, bare, user, repo in ENTRY.findall(table.group(1) if table else ""):
+		directory = quoted or bare
 		if directory in found:
 			raise fail(f"{REGISTRY.name} lists {directory} twice")
 		found[directory] = (user, repo)
@@ -103,7 +110,26 @@ def selected(name: str | None) -> list[pathlib.Path]:
 
 
 def label(where: pathlib.Path) -> str:
-	return "workspace" if where == ROOT else where.name
+	return "workspace" if where == ROOT else where.relative_to(REPOS).as_posix()
+
+
+def discovered() -> list[str]:
+	"""Every directory under repos/ that is a repository or holds none, by its path: a directory
+	that is no repository and holds some is a group, walked through and never itself named."""
+	found = []
+
+	def walk(at: pathlib.Path) -> None:
+		for path in sorted(p for p in at.iterdir() if p.is_dir() and not p.name.startswith(".")):
+			if is_repository(path) or not any(path.iterdir()):
+				found.append(path.relative_to(REPOS).as_posix())
+			elif any(is_repository(q) for q in path.rglob("*") if q.is_dir()):
+				walk(path)
+			else:
+				found.append(path.relative_to(REPOS).as_posix())
+
+	if REPOS.is_dir():
+		walk(REPOS)
+	return found
 
 
 def is_repository(path: pathlib.Path) -> bool:
@@ -125,12 +151,12 @@ def task_roots() -> list[str]:
 
 def command_list() -> int:
 	listed = registry()
-	on_disk = {p.name for p in REPOS.iterdir() if p.is_dir()} if REPOS.is_dir() else set()
+	on_disk = set(discovered())
 	for directory, (user, repo) in listed.items():
 		mark = "" if directory in on_disk else "   (not cloned)"
-		print(f"{directory:<12} {user}:{repo}{mark}")
+		print(f"{directory:<16} {user}:{repo}{mark}")
 	for name in sorted(on_disk - set(listed)):
-		print(f"{name:<12} on disk but not listed in {REGISTRY.name}")
+		print(f"{name:<16} on disk but not listed in {REGISTRY.name}")
 	return 0
 
 
@@ -153,6 +179,7 @@ def command_clone(name: str | None, dry: bool = False) -> int:
 			added += 1
 			continue
 		print(f"cloning {user}:{repo} into repos/{directory}")
+		target.parent.mkdir(parents=True, exist_ok=True)
 		# Colocated, because the git side is what the remote and any contributor speak.
 		subprocess.run(
 			["jj", "git", "clone", "--colocate", f"https://github.com/{user}/{repo}.git", str(target)],
@@ -230,7 +257,7 @@ OWN = {"update": "self:update", "clean": "self:clean", "fmt": "self:fmt"}
 def own_task(repo: pathlib.Path, verb: str) -> str:
 	if repo == ROOT:
 		return f"//:{OWN.get(verb, verb)}"
-	return f"//repos/{repo.name}:{verb}"
+	return f"//repos/{label(repo)}:{verb}"
 
 
 def declares(repo: pathlib.Path, verb: str) -> bool:
@@ -455,8 +482,8 @@ def command_publish(name: str | None, passed: list[str]) -> int:
 		raise fail("the workspace publishes nothing; it holds configuration")
 	config = repo / "mise.toml"
 	if not config.is_file() or "[tasks.publish]" not in config.read_text():
-		raise fail(f"repos/{repo.name} has no publish task")
-	task = f"//repos/{repo.name}:publish"
+		raise fail(f"repos/{label(repo)} has no publish task")
+	task = f"//repos/{label(repo)}:publish"
 	# Whatever was typed after the name goes to the project's own task, unread.
 	#
 	# Every other verb here means one thing everywhere and owns `--dry-run`. Publishing does not:
@@ -473,7 +500,7 @@ def command_check() -> int:
 	listed = registry()
 	roots = set(task_roots())
 
-	# One set, two files: mise cannot read repos.toml, so config_roots states it again.
+	# One set, two files: mise cannot read repos/registry.toml, so config_roots states it again.
 	expected = {f"repos/{directory}" for directory in listed}
 	for missing in sorted(expected - roots):
 		print(f"mise.toml [monorepo].config_roots is missing {missing}")
@@ -482,18 +509,18 @@ def command_check() -> int:
 		print(f"mise.toml [monorepo].config_roots names {extra}, which {REGISTRY.name} does not list")
 		problems += 1
 
-	if REPOS.is_dir():
-		for path in sorted(p for p in REPOS.iterdir() if p.is_dir()):
-			if path.name not in listed:
-				print(f"repos/{path.name} is on disk but not listed in {REGISTRY.name}")
+	for directory in discovered():
+		path = REPOS / directory
+		if directory not in listed:
+			print(f"repos/{directory} is on disk but not listed in {REGISTRY.name}")
+			problems += 1
+		elif not is_repository(path):
+			print(f"repos/{directory} is not a repository -- repos/ is ignored, so nothing tracks it")
+			problems += 1
+		else:
+			for complaint in shadowing(path):
+				print(f"repos/{directory}/{complaint}")
 				problems += 1
-			elif not is_repository(path):
-				print(f"repos/{path.name} is not a repository -- repos/*/ is ignored, so nothing tracks it")
-				problems += 1
-			else:
-				for complaint in shadowing(path):
-					print(f"repos/{path.name}/{complaint}")
-					problems += 1
 
 	if problems == 0:
 		print(f"{len(listed)} listed, task roots agree")

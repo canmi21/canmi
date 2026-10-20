@@ -205,9 +205,9 @@ warning: adding embedded git repository: repos/web
 160000 31cfb453... 0	repos/web
 ```
 
-## `repos.toml` lists them; `mise.toml` says it again
+## `repos/registry.toml` lists them; `mise.toml` says it again
 
-`repos.toml` maps a local directory to a remote:
+`repos/registry.toml` maps a local directory to a remote:
 
 ```toml
 [repos]
@@ -237,7 +237,7 @@ told off about the others.
 ## One verb, optionally one name
 
 `pull`, `push`, `fmt`, `check`, `audit`, `update` and `clean` run across every repository, and take
-a name from `repos.toml` to run against one:
+a name from `repos/registry.toml` to run against one:
 
 ```
 mise run pull            every repository

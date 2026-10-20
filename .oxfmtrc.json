@@ -5,7 +5,7 @@
 	"printWidth": 100,
 	"svelte": true,
 	"ignorePatterns": [
-		"repos/web/data/",
+		"repos/canmi/web/data/",
 		"**/.claude/",
 		"**/contents/",
 		"**/corpus/cases/",

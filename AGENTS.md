@@ -33,11 +33,11 @@ they care about and have a complete environment without copying everything else.
 ```
 AGENTS.md      this file, the only entry point
 mise.toml      monorepo root, task roots, the shared toolchain
-repos.toml     which repositories this workspace is made of, as user:repo
 spec/          rules that follow the author
 hooks/         the agent hook entrypoint both vendors call
 .mcp.json      the Tauri MCP server, pinned to its plugin, kept for the next Tauri app
-repos/         one directory per project, each a separate repository
+repos/         one directory per project, each a separate repository, grouped as the author likes;
+               registry.toml, the one file here, lists them as path = "user:repo"
 ```
 
 Formatting configuration lives here and is found by walking up: `.editorconfig`, `rustfmt.toml`,
@@ -122,7 +122,7 @@ YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
 **One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean|audit` run across
-every repository; add a name from `repos.toml` -- `mise run check rdm` -- to run against one, and
+every repository; add a name from `repos/registry.toml` -- `mise run check apps/rdm` -- to run against one, and
 `--dry-run` to any of them to be told what it would do. A name means that repository alone, in
 every verb. `pull` and `push` are jj's and live here; the rest run each repository's own task --
 `verify` for `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository
@@ -185,8 +185,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Project          | Rules                                                                                                                                                                   |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `repos/web`      | the site, its API, the status page, the service domains' pages, the CMS, the console, `local` and the corpus -- [repos/web/spec/](repos/web/spec/)                      |
-| `repos/platform` | the services every site reads, the gateway, the Workers and the model APIs -- [repos/platform/spec/](repos/platform/spec/)                                              |
-| `repos/infra`    | host, keeper and the node they run every app on -- [repos/infra/spec/](repos/infra/spec/)                                                                               |
+| `repos/platform` | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/platform/AGENTS.md), as it ignores the workspace's rules                 |
 | `repos/still`    | a macOS application; no spec yet                                                                                                                                        |
 | `repos/lib`      | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/lib/spec/](repos/lib/spec/) |
 | `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                                                                                 |
