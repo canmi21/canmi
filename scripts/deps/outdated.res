@@ -1,9 +1,7 @@
 /**
- * What waits beyond a repository's package ranges, judged by the newest version it holds anywhere:
- * a package is out of date only when that is older than the registry's latest. One on the latest
- * somewhere while another copy holds an older major is two majors at once, a warning unless
- * `versions.toml` allows it. `--names` prints only what `update --major` should move. See
- * docs/toolchain.md, "A package at two majors is a warning unless it is allowed".
+ * What waits beyond a repository's package ranges, by the newest version it holds anywhere;
+ * `--names` prints only what `update --major` should move. See docs/toolchain.md, "A package at two
+ * majors is a warning unless it is allowed".
  */
 let entry = /^("?)([^"=\s]+)\1\s*=\s*"(.*)"$/
 let brackets = /^\[+|\]+$/g

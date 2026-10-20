@@ -1,8 +1,6 @@
 /**
- * The gate refusing a plaintext secrets file: every file the repository's `.sops.yaml` claims is
- * held to what sops writes, a `sops` block and `ENC[` on every value. Run as a repository's
- * `secrets`, from its root. A plaintext secret, once committed, is in every clone and the reflog,
- * and rotating it is the one remedy, so this runs first.
+ * The gate refusing a plaintext secrets file: each file `.sops.yaml` claims carries a `sops` block
+ * and `ENC[` on every value. A repository's `secrets`, from its root; docs/toolchain.md.
  */
 let pathRegex = /path_regex:\s*(\S+)/g
 

@@ -1,13 +1,4 @@
-"""The rm an agent's shell finds first: a whitelist over the paths rm may unlink.
-
-Every operand is judged after the shell has expanded it, which is the point -- `rm -rf "$DIR/"`
-with an empty DIR arrives here as `/`, where no reading of the command text could have seen it.
-A refusal deletes nothing at all, not the operands that would have passed.
-See docs/toolchain.md, "rm is guarded, not banned".
-
-Dependencies are limited to the standard library for the system Python required by
-docs/toolchain.md.
-"""
+"""The rm an agent's shell finds first; see docs/toolchain.md, "rm is guarded, not banned"."""
 
 from __future__ import annotations
 

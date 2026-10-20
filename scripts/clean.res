@@ -1,9 +1,6 @@
 /**
- * A repository's `clean`: remove what cargo and the JavaScript tools built, never an installed
- * dependency or local state. A path goes only when a tool writes it, git ignores it and nothing
- * under it is tracked -- docs/toolchain.md, "A cache is what a tool can write again". Inside
- * node_modules only what tools dropped there goes; `.wrangler/state` and `.vercel`'s link stay, so
- * only `.wrangler/tmp` and `.vercel/output` go. Arguments name further caches, from the root.
+ * A repository's `clean`, docs/toolchain.md, "A cache is what a tool can write again": what cargo
+ * and the JavaScript tools built, never a dependency or local state. Arguments name further caches.
  */
 /** What `find` lists from `root`, a path a line, as the shell's `find` loops read them. */
 let find = (root, findArgs) =>

@@ -1,9 +1,7 @@
 /**
- * Every verb across the repositories, `repos <verb> [name | --all] [--dry-run]`: bare, the
- * workspace alone; a path from repos/registry.toml, that repository; `--all`, every one. pull, push
- * and clone are jj's and the same everywhere; fmt, clean, update and verify run a repository's own
- * task, and the workspace's own half here. See docs/repos.md, "One verb, the workspace unless told
- * otherwise".
+ * Every verb across the repositories, `repos <verb> [name | --all] [--dry-run]`, and the
+ * workspace's own half of fmt, clean, update and verify. See docs/repos.md, "One verb, the
+ * workspace unless told otherwise".
  */
 let root = Registry.root
 let repos = Registry.repos

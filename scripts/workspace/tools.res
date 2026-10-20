@@ -1,9 +1,7 @@
 /**
- * The pinned toolchain, current and honest about its channel: `tools check|outdated|up [name |
- * --all] [--dry-run]`. An outside build reads `.node-version`, `packageManager` and
- * `rust-toolchain.toml` and has never heard of mise, so those restate a pin and are written from
- * it. Stable is the publisher's stable channel, never the highest version published; a pin makes
- * "current" two questions, its line's stable release and the newest, and both are asked.
+ * The pinned toolchain against each publisher's stable channel, `tools check|outdated|up [name |
+ * --all] [--dry-run]`, and the files an outside build reads written from the pins. See
+ * docs/toolchain.md, "Stable means the publisher's channel, not the highest version that exists".
  */
 type response
 @val external fetch: (string, {"headers": Dict.t<string>}) => promise<response> = "fetch"

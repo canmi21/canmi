@@ -1,10 +1,7 @@
 /**
- * The gate holding every comment block in a repository to the limits in docs/code.md: at most six
- * body lines, ten for the block opening a file, and 100 columns with tabs at two -- the width oxfmt
- * and rustfmt give code, which neither rewraps. A body line is one carrying text: a block's own
- * markers, a blank star, a docstring's quotes and a link are punctuation. Paths given are measured
- * instead of the tree. A Python file's docstrings are found by Python's own parser, asked once for
- * them all.
+ * The gate holding every comment block in a repository to `Code`'s limits, docs/code.md. A body
+ * line is one carrying text, so markers, a blank star, a docstring's quotes and a link are not.
+ * Paths given are measured instead of the tree.
  */
 let width = Code.columns
 let bodyLimit = Code.blockLines

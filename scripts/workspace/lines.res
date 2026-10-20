@@ -1,9 +1,7 @@
 /**
- * Every file of ours under the line limits, docs/code.md: under 500 lines, and one past 1,000 fails
- * the gate, `lines [root ...]`. Given no root, the workspace and every repository its registry
- * lists, but one whose `workspace.toml` turns `[rules] lines` off. A binary, a lockfile, what
- * `.gitattributes` marks generated or vendored, and anything under a `vendor` directory are not
- * ours to shorten; `lines=deferred` passes a file known to be over. Warnings fail under `AUDIT`.
+ * Every file of ours under `Code`'s line limits, docs/code.md, `lines [root ...]`: with no root,
+ * the workspace and each registered repository keeping `[rules] lines`. What is generated, vendored
+ * or binary is not ours; `lines=deferred` passes a file known to be over.
  */
 let soft = Code.softLines
 let hard = Code.hardLines
