@@ -14,10 +14,8 @@ let names = (~root): array<string> =>
   ->Array.filterMap(relative => {
     let segments = relative->String.split("/")
     let last = segments->Array.length - 1
-    let named = segments->Array.findIndex(segment => Naming.namedInside->Array.includes(segment))
     segments
     ->Array.mapWithIndex((segment, at) => (segment, at == last))
-    ->Array.filterWithIndex((_, at) => named < 0 || at <= named)
     ->Array.find(((segment, file)) => !fits(segment, ~file))
     ->Option.map(((segment, _)) => `${relative}: ${segment} breaks the naming rule`)
   })
