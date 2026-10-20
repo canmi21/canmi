@@ -22,3 +22,12 @@ patterns = [
 [fix.tools.rustfmt]
 command = ["rustfmt", "--emit", "stdout"]
 patterns = ["glob:'**/*.rs'"]
+
+# ReScript reads from stdin by the extension named, so each takes its own.
+[fix.tools.rescript]
+command = ["rescript", "format", "--stdin", ".res"]
+patterns = ["glob:'**/*.res'"]
+
+[fix.tools.rescript-interface]
+command = ["rescript", "format", "--stdin", ".resi"]
+patterns = ["glob:'**/*.resi'"]
