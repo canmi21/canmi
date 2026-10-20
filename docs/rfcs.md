@@ -6,6 +6,11 @@ first of them, RFC 2ut6h; why they have a repository of their own is RFC 7f4xx. 
 files, found by id, until their pages are drawn by the settled design system, which no address
 reaches before then -- RFC ggry5.
 
+**A project that stands as its own product keeps its RFCs itself.** Decided by the author on
+2026-10-20: monoflake's drafts live in its own `docs/rfcs/`, under its license and beside the model
+they decide, and seam's are to move into seam the same way; until they do, seam's are among
+these. Everything else the author decides is an RFC here.
+
 **A rule cites the RFC behind it by its id alone**, `RFC 2ut6h`, and the RFC is found by it,
 `repos/canmi/rfcs/*/*-2ut6h.md`, whatever its area and slug became. An RFC names no page and no spec, so
 which rules it settled is read off the citations.

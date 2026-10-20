@@ -37,10 +37,11 @@ let fix = (payload: Payload.t) => {
     let cwd = Payload.cwd(payload)
     let root = Payload.jj(~cwd, ["workspace", "root"])->String.trim
     if root != "" {
-      // jj's repository config is not versioned, so the tracked jj.toml is named here.
+      // jj's repository config is not versioned, so the workspace's jujutsu.toml is named here,
+      // wherever below it the commit is made.
       let home = Node.env->Dict.get("HOME")->Option.getOr("")
       let env = Node.envCopy(Node.env)
-      env->Dict.set("JJ_CONFIG", `${home}/.config/jj/config.toml:${root}/jj.toml`)
+      env->Dict.set("JJ_CONFIG", `${home}/.config/jj/config.toml:${Registry.root}/jujutsu.toml`)
       // A broken formatter is not a reason to refuse work, so its failure is passed over.
       Node.spawnWithEnv("jj", ["fix"], {cwd, env, stdio: "ignore"})->ignore
     }

@@ -5,7 +5,7 @@ let inherited = [
   "rustfmt.toml",
   ".oxlintrc.json",
   ".oxfmtrc.json",
-  "jj.toml",
+  "jujutsu.toml",
   "rust-toolchain.toml",
 ]
 

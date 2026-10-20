@@ -180,7 +180,7 @@ let declares = (repo, verb) => {
 
 let task = (repo, verb) => `//repos/${Registry.label(repo)}:${verb}`
 
-/** The workspace's own fmt: oxfmt and ReScript's formatter over the files jj.toml gives them. */
+/** The workspace's own fmt: oxfmt and ReScript's formatter over the files jujutsu.toml names. */
 let formatted = "**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx,css,json,jsonc,md,svelte}"
 let fmt = (~dry) =>
   if dry {

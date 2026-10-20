@@ -23,8 +23,8 @@ _.path = ["{{config_root}}/hooks/bin", "{{config_root}}/node_modules/.bin"]
 # Where this workspace is, for a repository's task to reach the shared scripts at any depth.
 WORKSPACE = "{{config_root}}"
 
-# The user's jj config, then the shared rules in jj.toml.
-JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
+# The user's jj config, then the shared rules in jujutsu.toml.
+JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jujutsu.toml"
 
 # The toolchain every repository resolves, each pinned to a major that `tools up` moves within.
 [tools]

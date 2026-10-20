@@ -48,7 +48,7 @@ these files into each project, and checked the copies, is gone.
 
 **The rule is mechanical, not remembered.** `mise run check` fails when a project carries a
 version-controlled copy of `.editorconfig`, `rustfmt.toml`, `.oxlintrc.json`, `.oxfmtrc.json` or
-`jj.toml`, and when it declares a tool the workspace already declares. Both existed and neither
+`jujutsu.toml`, and when it declares a tool the workspace already declares. Both existed and neither
 was visible: still carried byte-identical copies of two of them and redeclared `rust`, and
 nothing said so for as long as the copies happened to agree. A rule that only holds while two
 files match is not a rule, it is a coincidence with a deadline.
@@ -88,7 +88,7 @@ enough to format this repository differently from the project beside it. What a 
 project or this repository declares.
 
 **Sharing the rules is not the same as sharing the tool that applies them.** `jj fix` is
-configured once, in `jj.toml`, and `JJ_CONFIG` is set here so every repository below inherits
+configured once, in `jujutsu.toml`, and `JJ_CONFIG` is set here so every repository below inherits
 it -- but the formatter it invokes is whichever one that repository's `PATH` provides. This has
 already gone wrong: a globally installed oxfmt formatted this repository at 0.28 while a project
 formatted at 0.65, one rule set through two formatters. So the version is pinned here in
@@ -310,7 +310,7 @@ flag "--major" help="Cross the ranges the manifest declares"
 | `verify` | nothing; reads `AUDIT`      | everything a change has to pass, warnings failing under `AUDIT=1`. See [lint-format.md](lint-format.md)                                                                                                                          |
 | `update` | `--dry-run`, `--major` opt. | moves within declared bounds -- ranges, its own `[tools]`, a tag no resolver moves -- and names what waits beyond them; `--major` crosses the ranges or is refused; writes only inside the repository; never verifies or reverts |
 | `clean`  | `--dry-run`                 | removes only what a tool wrote and can write again, never a dependency or local state; see [toolchain.md](toolchain.md), "A cache is what a tool can write again"                                                                |
-| `fmt`    | `--dry-run`                 | formats the files `jj.toml` names for its stack, with the same formatters, so `fmt` and the formatting a commit gets agree; the dry run lists what would change                                                                  |
+| `fmt`    | `--dry-run`                 | formats the files `jujutsu.toml` names for its stack, with the same formatters, so `fmt` and the formatting a commit gets agree; the dry run lists what would change                                                             |
 
 **A dry run writes nothing, and exits 0 when it has reported.** Whatever was found is the answer,
 not a failure -- `cargo fmt --check` and `pnpm outdated` exit non-zero on a finding, and a task

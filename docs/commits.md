@@ -211,9 +211,10 @@ every repository the registry lists has one. The hook sees only what an agent ty
 everything, an editor's message and a human's included, after the fact.
 
 `hooks/commit.res` runs before any jj subcommand that can write a description and does two
-things: it runs `jj fix` so the content being committed is already formatted, then it checks
-the message. A malformed message is refused with the specific reason, which the agent reads
-and corrects on the spot.
+things: it checks the message, then -- once the verify gate below has passed too -- it runs `jj
+fix` with the workspace's `jujutsu.toml`, wherever below it the commit is made, so the content
+being committed is already formatted. A malformed message is refused with the specific reason,
+which the agent reads and corrects on the spot.
 
 The guarded list is derived from which subcommands accept `-m`, not from the two that write
 most of the messages. It was `commit` and `describe` alone, and `jj split -m` carried a
