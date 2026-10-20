@@ -1,16 +1,18 @@
-# Planning: a roadmap here, everything not done an RFC
+# Planning: a short roadmap, everything not done an RFC
 
-Every repository's rules -- this workspace's `docs/` and `model/`, each project's `spec/` -- holds what holds now, and one file about
-what does not: `roadmap.md`, the long-term direction. Everything not done yet is an RFC in the
-`rfcs` repository, cloned at `repos/rfcs` -- RFC p992n, and [rfcs.md](rfcs.md) for the rest.
+Every repository's rules -- this workspace's `docs/` and `model/`, each project's `docs/` -- hold
+what holds now, and one file may hold what does not: `roadmap.md`, the long-term direction. The
+workspace keeps none now; its last direction was the platform's, which the author will set out
+afresh. Everything not done yet is an RFC in the `rfcs` repository, cloned at `repos/canmi/rfcs` --
+RFC p992n, and [rfcs.md](rfcs.md) for the rest.
 
-| What                                  | Where                                                     |
-| ------------------------------------- | --------------------------------------------------------- |
-| The long-term direction               | `roadmap.md`: a few lines, never detail, steps or a date  |
-| An open question, a finding           | a `draft` RFC                                             |
-| Work decided and waiting, a milestone | an `accepted` RFC                                         |
-| What waits on what                    | `blocked-by` on the RFC that waits, by id                 |
-| What to take up next                  | `mise run plan` in `repos/rfcs`, worked out from the rest |
+| What                                  | Where                                                    |
+| ------------------------------------- | -------------------------------------------------------- |
+| The long-term direction               | `roadmap.md`: a few lines, never detail, steps or a date |
+| An open question, a finding           | a `draft` RFC                                            |
+| Work decided and waiting, a milestone | an `accepted` RFC                                        |
+| What waits on what                    | `blocked-by` on the RFC that waits, by id                |
+| What to take up next                  | `mise run plan` in `repos/canmi/rfcs`, from the rest     |
 
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain
