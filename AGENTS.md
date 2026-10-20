@@ -2,7 +2,8 @@
 
 The workspace. This is the entry point for any agent starting with zero context, and the only
 one -- a project under `repos/` carries `spec/` and no `AGENTS.md`, because work always begins
-here.
+here. monoflake is the exception, with an `AGENTS.md` of its own, as it ignores the workspace's
+rules.
 
 It is named `AGENTS.md` so that one file serves both harnesses without a symlink. Codex reads the
 name natively; Claude Code reads it through its built-in `agents-md` plugin, whose default mode
@@ -13,11 +14,11 @@ Claude Code reading this file.
 
 ## Start here
 
-Read this file, then the `spec/` files covering your task -- this directory's for the rules that
-follow the author everywhere, and `repos/<project>/spec/` for the ones belonging to the project
-you are about to touch. If neither answers a decision you are about to make, ask the user.
-Decisions belong to the user, not to you -- unless their described approach already implies the
-answer. See [docs/agent-protocol.md](docs/agent-protocol.md).
+Read this file, then the rules covering your task: this workspace's `docs/` and `model/rules/`
+for the ones that follow the author everywhere, and `repos/<project>/spec/` for the ones belonging
+to the project you are about to touch. If none answers a decision you are about to make, ask the
+user. Decisions belong to the user, not to you -- unless their described approach already implies
+the answer. See [docs/agent-protocol.md](docs/agent-protocol.md).
 
 ## What this repository is
 
@@ -32,73 +33,82 @@ they care about and have a complete environment without copying everything else.
 
 ```
 AGENTS.md      this file, the only entry point
-mise.toml      monorepo root, task roots, the shared toolchain
-spec/          rules that follow the author
-hooks/         the agent hook entrypoint both vendors call
+mise.toml      monorepo root, task roots, the shared toolchain, the verbs
+model/         every rule a program can decide, its values and its check, in ReScript
+docs/          the why behind the rules, and the rules only judgment keeps
+scripts/       the tasks two repositories share, and the verbs' dispatcher, in ReScript
+hooks/         the agent hook entrypoint both vendors call, and the rm guard
 .mcp.json      the Tauri MCP server, pinned to its plugin, kept for the next Tauri app
 repos/         one directory per project, each a separate repository, grouped as the author likes;
                registry.toml, the one file here, lists them as path = "user:repo"
 ```
 
 Formatting configuration lives here and is found by walking up: `.editorconfig`, `rustfmt.toml`,
-`rust-toolchain.toml` and `.oxlintrc.json` are read from a project below without being copied
-into it. So is the
-toolchain in `mise.toml`, and so are the hooks. See
-[docs/repos.md](docs/repos.md).
+`rust-toolchain.toml` and `.oxlintrc.json` are read from a project below without being copied into
+it. So is the toolchain in `mise.toml`, and so are the hooks. See [docs/repos.md](docs/repos.md).
 
 ## How rules are recorded
 
 Every rule the user states gets written down. Never leave one in chat only.
 
 - This file holds the most important, most universal rules, plus the index below.
-- Anything narrower gets its own topic file in `spec/`, split by aspect, linked from the index.
+- **A rule a program can decide goes in `model/rules/`, with the check that holds it**, or marked
+  `Pending` with what the check would need; its why goes in `docs/`, which names the model file
+  rather than repeating a value. `mise run check workspace --pending` lists what no check holds
+  yet. See [docs/model.md](docs/model.md).
+- Anything only judgment can keep gets a topic file in `docs/`, split by aspect, linked from the
+  index.
 - A rule that belongs to one project goes in that project's `spec/`, not here.
-- Never restate spec content here. Link to it.
-- What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an `accepted`
-  one for decided work, blocked by others by id. **To know what is left, run `mise run plan` in
-  `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
+- Never restate the rules here. Link to them.
+- What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an
+  `accepted` one for decided work, blocked by others by id. **To know what is left, run `mise run
+plan` in `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
   [docs/planning.md](docs/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
-  `spec/` and this file instead, then verify a zero-memory agent could recover the arrangement
-  from `AGENTS.md` alone. See [docs/agent-protocol.md](docs/agent-protocol.md).
+  `docs/`, `model/rules/` and this file instead, then verify a zero-memory agent could recover the
+  arrangement from `AGENTS.md` alone. See [docs/agent-protocol.md](docs/agent-protocol.md).
 
 ## Core rules
 
 **Delegation** -- **a session works directly unless the user says it delegates.** Whether to spawn
 agents is the user's call, made per session, and the default is no. Once the user turns it on,
 work is split between this conversation and the agents it spawns: the conversation paraphrases
-the user's intent, decides, owns `spec/`, reads every worker's diff, runs the one type check per
+the user's intent, decides, owns the rules, reads every worker's diff, runs the one type check per
 wave and writes every commit; the workers edit, each owning a declared set of files and touching
 nothing else. Testing belongs to the user -- they are faster than any verification loop -- so a
 turn ends with something to click, not with a report. See [docs/delegation.md](docs/delegation.md).
 
-**Commits** -- Conventional Commits. Omit the scope in most cases. Subject starts lowercase,
-imperative mood, 96 characters max. Plain text throughout, never Markdown. **A body is optional
-and usually absent**: it says what changed, in three lines or so, and never why. The reasoning
-goes to `spec/` or beside the code, where somebody is looking for it -- a log carrying it twice
-is the mistake this rule exists to stop. See [docs/commits.md](docs/commits.md).
+**Commits** -- Conventional Commits, the types and widths in `model/rules/commits.res`. Omit the
+scope in most cases. Subject starts lowercase, imperative mood, 96 characters at most. Plain text
+throughout, never Markdown. **A body is optional and usually absent**: it says what changed, in
+three lines or so, and never why. The reasoning goes to the rules or beside the code, where
+somebody is looking for it -- a log carrying it twice is the mistake this rule exists to stop. A
+hook refuses a malformed message, and the commits part of the check reads every one since. See
+[docs/commits.md](docs/commits.md).
 
-**Comments** -- a comment points rather than argues. The settled argument lives in `spec/` and the
-comment names the file; **a decision nobody has made yet is a draft RFC**, cited by id in one line.
-Once it is made it becomes a `spec/` rule plus the change that implements it, never a comment
-carrying the debate. See [docs/code.md](docs/code.md), "The rules hold what is settled; an RFC holds
-what is not".
+**Comments** -- a comment points rather than argues. The settled argument lives in the rules and
+the comment names the file; **a decision nobody has made yet is a draft RFC**, cited by id in one
+line. Once it is made it becomes a rule plus the change that implements it, never a comment
+carrying the debate. See [docs/code.md](docs/code.md), "The rules hold what is settled; an RFC
+holds what is not".
 
 **Language** -- Talk to the user in simplified Chinese with English technical nouns left
 untranslated. Everything written into a file is English only: code, comments, docs, commit
 messages. **The English is American** -- `color`, `behavior`, `license`, never the British
 spelling; the platform is already American and half of it is identifiers, so a `color` in prose
-is a second spelling of a word the reader will search for as `color`. The one exception is a value that _is_ somebody else's name, which is recorded as its
-owner spells it rather than translated. An explicit user request overrides the rest. "App" means
-a standalone application, a deployed service, or a desktop client depending on context -- read
-which from the sentence rather than asking every time. "Base", unqualified, is this workspace.
-**"Kit" is either SvelteKit or the design package `@canmi/kit`** -- read which from the context;
-"shared lib" is the whole library, the `lib` repository. See [docs/voice.md](docs/voice.md).
+is a second spelling of a word the reader will search for as `color`. The one exception is a value
+that _is_ somebody else's name, which is recorded as its owner spells it rather than translated.
+An explicit user request overrides the rest. "App" means a standalone application, a deployed
+service, or a desktop client depending on context -- read which from the sentence rather than
+asking every time. "Base", unqualified, is this workspace. **"Kit" is either SvelteKit or the
+design package `@canmi/kit`** -- read which from the context; "shared lib" is the whole library,
+the `lib` repository. See [docs/voice.md](docs/voice.md).
 
-**Naming** -- Files and directories are lowercase English, hyphens allowed. A language with
-its own convention wins locally: Rust source files use underscores. Identifiers inside code
-always follow the language's own convention. Vendor names stay at the binding edge -- name a
-module for what it does, not for who supplies it. See [docs/naming.md](docs/naming.md).
+**Naming** -- Files and directories are lowercase English, hyphens allowed. A language with its own
+convention wins locally: Rust and ReScript source files use underscores. Identifiers inside code
+always follow the language's own convention. A name is written whole -- Cloudflare, never `CF`.
+Vendor names stay at the binding edge -- name a module for what it does, not for who supplies it.
+See [docs/naming.md](docs/naming.md).
 
 **Lint vs format** -- a linter owns semantics, a formatter owns layout. Whatever the formatter
 rewrites, the linter must not report; disable the overlap on the linter side. Holds for every
@@ -116,23 +126,29 @@ allows it only inside the workspace, temp and caches, and refuses the rest.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
--- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on their own. An agent commits what is settled and
-pushes at the right moment, unless the user said not to -- see [docs/commits.md](docs/commits.md). mise owns every tool version. **A new script or task is TypeScript, run by node as it is written**, never Python; the hooks keep Python. Indentation is tabs at width 2 in every language,
-YAML excepted; `.editorconfig` is the source of truth.
-See [docs/toolchain.md](docs/toolchain.md).
+-- use `jj`, not `git`, in this repository and in every one below it. Bookmarks do not advance on
+their own. An agent commits what is settled and pushes at the right moment, unless the user said
+not to -- see [docs/commits.md](docs/commits.md). mise owns every tool version. **A script, a task
+or a hook is ReScript**, compiled by `mise run build` and never committed; a mise task is the
+entry, and `hooks/bin/rm` with its guard the one thing left in Python. Indentation is tabs at
+width 2 in every language, YAML excepted; `.editorconfig` is the source of truth. See
+[docs/toolchain.md](docs/toolchain.md).
 
 **One verb, the workspace unless told otherwise.** `mise run pull|push|fmt|check|update|clean|audit`
 alone runs on this workspace; add a path from `repos/registry.toml` -- `mise run check apps/rdm` --
 to run on that repository, or `--all` to run on every one, and `--dry-run` to any of them to be
-told what it would do. A name means that repository alone, in every verb, and never with `--all`. `pull` and `push` are jj's and live here; the rest run each repository's own task --
-`verify` for `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository
-without one, naming it. What such a task owes the verb, `--dry-run` first, is in
-[docs/repos.md](docs/repos.md). `audit` is `check` with every warning
-counted as a failure, which is not what routine work runs. `update` moves within declared bounds
-and keeps a repository's move only where its own verify still passes; crossing a range is
-`update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes what a tool wrote and
-can write again; dependencies and local state are not caches. The workspace's own half of a verb
-is `self:<verb>`. See [docs/toolchain.md](docs/toolchain.md).
+told what it would do. A name means that repository alone, in every verb, and never with `--all`.
+`pull` and `push` are jj's and live here; the rest run each repository's own task -- `verify` for
+`check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository without one,
+naming it. What such a task owes the verb, `--dry-run` first, is in [docs/repos.md](docs/repos.md).
+The workspace's own half runs in the dispatcher, `scripts/workspace/repos.res`: its check is
+`model/check.res`, and `mise run check workspace words names` runs only the parts named. `audit`
+is `check` with every warning counted as a failure, which is not what routine work runs. `update`
+moves within declared bounds and keeps a repository's move only where its own verify still passes;
+crossing a range is `update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes
+what a tool wrote and can write again; dependencies and local state are not caches. `mise run
+repos list|clone` reads the registry against the disk, and `mise run tools` the toolchain against
+its pins. See [docs/toolchain.md](docs/toolchain.md).
 
 **`each` is every other task.** `mise run each <task> [args]` runs it in every repository that
 declares it, one at a time and on past a failure; the rest are passed over. See
@@ -153,6 +169,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Topic                                                                                                   | File                                             |
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [docs/agent-protocol.md](docs/agent-protocol.md) |
+| The model: what a program decides, what holds each rule, what is pending                                | [docs/model.md](docs/model.md)                   |
 | Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [docs/delegation.md](docs/delegation.md)         |
 | Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                   |
 | Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [docs/planning.md](docs/planning.md)             |
@@ -174,13 +191,13 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | ---------------------------------------------------- | ------------------------------------------ |
 | Type checking, tests, comments, a UI that only draws | [docs/code.md](docs/code.md)               |
 | Linting and formatting                               | [docs/lint-format.md](docs/lint-format.md) |
-| Shell, addresses, secrets, versions, jj              | [docs/toolchain.md](docs/toolchain.md)     |
+| Shell, addresses, secrets, versions, jj, hooks       | [docs/toolchain.md](docs/toolchain.md)     |
 
 **The projects**
 
 | Project            | Rules                                                                                                                                                                               |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `repos/canmi/web`  | the site, its API, the status page, the service domains' pages, the CMS, the console, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                      |
+| `repos/canmi/web`  | the site, its API, the status page, the service domains' pages, the CMS, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                                   |
 | `repos/monoflake`  | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/monoflake/AGENTS.md), as it ignores the workspace's rules                            |
 | `repos/apps/still` | a macOS application; no spec yet                                                                                                                                                    |
 | `repos/canmi/lib`  | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
@@ -188,3 +205,4 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | `repos/apps/cue`   | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/apps/cue/spec/](repos/apps/cue/spec/)                                            |
 | `repos/canmi/rfcs` | why each decision was made, one file per decision; documents only, no spec -- [docs/rfcs.md](docs/rfcs.md)                                                                          |
 | `repos/seam`       | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                              |
+| `repos/console`    | an archive of what was web's console, kept until it is pushed and this copy deleted; nothing in it builds                                                                           |

@@ -27,4 +27,4 @@ If you're curious, point an LLM at it and let it read.
 
 ## License
 
-MIT License © 2026 [Canmi](https://canmi.net)
+MIT License © 2024 [Canmi](https://canmi.net)
