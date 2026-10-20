@@ -333,7 +333,11 @@ question and only the party that sees the whole wave can ask it.
 **The one test a spawned agent may run is one it can isolate**: pure logic, no dev server, no
 port, no process anyone else is sharing, and nothing written outside the files it owns. A
 function it just wrote, with the test file it just wrote beside it. Not the suite, not a build,
-not anything that needs the application up.
+not anything that needs the application up. **A block a project's model holds alone is that
+case**: where each block builds, lints and tests apart from every other, as `monoflake/platform`'s
+`docs/code.md` makes them, its worker runs the block's acceptance, which touches nothing a
+neighbor shares. It still runs no jj, since every jj command snapshots the one tree, and the
+conversation reads what changed.
 
 **The browser and the desktop window open only when the acceptance criterion is a number.**
 Geometry, timing, drift, a count -- things clicking cannot produce. The rail's indicator was
