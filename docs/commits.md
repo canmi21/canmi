@@ -92,7 +92,6 @@ how much scrutiny a change received.
 ```
 Co-Authored-By: Claude Opus-5 <noreply@anthropic.com>
 Co-Authored-By: Codex GPT-5 <codex@openai.com>
-Co-Authored-By: Grok 4.6 <noreply@x.ai>
 ```
 
 Each vendor and its one address is `Commits.trailers`. Fill in the actual model short name rather

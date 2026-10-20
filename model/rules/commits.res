@@ -5,11 +5,7 @@ let subjectWidth = 96
 let bodyLines = 5
 
 /** Each vendor's trailer, by the name it opens with and the one address it takes. */
-let trailers = [
-  ("Claude", "noreply@anthropic.com"),
-  ("Codex", "codex@openai.com"),
-  ("Grok", "noreply@x.ai"),
-]
+let trailers = [("Claude", "noreply@anthropic.com"), ("Codex", "codex@openai.com")]
 
 /** Every jj subcommand that takes -m, so every one that can write a description. */
 let describing = ["commit", "ci", "describe", "desc", "split", "new", "squash", "metaedit"]
