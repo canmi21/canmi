@@ -6,11 +6,15 @@ This repository holds configuration and nothing else. Every project is its own r
 cloned into `repos/` and ignored here. Nothing is a submodule.
 
 ```
-workspace/            this repository -- rules, hooks, formatter configuration, the list
-  repos/web/            a repository of its own
-  repos/still/        another
-  repos/lib/          and another
+workspace/              this repository -- rules, hooks, scripts, formatter configuration, the list
+  repos/registry.toml   the list
+  repos/canmi/web/      a repository of its own, under a group
+  repos/apps/still/     another
+  repos/seam/           and one at the top
 ```
+
+A directory between `repos/` and a repository is a group: it is no repository and means nothing,
+and where a repository sits is the author's to choose. Nothing is read from the position.
 
 They are nested on the filesystem so the shared rules sit one directory up, where the tools that
 look for them will find them; they are separate repositories so a project's history, its
@@ -98,24 +102,13 @@ an MCP server pinned to its plugin".
 
 ### A rule that is code inherits the same way, as a module the projects import
 
-The three reference rules -- a markdown link resolves, a cited spec file exists, a section quoted
+The three reference rules -- a markdown link resolves, a cited doc exists, a section quoted
 beside a citation exists -- are one implementation in
-[`.mise/tasks/refs_check.py`](../.mise/tasks/refs_check.py), which each project's
-`.mise/tasks/refs` imports. Both entry points stay: `mise run refs` here and
-`mise run //repos/web:refs` in a project, each printing its own count. A project keeps what is
-its own -- the single-sourcing of its URLs, its skip sets, the upward walk that resolves a citation
-from inside it, and the walk across to a sibling repository that resolves one of another's.
-
-**A file in `.mise/tasks/` is a library exactly when it is not executable.** mise offers only
-executable files as tasks, so a module sitting beside them adds no third gate and needs no
-opt-out. `hooks/` already has this shape with `jj_command.py`, and so does each project's own task
-directory.
-
-**The importer resolves a fixed depth and fails loudly by name, rather than walking up.** A walk
-from a project reaches the user's home directory and beyond, and a `refs_check.py` found up there
-would be silently the wrong source. Two directories up is where this file says the workspace is;
-if it is not there the arrangement is wrong, and the gate says so and exits rather than checking
-less.
+[`scripts/workspace/references.res`](../scripts/workspace/references.res), and the workspace's
+refs part runs it over this tree. A project's own reference gate calls the same module from
+`$WORKSPACE`, as its other gates do, and keeps what is its own -- the single-sourcing of its URLs,
+its skip sets, the upward walk that resolves a citation from inside it, and the walk across to a
+sibling repository that resolves one of another's.
 
 **Two copies of one rule diverge, and neither tree holds the input that would show it.** The two
 checkers had drifted in two places before they were merged: one collapsed whitespace before
@@ -135,8 +128,8 @@ Workers or both -- read by `scripts/change/project.res`, which refuses a key it 
 `mise.toml` reaches each script as `node {{env.WORKSPACE}}/scripts/....res.mjs`, depending on
 `//:build`, since what ReScript compiles is never committed.
 
-**The workspace checks what it holds**: `check-tasks` type-checks `.mise/tasks` against the
-workspace's `tsconfig.json` and runs its tests, and is in its `verify`. A repository's test of its
+**The workspace checks what it holds**: the scripts part of `check workspace` runs the tests of
+`scripts/` and `model/`, which nothing below holds. A repository's test of its
 own configuration stays in that repository.
 
 **CI checks the workspace out where it sits at home.** A job that runs a repository's own task
@@ -211,8 +204,9 @@ warning: adding embedded git repository: repos/web
 
 ```toml
 [repos]
-web = "canmi21:web"
-still = "canmi21:still"
+"canmi/web" = "canmi21:web"
+"apps/still" = "canmi21:still"
+seam = "canmi21:seam"
 ```
 
 **The directory is the key, so uniqueness comes from the format rather than from a check.** Two
@@ -227,8 +221,8 @@ what the project is here, and the remote keeping the name it is published under.
 That key is also the name every command takes.
 
 mise needs the same set as task roots and cannot read that file, so `[monorepo].config_roots`
-states it a second time. Two copies of one fact, and therefore a check: `repos check` fails when
-they disagree. This is the shape used wherever a fact has to cross a boundary a tool cannot see.
+states it a second time. Two copies of one fact, and therefore a check: the repos part of `check
+workspace` fails when they disagree. This is the shape used wherever a fact has to cross a boundary a tool cannot see.
 
 A listed project that is not cloned is a warning from mise and nothing more, which is what makes
 the two-clone workflow work: a machine holding one project runs that project's tasks and is not
@@ -284,10 +278,11 @@ of its origin, which is the worst possible way for a push command to be wrong. A
 means "all of them" has to mean all of them, and the one holding the others is the easiest to
 forget.
 
-**Its own half of a verb is `self:<verb>`.** The workspace's `update`, `clean` and `fmt` cannot be
-named `update`, `clean` and `fmt` -- those are the loops -- so they are hidden file tasks under
-`.mise/tasks/self/`, and the dispatcher reaches them as it reaches any repository's. Its `verify`
-keeps the name, since the loop over verifies is `check`.
+**Its own half of a verb is the dispatcher's.** The workspace's `fmt`, `clean`, `update` and
+`verify` cannot be tasks of those names -- those are the loops -- so they are functions in
+`scripts/workspace/repos.res`, the loop over verbs, rather than hidden tasks beside it. Its verify
+is `check workspace`, `model/check.res`, whose parts are named after the name: `mise run check
+workspace words names` runs those two, and `--pending` lists the rules no check holds yet.
 
 **Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after
 the verb, because mise appends it last: `mise run push rdm --dry-run`. `pull` skips the fetch and

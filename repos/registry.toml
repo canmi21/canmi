@@ -9,3 +9,5 @@ monoflake = "monoflake:platform"
 "apps/rdm" = "canmi21:rdm"
 "apps/cue" = "canmi21:cue"
 "apps/still" = "canmi21:still"
+# An archive of what was web's console, kept until it is pushed and the copy here is deleted.
+console = "canmi21:console"

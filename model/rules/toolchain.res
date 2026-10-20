@@ -18,14 +18,6 @@ let porting = [
   "hooks/spec_diff.py",
   "hooks/test_language.py",
   "hooks/test_run.py",
-  ".mise/tasks/repos",
-  ".mise/tasks/tools",
-  ".mise/tasks/lines",
-  ".mise/tasks/refs",
-  ".mise/tasks/refs_check.py",
-  ".mise/tasks/self/clean",
-  ".mise/tasks/self/fmt",
-  ".mise/tasks/self/update",
 ]
 
 /** Local development is this name; a literal loopback address never is. */

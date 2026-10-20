@@ -48,6 +48,8 @@ let tracked = (root, ~skipFiles=[], ~skipDirs=[]) =>
     !(name->String.split("/")->Array.some(part => skipDirs->Array.includes(part)))
   )
   ->Array.map(name => Node.join([root, name]))
+  // The index still lists a file deleted since the last commit; what is on disk is what is read.
+  ->Array.filter(Node.existsSync)
 
 /** Whether a tracked file with no extension is text, and so can hold a citation. */
 let extensionlessText = path =>

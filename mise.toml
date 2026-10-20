@@ -12,6 +12,7 @@ config_roots = [
 	"repos/apps/rdm",
 	"repos/apps/cue",
 	"repos/apps/still",
+	"repos/console",
 ]
 
 [env]
@@ -35,38 +36,58 @@ oxlint = "1"
 # One verb: the workspace alone, a path from repos/registry.toml for that one, --all for every one.
 [tasks.pull]
 description = "Fetch the workspace, every repository with --all, or one: `pull [name | --all] [--dry-run]`"
-run = ".mise/tasks/repos pull"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs pull"
 
 [tasks.push]
 description = "Push the workspace's main, every repository's with --all, or one's: `push [name | --all] [--dry-run]`"
-run = ".mise/tasks/repos push"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs push"
 
 [tasks.fmt]
-description = "Run the workspace's own fmt, every repository's with --all, or one's: `fmt [name | --all] [--dry-run]`"
-run = ".mise/tasks/repos fmt"
+description = "Format the workspace, every repository with --all, or one: `fmt [name | --all] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs fmt"
 
+# `check workspace <part> ...` runs those parts of its own; `--pending` lists rules owed a check.
 [tasks.check]
-description = "Run the workspace's own verify, every repository's with --all, or one's: `check [name | --all] [--dry-run]`"
-run = ".mise/tasks/repos verify"
+description = "Verify the workspace, every repository with --all, or one: `check [name | --all] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs verify"
 
 # check, with every warning a failure.
 [tasks.audit]
-description = "Run a verify with warnings failing, as check chooses: `audit [name | --all] [--dry-run]`"
-run = "AUDIT=1 .mise/tasks/repos verify"
+description = "Verify with warnings failing, as check chooses: `audit [name | --all] [--dry-run]`"
+depends = ["build"]
+env = { AUDIT = "1" }
+run = "node scripts/workspace/repos.res.mjs verify"
 
 [tasks.clean]
-description = "Run a clean, which never touches dependencies, as check chooses: `clean [name | --all] [--dry-run]`"
-run = ".mise/tasks/repos clean"
+description = "Clean, which never touches dependencies, as check chooses: `clean [name | --all] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs clean"
+
+# Kept only where the repository's own verify still passes; --major is handed on.
+[tasks.update]
+description = "Update, reverting what verify rejects, as check chooses: `update [name | --all] [--dry-run] [--major]`"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs update"
 
 # What follows the name is the project's own, handed on unread.
 [tasks.publish]
 description = "Publish one repository, which must be named: `publish <name> [flags]`"
-run = ".mise/tasks/repos publish"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs publish"
 
-# Kept only where the repository's own verify still passes; --major is handed on.
-[tasks.update]
-description = "Run an update, reverting what its verify rejects, as check chooses: `update [name | --all] [--dry-run] [--major]`"
-run = ".mise/tasks/repos update"
+[tasks.repos]
+description = "List the registry against the disk, or clone what is missing: `repos list | clone [name] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/repos.res.mjs"
+
+[tasks.tools]
+description = "The toolchain against its pins and channels: `tools check | outdated | up [name | --all] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/tools.res.mjs"
 
 # One repository at a time and on past a failure; --dry-run is taken out before the task sees it.
 [tasks.each]
@@ -88,8 +109,3 @@ description = "Compile the scripts under scripts/ and the model under model/"
 run = "rescript build"
 sources = ["scripts/**/*.res", "model/**/*.res", "rescript.json"]
 outputs = { auto = true }
-
-[tasks.verify]
-description = "Everything a change to this repository has to pass: `verify [part ...] [--pending]`"
-depends = ["build"]
-run = "node model/check.res.mjs"

@@ -461,7 +461,7 @@ name, belongs in `package.json`.
 Task entry points stay in mise regardless of where the tool lives, so there is one place to
 look for "how do I run this" whichever ecosystem the binary came from. `mise tasks` lists them;
 `mise run verify` is the one a change has to pass. Tasks are defined in `mise.toml`, except
-where a task needs real logic, which goes in `.mise/tasks/` as an executable file.
+where a task needs real logic, which is a script under `scripts/` the task runs.
 
 ### The other exception: hook scripts
 
@@ -568,7 +568,7 @@ repository's `update` is the whole of how it moves, and what it owes is the cont
 
 **A name means that repository and nothing else.** `update rdm` runs rdm's `update` and writes
 nothing outside `repos/rdm`. The workspace's `[tools]` is the one set of pins every repository
-reads by walking up, so raising it is `update workspace` -- its `self:update` -- or `update` with
+reads by walking up, so raising it is `update workspace`, the dispatcher's own half, or `update` with
 no name, never a side effect of naming a project. A repository's own `update` moves the tools its
 own `mise.toml` declares and nothing it inherits.
 
