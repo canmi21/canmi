@@ -20,9 +20,11 @@ into `model/rules/` with its check and leaves this file.
 - **A commit by path can void the stamp.** `jj commit <paths>` runs the hook's `jj fix`, which may
   reformat what it commits, so the tree left is no longer the one that passed: check again before
   the next commit. Seen on 2026-10-20.
-- **Each commit is its own call, opened by `jj root &&`.** On 2026-10-13 a commit sent in a
-  parallel batch matched no path in the repository it meant, landed empty in the workspace, and a
-  chained push sent it.
+- **Each commit is its own call, alone in its message, opened by `jj root &&`.** Calls sent in one
+  message run in one shell, so one's `cd` lands in the other's: on 2026-10-13 a commit sent in a
+  parallel batch landed empty in the workspace and a chained push sent it, and on 2026-10-20 a
+  commit sent beside a check did the same, `main` moved onto it, caught before the push. A
+  `jj root` printing the wrong repository is the signal to stop, not to read past.
 - **`jj st` is read after every commit by path.** A rename is a delete and an add, so naming the
   new path leaves the delete behind; a path holding `[`, `]`, `~`, `&` or `|` is fileset syntax and
   is dropped unless written `'file:"..."'`. Name files, never a directory, which sweeps in another
