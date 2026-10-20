@@ -398,11 +398,13 @@ Triggered whenever the user says "remember this", "update yourself", or anything
 shape.
 
 Do not write to agent memory or any agent-private store. That content does not survive into
-the next session's view of this project and is invisible to every other agent. Instead:
+the next session's view of this project and is invisible to every other agent. **Agent memory
+keeps only what is private and the state of work in progress; a lesson learned the hard way goes
+to [lessons.md](lessons.md).** Instead:
 
 1. Decide where the rule belongs: an existing `docs/` file, or a new one named for its aspect;
    and, when a program can decide it, its values and check in `model/rules/` -- see
-   [model.md](model.md). A project's rule goes in its own `spec/`.
+   [model.md](model.md). A project's rule goes in its own `docs/`.
 2. Write it there.
 3. Re-read `AGENTS.md` and check it still holds. Are the rules it promotes still the most
    important ones? Is the index complete? Has anything drifted, duplicated, or gone stale?

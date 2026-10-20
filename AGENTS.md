@@ -67,6 +67,8 @@ Every rule the user states gets written down. Never leave one in chat only.
   `roadmap.md`. What is decided and only waits on a moment is a deferred item,
   `model/plan/deferred.res`, listed in red at the end of every check. See
   [docs/planning.md](docs/planning.md).
+- Agent memory keeps only what is private and the state of work in progress; a lesson learned the
+  hard way is written into [docs/lessons.md](docs/lessons.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `docs/`, `model/rules/` and this file instead, then verify a zero-memory agent could recover the
   arrangement from `AGENTS.md` alone. See [docs/agent-protocol.md](docs/agent-protocol.md).
@@ -179,6 +181,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Topic                                                                                                   | File                                             |
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [docs/agent-protocol.md](docs/agent-protocol.md) |
+| Lessons learned the hard way: commits, other sessions, shells, remotes, reading                         | [docs/lessons.md](docs/lessons.md)               |
 | The model: what a program decides, what holds each rule, what is pending                                | [docs/model.md](docs/model.md)                   |
 | Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [docs/delegation.md](docs/delegation.md)         |
 | Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                   |
