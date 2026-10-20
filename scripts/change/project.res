@@ -28,6 +28,8 @@ type deployable = {images: bool, workers: workers}
 type rules = {lines: bool}
 
 type declared = {
+  /** The workspace it sits under, as that one's `.git` address. */
+  base: option<string>,
   layout: Graph.layout,
   verify: option<verify>,
   deployable: option<deployable>,
@@ -160,8 +162,13 @@ let read = (root: string): result<declared, string> => {
     try {
       switch Toml.parse(Node.readFileSync(path)) {
       | Object(top) =>
-        only(top, "workspace.toml", ["layout", "verify", "deployable", "rules"])
+        only(top, "workspace.toml", ["base", "layout", "verify", "deployable", "rules"])
         Ok({
+          base: switch top->Dict.get("base") {
+          | None => None
+          | Some(String(address)) if address->String.endsWith(".git") => Some(address)
+          | Some(_) => fail("base: not the workspace's .git address")
+          },
           layout: layoutOf(
             root,
             tableAt(top, "layout", "workspace.toml")->Option.getOr(Dict.make()),

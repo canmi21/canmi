@@ -47,6 +47,8 @@ let parts: array<(string, part)> = [
         ->Array.filter(path => Node.existsSync(Node.join([path, "workspace.toml"])))
         ->Array.filterMap(path =>
           switch Project.read(path) {
+          | Ok({base: Some(address)}) if Some(address) != Registry.origin() =>
+            Some(`${path}/workspace.toml: base ${address} is not this workspace's origin`)
           | Ok(_) => None
           | Error(why) => Some(why)
           }

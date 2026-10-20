@@ -63,6 +63,12 @@ let rules: array<Rule.t> = [
     held: Check("repos"),
   },
   {
+    name: "base-is-origin",
+    says: "A workspace.toml's base is the .git address of the workspace it sits under",
+    doc,
+    held: Check("declared"),
+  },
+  {
     name: "declared-known",
     says: "A repository's workspace.toml holds only the keys the scripts read",
     doc,

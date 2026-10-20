@@ -65,6 +65,17 @@ let taskRoots = (): array<string> =>
   | _ => []
   }
 
+/** The workspace's own address, its origin as jj knows it, which a repository's `base` names. */
+let origin = () =>
+  Node.output(~cwd=root, "jj", ["git", "remote", "list"])
+  ->String.split("\n")
+  ->Array.findMap(line =>
+    switch line->String.split(" ") {
+    | ["origin", address] => Some(address)
+    | _ => None
+    }
+  )
+
 let isRepository = path =>
   Node.existsSync(Node.join([path, ".git"])) || Node.existsSync(Node.join([path, ".jj"]))
 

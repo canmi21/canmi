@@ -136,7 +136,11 @@ engines built on it, `verify` and `deployable`; `scripts/deploy/` holds `base`, 
 push's Deploy run plans against, and `artifact`, which puts a run's artifact in the bucket. **A
 repository declares what is its own as data, in `workspace.toml` at its root** -- where its apps
 and packages sit, its gates and what its files reach that no graph shows, whether it builds images,
-Workers or both -- read by `scripts/change/project.res`, which refuses a key it does not know. Its
+Workers or both -- read by `scripts/change/project.res`, which refuses a key it does not know.
+**Its one top-level key, `base`, names the workspace it sits under by that one's `.git` address**,
+decided by the author on 2026-10-20, so a reader of the repository alone learns where its rules
+and its linked configuration come from; the declared part holds it to this workspace's origin. A
+repository with nothing else to declare carries that line alone. Its
 `mise.toml` reaches each script as `node {{env.WORKSPACE}}/scripts/....res.mjs`, depending on
 `//:build`, since what ReScript compiles is never committed.
 
