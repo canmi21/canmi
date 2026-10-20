@@ -234,17 +234,19 @@ A listed project that is not cloned is a warning from mise and nothing more, whi
 the two-clone workflow work: a machine holding one project runs that project's tasks and is not
 told off about the others.
 
-## One verb, optionally one name
+## One verb, the workspace unless told otherwise
 
-`pull`, `push`, `fmt`, `check`, `audit`, `update` and `clean` run across every repository, and take
-a name from `repos/registry.toml` to run against one:
+`pull`, `push`, `fmt`, `check`, `audit`, `update` and `clean` run on this workspace alone, take a
+path from `repos/registry.toml` to run on that repository, and `--all` to run on every one, decided
+by the author on 2026-10-20, so a bare verb never reaches further than the directory it is typed in:
 
 ```
-mise run pull            every repository
-mise run pull rdm        that one
-mise run check           each repository's own verify
-mise run audit           the same, with warnings failing
-mise run update still    still's own update, and nothing else
+mise run pull                 the workspace
+mise run pull apps/rdm        that repository
+mise run pull --all           the workspace and every repository
+mise run check --all          each one's own verify
+mise run audit --all          the same, with warnings failing
+mise run update apps/still    still's own update, and nothing else
 ```
 
 They are one-line aliases onto a single dispatcher, so the short form is what gets typed and the

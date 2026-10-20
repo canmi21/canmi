@@ -32,30 +32,30 @@ pnpm = "12.5" # npm's latest-12, as mise also sees pnpm's next line
 jj = "0.45" # pre-1.0, where a minor is the breaking release
 oxlint = "1"
 
-# One verb, optionally one path from repos/registry.toml; the rest run each repository's own task.
+# One verb: the workspace alone, a path from repos/registry.toml for that one, or --all for every one.
 [tasks.pull]
-description = "Fetch every repository, or one: `pull [name] [--dry-run]`"
+description = "Fetch the workspace, every repository with --all, or one: `pull [name | --all] [--dry-run]`"
 run = ".mise/tasks/repos pull"
 
 [tasks.push]
-description = "Push every repository's main, or one: `push [name] [--dry-run]`"
+description = "Push the workspace's main, every repository's with --all, or one's: `push [name | --all] [--dry-run]`"
 run = ".mise/tasks/repos push"
 
 [tasks.fmt]
-description = "Run every repository's own fmt, or one: `fmt [name] [--dry-run]`"
+description = "Run the workspace's own fmt, every repository's with --all, or one's: `fmt [name | --all] [--dry-run]`"
 run = ".mise/tasks/repos fmt"
 
 [tasks.check]
-description = "Run every repository's own verify, or one: `check [name] [--dry-run]`"
+description = "Run the workspace's own verify, every repository's with --all, or one's: `check [name | --all] [--dry-run]`"
 run = ".mise/tasks/repos verify"
 
 # check, with every warning a failure.
 [tasks.audit]
-description = "Run every repository's verify with warnings failing, or one: `audit [name] [--dry-run]`"
+description = "Run a verify with warnings failing, as check chooses: `audit [name | --all] [--dry-run]`"
 run = "AUDIT=1 .mise/tasks/repos verify"
 
 [tasks.clean]
-description = "Run every repository's own clean, which never touches dependencies: `clean [name] [--dry-run]`"
+description = "Run a clean, which never touches dependencies, as check chooses: `clean [name | --all] [--dry-run]`"
 run = ".mise/tasks/repos clean"
 
 # What follows the name is the project's own, handed on unread.
@@ -65,7 +65,7 @@ run = ".mise/tasks/repos publish"
 
 # Kept only where the repository's own verify still passes; --major is handed on.
 [tasks.update]
-description = "Run every repository's own update, reverting what its verify rejects: `update [name] [--dry-run] [--major]`"
+description = "Run an update, reverting what its verify rejects, as check chooses: `update [name | --all] [--dry-run] [--major]`"
 run = ".mise/tasks/repos update"
 
 # One repository at a time and on past a failure; --dry-run is taken out before the task sees it.

@@ -121,10 +121,10 @@ pushes at the right moment, unless the user said not to -- see [spec/commits.md]
 YAML excepted; `.editorconfig` is the source of truth.
 See [spec/toolchain.md](spec/toolchain.md).
 
-**One verb, optionally one name.** `mise run pull|push|fmt|check|update|clean|audit` run across
-every repository; add a name from `repos/registry.toml` -- `mise run check apps/rdm` -- to run against one, and
-`--dry-run` to any of them to be told what it would do. A name means that repository alone, in
-every verb. `pull` and `push` are jj's and live here; the rest run each repository's own task --
+**One verb, the workspace unless told otherwise.** `mise run pull|push|fmt|check|update|clean|audit`
+alone runs on this workspace; add a path from `repos/registry.toml` -- `mise run check apps/rdm` --
+to run on that repository, or `--all` to run on every one, and `--dry-run` to any of them to be
+told what it would do. A name means that repository alone, in every verb, and never with `--all`. `pull` and `push` are jj's and live here; the rest run each repository's own task --
 `verify` for `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository
 without one, naming it. What such a task owes the verb, `--dry-run` first, is in
 [spec/architecture/repos.md](spec/architecture/repos.md). `audit` is `check` with every warning

@@ -87,15 +87,11 @@ def registry() -> dict[str, tuple[str, str]]:
 	return found
 
 
-def selected(name: str | None) -> list[pathlib.Path]:
-	"""The repositories a command applies to: one when named, all of them otherwise.
-
-	**This workspace is one of them.** It has a remote, a working copy and files to format like
-	any project, and leaving it out meant `push` reporting nothing to push while this very
-	repository was a commit ahead. `workspace` is the name for it, matching what the tools task
-	already accepted.
-	"""
+def selected(name: str | None, everything: bool = False) -> list[pathlib.Path]:
+	"""The repositories a command applies to: the one named, every one with `--all`, else the workspace."""
 	listed = registry()
+	if name and everything:
+		raise fail(f"{name} and --all ask for one repository and for every one; give one of them")
 	if name == "workspace":
 		return [ROOT]
 	if name:
@@ -106,6 +102,8 @@ def selected(name: str | None) -> list[pathlib.Path]:
 		if not target.is_dir():
 			raise fail(f"repos/{name} is listed but not cloned -- `mise run repos clone` first")
 		return [target]
+	if not everything:
+		return [ROOT]
 	return [ROOT] + [REPOS / d for d in listed if (REPOS / d).is_dir()]
 
 
@@ -190,7 +188,7 @@ def command_clone(name: str | None, dry: bool = False) -> int:
 	return 0
 
 
-def command_pull(name: str | None, dry: bool = False) -> int:
+def command_pull(name: str | None, dry: bool = False, everything: bool = False) -> int:
 	"""Fetch, and say what that brought in.
 
 	`jj git fetch` has no dry run and needs none of its own: it writes remote-tracking refs and
@@ -198,7 +196,7 @@ def command_pull(name: str | None, dry: bool = False) -> int:
 	divergence the last fetch left, saying which it is rather than passing stale state off as
 	current.
 	"""
-	for repo in selected(name):
+	for repo in selected(name, everything):
 		if not is_repository(repo):
 			print(f"{label(repo)}: not a repository, skipped")
 			continue
@@ -220,12 +218,12 @@ def command_pull(name: str | None, dry: bool = False) -> int:
 	return 0
 
 
-def command_push(name: str | None, dry: bool = False) -> int:
+def command_push(name: str | None, dry: bool = False, everything: bool = False) -> int:
 	"""Push main wherever origin is behind it. A repository whose origin has no main yet -- a new
 	project cloned from an empty remote -- is behind by all of it: `main@origin` names nothing
 	there and is an error, where `remote_bookmarks()` is an empty set and the range is the whole
 	history. The root commit is jj's, not the project's, so it is never counted."""
-	for repo in selected(name):
+	for repo in selected(name, everything):
 		if not is_repository(repo):
 			continue
 		result = jj(
@@ -309,7 +307,7 @@ def summary(verb: str, skipped: list[str], failed: list[str]) -> None:
 		print(f"failed: {', '.join(failed)}")
 
 
-def command_dispatch(verb: str, name: str | None, dry: bool = False) -> int:
+def command_dispatch(verb: str, name: str | None, dry: bool = False, everything: bool = False) -> int:
 	"""Each selected repository's own task for this verb, one after another and on past a failure.
 
 	**What a verb does is the repository's to say; this only decides where to look.** A
@@ -319,7 +317,7 @@ def command_dispatch(verb: str, name: str | None, dry: bool = False) -> int:
 	printing the task it would run. See spec/architecture/repos.md, "One verb, optionally one name".
 	"""
 	skipped, failed = [], []
-	for repo in selected(name):
+	for repo in selected(name, everything):
 		if not declares(repo, verb):
 			skipped.append(label(repo))
 			continue
@@ -351,7 +349,7 @@ def restore(repo: pathlib.Path, before: str, paths: list[str]) -> None:
 	jj("restore", "--from", before, *map(literal, paths), cwd=repo)
 
 
-def command_update(name: str | None, dry: bool = False, major: bool = False) -> int:
+def command_update(name: str | None, dry: bool = False, major: bool = False, everything: bool = False) -> int:
 	"""Each repository's own `update`, kept only where that repository's own `verify` still passes.
 
 	Moving is the repository's, because only it knows its resolvers, its pins and anything no
@@ -363,7 +361,7 @@ def command_update(name: str | None, dry: bool = False, major: bool = False) -> 
 	"""
 	skipped, failed, reverted = [], [], []
 	flags = (["--dry-run"] if dry else []) + (["--major"] if major else [])
-	for repo in selected(name):
+	for repo in selected(name, everything):
 		if not declares(repo, "update"):
 			skipped.append(label(repo))
 			continue
@@ -528,13 +526,14 @@ def command_check() -> int:
 
 
 def main(argv: list[str]) -> int:
-	"""`<action> [name] [--dry-run]`, the flag anywhere -- it arrives last through mise.
+	"""`<action> [name | --all] [--dry-run]`, the flags anywhere -- they arrive last through mise.
 
 	`publish` is the exception: its flags belong to the project being published, so anything this
 	does not recognize is collected rather than refused, and handed on unread.
 	"""
 	dry = False
 	major = False
+	everything = False
 	rest = []
 	unknown = []
 	for argument in argv:
@@ -542,6 +541,8 @@ def main(argv: list[str]) -> int:
 			dry = True
 		elif argument == "--major":
 			major = True
+		elif argument in ("-a", "--all"):
+			everything = True
 		elif argument.startswith("-"):
 			unknown.append(argument)
 		else:
@@ -567,24 +568,26 @@ def main(argv: list[str]) -> int:
 		raise fail(f"{action} reads the whole registry and takes no name")
 	if major and action != "update":
 		raise fail("--major belongs to update; crossing a boundary is that command's decision to take")
+	if everything and action not in ("update", "fmt", "clean", "verify", "pull", "push"):
+		raise fail(f"--all belongs to the verbs that run across repositories; {action} is not one")
 	if action == "update":
-		return command_update(name, dry, major)
+		return command_update(name, dry, major, everything)
 	if action in ("fmt", "clean", "verify"):
-		return command_dispatch(action, name, dry)
+		return command_dispatch(action, name, dry, everything)
 	if action == "list":
 		return command_list()
 	if action == "clone":
 		return command_clone(name, dry)
 	if action == "pull":
-		return command_pull(name, dry)
+		return command_pull(name, dry, everything)
 	if action == "push":
-		return command_push(name, dry)
+		return command_push(name, dry, everything)
 	if action == "check":
 		# Reads and reports; there is nothing for a dry run to hold back.
 		return command_check()
 	raise fail(
 		"usage: repos list | clone | pull | push | fmt | update | clean | verify | publish | check"
-		"  [name] [--dry-run]"
+		"  [name | --all] [--dry-run]"
 	)
 
 
