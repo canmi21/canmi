@@ -10,6 +10,7 @@ let fits = (segment, ~file) => {
 let names = (~root): array<string> =>
   References.tracked(root)
   ->Array.map(path => Node.relative(root, path))
+  ->Array.filter(relative => !Layout.vendored(relative))
   ->Array.filterMap(relative => {
     let segments = relative->String.split("/")
     let last = segments->Array.length - 1

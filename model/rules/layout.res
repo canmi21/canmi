@@ -29,6 +29,10 @@ let configuration = /\.config\.[a-z]+$/
 let rulesHome = "docs"
 let retired = "spec"
 
+/** Another project's files, kept as written, docs/vendor.md; names and shape pass them by. */
+let vendor = "vendor"
+let vendored = path => path->String.split("/")->Array.includes(vendor)
+
 /** A repository kept as it was until it is pushed and deleted, which no rule over prose reads. */
 let archives = ["console"]
 

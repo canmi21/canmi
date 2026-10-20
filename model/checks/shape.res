@@ -83,7 +83,7 @@ let problems = (files: array<string>, ~cargo: option<string>): array<string> => 
 let main = (~root): array<string> => {
   let cargo = Node.join([root, "Cargo.toml"])
   problems(
-    Lines.tracked(root),
+    Lines.tracked(root)->Array.filter(path => !Layout.vendored(path)),
     ~cargo=Node.existsSync(cargo) ? Some(Node.readFileSync(cargo)) : None,
   )
 }
