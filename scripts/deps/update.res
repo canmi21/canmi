@@ -5,7 +5,10 @@
  * way tools do". `--dry-run` says what would move and writes nothing.
  */
 let args = Node.args()
-let dry = args->Array.includes("--dry-run") || args->Array.includes("-n") || Node.envIs("usage_dry_run", "true")
+let dry =
+  args->Array.includes("--dry-run") ||
+  args->Array.includes("-n") ||
+  Node.envIs("usage_dry_run", "true")
 let major = args->Array.includes("--major") || Node.envOn("usage_major")
 let n = dry ? ["--dry-run"] : []
 let toolName = /^([a-z0-9-]*) *=/
@@ -38,7 +41,10 @@ Console.log(`$ mise upgrade ${own->Array.join("\n")}${dry ? " --dry-run" : ""}`)
 Node.run("mise", Array.concat(Array.concat(["upgrade"], own), n))->ignore
 Console.log("")
 if major {
-  if Node.spawnSync("sh", ["-c", "command -v cargo-upgrade"], {stdio: "ignore"}).status == Nullable.make(0) {
+  if (
+    Node.spawnSync("sh", ["-c", "command -v cargo-upgrade"], {stdio: "ignore"}).status ==
+      Nullable.make(0)
+  ) {
     Node.run("cargo", Array.concat(["upgrade", "--incompatible"], n))->ignore
   } else {
     Console.log("cargo-edit is not installed: the crates' majors were not checked")
@@ -62,14 +68,15 @@ let updated = Node.spawnSync(
   {encoding: "utf8", maxBuffer: 268435456},
 )
 let out =
-  `${updated.stdout->Nullable.getOr("")}${updated.stderr->Nullable.getOr("")}`->String.replaceRegExp(
-    /\n$/,
-    "",
-  )
+  `${updated.stdout->Nullable.getOr("")}${updated.stderr->Nullable.getOr(
+      "",
+    )}`->String.replaceRegExp(/\n$/, "")
 Console.log(out)
 if updated.status != Nullable.make(0) {
   if !(out->String.includes("ERR_PNPM_NO_MATURE_MATCHING_VERSION")) {
     Node.exit(1)
   }
-  Console.log("held by the supply-chain delay, nothing moved in the pnpm half; run again once it has aged")
+  Console.log(
+    "held by the supply-chain delay, nothing moved in the pnpm half; run again once it has aged",
+  )
 }

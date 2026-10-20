@@ -82,9 +82,11 @@ let run = (~cwd=?, command, commandArgs) =>
 
 /** What a command wrote to stdout, as text, or nothing where it wrote none. */
 let output = (~cwd=?, command, commandArgs) =>
-  spawnSync(command, commandArgs, {?cwd, encoding: "utf8", maxBuffer: 268435456}).stdout->Nullable.getOr(
-    "",
-  )
+  spawnSync(
+    command,
+    commandArgs,
+    {?cwd, encoding: "utf8", maxBuffer: 268435456},
+  ).stdout->Nullable.getOr("")
 
 @module("node:path") external isAbsolute: string => bool = "isAbsolute"
 
@@ -97,3 +99,19 @@ type decoder
 type decoderOptions = {fatal: bool, ignoreBOM: bool}
 @new external textDecoder: (string, decoderOptions) => decoder = "TextDecoder"
 @send external decode: (decoder, bytes) => string = "decode"
+
+@module("node:path") external extname: string => string = "extname"
+@module("node:os") external tmpdir: unit => string = "tmpdir"
+@module("node:fs") external mkdtempSync: string => string = "mkdtempSync"
+@module("node:util") external isDeepStrictEqual: ('a, 'a) => bool = "isDeepStrictEqual"
+@val external onExit: (@as("exit") _, unit => unit) => unit = "process.on"
+
+type bytesOptions = {cwd?: string, maxBuffer?: int, input?: bytes}
+@module("node:child_process")
+external execBytes: (string, array<string>, bytesOptions) => bytes = "execFileSync"
+
+/** The environment, as a copy a child process may be given. */
+@val external envCopy: (@as(json`{}`) _, Dict.t<string>) => Dict.t<string> = "Object.assign"
+type envOptions = {cwd?: string, env?: Dict.t<string>, stdio?: string}
+@module("node:child_process")
+external spawnWithEnv: (string, array<string>, envOptions) => spawned = "spawnSync"

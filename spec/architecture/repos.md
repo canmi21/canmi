@@ -125,15 +125,15 @@ one lockfile, at its root, and web's whole anchor list is byte-identical either 
 invisible because the input that separates them had never been written, which is the argument for
 one implementation rather than two that look alike.
 
-**A task two repositories run is written once, here, in TypeScript** -- RFC 17b3o. The deploy
-pipeline was first: `.mise/tasks/change/` holds what a change reaches -- `graph.ts`,
-`fingerprint.ts`, `resolved.ts` -- and the two engines built on it, `verify.ts` and
-`deployable.ts`; `.mise/tasks/deploy/` holds `base.ts`, the commit a push's Deploy run plans
-against, and `artifact.ts`, which puts a run's artifact in the bucket. A repository keeps a file of
-its own only for what is its own: its `verify.ts` names its gates and what its files reach that no
-graph shows, its `deployable.ts` whether it builds images, Workers or both, and its `workspace.ts`
-where its apps and packages sit. mise names a file task for its file without the extension, so
-`verify.ts` is `mise run verify`, and `check` finds it the same way.
+**A task two repositories run is written once, here, in ReScript under `scripts/`** -- RFC 17b3o.
+`scripts/change/` holds what a change reaches -- `graph`, `fingerprint`, `resolved` -- and the two
+engines built on it, `verify` and `deployable`; `.mise/tasks/deploy/` holds `base.ts`, the commit a
+push's Deploy run plans against, and `artifact.ts`, which puts a run's artifact in the bucket. **A
+repository declares what is its own as data, in `workspace.toml` at its root** -- where its apps
+and packages sit, its gates and what its files reach that no graph shows, whether it builds images,
+Workers or both -- read by `scripts/change/project.res`, which refuses a key it does not know. Its
+`mise.toml` reaches each script as `node {{env.WORKSPACE}}/scripts/....res.mjs`, depending on
+`//:build`, since what ReScript compiles is never committed.
 
 **The workspace checks what it holds**: `check-tasks` type-checks `.mise/tasks` against the
 workspace's `tsconfig.json` and runs its tests, and is in its `verify`. A repository's test of its
@@ -356,8 +356,8 @@ stylesheet built every crate. So what a change touched decides what runs.
 What it touched is the working copy's own change -- what is about to be committed -- or, with
 `--since REV`, everything after that revision. `--all` runs every gate, and so does `mise run
 audit`, which asks about the whole tree by definition. `--dry-run` prints the choice; `--files`
-names files to ask about without changing them. Each repository's `.mise/tasks/verify.ts` is its
-mapping, over the workspace's engine in `.mise/tasks/change/verify.ts`, and these are the rules every one keeps:
+names files to ask about without changing them. Each repository's `[verify]` in `workspace.toml` is
+its mapping, over the workspace's engine in `scripts/change/verify.res`, and these are the rules every one keeps:
 
 - **Three gates always run** -- secrets, references, comment lengths. Each is
   whole-tree and takes seconds, and a reference can break from anywhere.

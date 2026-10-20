@@ -44,7 +44,7 @@ describe("a comment", () => {
 
 describe("a Python file's docstrings", () => {
   let dir = ref("")
-  beforeEach(() => dir := mkdtempSync(Node.join([tmpdir(), "comments-"])))
+  beforeEach(() => dir := Node.mkdtempSync(Node.join([Node.tmpdir(), "comments-"])))
   afterEach(() => Node.rmSync(dir.contents, {recursive: true, force: true}))
 
   test("are found by Python's parser: the module's opens the file, a function's does not", () => {

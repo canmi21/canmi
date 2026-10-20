@@ -23,7 +23,8 @@ let letter = /[\p{L}\p{N}]/u
 let leadingStars = /^\*+/
 let lineEnding = /\r\n?/g
 
-let startsWithAny = (text, prefixes) => prefixes->Array.some(prefix => text->String.startsWith(prefix))
+let startsWithAny = (text, prefixes) =>
+  prefixes->Array.some(prefix => text->String.startsWith(prefix))
 
 /** The line with every link taken off it; one inside a backtick span is a token, and stays. */
 let unlinked = (line: string): string =>
@@ -153,7 +154,8 @@ let docstringSpans = (paths: array<string>): Map.t<string, array<span>> =>
 let linesOf = (path: string): option<array<string>> =>
   try {
     // Newlines read as Python's text mode reads them, a byte-order mark kept as a character.
-    let text = Node.textDecoder("utf-8", {fatal: true, ignoreBOM: true})->Node.decode(Node.readBytes(path))
+    let text =
+      Node.textDecoder("utf-8", {fatal: true, ignoreBOM: true})->Node.decode(Node.readBytes(path))
     Some(text->String.replaceRegExp(lineEnding, "\n")->String.split("\n"))
   } catch {
   | _ => None
@@ -219,13 +221,7 @@ let blocks = (lines: array<string>, ~spans: array<span>=[]): array<block> =>
     }
     found->Array.toSorted(((a1, a2, a3, a4), (b1, b2, b3, b4)) =>
       Int.toFloat(
-        a1 != b1
-          ? a1 - b1
-          : a2 != b2
-          ? a2 - b2
-          : a3 != b3
-          ? a3 - b3
-          : (a4 ? 1 : 0) - (b4 ? 1 : 0),
+        a1 != b1 ? a1 - b1 : a2 != b2 ? a2 - b2 : a3 != b3 ? a3 - b3 : (a4 ? 1 : 0) - (b4 ? 1 : 0),
       )
     )
   }
@@ -240,7 +236,9 @@ let files = (root, given) =>
         {encoding: "utf8", maxBuffer: 268435456},
       )
       ->String.split("\x00")
-      ->Array.filter(name => name != "" && !(skipped->Array.some(suffix => name->String.endsWith(suffix))))
+      ->Array.filter(name =>
+        name != "" && !(skipped->Array.some(suffix => name->String.endsWith(suffix)))
+      )
       ->Array.map(name => Node.join([root, name]))
 
 /** The gate: every block inside its limits, or each that is not, by where and by how much. */
@@ -292,9 +290,9 @@ let main = (~root=Node.cwd(), ~given=Node.args()) => {
     Node.exit(1)
   }
   Console.log(
-    `comments OK: ${Int.toString(counted.contents)} blocks inside ${Int.toString(bodyLimit)}/${Int.toString(
-        openingLimit,
-      )} body lines and ${Int.toString(width)} columns`,
+    `comments OK: ${Int.toString(counted.contents)} blocks inside ${Int.toString(
+        bodyLimit,
+      )}/${Int.toString(openingLimit)} body lines and ${Int.toString(width)} columns`,
   )
 }
 

@@ -6,7 +6,10 @@
 let defaultGlob = "**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx,css,json,jsonc,md,svelte}"
 
 let args = Node.args()
-let dry = args->Array.includes("--dry-run") || args->Array.includes("-n") || Node.envIs("usage_dry_run", "true")
+let dry =
+  args->Array.includes("--dry-run") ||
+  args->Array.includes("-n") ||
+  Node.envIs("usage_dry_run", "true")
 let glob = switch args->Array.indexOf("--glob") {
 | -1 => defaultGlob
 | at => args[at + 1]->Option.getOr(defaultGlob)
@@ -23,4 +26,7 @@ let step = (command, commandArgs) => {
 if Node.existsSync("Cargo.toml") {
   step("cargo", dry ? ["fmt", "--all", "--check", "--message-format", "short"] : ["fmt", "--all"])
 }
-step("oxfmt", [dry ? ["--list-different"] : [], ["--no-error-on-unmatched-pattern", glob]]->Array.flat)
+step(
+  "oxfmt",
+  [dry ? ["--list-different"] : [], ["--no-error-on-unmatched-pattern", glob]]->Array.flat,
+)

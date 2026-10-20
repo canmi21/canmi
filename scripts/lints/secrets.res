@@ -99,8 +99,7 @@ let main = (~root=Node.cwd()) => {
       Console.error("Plaintext secrets found:\n")
       problems->Array.forEach(problem => Console.error(`  ${problem}`))
       Console.error(
-        "\nEncrypt with `sops encrypt -i <file>` before committing. If a real credential was ever " ++
-        "written here in plaintext, rotate it -- removing the file does not remove it from history.",
+        "\nEncrypt with `sops encrypt -i <file>` before committing. If a real credential was ever " ++ "written here in plaintext, rotate it -- removing the file does not remove it from history.",
       )
       Node.exit(1)
     }

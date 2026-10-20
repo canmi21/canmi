@@ -5,7 +5,6 @@
  * node_modules only what tools dropped there goes; `.wrangler/state` and `.vercel`'s link stay, so
  * only `.wrangler/tmp` and `.vercel/output` go. Arguments name further caches, from the root.
  */
-
 /** What `find` lists from `root`, a path a line, as the shell's `find` loops read them. */
 let find = (root, findArgs) =>
   Node.execFileSync(
@@ -22,7 +21,9 @@ let dropped = [".vite", ".vite-temp", ".cache", ".vitest", ".svelte2tsx-language
 
 /** `-name a -o -name b ...` for each of `names`. */
 let anyName = names =>
-  names->Array.flatMapWithIndex((name, index) => index == 0 ? ["-name", name] : ["-o", "-name", name])
+  names->Array.flatMapWithIndex((name, index) =>
+    index == 0 ? ["-name", name] : ["-o", "-name", name]
+  )
 
 /** Every path a tool may have written, in the order the shell version found them. */
 let candidates = (root, ~extra=[]) => {
@@ -37,20 +38,25 @@ let candidates = (root, ~extra=[]) => {
     ]->Array.flat,
   )
   let installed = find(root, [prune([]), ["-name", "node_modules", "-prune", "-print"]]->Array.flat)
-  let inside =
-    installed->Array.flatMap(one =>
-      Node.lstatSync(Node.join([root, one]))->Node.statsIsSymbolicLink
-        ? []
-        : dropped
-          ->Array.map(cache => `${one}/${cache}`)
-          ->Array.filter(path =>
-            Node.stat(Node.join([root, path]))->Option.mapOr(false, stats => stats->Node.statsIsDirectory)
+  let inside = installed->Array.flatMap(one =>
+    Node.lstatSync(Node.join([root, one]))->Node.statsIsSymbolicLink
+      ? []
+      : dropped
+        ->Array.map(cache => `${one}/${cache}`)
+        ->Array.filter(path =>
+          Node.stat(Node.join([root, path]))->Option.mapOr(
+            false,
+            stats => stats->Node.statsIsDirectory,
           )
-    )
+        )
+  )
   let below = (name, keep) =>
     find(
       root,
-      [prune(["-o", "-name", "node_modules"]), ["-type", "d", "-name", name, "-prune", "-print"]]->Array.flat,
+      [
+        prune(["-o", "-name", "node_modules"]),
+        ["-type", "d", "-name", name, "-prune", "-print"],
+      ]->Array.flat,
     )->Array.map(directory => `${directory}/${keep}`)
   [
     made,
@@ -72,20 +78,29 @@ let size = (root, path) =>
 
 /** The task: `clean [--dry-run] [extra cache...]`, from the repository's root. */
 let main = (~root=Node.cwd(), ~args=Node.args()) => {
-  let dry = args->Array.includes("--dry-run") || args->Array.includes("-n") || Node.envIs("usage_dry_run", "true")
+  let dry =
+    args->Array.includes("--dry-run") ||
+    args->Array.includes("-n") ||
+    Node.envIs("usage_dry_run", "true")
   let extra = args->Array.filter(arg => !(arg->String.startsWith("-")))
+
   // cargo has nothing to clean, and fails, where there is no crate.
   if !Node.existsSync(Node.join([root, "Cargo.toml"])) {
     ()
   } else if dry {
-    Console.log(`would run cargo clean, ${Node.existsSync(Node.join([root, "target"])) ? size(root, "target") : ""}`)
+    Console.log(
+      `would run cargo clean, ${Node.existsSync(Node.join([root, "target"]))
+          ? size(root, "target")
+          : ""}`,
+    )
   } else if Node.run(~cwd=root, "cargo", ["clean"]) != 0 {
     Node.exit(1)
   }
   let found = ref(false)
   candidates(root, ~extra)->Array.forEach(path =>
     if Node.existsSync(Node.join([root, path])) {
-      let ignored = Node.spawnSync("git", ["check-ignore", "-q", path], {cwd: root}).status == Nullable.make(0)
+      let ignored =
+        Node.spawnSync("git", ["check-ignore", "-q", path], {cwd: root}).status == Nullable.make(0)
       let tracked = Node.output(~cwd=root, "git", ["ls-files", "--", path])->String.trim != ""
       if ignored && !tracked {
         found := true

@@ -18,6 +18,8 @@ describe("a version", () => {
 
   test("allowed at two majors is what versions.toml says, with its reason", () => {
     let text = "[several]\n# why\n\"@types/node\" = \"the \\\"types\\\" lag\"\nvite = \"two\"\n[other]\nx = \"y\"\n"
-    expect(Outdated.allowed(text))->toEqual(Map.fromArray([("@types/node", "the \"types\" lag"), ("vite", "two")]))
+    expect(Outdated.allowed(text))->toEqual(
+      Map.fromArray([("@types/node", "the \"types\" lag"), ("vite", "two")]),
+    )
   })
 })

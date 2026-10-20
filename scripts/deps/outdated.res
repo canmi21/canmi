@@ -108,23 +108,25 @@ let held = root => {
         | Some(Object(entries)) =>
           entries
           ->Dict.toArray
-          ->Array.forEach(((name, info)) => {
-            let version = switch info {
-            | Object(info) =>
-              switch info->Dict.get("version") {
-              | Some(String(version)) => version
+          ->Array.forEach(
+            ((name, info)) => {
+              let version = switch info {
+              | Object(info) =>
+                switch info->Dict.get("version") {
+                | Some(String(version)) => version
+                | _ => ""
+                }
               | _ => ""
               }
-            | _ => ""
-            }
-            if version != "" && !(local->RegExp.test(version)) {
-              let found = versions->Map.get(name)->Option.getOr(Map.make())
-              versions->Map.set(name, found)
-              let holders = found->Map.get(version)->Option.getOr(Set.make())
-              found->Map.set(version, holders)
-              holders->Set.add(who)
-            }
-          })
+              if version != "" && !(local->RegExp.test(version)) {
+                let found = versions->Map.get(name)->Option.getOr(Map.make())
+                versions->Map.set(name, found)
+                let holders = found->Map.get(version)->Option.getOr(Set.make())
+                found->Map.set(version, holders)
+                holders->Set.add(who)
+              }
+            },
+          )
         | _ => ()
         }
       )
@@ -225,9 +227,10 @@ let report = (root: string, names: bool): array<string> => {
         "Out of date -- the newest the workspace holds is behind the registry:",
         "",
       ])
-      let width = behind->Array.reduce(0, (widest, (name, _, _, _)) =>
-        Math.Int.max(widest, name->String.length)
-      )
+      let width =
+        behind->Array.reduce(0, (widest, (name, _, _, _)) =>
+          Math.Int.max(widest, name->String.length)
+        )
       behind->Array.forEach(((name, have, latest, who)) =>
         lines->Array.push(
           `  ${name->String.padEnd(width, " ")}  ${have} -> ${latest}   (${who->Array.join(", ")})`,
@@ -254,7 +257,9 @@ let report = (root: string, names: bool): array<string> => {
       | Some(why) =>
         lines->Array.pushMany([
           "",
-          `allowed at several majors: ${name}\n    ${copies->Array.join("\n    ")}\n    because ${why}`,
+          `allowed at several majors: ${name}\n    ${copies->Array.join(
+              "\n    ",
+            )}\n    because ${why}`,
         ])
       | None =>
         warned := warned.contents + 1
