@@ -127,8 +127,8 @@ one implementation rather than two that look alike.
 
 **A task two repositories run is written once, here, in ReScript under `scripts/`** -- RFC 17b3o.
 `scripts/change/` holds what a change reaches -- `graph`, `fingerprint`, `resolved` -- and the two
-engines built on it, `verify` and `deployable`; `.mise/tasks/deploy/` holds `base.ts`, the commit a
-push's Deploy run plans against, and `artifact.ts`, which puts a run's artifact in the bucket. **A
+engines built on it, `verify` and `deployable`; `scripts/deploy/` holds `base`, the commit a
+push's Deploy run plans against, and `artifact`, which puts a run's artifact in the bucket. **A
 repository declares what is its own as data, in `workspace.toml` at its root** -- where its apps
 and packages sit, its gates and what its files reach that no graph shows, whether it builds images,
 Workers or both -- read by `scripts/change/project.res`, which refuses a key it does not know. Its

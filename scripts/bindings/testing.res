@@ -32,3 +32,23 @@ let temporaryRoot = prefix => {
   afterEach(() => Node.rmSync(root.contents, {recursive: true, force: true}))
   root
 }
+@send external toThrow: (expectation<unit => 'a>, string) => unit = "toThrow"
+@send external toBeGreaterThan: (expectation<float>, float) => unit = "toBeGreaterThan"
+@get external rejects: expectation<promise<'a>> => expectation<promise<'a>> = "rejects"
+@send external toThrowAsync: (expectation<promise<'a>>, string) => promise<unit> = "toThrow"
+
+type server
+type serverRequest
+type serverResponse
+type serverAddress = {port: int}
+@module("node:http")
+external createServer: ((serverRequest, serverResponse) => unit) => server = "createServer"
+@send external listen: (server, int, unit => unit) => unit = "listen"
+@send external serverAddress: server => serverAddress = "address"
+@send external close: (server, unit => unit) => unit = "close"
+@get external requestUrl: serverRequest => string = "url"
+@get external requestMethod: serverRequest => string = "method"
+@send external writeHead: (serverResponse, int, Dict.t<string>) => serverResponse = "writeHead"
+@send external endResponse: (serverResponse, string) => unit = "end"
+@module("vitest") external testAsync: (string, unit => promise<unit>) => unit = "test"
+@module("vitest") external afterEachAsync: (unit => promise<unit>) => unit = "afterEach"
