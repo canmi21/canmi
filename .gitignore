@@ -1,16 +1,9 @@
-# Every directory under repos/ is a separate repository, cloned into place. jj stops at a
-# nested .jj or .git on its own, so this entry is not for jj -- it is for git, which would
-# otherwise turn one into a submodule the moment `git add -A` runs in this colocated repo.
-# See spec/architecture/repos.md.
+# Each repository under repos/ is its own, never a submodule; registry.toml is tracked.
 repos/*/
 
-# The formatter `jj fix` runs, the TOML reader the shared task libraries parse with, and the tools
-# that check those libraries.
 node_modules/
-
-# OS
 .DS_Store
 
-# Python bytecode, written beside the mise task scripts when they run.
+# What the Python task scripts write as they run.
 __pycache__/
 *.pyc

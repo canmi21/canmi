@@ -1,24 +1,10 @@
-# rustfmt defaults, with two exceptions that are load-bearing rather than stylistic.
+# rustfmt's defaults, held to .editorconfig, which it does not read.
 
-# rustfmt does not infer the edition from Cargo.toml when invoked directly, and its
-# built-in default is still 2015. Without this, formatting silently uses the wrong
-# grammar.
+# Run outside cargo, its default edition is still 2015.
 edition = "2024"
-
-# Default is "Auto". .editorconfig pins end_of_line = lf, and rustfmt does not read
-# .editorconfig, so this has to be stated here to keep the two in agreement.
 newline_style = "Unix"
-
-# Tabs at width 2, matching .editorconfig's [*] section. rustfmt's own defaults are
-# 4 spaces with no hard tabs, so both keys are required to bring it in line; rustfmt
-# does not read .editorconfig itself.
 hard_tabs = true
 tab_spaces = 2
 
-# rustfmt keeps a set of width thresholds below max_width -- struct literals at 18 columns,
-# function call arguments at 60, arrays, chains -- and breaks a construct across lines once it
-# passes its own one. "Max" raises every threshold to max_width, so anything that fits on a
-# line stays on it. It arrived with the governor crate, which had it and nothing else did; the
-# choice was to drop it there or adopt it everywhere, and one rule set for every repository is
-# the point of this file.
+# Whatever fits within max_width stays on one line.
 use_small_heuristics = "Max"

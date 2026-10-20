@@ -1,7 +1,5 @@
 {
-	// The workspace's own TypeScript: the task libraries under .mise/tasks every repository's tasks
-	// and CI run. Node runs each file as written, stripping its types, so nothing is emitted. See
-	// spec/toolchain.md, "A script is TypeScript, run by node as it is written".
+	// The task libraries under .mise/tasks, which node runs as written, so nothing is emitted.
 	"compilerOptions": {
 		"target": "es2023",
 		"module": "preserve",

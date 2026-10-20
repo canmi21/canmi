@@ -1,14 +1,12 @@
 {
-	// Schema is fetched over HTTP rather than from ./node_modules, because oxlint is
-	// installed through mise (see mise.toml) and there is no local install to point at.
+	// oxlint comes from mise, so its schema is fetched rather than read from node_modules.
 	"$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
 	"plugins": ["typescript", "unicorn", "import", "oxc"],
 	"categories": {
 		"correctness": "error",
 		"suspicious": "warn",
 		"perf": "warn",
-		// style, pedantic, and nursery stay off. style overlaps oxfmt outright; the other
-		// two are opinion rather than defect. See spec/lint-format.md.
+		// style overlaps oxfmt; pedantic and nursery are opinion. See spec/lint-format.md.
 		"style": "off",
 		"pedantic": "off",
 		"nursery": "off"
@@ -20,35 +18,21 @@
 		"**/.svelte-kit/**",
 		"**/.wrangler/**",
 		"**/worker-configuration.d.ts",
-		// Source taken from another project verbatim is theirs to lint; see repos/seam/vendor/kit/VENDOR.md.
+		// Vendored source is its authors' to lint, spec/vendor.md.
 		"**/vendor/**",
 		"data/**"
 	],
 	"rules": {
-		// Formatting belongs to oxfmt, so the linter does not police it. Verified: oxfmt
-		// rewrites U+00A0 to a plain space on its own, which makes this rule pure
-		// duplication. See spec/lint-format.md.
+		// oxfmt rewrites U+00A0 itself.
 		"no-irregular-whitespace": "off",
 
-		// Paraglide exports each message under its literal dotted key, so reading one is a
-		// computed namespace access this rule cannot follow. The check it performs is already
-		// done, and done better, by the compiler: verified that `m['notice.polised']` fails
-		// type checking with "Property 'notice.polised' does not exist ... Did you mean
-		// 'notice.polished'?", naming the typo the linter could only say it was unable to
-		// validate. Same duplication argument as the rules above. See
-		// repos/web/spec/locale/interface.md, "Keys are dotted, and read off the namespace".
+		// Paraglide's dotted keys are checked by the compiler, which names the typo.
 		"import/namespace": "off",
 
-		// Side-effect imports are load-bearing here: `import '@canmi/tokens/colors.css'`
-		// is how every app pulls in styles. Verified: with this rule on, oxlint reports
-		// each one of them. Turning it off is not a preference, it is required by the
-		// Vite + Tailwind setup.
+		// A side-effect CSS import is how every app loads its styles.
 		"import/no-unassigned-import": "off",
 
-		// Redundant rather than wrong. Verified: with this off, `import {} from './x'`
-		// is still caught by import/no-empty-named-blocks, which is active. Two rules
-		// reporting one defect is the same duplication problem as lint overlapping fmt,
-		// so the narrower one stays off. See spec/lint-format.md.
+		// import/no-empty-named-blocks reports the same defect.
 		"unicorn/require-module-specifiers": "off"
 	},
 	"env": {
