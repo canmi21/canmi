@@ -80,3 +80,62 @@ describe("drift", () => {
     )->toEqual([])
   })
 })
+
+describe("a deferred item", () => {
+  let rules: array<Rule.t> = [
+    {name: "rules-in-docs", says: "", doc: "", held: Check("shape")},
+    {name: "drifted", says: "", doc: "", held: Check("drift")},
+  ]
+  let item: Deferred.item = {
+    id: "spec-to-docs",
+    what: "",
+    repos: ["seam"],
+    until: Author,
+    waives: ["rules-in-docs"],
+  }
+
+  test("names what is there, and waives only what a part can", () => {
+    let statuses = Dict.fromArray([("p992n", "accepted")])
+    expect(
+      Waiting.problemsIn(
+        [item, {...item, until: Closes("p992n")}],
+        ~repos=["seam"],
+        ~rules,
+        ~statuses,
+      ),
+    )->toEqual(["deferred spec-to-docs: its id is taken by another item"])
+    expect(
+      Waiting.problemsIn(
+        [
+          {
+            ...item,
+            id: "Bad id",
+            repos: ["gone"],
+            until: Closes("zzzzz"),
+            waives: ["drifted", "none"],
+          },
+        ],
+        ~repos=["seam"],
+        ~rules,
+        ~statuses,
+      ),
+    )->toEqual([
+      "deferred Bad id: its id is not lowercase words joined by hyphens",
+      "deferred Bad id: gone is not in repos/registry.toml",
+      "deferred Bad id: waives drifted, held by no part that can waive: shape",
+      "deferred Bad id: waives none, which is no rule",
+      "deferred Bad id: waits on zzzzz, which is no RFC",
+    ])
+  })
+
+  test("waives its rule over its repositories alone", () => {
+    expect(Waiting.waiverIn([item], ~repo="seam", ~rule="rules-in-docs"))->toEqual(
+      Some("spec-to-docs"),
+    )
+    expect(Waiting.waiverIn([item], ~repo="apps/still", ~rule="rules-in-docs"))->toEqual(None)
+    expect(Waiting.waiverIn([item], ~repo="seam", ~rule="tree-wide"))->toEqual(None)
+    expect(Shape.ruled(["spec/a.md"], ~cargo=None))->toEqual([
+      ("rules-in-docs", "spec/: the rules are docs/ now"),
+    ])
+  })
+})

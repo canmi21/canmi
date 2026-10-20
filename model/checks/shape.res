@@ -21,8 +21,8 @@ let parentOf = path => {
   parts->Array.length == 1 ? "." : parts->Array.slice(~start=0, ~end=-1)->Array.join("/")
 }
 
-/** Every way the tracked `files` break the layout rules; `cargo` is the root Cargo.toml's text. */
-let problems = (files: array<string>, ~cargo: option<string>): array<string> => {
+/** Every way `files` break the layout rules, each by rule; `cargo` is the root Cargo.toml. */
+let ruled = (files: array<string>, ~cargo: option<string>): array<(string, string)> => {
   let tree = directories(files)
   let inside = path => tree->Dict.get(path)->Option.getOr([])
   let isPackage = path => Layout.manifests->Array.some(name => inside(path)->Array.includes(name))
@@ -35,9 +35,10 @@ let problems = (files: array<string>, ~cargo: option<string>): array<string> => 
     if path != "." {
       let count = inside(path)->Array.length
       if count > Layout.widest {
-        found->Array.push(
+        found->Array.push((
+          "tree-wide",
           `${path}/: ${Int.toString(count)} entries, past ${Int.toString(Layout.widest)}`,
-        )
+        ))
       }
       let parent = parentOf(path)
       let depth = if parent == "." {
@@ -49,9 +50,10 @@ let problems = (files: array<string>, ~cargo: option<string>): array<string> => 
       }
       depths->Dict.set(path, depth)
       if depth == Layout.deepest + 1 {
-        found->Array.push(
+        found->Array.push((
+          "tree-deep",
           `${path}/: ${Int.toString(depth)} deep, past ${Int.toString(Layout.deepest)}`,
-        )
+        ))
       }
     }
   )
@@ -61,29 +63,43 @@ let problems = (files: array<string>, ~cargo: option<string>): array<string> => 
       Layout.sources->Array.some(suffix => name->String.endsWith(suffix)) &&
       !(Layout.configuration->RegExp.test(name))
     ) {
-      found->Array.push(`${name}: a source file at the root, where configuration alone sits`)
+      found->Array.push((
+        "root-configuration",
+        `${name}: a source file at the root, where configuration alone sits`,
+      ))
     }
   )
   switch cargo {
   | Some(text) =>
     switch Toml.parse(text) {
     | JSON.Object(manifest) if manifest->Dict.get("package")->Option.isSome =>
-      found->Array.push("Cargo.toml: a [package] at the root, where a virtual manifest alone is")
+      found->Array.push((
+        "root-configuration",
+        "Cargo.toml: a [package] at the root, where a virtual manifest alone is",
+      ))
     | _ => ()
-    | exception _ => found->Array.push("Cargo.toml: does not parse")
+    | exception _ => found->Array.push(("root-configuration", "Cargo.toml: does not parse"))
     }
   | None => ()
   }
   if tree->Dict.get(Layout.retired)->Option.isSome {
-    found->Array.push(`${Layout.retired}/: the rules are ${Layout.rulesHome}/ now`)
+    found->Array.push((
+      "rules-in-docs",
+      `${Layout.retired}/: the rules are ${Layout.rulesHome}/ now`,
+    ))
   }
   found
 }
 
-let main = (~root): array<string> => {
+let problems = (files, ~cargo) => ruled(files, ~cargo)->Array.map(((_, says)) => says)
+
+/** A repository's findings over what version control keeps, its vendored source passed over. */
+let tagged = (~root): array<(string, string)> => {
   let cargo = Node.join([root, "Cargo.toml"])
-  problems(
+  ruled(
     Lines.tracked(root)->Array.filter(path => !Layout.vendored(path)),
     ~cargo=Node.existsSync(cargo) ? Some(Node.readFileSync(cargo)) : None,
   )
 }
+
+let main = (~root) => tagged(~root)->Array.map(((_, says)) => says)

@@ -11,8 +11,26 @@ RFC p992n, and [rfcs.md](rfcs.md) for the rest.
 | The long-term direction               | `roadmap.md`: a few lines, never detail, steps or a date |
 | An open question, a finding           | a `draft` RFC                                            |
 | Work decided and waiting, a milestone | an `accepted` RFC                                        |
+| Chores decided, waiting on a moment   | a deferred item, `model/plan/deferred.res`               |
 | What waits on what                    | `blocked-by` on the RFC that waits, by id                |
 | What to take up next                  | `mise run plan` in `repos/canmi/rfcs`, from the rest     |
+
+**What is not done is one of three, and each has one home.** Agreed with the author on 2026-10-20.
+
+- **Open** -- what is not decided: not yet discussed, or discussed without an end. It is a draft
+  RFC, or a row of a project's own checklist where it keeps one, as the platform does. Code that
+  waits on it is a `%todo("<id>")` or a `todo!("<id>")` naming it, and on nothing else.
+- **Deferred** -- what is decided and waits on a moment, with nothing left to argue: a repository
+  to split, a directory to rename, commits held back. Each is an item of `model/plan/deferred.res`,
+  waiting until an RFC lands or until the author says, and listed in red at the end of every
+  `check`, never failing it. One that needs an argument is an `accepted` RFC instead, and nothing
+  decided is stubbed in code.
+- **Not done at all** -- a rule, or a `declined` RFC; never a list of things to do.
+
+**A deferred item may waive a rule of the workspace's over the repositories it names**, so a
+violation already known and already scheduled is listed rather than refusing every commit there;
+the waiver ends with the item. Only a part whose findings name the rule they break can waive one,
+`Waiting.waivable`.
 
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain

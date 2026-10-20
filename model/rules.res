@@ -8,4 +8,5 @@ let all: array<Rule.t> = [
   Format.rules,
   Voice.rules,
   Readme.rules,
+  Planning.rules,
 ]->Array.flat

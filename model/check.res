@@ -7,8 +7,15 @@
 let root = Registry.root
 let python = "/usr/bin/python3"
 
-/** A Soft part's findings are warnings, failing only under AUDIT, as soft rules are read. */
-type part = Script(unit => int) | Found(unit => array<string>) | Soft(unit => array<string>)
+/**
+ * A Soft part's findings are warnings, failing only under AUDIT, as soft rules are read; a Waivable
+ * part's each name the rule broken, passed over in the repository a deferred item waives it for.
+ */
+type part =
+  | Script(unit => int)
+  | Found(unit => array<string>)
+  | Soft(unit => array<string>)
+  | Waivable(string, unit => array<(string, string)>)
 
 let report = found => {
   found->Array.forEach(line => Console.log(`  x ${line}`))
@@ -92,7 +99,8 @@ let parts: array<(string, part)> = [
   ("words", Found(() => Words.main(~root))),
   ("pins", Found(() => Pins.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
-  ("shape", Found(() => Shape.main(~root))),
+  ("shape", Waivable("workspace", () => Shape.tagged(~root))),
+  ("deferred", Found(Waiting.problems)),
   ("tasks", Found(() => Tasks.main(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
 ]
@@ -135,11 +143,21 @@ let outcome = part =>
       Console.log("  no drift")
     }
     warned != [] && Node.envIs("AUDIT", "1") ? 1 : 0
+  | Waivable(repo, found) =>
+    let kept = found()->Array.filter(((rule, says)) =>
+      switch Waiting.waiver(~repo, ~rule) {
+      | Some(id) =>
+        Console.log(`  waived by deferred ${id}: ${says}`)
+        false
+      | None => true
+      }
+    )
+    report(kept->Array.map(((_, says)) => says))
   }
 
 /** What the workspace holds over every repository below it, run on one: each part a name. */
 let over = (repo): array<(string, part)> => [
-  ("shape", Found(() => Shape.main(~root=repo))),
+  ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
   ("tasks", Found(() => Tasks.main(~root=repo))),
   ("names", Found(() => Filenames.names(~root=repo))),
   ("commits", Found(() => commits(repo))),
@@ -152,6 +170,11 @@ let repository = (repo): int => {
     Console.log(`\n=== ${Registry.label(repo)} ${name}, the workspace's ===`)
     outcome(part) != 0
   })
+  let waiting = Waiting.shown(~repo=Some(Registry.label(repo)))
+  if waiting != [] {
+    Console.log("")
+    waiting->Array.forEach(line => Console.log(line))
+  }
   failed->Array.length > 0 ? 1 : 0
 }
 
@@ -187,6 +210,7 @@ let run = (named: array<string>): int => {
         owed,
       )} pending a check: check workspace --pending`,
   )
+  Waiting.shown(~repo=None)->Array.forEach(line => Console.log(line))
   if failed->Array.length > 0 {
     Console.log(`failed: ${failed->Array.join(", ")}`)
   }

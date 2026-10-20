@@ -64,7 +64,8 @@ Every rule the user states gets written down. Never leave one in chat only.
 - What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an
   `accepted` one for decided work, blocked by others by id. **To know what is left, run `mise run
   plan` in `repos/canmi/rfcs`**; a project's `docs/` keeps its rules and at most a short
-  `roadmap.md`. See
+  `roadmap.md`. What is decided and only waits on a moment is a deferred item,
+  `model/plan/deferred.res`, listed in red at the end of every check. See
   [docs/planning.md](docs/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `docs/`, `model/rules/` and this file instead, then verify a zero-memory agent could recover the
