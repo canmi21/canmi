@@ -48,6 +48,10 @@ into `model/rules/` with its check and leaves this file.
 - **A computed list of paths is built in Python**, asserted non-empty and passed by
   `subprocess.run`. The Bash tool's zsh does not split `$list`, and macOS's bash 3.2 has no
   `mapfile`; on 2026-10-04 an empty list made `jj restore` restore the whole working copy.
+- **A tool is run through mise, never as the Bash tool's PATH finds it.** That PATH puts a global
+  pnpm 11 ahead of mise's pinned 12, so a bare `pnpm install` in a repository below rewrites its
+  lockfile with the wrong one; `mise exec -- pnpm ...` or a mise task runs the pinned one. Seen
+  on 2026-10-20.
 - **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
   binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
 
