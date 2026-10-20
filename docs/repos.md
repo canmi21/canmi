@@ -62,8 +62,8 @@ there is none; with it, the file is there, and where it comes from is its target
 workspace's file and behaves exactly as it did walking up; cloned alone, each takes the dangling
 link for no file and falls back to its defaults, with no error. The repos part holds every such
 link to resolve to the workspace's file of the same name, and still refuses a copy, telling it
-which link to make instead. A project links what it uses and nothing else, so the links are also
-the list of what it takes from here.
+which link to make instead. A project links what it uses or is about to, and nothing else, so the
+links are also the list of what it takes from here.
 
 An identical copy and a divergent one are reported differently -- the first is dead weight, the
 second is the shadowing this arrangement exists to prevent -- and both fail, because a deliberate
