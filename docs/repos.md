@@ -238,7 +238,7 @@ by the author on 2026-10-20, so a bare verb never reaches further than the direc
 mise run pull                 the workspace
 mise run pull apps/rdm        that repository
 mise run pull --all           the workspace and every repository
-mise run check --all          each one's own verify
+mise run check --all          each one's own verify, then the workspace's rules over it
 mise run audit --all          the same, with warnings failing
 mise run update apps/still    still's own update, and nothing else
 ```
@@ -374,6 +374,19 @@ its mapping, over the workspace's engine in `scripts/change/verify.res`, and the
 the graph misses is a gate that silently does not run, which is the failure [code.md](code.md)
 describes, so a second such entry is worth a structural fix before it is worth a line in the list.
 
+## A tree grows by nesting, never by spreading
+
+Agreed with the author on 2026-10-19 for monoflake and on 2026-10-20 for every repository: **no
+directory but a repository's root holds more than `Layout.widest` entries, and none lies more than
+`Layout.deepest` deep**, counted from a top-level directory or a package's root -- a directory with
+one of `Layout.manifests` -- its first subdirectory 1. What outgrows a directory is nested in it as
+its abstraction rises, never laid beside the rest. Both numbers are for now: one reached asks first
+whether it still fits, and only then how the tree is cut below it. The root is exempt from the
+count because what tools ask to find there is no part of the tree; **what sits at the root is
+configuration**, so a root `Cargo.toml` is a virtual manifest and no source file sits beside it.
+The shape part of `check` holds all three over the files version control keeps, so what is built
+or installed is never counted.
+
 ## `each` is the verb for everything else
 
 `mise run each <task> [args]` runs `<task>` in every repository that declares one and passes over
@@ -381,7 +394,7 @@ the rest in silence: `each lint` is every linter a project declares, `each icons
 matching is mise's own `//repos/...:<task>`, so a project gains the verb by declaring the task and
 nothing here lists which ones do.
 
-It runs one repository at a time and goes on past a failure. A fan-out that interleaves five
+It runs one repository at a time and goes on past a failure, from `scripts/workspace/each.res`. A fan-out that interleaves five
 logs, or stops at the first red one, answers "does it pass everywhere" worse than a loop typed by
 hand. The workspace's own tasks are outside it -- `//:check` already fans out to every verify, so
 `//...` would run them twice -- and a task nobody declares is an error rather than a clean run.
@@ -401,18 +414,37 @@ project's `deploy` is reachable by typing a bare task name from inside another.
 `mise tasks ls` shows only this repository's; `--all` is needed for the projects'. That is worth
 knowing before concluding a project has no tasks.
 
-## Nothing is written down inside a project except its own spec
+## A repository's own rules extend the workspace's
 
 `AGENTS.md` says every rule the user states gets written down and never left in chat only.
-**Inside a project that rule is narrower.** A project carries `spec/` and no `AGENTS.md`, because
-work always begins at this repository and a second entry point would be a second thing to keep
-current.
+**Inside a project that rule is narrower: what is written there is the project's own.** Agreed
+with the author on 2026-10-20, replacing the arrangement where a project carried `spec/` and no
+`AGENTS.md`:
+
+- **A project keeps its rules in `docs/`**, `Layout.rulesHome`. `spec/` was the name while the rules
+  were prose alone; once what a program can decide moved into a model, what is left is the why
+  and the judgment, which is docs. A repository still holding `spec/` fails the shape part until it
+  is renamed.
+- **A project may carry an `AGENTS.md` of its own**, read by both harnesses exactly as this one is.
+  It extends this file: it says what is particular to that project and useful there alone, and
+  restates nothing the workspace says. Work still begins here, so a project's `AGENTS.md` is read
+  second.
+- **What two projects both need belongs here**, written once and read by both, rather than kept in
+  step by hand.
+
+**Both are soft.** Drift in day-to-day work is tolerated -- a sentence that repeats the workspace
+while a section is being written costs nothing -- so the drift part of `check` reports it as a
+warning, and only `audit` fails on it. What is wanted is that drift can be swept on request:
+`mise run check workspace drift` lists every sentence in a project's `AGENTS.md` or `docs/` that
+says what the workspace's say, or what another project's say, by where it is and the file it
+repeats. A sentence is counted as repeated when `Drift.share` of its runs of `Drift.run` words
+appear in the other; an RFC is a record of a decision rather than a rule, and is not read.
 
 The default in a project is still to write nothing beyond what the user asks for: the design of a
 separate application is that application's, and dragging it here would defeat the separation.
 When something does belong to this repository -- the entry below is one -- the user says so.
 
-A project's `spec/` may cite this repository's rules in prose but does not link to them. A
+A project's `docs/` may cite this repository's rules in prose but does not link to them. A
 relative link across the boundary resolves only while nested and is fragile about depth; a
 citation by name reads correctly either way. Code citations are different: `refs` resolves a
 cited `spec/*.md` by walking up, so it finds this repository's rules when nested and reports them

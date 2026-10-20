@@ -90,19 +90,10 @@ description = "The toolchain against its pins and channels: `tools check | outda
 depends = ["build"]
 run = "node scripts/workspace/tools.res.mjs"
 
-# One repository at a time and on past a failure; --dry-run is taken out before the task sees it.
 [tasks.each]
 description = "Run a task in every repository that declares it, one after another: `each <task> [args] [--dry-run]`"
-run = '''
-each() {
-	t= n=
-	for a; do shift
-		case $a in -n|--dry-run) n=-n;; *) if [ -z "$t" ]; then t=$a; else set -- "$@" "$a"; fi;; esac
-	done
-	[ -n "$t" ] || { echo "usage: mise run each <task> [args] [--dry-run]" >&2; return 2; }
-	mise run $n --jobs 1 --continue-on-error "//repos/...:$t" "$@"
-}
-each'''
+depends = ["build"]
+run = "node scripts/workspace/each.res.mjs"
 
 # What the scripts compile to, never committed: every task running one depends on it.
 [tasks.build]

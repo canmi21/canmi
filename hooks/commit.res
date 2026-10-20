@@ -16,9 +16,8 @@ let messages = command =>
   )
 
 /** The exit status the harness reads: 2 refuses the command, with the reasons on stderr. */
-let handle = (payload: Payload.t): int => {
-  let found = messages(Payload.command(payload))
-  let problems = found->Array.flatMap(History.problems)
+let refuse = (payload: Payload.t): int => {
+  let problems = messages(Payload.command(payload))->Array.flatMap(History.problems)
   if problems != [] {
     Console.error("Commit message rejected by hooks/commit.res:\n")
     problems->Array.forEach(problem => Console.error(`  - ${problem}\n`))
@@ -27,18 +26,23 @@ let handle = (payload: Payload.t): int => {
     )
     2
   } else {
-    if found != [] {
-      let cwd = Payload.cwd(payload)
-      let root = Payload.jj(~cwd, ["workspace", "root"])->String.trim
-      if root != "" {
-        // jj's repository config is not versioned, so the tracked jj.toml is named here.
-        let home = Node.env->Dict.get("HOME")->Option.getOr("")
-        let env = Node.envCopy(Node.env)
-        env->Dict.set("JJ_CONFIG", `${home}/.config/jj/config.toml:${root}/jj.toml`)
-        // A broken formatter is not a reason to refuse work, so its failure is passed over.
-        Node.spawnWithEnv("jj", ["fix"], {cwd, env, stdio: "ignore"})->ignore
-      }
-    }
     0
+  }
+}
+
+/** Once every gate passed: jj fix over what the command describes. */
+let fix = (payload: Payload.t) => {
+  let found = messages(Payload.command(payload))
+  if found != [] {
+    let cwd = Payload.cwd(payload)
+    let root = Payload.jj(~cwd, ["workspace", "root"])->String.trim
+    if root != "" {
+      // jj's repository config is not versioned, so the tracked jj.toml is named here.
+      let home = Node.env->Dict.get("HOME")->Option.getOr("")
+      let env = Node.envCopy(Node.env)
+      env->Dict.set("JJ_CONFIG", `${home}/.config/jj/config.toml:${root}/jj.toml`)
+      // A broken formatter is not a reason to refuse work, so its failure is passed over.
+      Node.spawnWithEnv("jj", ["fix"], {cwd, env, stdio: "ignore"})->ignore
+    }
   }
 }

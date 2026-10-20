@@ -5,7 +5,20 @@ let shape = /^[a-z0-9]+(?:[-.][a-z0-9]+)*$/
 let underscored = [".rs", ".py", ".go", ".res", ".resi"]
 
 /** Names a tool finds by spelling, so they are spelled its way. */
-let assigned = ["AGENTS.md", "README.md", "LICENSE", "Cargo.toml", "Cargo.lock", "Dockerfile"]
+let assigned = [
+  "AGENTS.md",
+  "README.md",
+  "LICENSE",
+  "LICENSES",
+  "REUSE.toml",
+  "VENDOR.md",
+  "Cargo.toml",
+  "Cargo.lock",
+  "Dockerfile",
+]
+
+/** Directories whose contents a tool names, as REUSE names LICENSES/ by SPDX identifier. */
+let namedInside = ["LICENSES"]
 
 /** No instruction file but AGENTS.md, since one would stop Claude Code reading it. */
 let refused = ["CLAUDE.md"]

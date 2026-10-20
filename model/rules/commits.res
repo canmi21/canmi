@@ -14,8 +14,26 @@ let trailers = [
 /** Every jj subcommand that takes -m, so every one that can write a description. */
 let describing = ["commit", "ci", "describe", "desc", "split", "new", "squash", "metaedit"]
 
-/** The commit the history check starts after; what came before is left as it was written. */
-let since = "71c246fe"
+/** Per repository, the commit its history check starts after; what came before stays as written. */
+let since = [
+  ("workspace", "71c246fe"),
+  ("canmi/web", "8f2d6769"),
+  ("canmi/lib", "0e2abfcf"),
+  ("canmi/rfcs", "76bab398"),
+  ("seam", "ae2feb96"),
+  ("monoflake", "607b60cb"),
+  ("apps/rdm", "ecaa6b03"),
+  ("apps/cue", "5655f8a0"),
+  ("apps/still", "18ed09a1"),
+  ("console", "fb308466"),
+]
+
+/** The jj subcommands that make a commit, and so wait on a passing verify. */
+let committing = ["commit", "ci"]
+
+/** The escape a command names to pass a gate, `SKIP=verify jj commit ...`, as pre-commit has it. */
+let skip = "SKIP"
+let skippable = ["verify"]
 
 let doc = "docs/commits.md"
 let rules: array<Rule.t> = [
@@ -68,6 +86,18 @@ let rules: array<Rule.t> = [
     says: "`describing` is every jj subcommand that takes -m",
     doc,
     held: Pending("jj's own help read for every subcommand that accepts -m"),
+  },
+  {
+    name: "since-recorded",
+    says: "Every repository the registry lists has its `since`",
+    doc,
+    held: Check("commits"),
+  },
+  {
+    name: "verified-before-commit",
+    says: "A `committing` command waits until verify passed at the working copy, `skip` aside",
+    doc,
+    held: Hook("hooks/verified"),
   },
   {
     name: "main-covers-work",

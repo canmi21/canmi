@@ -273,7 +273,8 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   let failed = []
   Registry.selected(name, ~everything)->Array.forEach(repo => {
     let place = Registry.label(repo)
-    let code = if repo == root {
+    let before = verb == "verify" && !dry ? Stamp.snapshot(repo) : ""
+    let own = if repo == root {
       Console.log(`\n=== workspace ${verb}${dry ? " --dry-run" : ""} ===`)
       switch verb {
       | "fmt" => fmt(~dry)
@@ -294,8 +295,19 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       Console.log(`\n=== ${[task(repo, verb), ...flags]->Array.join(" ")} ===`)
       Node.run(~cwd=root, "mise", ["run", task(repo, verb), ...flags])
     }
-    if code != 0 {
+    // Below the workspace, verify is the repository's own and then the workspace's rules over it.
+    let held = if repo == root || verb != "verify" {
+      0
+    } else if dry {
+      Console.log("would run the workspace's rules over it")
+      0
+    } else {
+      Check.repository(repo)
+    }
+    if own != 0 || held != 0 {
       failed->Array.push(place)
+    } else if before != "" && (repo != root || parts == []) {
+      Stamp.write(repo, before)
     }
   })
   summary(verb, skipped, failed)
@@ -310,9 +322,7 @@ let symptom = output => {
   (flagged == [] ? all : flagged)->Array.slice(~start=0, ~end=10)
 }
 
-/** The working copy as a commit, as of now; jj snapshots on every command, so asking is enough. */
-let snapshot = repo =>
-  jj(~cwd=repo, ["log", "-r", "@", "--no-graph", "-T", "commit_id"])->String.trim
+let snapshot = Stamp.snapshot
 
 /** Exactly these paths put back as they were in `before`, by path so others' edits survive. */
 let restore = (repo, before, paths) => {

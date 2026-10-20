@@ -101,9 +101,10 @@ worth being told about.
 
 Starting a conversation with no context about this project:
 
-1. Read `AGENTS.md` at the workspace root. It is the only entry point.
+1. Read `AGENTS.md` at the workspace root, where work always begins, then the `AGENTS.md` of the
+   project you are about to touch, where it has one.
 2. Read the rules that cover the task: this repository's `docs/` and `model/rules/` for the
-   ones that hold everywhere, and `repos/<project>/spec/` for the project you are about to touch.
+   ones that hold everywhere, and the project's `docs/` -- `spec/` until it is renamed.
 3. Know which repository you are in, and start from its current `main`.
 4. Only then act.
 

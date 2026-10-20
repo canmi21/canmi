@@ -74,8 +74,12 @@ let problems = (message: string): array<string> => {
   }
 }
 
-/** Every described commit after `Commits.since` up to the working copy, by its commit. */
-let main = (~root): array<string> =>
+/** The commit a repository's history is read after, by its registry path or `workspace`. */
+let since = name =>
+  Commits.since->Array.find(((path, _)) => path == name)->Option.map(((_, commit)) => commit)
+
+/** Every described commit after `after` up to the working copy, by its commit. */
+let main = (~root, ~after): array<string> =>
   Node.output(
     ~cwd=root,
     "jj",
@@ -83,7 +87,7 @@ let main = (~root): array<string> =>
       "log",
       "--no-graph",
       "-r",
-      `${Commits.since}..@ & ~empty() & ~description(exact:"")`,
+      `${after}..@ & ~empty() & ~description(exact:"")`,
       "-T",
       `commit_id.short() ++ "\\x00" ++ description ++ "\\x01"`,
     ],

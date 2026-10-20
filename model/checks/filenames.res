@@ -6,18 +6,22 @@ let fits = (segment, ~file) => {
     Naming.shape->RegExp.test(underscored ? bare->String.replaceAll("_", "-") : bare)
 }
 
+/** Every name `root` tracks that breaks the naming rule. */
+let names = (~root): array<string> =>
+  References.tracked(root)
+  ->Array.map(path => Node.relative(root, path))
+  ->Array.filterMap(relative => {
+    let segments = relative->String.split("/")
+    let last = segments->Array.length - 1
+    let named = segments->Array.findIndex(segment => Naming.namedInside->Array.includes(segment))
+    segments
+    ->Array.mapWithIndex((segment, at) => (segment, at == last))
+    ->Array.filterWithIndex((_, at) => named < 0 || at <= named)
+    ->Array.find(((segment, file)) => !fits(segment, ~file))
+    ->Option.map(((segment, _)) => `${relative}: ${segment} breaks the naming rule`)
+  })
+
 let main = (~root): array<string> => {
-  let names =
-    References.tracked(root)
-    ->Array.map(path => Node.relative(root, path))
-    ->Array.filterMap(relative => {
-      let segments = relative->String.split("/")
-      let last = segments->Array.length - 1
-      segments
-      ->Array.mapWithIndex((segment, at) => (segment, at == last))
-      ->Array.find(((segment, file)) => !fits(segment, ~file))
-      ->Option.map(((segment, _)) => `${relative}: ${segment} breaks the naming rule`)
-    })
   let refused =
     [root]
     ->Array.concat(
@@ -31,5 +35,5 @@ let main = (~root): array<string> => {
       ->Array.filter(line => Naming.refused->Array.includes(Node.basename(line)))
       ->Array.map(line => `${Node.relative(root, Node.join([repository, line]))} is refused`)
     )
-  Array.concat(names, refused)
+  Array.concat(names(~root), refused)
 }

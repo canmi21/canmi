@@ -1,9 +1,9 @@
 # AGENTS.md
 
-The workspace. This is the entry point for any agent starting with zero context, and the only
-one -- a project under `repos/` carries `spec/` and no `AGENTS.md`, because work always begins
-here. monoflake is the exception, with an `AGENTS.md` of its own, as it ignores the workspace's
-rules.
+The workspace. This is the entry point for any agent starting with zero context, and work always
+begins here. A project under `repos/` keeps its rules in `docs/` and may carry an `AGENTS.md` of
+its own, read after this one: it extends this file with what is that project's alone and restates
+none of it -- [docs/repos.md](docs/repos.md), "A repository's own rules extend the workspace's".
 
 It is named `AGENTS.md` so that one file serves both harnesses without a symlink. Codex reads the
 name natively; Claude Code reads it through its built-in `agents-md` plugin, whose default mode
@@ -15,10 +15,10 @@ Claude Code reading this file.
 ## Start here
 
 Read this file, then the rules covering your task: this workspace's `docs/` and `model/rules/`
-for the ones that follow the author everywhere, and `repos/<project>/spec/` for the ones belonging
-to the project you are about to touch. If none answers a decision you are about to make, ask the
-user. Decisions belong to the user, not to you -- unless their described approach already implies
-the answer. See [docs/agent-protocol.md](docs/agent-protocol.md).
+for the ones that follow the author everywhere, and the project's own `AGENTS.md` and `docs/` --
+`spec/` until it is renamed -- for the ones belonging to the project you are about to touch. If
+none answers a decision you are about to make, ask the user. Decisions belong to the user, not to
+you -- unless their described approach already implies the answer. See [docs/agent-protocol.md](docs/agent-protocol.md).
 
 ## What this repository is
 
@@ -58,11 +58,13 @@ Every rule the user states gets written down. Never leave one in chat only.
   yet. See [docs/model.md](docs/model.md).
 - Anything only judgment can keep gets a topic file in `docs/`, split by aspect, linked from the
   index.
-- A rule that belongs to one project goes in that project's `spec/`, not here.
+- A rule that belongs to one project goes in that project's `docs/`, not here; one two projects
+  share comes here.
 - Never restate the rules here. Link to them.
 - What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an
   `accepted` one for decided work, blocked by others by id. **To know what is left, run `mise run
-  plan` in `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
+  plan` in `repos/canmi/rfcs`**; a project's `docs/` keeps its rules and at most a short
+  `roadmap.md`. See
   [docs/planning.md](docs/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `docs/`, `model/rules/` and this file instead, then verify a zero-memory agent could recover the
@@ -83,8 +85,9 @@ scope in most cases. Subject starts lowercase, imperative mood, 96 characters at
 throughout, never Markdown. **A body is optional and usually absent**: it says what changed, in
 three lines or so, and never why. The reasoning goes to the rules or beside the code, where
 somebody is looking for it -- a log carrying it twice is the mistake this rule exists to stop. A
-hook refuses a malformed message, and the commits part of the check reads every one since. See
-[docs/commits.md](docs/commits.md).
+hook refuses a malformed message, and the commits part of the check reads every one since. **A
+commit waits until `mise run check <path>` passed at the working copy**; `SKIP=verify jj commit
+...` names the escape. See [docs/commits.md](docs/commits.md).
 
 **Comments** -- a comment points rather than argues. The settled argument lives in the rules and
 the comment names the file; **a decision nobody has made yet is a draft RFC**, cited by id in one
@@ -110,6 +113,10 @@ always follow the language's own convention. A name is written whole -- Cloudfla
 Vendor names stay at the binding edge -- name a module for what it does, not for who supplies it.
 See [docs/naming.md](docs/naming.md).
 
+**Shape** -- a tree grows by nesting, never by spreading: no directory but a root holds more than
+`Layout.widest` entries or lies more than `Layout.deepest` deep, and a root holds configuration,
+not source. See [docs/repos.md](docs/repos.md), "A tree grows by nesting, never by spreading".
+
 **Lint vs format** -- a linter owns semantics, a formatter owns layout. Whatever the formatter
 rewrites, the linter must not report; disable the overlap on the linter side. Holds for every
 language. See [docs/lint-format.md](docs/lint-format.md).
@@ -130,7 +137,8 @@ reaching another machine across the network. Version control is jj (Jujutsu), co
 their own. An agent commits what is settled and pushes at the right moment, unless the user said
 not to -- see [docs/commits.md](docs/commits.md). mise owns every tool version. **A script, a task
 or a hook is ReScript**, compiled by `mise run build` and never committed; a mise task is the
-entry, and `hooks/bin/rm` with its guard the one thing left in Python. Indentation is tabs at
+entry, `Toolchain.taskLines` lines at most, and `hooks/bin/rm` with its guard the one thing left in
+Python. Indentation is tabs at
 width 2 in every language, YAML excepted; `.editorconfig` is the source of truth. See
 [docs/toolchain.md](docs/toolchain.md).
 
@@ -140,7 +148,8 @@ to run on that repository, or `--all` to run on every one, and `--dry-run` to an
 told what it would do. A name means that repository alone, in every verb, and never with `--all`.
 `pull` and `push` are jj's and live here; the rest run each repository's own task -- `verify` for
 `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository without one,
-naming it. What such a task owes the verb, `--dry-run` first, is in [docs/repos.md](docs/repos.md).
+naming it. `check` then runs the workspace's rules over the repository, and its pass is what a
+commit there waits on. What such a task owes the verb, `--dry-run` first, is in [docs/repos.md](docs/repos.md).
 The workspace's own half runs in the dispatcher, `scripts/workspace/repos.res`: its check is
 `model/check.res`, and `mise run check workspace words names` runs only the parts named. `audit`
 is `check` with every warning counted as a failure, which is not what routine work runs. `update`
@@ -198,7 +207,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | Project            | Rules                                                                                                                                                                               |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `repos/canmi/web`  | the site, its API, the status page, the service domains' pages, the CMS, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                                   |
-| `repos/monoflake`  | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/monoflake/AGENTS.md), as it ignores the workspace's rules                            |
+| `repos/monoflake`  | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/monoflake/AGENTS.md) and [docs/](repos/monoflake/docs/)                              |
 | `repos/apps/still` | a macOS application; no spec yet                                                                                                                                                    |
 | `repos/canmi/lib`  | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
 | `repos/apps/rdm`   | a GPUI download manager for macOS -- [repos/apps/rdm/spec/](repos/apps/rdm/spec/)                                                                                                   |

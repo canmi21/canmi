@@ -12,6 +12,26 @@ let inherited = [
 /** Of those, the one a copy may stand in for when it names the workspace's in `extends`. */
 let extendable = [".oxlintrc.json"]
 
+/** No directory but a repository's root holds more entries than this. */
+let widest = 16
+
+/** Nor lies deeper, a top-level directory's first subdirectory or a package's counted 1. */
+let deepest = 5
+
+/** A directory holding one of these is a package's root, where the depth counts from 1 again. */
+let manifests = ["Cargo.toml", "package.json", "rescript.json"]
+
+/** What sits at a root is configuration: a source file there belongs to a package below it. */
+let sources = [".rs", ".res", ".ts", ".tsx", ".js", ".mjs", ".svelte", ".py", ".go"]
+let configuration = /\.config\.[a-z]+$/
+
+/** Where a repository keeps its rules, and the name that place had before the model. */
+let rulesHome = "docs"
+let retired = "spec"
+
+/** A repository kept as it was until it is pushed and deleted, which no rule over prose reads. */
+let archives = ["console"]
+
 let doc = "docs/repos.md"
 let rules: array<Rule.t> = [
   {
@@ -57,9 +77,39 @@ let rules: array<Rule.t> = [
     held: Pending("each repository's usage spec read for the flags its verb tasks take"),
   },
   {
-    name: "one-entry",
-    says: "A project carries spec/ and no entry point of its own, monoflake excepted",
+    name: "tree-wide",
+    says: "No directory but a repository's root holds more than `widest` entries",
     doc,
-    held: Pending("the registry naming which repositories keep an entry point of their own"),
+    held: Check("shape"),
+  },
+  {
+    name: "tree-deep",
+    says: "No directory lies more than `deepest` below a top-level directory or a package's root",
+    doc,
+    held: Check("shape"),
+  },
+  {
+    name: "root-configuration",
+    says: "A root Cargo.toml is a virtual manifest, and no source file sits at a root",
+    doc,
+    held: Check("shape"),
+  },
+  {
+    name: "rules-in-docs",
+    says: "A repository keeps its rules in `rulesHome`, never in `retired`",
+    doc,
+    held: Check("shape"),
+  },
+  {
+    name: "agents-extend",
+    says: "A repository's AGENTS.md and docs restate nothing the workspace's say; soft",
+    doc,
+    held: Check("drift"),
+  },
+  {
+    name: "shared-goes-up",
+    says: "What two repositories' docs both say belongs to the workspace; soft",
+    doc,
+    held: Check("drift"),
   },
 ]

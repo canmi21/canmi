@@ -720,7 +720,10 @@ belongs to the user -- see [agent-protocol.md](agent-protocol.md).
 **A task, a tool or a hook of the workspace's is ReScript**, under `scripts/`, `hooks/` and
 `model/`, compiled to `.res.mjs` beside its source by `mise run build`, which every task running one
 depends on, and never committed -- RFC 17b3o. A mise task is the entry, and the script behind it
-decides the order. It replaced TypeScript run by node, the rule from 2026-10-13, on 2026-10-20.
+decides the order: **a task runs `Toolchain.taskLines` lines at most**, agreed with the author on
+2026-10-19 for monoflake and on 2026-10-20 everywhere, and past that it is a script with the task
+its one line. `each`, a nine-line shell function in `mise.toml`, became `scripts/workspace/each.res`
+the day the tasks part first measured it. It replaced TypeScript run by node, the rule from 2026-10-13, on 2026-10-20.
 **No script is written in Python**, and the settings part holds the tree to it: `Toolchain.kept`
 names the exceptions, `hooks/bin/rm` and its guard among them, which is a command an agent types
 rather than a script, and stays as it is.

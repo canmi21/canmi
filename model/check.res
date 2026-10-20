@@ -7,7 +7,8 @@
 let root = Registry.root
 let python = "/usr/bin/python3"
 
-type part = Script(unit => int) | Found(unit => array<string>)
+/** A Soft part's findings are warnings, failing only under AUDIT, as soft rules are read. */
+type part = Script(unit => int) | Found(unit => array<string>) | Soft(unit => array<string>)
 
 let report = found => {
   found->Array.forEach(line => Console.log(`  x ${line}`))
@@ -16,6 +17,23 @@ let report = found => {
   }
   found->Array.length > 0 ? 1 : 0
 }
+
+/** A repository's history after its `since`, or that it has none. */
+let commits = repo => {
+  let name = Registry.label(repo)
+  switch History.since(name) {
+  | Some(after) => History.main(~root=repo, ~after)
+  | None => [`${name} has no since in model/rules/commits.res, so its history is not read`]
+  }
+}
+
+/** Every repository the registry lists with its `since`. */
+let recorded = () =>
+  Registry.paths()->Array.filterMap(path =>
+    History.since(path)->Option.isSome
+      ? None
+      : Some(`${path} has no since in model/rules/commits.res`)
+  )
 
 let parts: array<(string, part)> = [
   ("tools", Script(() => Tools.check(~everything=true))),
@@ -67,11 +85,14 @@ let parts: array<(string, part)> = [
       },
     ),
   ),
-  ("commits", Found(() => History.main(~root))),
+  ("commits", Found(() => Array.concat(commits(root), recorded()))),
   ("names", Found(() => Filenames.main(~root))),
   ("words", Found(() => Words.main(~root))),
   ("pins", Found(() => Pins.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
+  ("shape", Found(() => Shape.main(~root))),
+  ("tasks", Found(() => Tasks.main(~root))),
+  ("drift", Soft(() => Drift.main(~only=None))),
 ]
 
 let known = parts->Array.map(((name, _)) => name)
@@ -105,7 +126,32 @@ let outcome = part =>
   switch part {
   | Script(run) => run()
   | Found(found) => report(found())
+  | Soft(found) =>
+    let warned = found()
+    warned->Array.forEach(line => Console.log(`  warning: ${line}`))
+    if warned == [] {
+      Console.log("  no drift")
+    }
+    warned != [] && Node.envIs("AUDIT", "1") ? 1 : 0
   }
+
+/** What the workspace holds over every repository below it, run on one: each part a name. */
+let over = (repo): array<(string, part)> => [
+  ("shape", Found(() => Shape.main(~root=repo))),
+  ("tasks", Found(() => Tasks.main(~root=repo))),
+  ("names", Found(() => Filenames.names(~root=repo))),
+  ("commits", Found(() => commits(repo))),
+  ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
+]
+
+/** The workspace's rules over one repository below it, each part logged, on past a failure. */
+let repository = (repo): int => {
+  let failed = over(repo)->Array.filter(((name, part)) => {
+    Console.log(`\n=== ${Registry.label(repo)} ${name}, the workspace's ===`)
+    outcome(part) != 0
+  })
+  failed->Array.length > 0 ? 1 : 0
+}
 
 /** Each part named, or every one, its own log under its name, and on past a failure. */
 let run = (named: array<string>): int => {

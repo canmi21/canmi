@@ -106,3 +106,49 @@ let invocations = (command): array<(string, array<string>)> =>
       found.contents
     }
   })
+
+/** The gates a jj invocation's own assignments skip, `SKIP=verify jj commit`, comma-separated. */
+let skipped = (command): array<string> =>
+  segments(command)->Array.flatMap(segment => {
+    let at =
+      segment->Array.findIndexWithIndex((word, index) =>
+        Node.basename(word) == "jj" && isCommand(segment, index)
+      )
+    let prefix = `${Commits.skip}=`
+    at < 0
+      ? []
+      : segment
+        ->Array.slice(~start=0, ~end=at)
+        ->Array.filter(word => word->String.startsWith(prefix))
+        ->Array.flatMap(word =>
+          word
+          ->String.slice(~start=prefix->String.length)
+          ->String.split(",")
+          ->Array.map(String.trim)
+        )
+  })
+
+/** The repository a jj invocation names with -R or --repository before its subcommand, if any. */
+let repository = (command): option<string> =>
+  segments(command)->Array.reduce(None, (found, segment) =>
+    found->Option.isSome
+      ? found
+      : {
+          let at = segment->Array.findIndex(word => Node.basename(word) == "jj")
+          let named = ref(None)
+          if at >= 0 {
+            segment
+            ->Array.slice(~start=at + 1)
+            ->Array.forEachWithIndex((word, index) =>
+              if named.contents == None {
+                if word == "-R" || word == "--repository" {
+                  named := segment[at + 2 + index]
+                } else if word->String.startsWith("--repository=") {
+                  named := Some(word->String.slice(~start="--repository="->String.length))
+                }
+              }
+            )
+          }
+          named.contents
+        }
+  )

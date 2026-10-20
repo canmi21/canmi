@@ -48,10 +48,4 @@ let rules: array<Rule.t> = [
     doc: "docs/repos.md",
     held: Pending("a list of each repository's generators and what they write"),
   },
-  {
-    name: "verified-before-commit",
-    says: "verify passes before a commit is made",
-    doc,
-    held: Pending("a hook that runs verify before a commit, if one is wanted"),
-  },
 ]

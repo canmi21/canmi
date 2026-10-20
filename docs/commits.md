@@ -203,9 +203,11 @@ and [agent-protocol.md](agent-protocol.md) says what to do with the delta.
 
 ## Enforcement
 
-**What reached `main` is checked again, by the commits part of `check workspace`**: every described
-commit after `Commits.since` against the same rules the hook applies, from one function in
-`model/checks/history.res`. The hook sees only what an agent types with `-m`; the history sees
+**What reached `main` is checked again, by the commits part of `check`**: every described commit
+after the repository's own `Commits.since` against the same rules the hook applies, from one
+function in `model/checks/history.res`. What came before a repository's `since` is left as it was
+written; each one was set to that repository's `main` on 2026-10-20, as the author asked, and
+every repository the registry lists has one. The hook sees only what an agent types with `-m`; the history sees
 everything, an editor's message and a human's included, after the fact.
 
 `hooks/commit.res` runs before any jj subcommand that can write a description and does two
@@ -232,6 +234,21 @@ entrypoint owns routing, command selection, and combining output from policies t
 apply to one event. A vendor adapter never owns policy: if the harness payloads diverge later,
 the shared entrypoint normalizes their common meaning rather than growing two implementations
 that only appear equivalent.
+
+**A commit waits on a passing verify.** Agreed with the author on 2026-10-20, following
+monoflake's "a commit is made only after verify passes": `hooks/verified.res` refuses a
+`Commits.committing` command until the repository's `mise run check <path>` -- or `mise run check`
+for the workspace -- passed at the working copy being committed. A pass writes the working copy's
+commit to `.jj/verified`, and the hook compares contents with `jj diff`, so describing the change
+afterwards keeps it verified and editing a file does not. A run of named parts, `check workspace
+words`, verifies nothing and writes nothing. The hook reads the working copy before the command
+runs, so an edit chained into it -- `printf x >> f && jj commit` -- is not seen, which was found by
+trying it: a commit is a command of its own.
+
+**The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
+`SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;
+`Commits.skippable` lists what it may name. A repository that cannot pass yet is no reason to stop
+work in it, so the gate is passed by saying so rather than by working around it.
 
 `hooks/decision.res` runs _after_ the commit lands and asks the question the diff
 cannot: was a decision made here that nobody wrote down? It fires when a `feat`, `refactor`,

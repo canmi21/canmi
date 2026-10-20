@@ -27,7 +27,18 @@ let say = json => Console.log(JSON.stringify(json))
 
 let handle = (payload: Payload.t): int =>
   switch payload->Payload.text("hook_event_name") {
-  | Some("PreToolUse") => Commit.handle(payload)
+  | Some("PreToolUse") =>
+    // The message first, as it is cheap and the commonest refusal; jj fix only once both pass.
+    switch Commit.refuse(payload) {
+    | 0 =>
+      switch Verified.handle(payload) {
+      | 0 =>
+        Commit.fix(payload)
+        0
+      | refused => refused
+      }
+    | refused => refused
+    }
   | Some("PostToolUse") =>
     combined([Decision.context(payload), Delta.context(payload)])->Option.forEach(message =>
       say(post(message))

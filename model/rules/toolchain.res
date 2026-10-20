@@ -12,6 +12,9 @@ let loopback = /\b127\.0\.0\.1\b/
 
 let indentation = [("indent_style", "tab"), ("tab_width", "2")]
 
+/** A mise task's run, in lines; past it the task is a script and the task its one-line entry. */
+let taskLines = 5
+
 let doc = "docs/toolchain.md"
 let rules: array<Rule.t> = [
   {
@@ -31,6 +34,12 @@ let rules: array<Rule.t> = [
     says: "A script, hook or task of the workspace's is ReScript, `kept` excepted",
     doc,
     held: Check("settings"),
+  },
+  {
+    name: "task-short",
+    says: "Every mise task in a repository runs `taskLines` lines at most",
+    doc,
+    held: Check("tasks"),
   },
   {
     name: "tabs",
