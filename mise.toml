@@ -18,6 +18,9 @@ config_roots = [
 # hooks/bin first, so an agent's rm is the guarded one; oxfmt from package.json, to reach svelte.
 _.path = ["{{config_root}}/hooks/bin", "{{config_root}}/node_modules/.bin"]
 
+# Where this workspace is, for a repository's task to reach the shared scripts at any depth.
+WORKSPACE = "{{config_root}}"
+
 # The user's jj config, then the shared rules in jj.toml.
 JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jj.toml"
 
@@ -79,6 +82,13 @@ each() {
 }
 each'''
 
+# What the scripts compile to, never committed: every task running one depends on it.
+[tasks.build]
+description = "Compile the scripts under scripts/"
+run = "rescript build"
+sources = ["scripts/**/*.res", "rescript.json"]
+outputs = { auto = true }
+
 [tasks.check-tools]
 description = "Check the versions an outside build reads, and that no project redeclares a workspace tool"
 run = ".mise/tasks/tools check"
@@ -93,7 +103,8 @@ run = "/usr/bin/python3 -m unittest discover -s hooks -p 'test_*.py'"
 
 # The shared task libraries, which no repository below holds.
 [tasks.check-tasks]
-description = "Type-check and test the shared task libraries under .mise/tasks"
+description = "Type-check and test the shared scripts and task libraries"
+depends = ["build"]
 run = ["pnpm exec tsc -p tsconfig.json", "pnpm exec vitest run"]
 
 [tasks.verify]

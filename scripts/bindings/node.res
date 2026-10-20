@@ -1,0 +1,99 @@
+/** Node's own modules, as much of them as the task scripts call. */
+type spawnOptions = {
+  stdio?: string,
+  cwd?: string,
+  encoding?: string,
+  maxBuffer?: int,
+  input?: string,
+}
+
+type spawned = {
+  status: Nullable.t<int>,
+  error: Nullable.t<JsExn.t>,
+  stdout: Nullable.t<string>,
+  stderr: Nullable.t<string>,
+}
+
+@module("node:child_process")
+external spawnSync: (string, array<string>, spawnOptions) => spawned = "spawnSync"
+@module("node:child_process")
+external execFileSync: (string, array<string>, spawnOptions) => string = "execFileSync"
+
+@val external argv: array<string> = "process.argv"
+@val external env: Dict.t<string> = "process.env"
+@val external exit: int => 'a = "process.exit"
+@val external cwd: unit => string = "process.cwd"
+@val external isMain: bool = "import.meta.main"
+@val external importMetaUrl: string = "import.meta.url"
+
+/** The arguments a script was given, past node and the script. */
+let args = () => argv->Array.slice(~start=2)
+
+/** Whether `name` is set in the environment to something, as JavaScript reads a string as true. */
+let envOn = name => env->Dict.get(name)->Option.mapOr(false, value => value != "")
+
+/** Whether `name` is set in the environment to exactly `value`. */
+let envIs = (name, value) => env->Dict.get(name) == Some(value)
+
+type dirent
+@get external name: dirent => string = "name"
+@send external isDirectory: dirent => bool = "isDirectory"
+@send external isFile: dirent => bool = "isFile"
+@send external isSymbolicLink: dirent => bool = "isSymbolicLink"
+
+type stats
+@send external statsIsFile: stats => bool = "isFile"
+@send external statsIsDirectory: stats => bool = "isDirectory"
+@send external statsIsSymbolicLink: stats => bool = "isSymbolicLink"
+
+type withTypes = {withFileTypes: bool}
+type noThrow = {throwIfNoEntry: bool}
+type removal = {recursive: bool, force: bool}
+
+@module("node:fs") external existsSync: string => bool = "existsSync"
+@module("node:fs") external readFileSync: (string, @as("utf8") _) => string = "readFileSync"
+@module("node:fs") external writeFileSync: (string, string) => unit = "writeFileSync"
+@module("node:fs") external readdir: string => array<string> = "readdirSync"
+@module("node:fs") external readdirTyped: (string, withTypes) => array<dirent> = "readdirSync"
+@module("node:fs") external statMaybe: (string, noThrow) => Nullable.t<stats> = "statSync"
+@module("node:fs") external lstatSync: string => stats = "lstatSync"
+@module("node:fs") external rmSync: (string, removal) => unit = "rmSync"
+@module("node:fs") external realpathSync: string => string = "realpathSync"
+
+/** The directory entries of `directory`, each with its type. */
+let entries = directory => readdirTyped(directory, {withFileTypes: true})
+
+/** What `path` is, or None where nothing is there. */
+let stat = path => statMaybe(path, {throwIfNoEntry: false})->Nullable.toOption
+
+@module("node:path") @variadic external join: array<string> => string = "join"
+@module("node:path") @variadic external resolve: array<string> => string = "resolve"
+@module("node:path") external relative: (string, string) => string = "relative"
+@module("node:path") external dirname: string => string = "dirname"
+@module("node:path") external basename: string => string = "basename"
+@module("node:path") external sep: string = "sep"
+
+@module("node:url") external fileURLToPath: string => string = "fileURLToPath"
+@module("node:url") external pathToFileURL: string => {"href": string} = "pathToFileURL"
+
+/** A command's output as it arrives, and its status, 1 where it gave none. */
+let run = (~cwd=?, command, commandArgs) =>
+  spawnSync(command, commandArgs, {stdio: "inherit", ?cwd}).status->Nullable.getOr(1)
+
+/** What a command wrote to stdout, as text, or nothing where it wrote none. */
+let output = (~cwd=?, command, commandArgs) =>
+  spawnSync(command, commandArgs, {?cwd, encoding: "utf8", maxBuffer: 268435456}).stdout->Nullable.getOr(
+    "",
+  )
+
+@module("node:path") external isAbsolute: string => bool = "isAbsolute"
+
+/** A string's characters by code point, as `[...text]` spreads it. */
+@scope("Array") @val external codePoints: string => array<string> = "from"
+
+type bytes
+@module("node:fs") external readBytes: string => bytes = "readFileSync"
+type decoder
+type decoderOptions = {fatal: bool, ignoreBOM: bool}
+@new external textDecoder: (string, decoderOptions) => decoder = "TextDecoder"
+@send external decode: (decoder, bytes) => string = "decode"

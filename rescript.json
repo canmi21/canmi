@@ -1,0 +1,8 @@
+{
+	"name": "workspace",
+	"sources": [{ "dir": "scripts", "subdirs": true }],
+	"dependencies": [],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "error": "+a" }
+}
