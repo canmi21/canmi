@@ -1,5 +1,6 @@
 # Every repository here, by its path under repos/, any depth: path = "user:repo". mise.toml's
-# config_roots repeats the set, as mise cannot read this file; `mise run check-repos` holds the two.
+# config_roots repeats the set, as mise cannot read this file; `mise run check workspace repos`
+# holds the two.
 [repos]
 "canmi/web" = "canmi21:web"
 "canmi/lib" = "canmi21:lib"
@@ -10,4 +11,4 @@ monoflake = "monoflake:platform"
 "apps/cue" = "canmi21:cue"
 "apps/still" = "canmi21:still"
 # An archive of what was web's console, kept until it is pushed and the copy here is deleted.
-console = "canmi21:console"
+console = "monoflake:console"
