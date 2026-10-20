@@ -24,7 +24,15 @@ type workers = None | All | Only(array<string>)
 
 type deployable = {images: bool, workers: workers}
 
-type declared = {layout: Graph.layout, verify: option<verify>, deployable: option<deployable>}
+/** The workspace's rules over what is inside a repository, each on unless turned off here. */
+type rules = {lines: bool}
+
+type declared = {
+  layout: Graph.layout,
+  verify: option<verify>,
+  deployable: option<deployable>,
+  rules: rules,
+}
 
 exception Malformed(string)
 
@@ -132,6 +140,17 @@ let deployableOf = (table: table): deployable => {
   }
 }
 
+let rulesOf = (table: table): rules => {
+  only(table, "rules", ["lines"])
+  {
+    lines: switch table->Dict.get("lines") {
+    | None => true
+    | Some(Boolean(on)) => on
+    | Some(_) => fail("rules.lines: not true or false")
+    },
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -141,7 +160,7 @@ let read = (root: string): result<declared, string> => {
     try {
       switch Toml.parse(Node.readFileSync(path)) {
       | Object(top) =>
-        only(top, "workspace.toml", ["layout", "verify", "deployable"])
+        only(top, "workspace.toml", ["layout", "verify", "deployable", "rules"])
         Ok({
           layout: layoutOf(
             root,
@@ -149,6 +168,7 @@ let read = (root: string): result<declared, string> => {
           ),
           verify: tableAt(top, "verify", "workspace.toml")->Option.map(verifyOf),
           deployable: tableAt(top, "deployable", "workspace.toml")->Option.map(deployableOf),
+          rules: rulesOf(tableAt(top, "rules", "workspace.toml")->Option.getOr(Dict.make())),
         })
       | _ => Error(`${path}: not a table`)
       }

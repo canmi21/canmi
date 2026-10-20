@@ -54,9 +54,9 @@ Every rule the user states gets written down. Never leave one in chat only.
 - Anything narrower gets its own topic file in `spec/`, split by aspect, linked from the index.
 - A rule that belongs to one project goes in that project's `spec/`, not here.
 - Never restate spec content here. Link to it.
-- What is not done yet is an RFC in `repos/rfcs`: a `draft` for an open question, an `accepted`
+- What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an `accepted`
   one for decided work, blocked by others by id. **To know what is left, run `mise run plan` in
-  `repos/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
+  `repos/canmi/rfcs`**; a `spec/` keeps only its rules and a short `roadmap.md`. See
   [spec/planning.md](spec/planning.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `spec/` and this file instead, then verify a zero-memory agent could recover the arrangement
@@ -182,13 +182,13 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 **The projects**
 
-| Project          | Rules                                                                                                                                                                   |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `repos/web`      | the site, its API, the status page, the service domains' pages, the CMS, the console, `local` and the corpus -- [repos/web/spec/](repos/web/spec/)                      |
-| `repos/platform` | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/platform/AGENTS.md), as it ignores the workspace's rules                 |
-| `repos/still`    | a macOS application; no spec yet                                                                                                                                        |
-| `repos/lib`      | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/lib/spec/](repos/lib/spec/) |
-| `repos/rdm`      | a GPUI download manager for macOS -- [repos/rdm/spec/](repos/rdm/spec/)                                                                                                 |
-| `repos/cue`      | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/cue/spec/](repos/cue/spec/)                                          |
-| `repos/rfcs`     | why each decision was made, one file per decision; documents only, no spec -- [spec/rfcs.md](spec/rfcs.md)                                                              |
-| `repos/seam`     | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                  |
+| Project            | Rules                                                                                                                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `repos/canmi/web`  | the site, its API, the status page, the service domains' pages, the CMS, the console, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                      |
+| `repos/monoflake`  | the platform's design and code: the model, its checks, the drafts -- its own [AGENTS.md](repos/monoflake/AGENTS.md), as it ignores the workspace's rules                            |
+| `repos/apps/still` | a macOS application; no spec yet                                                                                                                                                    |
+| `repos/canmi/lib`  | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
+| `repos/apps/rdm`   | a GPUI download manager for macOS -- [repos/apps/rdm/spec/](repos/apps/rdm/spec/)                                                                                                   |
+| `repos/apps/cue`   | one bot behind many chat clients: a stateful hub, and a thin bridge per client, QQ first -- [repos/apps/cue/spec/](repos/apps/cue/spec/)                                            |
+| `repos/canmi/rfcs` | why each decision was made, one file per decision; documents only, no spec -- [spec/rfcs.md](spec/rfcs.md)                                                                          |
+| `repos/seam`       | compile-time rendering for Svelte, and the framework around it -- [repos/seam/spec/](repos/seam/spec/)                                                                              |

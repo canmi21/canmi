@@ -80,3 +80,9 @@ external httpsRequest: (requestOptions, incoming => unit) => clientRequest = "re
 
 /** A JavaScript Error carrying `message`. */
 @new external error: string => JsExn.t = "Error"
+
+/** A file's bytes, or None where it cannot be read. */
+let readBytesOf = path =>
+  try Some(Node.readBytes(path)) catch {
+  | _ => None
+  }

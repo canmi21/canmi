@@ -120,7 +120,7 @@ thought of is a crash in a reader's browser. One check gating everything has no 
 affordable only because the import is dynamic and the payload is therefore reached by nobody who
 does not need it, which is a property of the bundler rather than of the polyfill; a static import
 of the same set is a tax on every reader. web measures both sides of that in
-[its own spec](../repos/web/spec/compat.md).
+[its own spec](../repos/canmi/web/spec/compat.md).
 
 ## Errors are types on the way up and one message at the edge
 

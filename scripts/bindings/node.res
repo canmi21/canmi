@@ -115,3 +115,29 @@ external execBytes: (string, array<string>, bytesOptions) => bytes = "execFileSy
 type envOptions = {cwd?: string, env?: Dict.t<string>, stdio?: string}
 @module("node:child_process")
 external spawnWithEnv: (string, array<string>, envOptions) => spawned = "spawnSync"
+
+type child
+type stream
+type piped = {cwd: string, stdio: array<string>, env?: Dict.t<string>}
+@module("node:child_process") external spawn: (string, array<string>, piped) => child = "spawn"
+@get external childOut: child => stream = "stdout"
+@get external childErr: child => stream = "stderr"
+@send external onChunk: (stream, @as("data") _, bytes => unit) => unit = "on"
+@send external onClose: (child, @as("close") _, Nullable.t<int> => unit) => unit = "on"
+@send external chunkText: (bytes, @as("utf8") _) => string = "toString"
+@val @scope(("process", "stdout")) external write: string => unit = "write"
+
+/** A command's output shown as it arrives and kept, and its status: a long run is never silent. */
+let stream = (~cwd, command, commandArgs) =>
+  Promise.make((resolve, _) => {
+    let child = spawn(command, commandArgs, {cwd, stdio: ["ignore", "pipe", "pipe"]})
+    let seen = []
+    let take = chunk => {
+      let text = chunk->chunkText
+      write(text)
+      seen->Array.push(text)
+    }
+    child->childOut->onChunk(take)
+    child->childErr->onChunk(take)
+    child->onClose(code => resolve((code->Nullable.getOr(1), seen->Array.join(""))))
+  })
