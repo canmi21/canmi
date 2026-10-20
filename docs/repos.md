@@ -53,6 +53,18 @@ was visible: still carried byte-identical copies of two of them and redeclared `
 nothing said so for as long as the copies happened to agree. A rule that only holds while two
 files match is not a rule, it is a coincidence with a deadline.
 
+**A project shows what it inherits as a link up.** Decided by the author on 2026-10-20, first for
+monoflake: each inherited file a project uses sits at its root as a symbolic link to the
+workspace's -- `.oxfmtrc.json -> ../../.oxfmtrc.json` -- committed as a link that dangles on its
+own. Without it, someone reading the project alone sees no formatter configuration and concludes
+there is none; with it, the file is there, and where it comes from is its target. Measured on
+2026-10-20 with oxfmt 0.74, oxlint 1.89 and rustfmt: nested, each reads the link through to the
+workspace's file and behaves exactly as it did walking up; cloned alone, each takes the dangling
+link for no file and falls back to its defaults, with no error. The repos part holds every such
+link to resolve to the workspace's file of the same name, and still refuses a copy, telling it
+which link to make instead. A project links what it uses and nothing else, so the links are also
+the list of what it takes from here.
+
 An identical copy and a divergent one are reported differently -- the first is dead weight, the
 second is the shadowing this arrangement exists to prevent -- and both fail, because a deliberate
 override has to be written down here before it is legitimate.

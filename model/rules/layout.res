@@ -1,5 +1,5 @@
 /** How the workspace and the repositories under it are arranged; the repos and tools parts. */
-/** What a repository below inherits by position and so never copies. */
+/** What a repository below inherits by position: never copied, and shown as a link where used. */
 let inherited = [
   ".editorconfig",
   "rustfmt.toml",
@@ -41,6 +41,12 @@ let rules: array<Rule.t> = [
   {
     name: "not-copied",
     says: "No repository below carries a tracked copy of an `inherited` file",
+    doc,
+    held: Check("repos"),
+  },
+  {
+    name: "linked-up",
+    says: "An inherited file a repository shows is a link resolving to the workspace's, never a copy",
     doc,
     held: Check("repos"),
   },

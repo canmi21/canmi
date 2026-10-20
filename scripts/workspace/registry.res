@@ -139,7 +139,8 @@ let selected = (name: option<string>, ~everything=false): array<string> => {
 /**
  * What a project carries that this workspace provides by position, so a copy is dead weight and a
  * difference shadows it: `.editorconfig` stops the walk outright, and rustfmt takes the first file
- * it finds. An `.oxlintrc.json` that `extends` the workspace's states a difference, and passes.
+ * it finds. A link to the workspace's shows the inheritance and passes; so does an `.oxlintrc.json`
+ * that `extends` the workspace's, stating a difference.
  */
 let inherited = Layout.inherited
 
@@ -165,14 +166,23 @@ let shadowing = (project: string): array<string> =>
     let path = Node.join([project, relative])
     let name = Node.basename(path)
     let provided = Node.join([root, name])
-    if (
-      !(inherited->Array.includes(name)) ||
-      relative->String.split("/")->Array.includes("vendor") ||
-      !Node.existsSync(path)
-    ) {
+    let linked = try Node.lstatSync(path)->Node.statsIsSymbolicLink catch {
+    | _ => false
+    }
+    let up = Node.relative(Node.dirname(path), provided)
+    if !(inherited->Array.includes(name)) || relative->String.split("/")->Array.includes("vendor") {
+      None
+    } else if linked {
+      let target = try Some(Node.realpathSync(path)) catch {
+      | _ => None
+      }
+      target == Some(Node.realpathSync(provided))
+        ? None
+        : Some(`${relative} links elsewhere than the workspace's ${name}; link ${up}`)
+    } else if !Node.existsSync(path) {
       None
     } else if Node.existsSync(provided) && Node.readFileSync(provided) == Node.readFileSync(path) {
-      Some(`${relative} is a byte-identical copy of the workspace's; delete it`)
+      Some(`${relative} is a byte-identical copy of the workspace's; link ${up} instead`)
     } else if extendsWorkspace(path, provided) {
       None
     } else {
