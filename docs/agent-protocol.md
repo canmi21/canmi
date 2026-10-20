@@ -170,7 +170,17 @@ Do not ask when:
 
 Calibration matters in both directions. Escalating every trivial choice wastes the user's
 attention; silently settling a structural one takes a decision that was never yours. When
-genuinely unsure, ask one focused question instead of a list.
+genuinely unsure of one thing, ask one focused question.
+
+### The questions of one block are asked together
+
+**When a piece of work leaves several decisions open, they are gathered first and brought in one
+round**, decided by the author on 2026-10-20: everything the block still needs is looked for before
+anything is asked, each question numbered and in plain words -- what it is, its choices and what
+each costs, a recommendation -- so the author answers them all at once, and the changes they
+settle are then made together. Asking them one after another, each found only once the last was
+answered, cost the author a round trip a question for what was one decision. A block is the work
+in hand, such as a boundary being drawn; what belongs to the next one waits for it.
 
 ### Working a backlog: one item, proposed and accepted, then done
 
