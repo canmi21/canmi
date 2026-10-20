@@ -109,7 +109,10 @@ does with a brief it believes is wrong.
 **The conversation writes no code in a delegating session, a shared contract included.** A type
 two workers build against, a client both call, a skeleton that lets the tree compile: each is the
 first wave's one worker, and the workers depending on it are the next wave, briefed with what it
-landed. The conversation's own edits are the rules, the registrations only it may touch -- a
+landed. **The one exception is an interface a project's model owns**: where a project derives each
+block's brief from its model and holds a block to it alone, as `monoflake/platform` does in its
+`docs/code.md`, the interface is the model's, written by the conversation and reviewed by the
+author before a worker begins, and the brief the project prints is the brief. The conversation's own edits are the rules, the registrations only it may touch -- a
 workspace member list, a URL table entry -- and a one-line fix a brief would be longer than.
 
 **Judgment.** Working out _why_ something is broken, and what the fix has to be, stays here. It

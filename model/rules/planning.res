@@ -12,6 +12,8 @@ let rules: array<Rule.t> = [
     name: "todo-cites-open",
     says: "A %todo or a todo! names an open row or a draft RFC, and none names one closed",
     doc,
-    held: Pending("each repository's %todo and todo! read against its own open rows and RFCs"),
+    held: Pending(
+      "monoflake/platform holds its own, model/checks/layout/code.res; the workspace reading every repository's",
+    ),
   },
 ]
