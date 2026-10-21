@@ -20,6 +20,12 @@ into `model/rules/` with its check and leaves this file.
 - **A commit by path can void the stamp.** `jj commit <paths>` runs the hook's `jj fix`, which may
   reformat what it commits, so the tree left is no longer the one that passed: check again before
   the next commit. Seen on 2026-10-20.
+- **A check can void its own stamp.** A crate added to a workspace's members is written into
+  `Cargo.lock` by the cargo the check runs, so the tree it leaves is not the one it passed: on
+  2026-10-20 a commit after it was refused. A check after a change of members runs twice.
+- **No check runs while a worker builds.** A check builds every block, and two builds of one
+  ReScript package at once collide on its lock, failing whichever started second, so the
+  conversation's checks and commits wait until the wave has returned.
 - **Each commit is its own call, alone in its message, opened by `jj root &&`.** Calls sent in one
   message run in one shell, so one's `cd` lands in the other's: on 2026-10-13 a commit sent in a
   parallel batch landed empty in the workspace and a chained push sent it, and on 2026-10-20 a
