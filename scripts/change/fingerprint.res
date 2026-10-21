@@ -1,8 +1,6 @@
 /**
- * What a file is to a build: two revisions of it compare equal here when no image built from them
- * could tell them apart. Rust source is its tokens, without comments or layout; a Dockerfile, a
- * `.dockerignore` and the image task are their lines without comments or blank ones; a declaration
- * or a crate's manifest is its parsed value. Anything else is its bytes. Read by deployable.res.
+ * What a file is to a build, two revisions comparing equal when no image built from them could
+ * tell them apart. Read by deployable.res.
  */
 /** Where a crate keeps what `cargo build` never compiles into its binary. */
 let unbuiltDirectories = ["tests", "benches", "examples"]
@@ -47,8 +45,7 @@ let keywords = [
 let word = character => character != "" && wordCharacter->RegExp.test(character)
 
 /**
- * Whether `path` goes into no image at all: prose, a license, or what a crate builds only for its
- * tests, benchmarks and examples.
+ * Whether `path` goes into no image, as prose, a license or a crate's tests, benches and examples.
  */
 let ignored = (path: string, ~crateDirectories: array<string>=[]): bool => {
   let name = path->String.slice(~start=path->String.lastIndexOf("/") + 1)
@@ -94,9 +91,8 @@ let startsWith = (tokens: array<string>, at, run: array<string>) =>
   run->Array.everyWithIndex((token, offset) => tokens[at + offset] == Some(token))
 
 /**
- * `tokens` with the body of every match arm and closure that is a block of one expression written
- * without its braces, `=> { x }` as `=> x,` and `|y| { x }` as `|y| x`, as rustfmt writes it once
- * it fits on a line.
+ * `tokens` with each one-expression block of a match arm or closure unbraced, `=> { x }` as
+ * `=> x,`, as rustfmt writes it once it fits on a line.
  */
 let unbraced = (input: array<string>) => {
   let tokens = input->Array.copy
@@ -160,13 +156,11 @@ let withoutOptionalSemicolons = (tokens: array<string>) => {
 }
 
 /**
- * `tokens` without the commas that mean nothing: one ending a list, right before `)`, `]`, `}` or
- * `>`, and one right after a block's `}` with more to follow, as after a match arm. The comma
- * ending a tuple's parentheses with no other is kept, since it makes `(x,)` a tuple; parentheses
- * after a name, `!`, `)`, `]` or `>` are a call's, whose last comma means nothing.
+ * `tokens` without the commas rustfmt adds and removes, one ending a list or following a block's
+ * `}`. The comma that makes `(x,)` a tuple is kept.
  */
 let withoutOptionalCommas = (tokens: array<string>) => {
-  // Each open bracket: its commas so far, and whether it holds a call's arguments.
+  // Each open bracket's commas so far, and whether it holds a call's arguments.
   let kept = []
   let brackets: array<(ref<int>, bool)> = []
   let closers = Array.concat(closing_, [">"])
@@ -208,10 +202,8 @@ let withoutOptionalCommas = (tokens: array<string>) => {
 }
 
 /**
- * The tokens of Rust source `text`, comments and whitespace dropped. A literal is kept whole, so a
- * change inside a string is a change; punctuation is one character a token, so `&&` and `& &`,
- * which rustfmt rewrites one into the other, are the same; and the commas rustfmt adds and removes
- * as it wraps a line are dropped, see `withoutOptionalCommas`.
+ * The tokens of Rust source `text` without comments or whitespace, a literal whole and
+ * punctuation one character a token, so what rustfmt rewrites compares equal.
  */
 let rustTokens = (text: string): array<string> => {
   let tokens = []
@@ -264,13 +256,13 @@ let rustTokens = (text: string): array<string> => {
           let start = i.contents
           i := i.contents + (c == "'" ? 1 : 2)
           if from(i.contents, "\\") || from(i.contents + 1, "'") {
-            // A character: an escape, or one character and its closing quote.
+            // A character, an escape or one character, and its closing quote.
             while i.contents < n && at(i.contents) != "'" {
               i := i.contents + (at(i.contents) == "\\" ? 2 : 1)
             }
             i := i.contents + 1
           } else {
-            // A lifetime or a label: the quote and the name after it.
+            // A lifetime or a label, the quote and the name after it.
             while i.contents < n && word(at(i.contents)) {
               i := i.contents + 1
             }
@@ -301,7 +293,9 @@ let rustTokens = (text: string): array<string> => {
   tokens->withoutOptionalSemicolons->unbraced->withoutOptionalCommas
 }
 
-/** `text` split into lines as Python's `splitlines` does for these files: no empty last line. */
+/**
+ * `text` split into lines as Python's `splitlines` does for these files, with no empty last one.
+ */
 let lines = (text: string) => {
   let split = text->String.splitByRegExp(lineBreak)->Array.map(line => line->Option.getOr(""))
   if split->Array.at(-1) == Some("") {

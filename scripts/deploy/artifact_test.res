@@ -24,7 +24,7 @@ let bucket: Artifact.bucket = {
 
 describe("signing", () => {
   test("gives the signature of AWS's own example of a signed GET", () => {
-    // "Example: GET Object" in Amazon S3's "Signature Calculations for the Authorization Header".
+    // "Example GET Object" in Amazon S3's "Signature Calculations for the Authorization Header".
     let signed = Artifact.authorization(
       {
         method: "GET",

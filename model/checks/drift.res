@@ -1,7 +1,6 @@
 /**
- * Prose a repository's AGENTS.md or docs say that the workspace's already do, or that another
- * repository's say too: a sentence most of whose runs of `run` words appear there. A warning, not
- * a failure -- docs/repos.md, "A repository's own rules extend the workspace's".
+ * Sentences in a repository's rules that the workspace's or another repository's already say,
+ * most of their runs of `run` words found there. See docs/repos.md.
  */
 let run = 8
 let share = 0.6
@@ -10,7 +9,7 @@ let shortest = 12
 
 type sentence = {file: string, line: int, opening: string, grams: array<string>}
 
-/** What holds a repository's rules: its AGENTS.md, and the prose under docs/ or its old name. */
+/** What holds a repository's rules, its AGENTS.md and the prose under docs/ or its old name. */
 let ruling = path =>
   path == "AGENTS.md" ||
     ([Layout.rulesHome, Layout.retired]->Array.some(home => path->String.startsWith(home ++ "/")) &&
@@ -139,7 +138,7 @@ let distinct = found => Set.fromArray(found)->Set.values->Array.fromIterator
 
 let main = (~only: option<string>): array<string> => {
   let repositories =
-    Registry.paths()
+    Waiting.active()
     ->Array.filter(path => !(Layout.archives->Array.includes(path)))
     ->Array.filter(path => Node.existsSync(Node.join([Registry.repos, path])))
     ->Array.map(path => (path, read(Node.join([Registry.repos, path]))))

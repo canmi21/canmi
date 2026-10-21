@@ -1,14 +1,11 @@
 /**
- * The reference rules two gates share: a link resolves, a citation resolves, a section exists. The
- * workspace's `refs` runs them over its own tree; each gate states only what is its own -- which
- * files it reads, how a citation resolves from where it sits.
+ * The reference rules two gates share, that a link and a citation resolve and a section exists.
+ * Each gate states only which files it reads and how a citation resolves from where it sits.
  */
 let mdLink = /\[[^\]]*\]\(([^)]+)\)/g
 /** A path as a doc writes one, lowercase throughout, as docs/naming.md asks. */
 let docPath = "[a-z0-9-]+(?:/[a-z0-9-]+)*\\.md"
-/**
- * A citation's tail past its prefix: directories lowercase, the basename as a framework names it.
- */
+/** A citation's tail past its prefix, directories lowercase and the basename as named. */
 let docTail = "(?:[a-z0-9-]+/)*[A-Za-z0-9-]+\\.md"
 /** The entry point every tree carries, citable by anchor and by nothing else. */
 let rootDocs = "AGENTS\\.md"
@@ -26,7 +23,7 @@ let spaces = /\s+/g
 let notWord = /[^a-z0-9 ]/g
 let fence = /```[\s\S]*?```/g
 let inlineCode = /`[^`\n]+`/g
-/** Who a citation names as its owner, just before it: `platform's spec/...`, `the workspace's`. */
+/** Who a citation names as its owner just before it, `platform's spec/...` or `the workspace's`. */
 let ownerOf = /\b(\w+)'s `?$/
 
 let read = path =>
@@ -64,7 +61,7 @@ let citingFiles = (files, suffixes) =>
     suffixes->Array.includes(Node.extname(path)) || extensionlessText(path)
   )
 
-/** Fenced blocks and inline code blanked, line structure kept: an example of a link is not one. */
+/** Fenced blocks and inline code blanked, lines kept, since an example of a link is none. */
 let withoutCode = text =>
   text
   ->String.replaceRegExpBy0Unsafe(fence, (~match, ~offset as _, ~input as _) =>

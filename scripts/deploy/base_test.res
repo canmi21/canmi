@@ -105,7 +105,7 @@ describe("the last commit built", () => {
 })
 
 describe("a commit held", () => {
-  // Against a real repository: two commits on one line, and one on a line of its own.
+  // A real repository with two commits on one line and one on a line of its own.
   let checkout = temporaryRoot("base-")
   let git = args =>
     Node.execFileSync(

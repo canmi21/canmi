@@ -157,7 +157,7 @@ let repositoryOf = (segment: array<string>): option<string> => {
 /** The repository a jj invocation names with -R or --repository before its subcommand, if any. */
 let repository = (command): option<string> => segments(command)->Array.findMap(repositoryOf)
 
-/** Where each invocation of `subcommands` runs: `cwd`, moved by each `cd` before it, then by -R. */
+/** Where each invocation of `subcommands` runs, `cwd` moved by each `cd` before it, then -R. */
 let placed = (command, ~cwd, subcommands): array<string> => {
   let at = ref(cwd)
   let found = []

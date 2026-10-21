@@ -1,4 +1,4 @@
-/** A hook's payload as both harnesses send it: a field absent or misshapen is none, not a crash. */
+/** A hook's payload as both harnesses send it, a field absent or misshapen read as none. */
 type t = Dict.t<JSON.t>
 
 let parse = (text): option<t> =>

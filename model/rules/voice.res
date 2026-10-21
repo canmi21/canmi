@@ -26,7 +26,7 @@ let british = [
 /** Shorthand a name is never written in, each with the whole word. */
 let shortened = [("CF", "Cloudflare"), ("DB", "database"), ("DBs", "databases")]
 
-/** Text outside English: CJK ideographs, kana, hangul and full-width forms. */
+/** Text outside English, such as CJK ideographs, kana, hangul and full-width forms. */
 let foreign = RegExp.fromString("[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\uff00-\uffef]")
 
 /** Files whose job is to read or measure another language, so they quote it. */

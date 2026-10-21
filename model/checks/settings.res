@@ -39,7 +39,7 @@ let main = (~root): array<string> => {
   if !(read(".gitignore")->String.split("\n")->Array.includes("repos/*/")) {
     say(".gitignore does not list repos/*/")
   }
-  Registry.paths()
+  Waiting.active()
   ->Array.map(path => (path, Node.join([Registry.repos, path, "Cargo.toml"])))
   ->Array.forEach(((path, manifest)) =>
     if Node.existsSync(manifest) && !(References.read(manifest)->String.includes("[workspace]")) {

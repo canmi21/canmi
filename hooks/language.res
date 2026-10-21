@@ -1,8 +1,6 @@
 /**
- * At the end of a turn: hold it while the reply it ends with speaks English to a user who wrote
- * Chinese -- docs/voice.md. The reply is the prose after the last tool call; a short block, a path
- * or a command is not prose, and a user who wrote English is answered in English. Both harnesses'
- * transcripts are read, and the payload's last message where there is none.
+ * At the end of a turn, holds a reply in English to a user who wrote Chinese, docs/voice.md.
+ * A short block, a path or a command is not prose, and both harnesses' transcripts are read.
  */
 let chinese = RegExp.fromString("[\\u3400-\\u4dbf\\u4e00-\\u9fff\\uf900-\\ufaff]")
 let fenced = /```[\s\S]*?```/g
@@ -10,7 +8,7 @@ let inline = /`[^`\n]*`/g
 let latin = /[A-Za-z]/g
 /** Fewer letters than this is a word, a path or a command, not a reply written in a language. */
 let proseLetters = 60
-/** What the harness writes in the user's place: injected context, and another session's message. */
+/** What the harness writes in the user's place, injected context and another session's message. */
 let harness = ["<", "Another Claude session sent a message"]
 
 let english = text => {
@@ -58,7 +56,7 @@ let entry = (line): option<(role, array<string>, bool)> =>
         if kind == "assistant" {
           (Assistant, parts, false)
         } else if parts == [] {
-          // A tool's result: neither side speaking, and the end of whatever was written before it.
+          // A tool's result, where neither side speaks and what was written before it ends.
           (Tool, [], false)
         } else {
           // Claude Code marks a person's message `origin: {"kind": "human"}`; another session's

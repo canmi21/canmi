@@ -129,7 +129,9 @@ type piped = {cwd: string, stdio: array<string>, env?: Dict.t<string>}
 @send external chunkText: (bytes, @as("utf8") _) => string = "toString"
 @val @scope(("process", "stdout")) external write: string => unit = "write"
 
-/** A command's output shown as it arrives and kept, and its status: a long run is never silent. */
+/**
+ * A command's output shown as it arrives and kept, with its status, so a long run is never silent.
+ */
 let stream = (~cwd, command, commandArgs) =>
   Promise.make((resolve, _) => {
     let child = spawn(command, commandArgs, {cwd, stdio: ["ignore", "pipe", "pipe"]})

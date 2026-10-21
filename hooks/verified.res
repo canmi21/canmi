@@ -1,4 +1,4 @@
-/** Before a jj command making a commit: refuse it until verify passed at this working copy. */
+/** Refuses a jj command that makes a commit until verify passed at this working copy. */
 let label = repo =>
   repo == Registry.root
     ? "mise run check"
@@ -6,7 +6,7 @@ let label = repo =>
     ? `mise run check ${Registry.label(repo)}`
     : "the repository's verify"
 
-/** The exit status the harness reads: 2 refuses the command, with the reason on stderr. */
+/** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let handle = (payload: Payload.t): int => {
   let command = Payload.command(payload)
   let places = Jj_command.placed(command, ~cwd=Payload.cwd(payload), Commits.committing)

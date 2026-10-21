@@ -3,7 +3,7 @@ open Testing
 let root = Registry.root
 let entry = Node.join([root, "hooks", "run.res.mjs"])
 
-/** What both adapters run: walk up to the checkout with hooks/, build it if need be, run it. */
+/** What both adapters run, walking up to the checkout with hooks/ and building it if need be. */
 let command = `d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f "$d/hooks/run.res" ] && [ "$d" != / ]; do d=$(dirname "$d"); done; [ -f "$d/hooks/run.res" ] || exit 0; e="$d/hooks/run.res.mjs"; r="$d/node_modules/.bin/rescript"; [ -f "$e" ] || { "$r" build >&2; [ -f "$e" ] || { "$r" clean >&2; "$r" build >&2; }; }; [ -f "$e" ] || { echo "hooks: $e is not built and building did not make it; run mise run build in $d" >&2; exit 1; }; exec node "$e"`
 
 type adapter = {hooks: Dict.t<array<{"hooks": array<{"command": string}>}>>}
@@ -60,7 +60,7 @@ describe("the shared entrypoint", () => {
     () => {
       let docs = Node.join([root, "docs"])
       expect(invoke(~cwd=docs, ~through=true, post(docs)))->toEqual((0, "", ""))
-      // The case the walk exists for: jj answers about the project, not about this repository.
+      // The case the walk exists for, where jj answers about the project and not this repository.
       Registry.paths()
       ->Array.map(path => Node.join([Registry.repos, path]))
       ->Array.find(path => Node.existsSync(Node.join([path, ".jj"])))

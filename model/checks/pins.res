@@ -1,4 +1,4 @@
-/** The workspace's [tools] against model/rules/toolchain.res: a major, or a reason beside it. */
+/** Each [tools] pin against model/rules/toolchain.res, a major or a reason beside it. */
 let entry = /^\s*([\w:@\/.-]+)\s*=\s*"([^"]*)"\s*(#.*)?$/
 let table = /^\s*\[([^\]]+)\]\s*$/
 

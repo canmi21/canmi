@@ -24,7 +24,7 @@ let main = (~root): array<string> => {
   let refused =
     [root]
     ->Array.concat(
-      Registry.paths()
+      Waiting.active()
       ->Array.map(path => Node.join([Registry.repos, path]))
       ->Array.filter(Node.existsSync),
     )

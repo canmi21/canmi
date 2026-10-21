@@ -1,4 +1,4 @@
-# The root of a mise monorepo: a repository's tasks are `//repos/<path>:<task>`.
+# The root of a mise monorepo, a repository's tasks being `//repos/<path>:<task>`.
 monorepo_root = true
 
 # repos/registry.toml again, since mise cannot read it; `check workspace repos` holds the two to
@@ -35,7 +35,7 @@ pnpm = "12"
 jj = "0.46" # pre-1.0, where a minor is the breaking release
 oxlint = "1"
 
-# One verb: the workspace alone, a path from repos/registry.toml for that one, --all for every one.
+# One verb, for the workspace alone, a path from repos/registry.toml, or --all for every one.
 [tasks.pull]
 description = "Fetch the workspace, every repository with --all, or one: `pull [name | --all] [--dry-run]`"
 depends = ["build"]
@@ -96,7 +96,7 @@ description = "Run a task in every repository that declares it, one after anothe
 depends = ["build"]
 run = "node scripts/workspace/each.res.mjs"
 
-# What the scripts compile to, never committed: every task running one depends on it.
+# What the scripts compile to, never committed, which every task running one depends on.
 [tasks.build]
 description = "Compile the scripts under scripts/ and the model under model/"
 run = "rescript build"

@@ -1,7 +1,6 @@
 /**
- * A repository's `fmt`: rustfmt over its crates where it has any, then oxfmt over the files its
- * glob names; `--dry-run` lists what either would change and fails nothing. `--glob` replaces the
- * default glob, for a repository that formats fewer kinds of file.
+ * A repository's `fmt`, rustfmt over its crates and oxfmt over the files its glob names, `--glob`
+ * replacing that glob. `--dry-run` lists what either would change and fails nothing.
  */
 let defaultGlob = "**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx,css,json,jsonc,md,svelte}"
 

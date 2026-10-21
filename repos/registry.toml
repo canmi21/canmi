@@ -1,6 +1,5 @@
-# Every repository here, by its path under repos/, any depth: path = "user:repo". mise.toml's
-# config_roots repeats the set, as mise cannot read this file; `mise run check workspace repos`
-# holds the two.
+# Every repository here as `path = "user:repo"`, its path under repos/ any depth. mise.toml's
+# config_roots repeats the set, and `mise run check workspace repos` holds the two.
 [repos]
 "canmi/web" = "canmi21:web"
 "canmi/lib" = "canmi21:lib"

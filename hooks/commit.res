@@ -1,4 +1,4 @@
-/** Before a jj command writing a description: refuse a malformed message, then run jj fix. */
+/** Refuses a jj command that writes a malformed description, then runs jj fix. */
 /** Every -m value given to a subcommand that can write a description. */
 let messages = command =>
   Jj_command.invocations(command)
@@ -15,7 +15,7 @@ let messages = command =>
     )
   )
 
-/** The exit status the harness reads: 2 refuses the command, with the reasons on stderr. */
+/** The exit status the harness reads, 2 refusing the command with the reasons on stderr. */
 let refuse = (payload: Payload.t): int => {
   let problems = messages(Payload.command(payload))->Array.flatMap(History.problems)
   if problems != [] {
@@ -30,7 +30,7 @@ let refuse = (payload: Payload.t): int => {
   }
 }
 
-/** Once every gate passed: jj fix over what the command describes. */
+/** Runs jj fix over what the command describes, once every gate passed. */
 let fix = (payload: Payload.t) => {
   let found = messages(Payload.command(payload))
   if found != [] {

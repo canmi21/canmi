@@ -1,7 +1,6 @@
 /**
- * The pinned toolchain against each publisher's stable channel, `tools check|outdated|up [name |
- * --all] [--dry-run]`, and the files an outside build reads written from the pins. See
- * docs/toolchain.md, "Stable means the publisher's channel, not the highest version that exists".
+ * The pinned toolchain against each publisher's stable channel, `tools check|outdated|up`, and the
+ * files an outside build reads written from the pins. See docs/toolchain.md.
  */
 type response
 @val external fetch: (string, {"headers": Dict.t<string>}) => promise<response> = "fetch"
@@ -39,7 +38,7 @@ let textField = (json, key) =>
   | _ => None
   }
 
-/** The part of a version a pin holds: the major, or below 1.0 the minor; a channel has none. */
+/** The part of a version a pin holds, the major or below 1.0 the minor, none for a channel. */
 let series = (version: string): option<string> => {
   let parts = version->String.split(".")
   switch (parts[0], parts[1]) {
@@ -140,7 +139,7 @@ let ask = async (tool, line: option<string>): option<string> =>
       | _ => None
       }
     | Some(("rust", _)) =>
-      // The whole manifest: the version wanted is inside [pkg.rust], and the first one is cargo's.
+      // The whole manifest, the version wanted inside [pkg.rust] and the first one cargo's.
       let response = await fetch(
         "https://static.rust-lang.org/dist/channel-rust-stable.toml",
         {"headers": Dict.fromArray([("User-Agent", "workspace-tools")])},
@@ -170,7 +169,7 @@ let stable = (tool, ~line=?) => {
   }
 }
 
-/** A directory's own tools: (tool, version) and what its `[tools]` asks for, read from mise. */
+/** A directory's own tools as (tool, version), and what its `[tools]` asks for, read from mise. */
 let current = where =>
   switch JSON.parseOrThrow(Node.output(~cwd=where, "mise", ["ls", "--current", "--json"])) {
   | Object(tools) => tools
@@ -200,7 +199,7 @@ let own = (where, part) => {
 let installed = where => own(where, "version")
 let pinned = where => own(where, "requested_version")->Dict.fromArray
 
-/** Whether a pin would accept a version: mise matches a pin as its prefix. */
+/** Whether a pin would accept a version, which mise matches as its prefix. */
 let allows = (pin, version) =>
   pin != "" && (version == pin || version->String.startsWith(`${pin}.`))
 
@@ -282,10 +281,7 @@ let writeDerived = (path, resolved) =>
     )
   }
 
-/**
- * The directories declaring tools of their own: the one named, every one with `--all`, else the
- * workspace.
- */
+/** The directories declaring tools of their own, as `Registry.selected` chooses them. */
 let configured = (name, everything) =>
   Registry.selected(name, ~everything)->Array.filter(where =>
     Node.existsSync(Node.join([where, "mise.toml"]))
@@ -394,7 +390,7 @@ let report = (rows: array<row>) => {
       unknown := unknown.contents + 1
     | Some(newest) =>
       switch (series(row.version), row.line) {
-      // A channel, not a version: whether it is current is the toolchain it resolves to.
+      // A channel, which is current when the toolchain it resolves to is.
       | (None, _) =>
         switch row.tool == "rust" ? rustChannel(row.where) : None {
         | Some(holds) if holds != newest =>
@@ -505,7 +501,7 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
     )
     0
   } else {
-    // rust is the one tool mise cannot move: its rust is rustup's toolchain, so rustup advances it.
+    // rust is rustup's toolchain, which mise cannot move, so rustup advances it.
     if places->Array.some(where => installed(where)->Array.some(((tool, _)) => tool == "rust")) {
       if dry {
         Console.log("would run rustup update stable")
@@ -526,7 +522,7 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
           {cwd: where, encoding: "utf8", maxBuffer: 268435456},
         )
         let stdout = ran.stdout->Nullable.getOr("")
-        // mise's advice to bump is dropped: it reads every published version, never a stable tag.
+        // mise's advice to bump is dropped, as it reads every published version and no stable tag.
         [stdout, ran.stderr->Nullable.getOr("")]->Array.forEach(stream =>
           stream
           ->String.split("\n")
@@ -574,8 +570,7 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
         await each(rest)
       }
     await each(List.fromArray(places))
-    // Written from the pins: whatever the toolchain moved to, the files an outside build reads
-    // follow.
+    // The files an outside build reads are written from the pins, wherever the toolchain moved.
     let rewritten = places->Array.flatMap(where =>
       derived(where)->Array.map(((path, _, current)) => {
         if !dry {

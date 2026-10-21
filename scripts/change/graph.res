@@ -1,7 +1,6 @@
 /**
- * What a change reaches in one repository: its Rust crates and its TypeScript packages, and the
- * edges between them. Read by verify.res, to choose gates, and by deployable.res, to choose images
- * and Workers. Every repository's tasks call it with their own root and layout.
+ * What a change reaches in one repository, its Rust crates, TypeScript packages and the edges
+ * between them. Read by verify.res and deployable.res.
  */
 /** Where a repository keeps its apps and packages. */
 type layout = {
@@ -294,9 +293,8 @@ let testModules = (sources: array<string>) => {
 }
 
 /**
- * Path -> crates whose own code, not a test, includes it with `include_str!` or `include_bytes!`:
- * what a binary carries. A test is a file under the crate's `tests/`, an include after a file's
- * first `#[cfg(test)]`, or a module declared `#[cfg(test)] mod name;` in a file of its own.
+ * Path to the crates whose own code includes it with `include_str!` or `include_bytes!`, a test's
+ * include aside.
  */
 let embedded = (root, directories: Map.t<string, string>): edges => {
   let real = resolved(root)
@@ -320,9 +318,7 @@ let embedded = (root, directories: Map.t<string, string>): edges => {
 
 let buildLiteral = /"(\.\.?\/[^"]+)"/g
 
-/**
- * Path -> crates whose build script reads it: a relative literal in a `build.rs`, from its crate.
- */
+/** Path to the crates whose build script reads it, a relative literal in `build.rs`. */
 let buildInputs = (root, directories: Map.t<string, string>): edges => {
   let real = resolved(root)
   let inputs = Map.make()

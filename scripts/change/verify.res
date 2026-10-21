@@ -2,7 +2,7 @@
  * The gates a change has to pass, chosen by what it touched, each repository calling it with its
  * own gates. See docs/repos.md, "verify runs what a change reaches".
  */
-/** What a file reaches that no graph shows: packages or crates read rather than imported. */
+/** What a file reaches that no graph shows, packages or crates read rather than imported. */
 type reach = {packages?: array<string>, crates?: array<string>}
 
 /** A repository's gates, as its own `verify` task names them. */
@@ -10,7 +10,7 @@ type config = {
   layout: Graph.layout,
   /** Whole-tree and cheap, so they run whatever changed. */
   always: array<string>,
-  /** Whole-program by nature: tsc, vitest and oxlint read everything they read. */
+  /** Whole-program gates, tsc, vitest and oxlint reading everything they read. */
   node: array<string>,
   /** Gates that belong to one package, run when it or anything it imports changed. */
   packageGates: Dict.t<array<string>>,
@@ -37,7 +37,7 @@ let nodeSuffixes = [
   ".yaml",
   ".yml",
 ]
-/** The gates themselves: a change to how anything is checked is checked against everything. */
+/** The gates themselves, so a change to how anything is checked is checked against everything. */
 let gateFile = "mise.toml"
 let gateDirectory = ".mise/tasks/"
 let nodeRootFiles = ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "vitest.config.ts"]
@@ -148,12 +148,11 @@ let plan = (config: config, files: array<string>): plan =>
 let isDeclaration = (layout: Graph.layout, path: string): bool =>
   Graph.appOf(layout, path)->Option.isSome && path->String.endsWith("/service.toml")
 
-/** A repository's `verify` task: the gates printed, then run, every one reporting. */
+/** A repository's `verify` task, which prints the gates and runs every one. */
 let main = (config: config, ~args=Node.args()) => {
   let root = config.layout.root
 
-  // A library taken from the checkout beside this one is a state for trying a change, never one
-  // to pass in: what it installed is nowhere a clone can reach.
+  // A library taken from the checkout beside this one is never passed, since no clone can reach it.
   if Node.existsSync(Node.join([root, ".local", "lib"])) {
     Console.error("verify: the library is local; `mise run lib-local --off` first")
     Node.exit(1)
@@ -209,7 +208,7 @@ let main = (config: config, ~args=Node.args()) => {
       )
     | None => ()
     }
-    // Every gate reports, not only the first to fail: a red run is worth its whole list.
+    // Every gate reports, not only the first to fail, so a red run gives its whole list.
     let command = ["run", "--continue-on-error", chosen.gates->Array.getUnsafe(0)]
     chosen.gates
     ->Array.slice(~start=1)

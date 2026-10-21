@@ -10,7 +10,7 @@ let trailer = RegExp.fromString(
 )
 /** A trailer line, `Key: value`, which a body's length does not count. */
 let trailerLine = /^[A-Za-z][A-Za-z-]*: /
-/** What Markdown would render: code, emphasis, a heading, a bullet, a link. */
+/** What Markdown would render, such as code, emphasis, a heading, a bullet or a link. */
 let marks = /`|\*\*|^#{1,6} |^\s*[-*+] |\[[^\]]*\]\([^)]*\)/
 
 let expected =

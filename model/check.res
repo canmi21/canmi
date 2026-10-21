@@ -1,8 +1,6 @@
 /**
- * The workspace's own verify, `check workspace [part ...] [--pending]`: every part, or those named.
- * A part either runs a script that prints its own report or answers with violations, one per line.
- * Every rule in model/rules/ is held by a part, a hook, a gate or nothing yet; the rules part holds
- * each to one that exists, and `--pending` lists the rules no check holds.
+ * The workspace's own verify, `check workspace [part ...] [--pending]`.
+ * Each rule in model/rules/ is held by a part, a hook, a gate or nothing yet.
  */
 let root = Registry.root
 let python = "/usr/bin/python3"
@@ -108,7 +106,7 @@ let parts: array<(string, part)> = [
 
 let known = parts->Array.map(((name, _)) => name)
 
-/** Every rule held by something that exists: a part of this check, or a hook's or a gate's file. */
+/** Each rule held by a part, a hook or a gate that does not exist. */
 let unheld = (): array<string> =>
   Rules.all->Array.filterMap(rule =>
     switch rule.held {
@@ -156,7 +154,7 @@ let outcome = part =>
     report(kept->Array.map(((_, says)) => says))
   }
 
-/** What the workspace holds over every repository below it, run on one: each part a name. */
+/** What the workspace holds over every repository below it, each part by its name. */
 let over = (repo): array<(string, part)> => [
   ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
   ("tasks", Found(() => Tasks.main(~root=repo))),

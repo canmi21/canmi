@@ -1,6 +1,6 @@
 /**
- * The one hook entrypoint Claude Code and Codex both call, through the same line in their adapters:
- * it routes each event to its policies and combines what they answer into one response.
+ * The one hook entrypoint Claude Code and Codex both call, routing each event to its policies
+ * and combining their answers into one response.
  */
 let post = (message: string) => JSON.Object(
   Dict.fromArray([
@@ -45,7 +45,7 @@ let handle = (payload: Payload.t): int =>
     )
     0
   | Some("Stop") =>
-    // One hold at a time: work outside the bookmark costs more; the language is judged next stop.
+    // One hold at a time, the bookmark's first and the language judged at the next stop.
     switch Bookmark.response(payload) {
     | Some(held) => say(held)
     | None => Language.response(payload)->Option.forEach(say)

@@ -1,10 +1,6 @@
 /**
- * One Deploy run's artifact into the bucket, RFC q28g5: `node artifact.res.mjs <name> <dir>
- * [--store] [--hidden] [--dry-run]`, from the workspace's checkout in a repository's CI. Zipped as
- * actions/upload-artifact zipped it, put at `<owner>/<repo>/<run>/<name>.zip`, then `<name>.json`
- * beside it; a `deploy-*` or `worker-*` then prunes the repository's runs. Reached by the S3 API
- * alone, signed here, from ARTIFACTS_ENDPOINT, _REGION, _BUCKET, _WRITE_KEY_ID and _WRITE_SECRET,
- * path-style unless ARTIFACTS_VIRTUAL_HOST is `true`.
+ * Puts one Deploy run's artifact into the bucket by the S3 API, from a repository's CI. RFC q28g5.
+ * Its usage is `usage` below, and its settings the ARTIFACTS_ variables.
  */
 let usage = "usage: artifact.res.mjs <name> <dir> [--store] [--hidden] [--dry-run]"
 /** The names a Deploy run's artifacts take. */
@@ -27,7 +23,7 @@ type bucket = {
   virtualHost: bool,
 }
 
-/** A file in the zip: its path there, `/`-separated, and where it is on disk. */
+/** A file in the zip, its `/`-separated path there and where it is on disk. */
 type entry = {name: string, path: string}
 
 /** The files under `dir`, sorted, with what a leading dot hides left out unless `hidden`. */
@@ -90,8 +86,8 @@ let unsigned: float => float = %raw(`value => value >>> 0`)
 let unsignedInt: int => float = %raw(`value => value >>> 0`)
 
 /**
- * Writes `entries` to a zip at `out`, each deflated or, with `store`, stored, so a large image is
- * streamed rather than held. No ZIP64: an entry or a zip past 4 GiB is refused.
+ * Writes `entries` to a zip at `out`, deflated or stored and streamed. An entry or a zip past
+ * 4 GiB is refused, there being no ZIP64.
  */
 let zip = (entries: array<entry>, out: string, store: bool) => {
   let fd = Net.openSync(out, "w")
@@ -269,10 +265,7 @@ let authorization = (signable: signable, region: string, keyId: string, secret: 
 
 type address = {host: string, name: string, path: string}
 
-/**
- * Where `key` is in the bucket, path-style or by virtual host: the Host, the name to dial, the
- * path.
- */
+/** Where `key` is in the bucket, path-style or by virtual host, as Host, address and path. */
 let address = (bucket: bucket, key: string): address => {
   let encoded = key != "" ? `/${key->String.split("/")->Array.map(encode)->Array.join("/")}` : ""
   let host = bucket.endpoint->Net.host
@@ -288,7 +281,7 @@ let address = (bucket: bucket, key: string): address => {
 
 type answer = {status: int, body: string}
 
-/** What a request carries: nothing, bytes, or a file streamed with its digest. */
+/** What a request carries, nothing, bytes or a file streamed with its digest. */
 type body = Nothing | Bytes(Net.bytes) | File(string, digest)
 
 let stampDashes = /[-:]/g
@@ -492,9 +485,8 @@ let seconds = (pattern: RegExp.t, text: string) => {
 }
 
 /**
- * The id of every version and delete marker of exactly `key`, across as many pages as
- * ListObjectVersions gives -- a sibling it shares a prefix with is passed over. None where the
- * store does not implement the listing, as a store that keeps no versions need not.
+ * The id of every version and delete marker of exactly `key` across ListObjectVersions' pages,
+ * or None where the store does not implement the listing.
  */
 let versions = async (bucket: bucket, key: string): array<string> => {
   let ids = []
@@ -538,9 +530,8 @@ let versions = async (bucket: bucket, key: string): array<string> => {
 }
 
 /**
- * Deletes `key` as a DELETE always has, then every version and delete marker of it the store still
- * keeps, so the bytes go now; a store may keep versions with S3 Versioning off. A version already
- * gone is not an error.
+ * Deletes `key` and every version and delete marker the store still keeps, so the bytes go now.
+ * A version already gone is not an error.
  */
 let erase = async (bucket: bucket, key: string) => {
   let _ = await call(bucket, "DELETE", key, Dict.make(), Nothing)
@@ -567,7 +558,7 @@ let ordered = found =>
     a->String.endsWith(".json") ? -1. : b->String.endsWith(".json") ? 1. : 0.
   )
 
-/** Run ids, the newest first: by number, since `100` is newer than `99`. */
+/** Run ids newest first, by number, since `100` is newer than `99`. */
 let descending = runs =>
   runs->Array.toSorted((a, b) =>
     b->Float.fromString->Option.getOr(0.) -. a->Float.fromString->Option.getOr(0.)
@@ -576,9 +567,8 @@ let descending = runs =>
 let runKey = /^(\d+)\/([^\/]+)\.(zip|json)$/
 
 /**
- * The keys pruning `artifact` deletes from `keys`, every one under `prefix`: its runs older than
- * the newest `kept` holding it, then each run older than the repository's newest `kept` left
- * holding only `declarations`, so a run that changed declarations alone outlives two newer runs.
+ * The keys under `prefix` that pruning `artifact` deletes, its runs older than the newest `kept`,
+ * and then runs holding only `declarations` past the repository's newest `kept`.
  */
 let pruned = (keys: array<string>, prefix: string, artifact: string): array<string> => {
   let runs: Map.t<string, Map.t<string, array<string>>> = Map.make()

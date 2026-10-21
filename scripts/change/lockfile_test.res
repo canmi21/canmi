@@ -1,6 +1,6 @@
 open Testing
 
-// Two documents, as pnpm writes them: its own config's importer first, then the repository's.
+// Two documents as pnpm writes them, its own config's importer first and then the repository's.
 let lock = `lockfileVersion: '9.0'
 
 importers:

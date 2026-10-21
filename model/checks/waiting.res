@@ -19,7 +19,7 @@ let rec markdown = directory =>
     }
   })
 
-/** Every RFC by its id to its status: canmi/rfcs whole, and each repository's docs/rfcs. */
+/** Every RFC's status by its id, from canmi/rfcs whole and each repository's docs/rfcs. */
 let statuses = (): Dict.t<string> => {
   let found = Dict.make()
   let places =
@@ -109,6 +109,9 @@ let pauserIn = (items: array<item>, ~repo) =>
   ->Option.map(item => item.id)
 
 let pauser = (~repo) => pauserIn(items, ~repo)
+
+/** The registry's repositories that no item pauses, the ones a scan across them reads. */
+let active = () => Registry.paths()->Array.filter(path => pauser(~repo=path)->Option.isNone)
 
 let red = text => Node.envOn("NO_COLOR") ? text : `\u001b[31m${text}\u001b[0m`
 

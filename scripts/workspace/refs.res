@@ -1,8 +1,6 @@
 /**
- * How this workspace refers to its own files, `refs [--json]`: a markdown link in a doc resolves,
- * a doc under `docs/`, or under a project's `repos/<path>/`, cited from code exists -- unless it is
- * in a project not cloned, a note and no failure -- and a section quoted beside it exists. With
- * `--json`, the pair graph instead.
+ * How this workspace refers to its own files, `refs [--json]`. A doc's links, the docs code cites
+ * and the sections quoted beside them exist, a project not cloned a note.
  */
 let codeSuffixes = [
   ".ts",
@@ -30,7 +28,7 @@ let files = () => References.tracked(root, ~skipFiles)
 let docs = () =>
   files()->Array.filter(path => Node.extname(path) == ".md")->Array.toSorted(String.compare)
 
-/** Where a citation points: beside the citing file, or from the root. */
+/** Where a citation points, beside the citing file or from the root. */
 let resolve = (path, cited) =>
   [Node.join([Node.dirname(path), cited]), Node.join([root, cited])]->Array.find(Node.existsSync)
 

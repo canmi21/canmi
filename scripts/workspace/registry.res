@@ -1,8 +1,6 @@
 /**
- * The repositories this workspace is made of: `repos/registry.toml`, each path under `repos/` to
- * the `user:repo` it is cloned from, a path any depth; the directories between are groups, which
- * mean nothing. mise cannot read the registry, so `mise.toml`'s `config_roots` states the set
- * again, and `check` holds the two, and the disk, to one.
+ * The repositories of this workspace, `repos/registry.toml`, each path under `repos/` to its
+ * `user:repo`. `mise.toml`'s `config_roots` repeats the set, and `check` holds the two to the disk.
  */
 let root = Node.resolve([Node.dirname(Node.fileURLToPath(Node.importMetaUrl)), "..", ".."])
 let repos = Node.join([root, "repos"])
@@ -84,8 +82,7 @@ let label = where =>
   where == root ? "workspace" : Node.relative(repos, where)->String.split(Node.sep)->Array.join("/")
 
 /**
- * Every directory under repos/ that is a repository or holds none, by its path: one that is no
- * repository and holds some is a group, walked through and never named.
+ * Every directory under repos/ that is a repository or holds none, a group walked through unnamed.
  */
 let discovered = (): array<string> => {
   let found = []
@@ -116,7 +113,7 @@ let discovered = (): array<string> => {
 }
 
 /**
- * The repositories a command applies to: the one named, every one with `--all`, else the workspace.
+ * The repositories a command applies to, the one named, every one with `--all`, or the workspace.
  */
 let selected = (name: option<string>, ~everything=false): array<string> => {
   let listed = paths()
@@ -148,10 +145,8 @@ let selected = (name: option<string>, ~everything=false): array<string> => {
 }
 
 /**
- * What a project carries that this workspace provides by position, so a copy is dead weight and a
- * difference shadows it: `.editorconfig` stops the walk outright, and rustfmt takes the first file
- * it finds. A link to the workspace's shows the inheritance and passes; so does an `.oxlintrc.json`
- * that `extends` the workspace's, stating a difference.
+ * What a project carries that this workspace provides by position, a copy dead weight and a
+ * difference a shadow. A link to the workspace's passes, as does an `.oxlintrc.json` extending it.
  */
 let inherited = Layout.inherited
 

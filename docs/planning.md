@@ -33,7 +33,8 @@ the waiver ends with the item. Only a part whose findings name the rule they bre
 `Waiting.waivable`.
 
 **A deferred item may pause the repositories it names**, `pauses: true`, so that `check --all` and
-`audit --all` pass over them and say so. A repository nobody is working on is not checked, because
+`audit --all` pass over them and say so, and the workspace's scans across repositories, lines,
+names, settings and drift, read only the rest, `Waiting.active`. A repository nobody is working on is not checked, because
 its findings ask for work nobody is doing; naming it alone, `mise run check canmi/web`, still runs
 its check. The `paused` item holds every repository but the workspace and monoflake's two.
 

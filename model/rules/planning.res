@@ -1,4 +1,4 @@
-/** What is not done and where it is kept, docs/planning.md: Open, Deferred, or not done at all. */
+/** Where what is not done is kept, docs/planning.md, as Open, Deferred or not done at all. */
 let doc = "docs/planning.md"
 
 let rules: array<Rule.t> = [

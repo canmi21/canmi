@@ -1,7 +1,6 @@
 /**
- * What waits beyond a repository's package ranges, by the newest version it holds anywhere;
- * `--names` prints only what `update --major` should move. See docs/toolchain.md, "A package at two
- * majors is a warning unless it is allowed".
+ * What waits beyond a repository's package ranges, by the newest version it holds anywhere,
+ * `--names` printing only what `update --major` should move. See docs/toolchain.md.
  */
 let entry = /^("?)([^"=\s]+)\1\s*=\s*"(.*)"$/
 let brackets = /^\[+|\]+$/g
@@ -9,7 +8,7 @@ let lineBreak = /\r?\n/
 let digits = /^\d+$/
 let local = /^(link:|file:|workspace:)/
 
-/** `versions.toml`'s `[several]`: package name -> why it may hold two majors. */
+/** `versions.toml`'s `[several]`, each package name to why it may hold two majors. */
 let allowed = (text: string): Map.t<string, string> => {
   let found = Map.make()
   let section = ref(None)
@@ -35,7 +34,7 @@ let allowed = (text: string): Map.t<string, string> => {
   found
 }
 
-/** A version as something to sort by: its numbers, then a release above any prerelease of it. */
+/** A version as a sort key, its numbers and then a release above any prerelease of it. */
 let key = (version: string): array<int> => {
   let dash = version->String.indexOf("-")
   let core = dash < 0 ? version : version->String.slice(~start=0, ~end=dash)
@@ -62,7 +61,7 @@ let compare = (a: string, b: string): int => {
 
 let order = (a, b) => Int.toFloat(compare(a, b))
 
-/** The part a `^` range holds: the first non-zero number, as `^0.x` does. */
+/** The part a `^` range holds, the first non-zero number, as `^0.x` does. */
 let major = (version: string): string => {
   let parts = version->String.split("-")->Array.getUnsafe(0)->String.split(".")
   switch parts->Array.findIndex(part => part != "0") {
@@ -206,7 +205,7 @@ let report = (root: string, names: bool): array<string> => {
       behind->Array.push((name, present->byVersion->Array.join(", "), entry.latest, who))
     }
   })
-  // A package at two majors that nothing calls out of date: every copy is on its own latest line.
+  // A package at two majors that nothing calls out of date has every copy on its own latest line.
   versions
   ->keys
   ->sorted
@@ -289,7 +288,7 @@ let report = (root: string, names: bool): array<string> => {
   }
 }
 
-/** The task: `outdated [--names]`, from the repository's root. */
+/** The task `outdated [--names]`, run from the repository's root. */
 let main = (~root=Node.cwd(), ~args=Node.args()) => {
   let names = args->Array.includes("--names") || Node.envIs("usage_names", "true")
   let lines = report(root, names)

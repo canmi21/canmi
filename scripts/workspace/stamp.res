@@ -20,7 +20,7 @@ let read = repo =>
   | _ => None
   }
 
-/** Whether the working copy holds what last passed: the same files, whatever its description. */
+/** Whether the working copy holds the same files that last passed, whatever its description. */
 let holds = repo =>
   switch read(repo) {
   | None => false

@@ -1,11 +1,8 @@
 /**
- * What a change needs built, as JSON, for the repository that calls it: images, declarations to
- * apply alone, or Workers. An app with a `service.toml` and a `Dockerfile` needs a new image when
- * what goes into it changed, each read as a build reads it (fingerprint.res). A declaration changed
- * alone needs none; `--declared` lists those. A Worker, an app placed on `workers` with a
- * `wrangler.jsonc`, needs packaging when it, a package it imports, or the packaging changed.
+ * What a change needs built, as JSON, for the repository that calls it, as images, declarations
+ * applied alone or Workers, each input read as a build reads it (fingerprint.res).
  */
-/** How every image is built: a change here is a change to all of them. */
+/** How every image is built, so a change here is a change to all of them. */
 let everyImage = [".dockerignore", ".mise/tasks/image"]
 /** What every image is resolved from, read at both revisions; given files alone, every image. */
 let resolution_ = ["Cargo.toml", "Cargo.lock"]
@@ -21,7 +18,7 @@ let everyWorker = ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".mi
 /** Which Workers a repository packages, `only` narrowing them to those named. */
 type workers = {only?: Set.t<string>}
 
-/** A repository's Workers: none, as `false`, or those it packages. */
+/** A repository's Workers, none as `false` or those it packages. */
 @unboxed
 type packaged = | @as(false) NoWorkers | Workers(workers)
 
@@ -124,8 +121,8 @@ Node.onExit(() =>
 )
 
 /**
- * One side of a comparison: the commit `commit` names, or the files on disk where it is None. Its
- * whole tree is written out once, the first time cargo is asked about it.
+ * One side of a comparison, the commit `commit` names or the files on disk where it is None,
+ * its tree written out the first time cargo is asked about it.
  */
 let revision = (root: string, ~commit: option<string>=?): readable => {
   let written = ref(None)
@@ -178,9 +175,8 @@ let treeOf = (side: readable) =>
   }
 
 /**
- * The crates a change to Cargo.lock or the root Cargo.toml reaches, or None for every image: given
- * no revisions to read, or where either file cannot be read or told apart. A crate the lockfile
- * moves is asked of cargo, and kept where cargo cannot answer.
+ * The crates a change to Cargo.lock or the root Cargo.toml reaches, or None for every image where
+ * either cannot be read. A crate the lockfile moves is asked of cargo.
  */
 let resolution = (
   root,
@@ -259,8 +255,8 @@ let continuation = /\\\n/g
 let lineBreak = /\r\n|\r|\n/
 
 /**
- * What `dockerfile` copies from the build's context, or None where it cannot be told: every source
- * of a `COPY` or `ADD` without `--from`, but an address `ADD` fetches.
+ * What `dockerfile` copies from the build's context, every source of a `COPY` or `ADD` without
+ * `--from` but an address, or None where it cannot be told.
  */
 let copied = (dockerfile: string): option<Set.t<string>> => {
   let sources = Set.make()
@@ -315,10 +311,7 @@ let cargoBuilt = (layout: Graph.layout, declared: declared, crateDirs: Map.t<str
   found
 }
 
-/**
- * Those of `files` that change a build: not ignored and, with revisions, not the same as a build
- * reads them.
- */
+/** Those of `files` that change a build, not ignored and, given revisions, read differently. */
 let changes = (files: array<string>, crateDirs: array<string>, revisions: revisions) => {
   let kept = files->Array.filter(file => !Fingerprint.ignored(file, ~crateDirectories=crateDirs))
   switch revisions {
@@ -338,9 +331,8 @@ let declaration = (layout: Graph.layout, path: string) =>
   }
 
 /**
- * The apps of `declared` built from their package rather than a crate's binary whose package
- * imports a package of the repository that `moving` changed. A lockfile change counts for the
- * packages whose importer it moved, and for every one where `revisions` cannot tell. RFC l6r4u.
+ * The apps of `declared` built from a package that imports one `moving` changed, a lockfile
+ * change counting where it moved the importer or cannot tell. RFC l6r4u.
  */
 let imported = (
   layout: Graph.layout,
@@ -502,9 +494,8 @@ let neededWorkers = (layout: Graph.layout, files: array<string>, declared: decla
   }
 
 /**
- * The files a change touched and the revisions to read them at, as the arguments name them:
- * `--files` alone has no revisions, `--git` compares two commits, and neither compares the working
- * copy with `--since` or its parent.
+ * The files a change touched and the revisions to read them at, `--files` with none, `--git`
+ * between two commits, and otherwise the working copy against `--since` or its parent.
  */
 let inputs = (root, args: array<string>): (array<string>, revisions) => {
   let after = flag => args[args->Array.indexOf(flag) + 1]
@@ -570,7 +561,7 @@ let deployable = (config: config, args: array<string>): array<string> => {
   }
 }
 
-/** A repository's `deployable` task: the list as JSON on stdout, or the reason on stderr. */
+/** A repository's `deployable` task, the list as JSON on stdout or the reason on stderr. */
 let main = (config: config, ~args=Node.args()) =>
   try {
     Console.log(JSON.stringifyAny(deployable(config, args))->Option.getOr("[]"))

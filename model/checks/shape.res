@@ -1,4 +1,4 @@
-/** A repository's tree against model/rules/layout.res: how wide, how deep, its root, its docs. */
+/** A repository's tree against model/rules/layout.res, its width, depth, root and docs. */
 /** Each directory of `files`, `.` the root, to the names directly inside it. */
 let directories = (files: array<string>): Dict.t<array<string>> => {
   let found = Dict.make()

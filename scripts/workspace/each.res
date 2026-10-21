@@ -1,4 +1,6 @@
-/** `each <task> [args] [--dry-run]`: the task in every repository declaring it, one at a time. */
+/**
+ * `each <task> [args] [--dry-run]` runs the task in every repository declaring it, one at a time.
+ */
 let main = (argv: array<string>): int => {
   let dry = argv->Array.some(arg => arg == "-n" || arg == "--dry-run")
   let rest = argv->Array.filter(arg => arg != "-n" && arg != "--dry-run")

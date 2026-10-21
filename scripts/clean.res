@@ -1,6 +1,6 @@
 /**
- * A repository's `clean`, docs/toolchain.md, "A cache is what a tool can write again": what cargo
- * and the JavaScript tools built, never a dependency or local state. Arguments name further caches.
+ * A repository's `clean`, what cargo and the JavaScript tools built and never a dependency or local
+ * state, docs/toolchain.md. Arguments name further caches.
  */
 /** What `find` lists from `root`, a path a line, as the shell's `find` loops read them. */
 let find = (root, findArgs) =>
@@ -73,7 +73,7 @@ let size = (root, path) =>
   ->Option.flatMap(word => word)
   ->Option.getOr("")
 
-/** The task: `clean [--dry-run] [extra cache...]`, from the repository's root. */
+/** The task `clean [--dry-run] [extra cache...]`, run from the repository's root. */
 let main = (~root=Node.cwd(), ~args=Node.args()) => {
   let dry =
     args->Array.includes("--dry-run") ||

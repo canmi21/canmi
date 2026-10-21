@@ -4,7 +4,7 @@ let stating = ["model/rules/voice.res", "model/checks/words.res"]
 let binary = [".png", ".jpg", ".ico", ".woff2"]
 let skipped = ["pnpm-lock.yaml", "LICENSE"]
 
-/** A line with its inline code blanked: a word in backticks is an example, not a use. */
+/** A line with its inline code blanked, since a word in backticks is an example and not a use. */
 let inlineCode = /`[^`\n]+`/g
 let plain = line => line->String.replaceRegExp(inlineCode, "``")
 

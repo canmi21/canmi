@@ -1,4 +1,4 @@
-/** What is decided and waits, `docs/planning.md`: each item listed at the end of every check. */
+/** What is decided and waits, `docs/planning.md`, each item listed at the end of every check. */
 type until =
   /** Due once the RFC of this id is landed or declined. */
   | Closes(string)

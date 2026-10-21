@@ -1,7 +1,6 @@
 /**
- * The gate holding every comment block in a repository to `Code`'s limits, docs/code.md. A body
- * line is one carrying text, so markers, a blank star, a docstring's quotes and a link are not.
- * Paths given are measured instead of the tree.
+ * Holds every comment block in a repository to `Code`'s limits, docs/code.md, a body line being
+ * one that carries text. Paths given are measured instead of the tree.
  */
 let width = Code.columns
 let bodyLimit = Code.blockLines
@@ -13,7 +12,7 @@ let skipped = [".md"]
 /** Tried in order, `///` before `//`; `#` opens a comment only before a space or the line's end. */
 let openers = ["///", "//!", "//", "/**", "/*", "*/", "<!--", "\"\"\"", "'''", "#"]
 let closers = ["*/", "-->", "\"\"\"", "'''"]
-/** Read by a tool rather than a person: a shebang and mise's task header lead and are not prose. */
+/** Directives read by a tool, a shebang and mise's task header, which are not prose. */
 let directives = ["#!", "#MISE", "#USAGE", "//MISE"]
 let preamble = ["set -"]
 /** A link, as docs/code.md's "A link is not length" means it, stopping before punctuation. */
@@ -85,11 +84,11 @@ let hashed = bare =>
   (bare == "#" || bare->String.startsWith("# ") || bare->String.startsWith("#\t")) &&
     !startsWithAny(bare, directives)
 
-/** Whether a tool wrote this file, `@generated` in its first five lines: nobody's to fix. */
+/** Whether a tool wrote this file, `@generated` in its first five lines, and so nobody's to fix. */
 let generated = lines =>
   lines->Array.slice(~start=0, ~end=5)->Array.some(line => line->String.includes("@generated"))
 
-/** A block: its first line, its body lines, its widest column, and whether it opens the file. */
+/** A block as its first line, its body lines, its widest column and whether it opens the file. */
 type block = (int, int, int, bool)
 
 /** A docstring's span, `(first, last, opensTheModule)`, from Python's own parser. */
@@ -243,8 +242,8 @@ let span = /`[^`]*`/g
 let label = /^(?:[A-Z]+:|- )/
 /** A colon in prose, not a path's `::` nor a time's or a ratio's between digits. */
 let colon = /(?<![:\d]):(?![:\d])|(?<=\D):(?=\d)|(?<=\d):(?=\D)/
-/** A dash between words: two hyphens, an em or en dash, or a hyphen standing alone. */
-let dash = /--|\u2014|\u2013|\s-\s/
+/** A dash between words, two hyphens or one standing alone or an em or en dash, and not a flag. */
+let dash = /(?:^|\s)--?(?:\s|$)|\u2014|\u2013/
 
 /** What a block's prose holds that docs/code.md asks a comment to do without. */
 let marks = (body: array<string>): array<string> => {
@@ -268,7 +267,7 @@ let marks = (body: array<string>): array<string> => {
   found
 }
 
-/** The files to measure: everything version control lists, untracked but unignored among them. */
+/** The files to measure, everything version control lists with untracked but unignored ones. */
 let files = (root, given) =>
   given->Array.length > 0
     ? given
@@ -313,7 +312,7 @@ let plain = (~root=Node.cwd(), ~given=[]): array<string> => {
   )
 }
 
-/** The gate: every block inside its limits, or each that is not, by where and by how much. */
+/** The gate, which names each block past its limits by where and by how much. */
 let main = (~root=Node.cwd(), ~given=Node.args()) => {
   let read = files(root, given)->Array.map(path => (path, linesOf(path)))
   let python = read->Array.filterMap(((path, lines)) =>

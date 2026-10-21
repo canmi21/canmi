@@ -1,6 +1,6 @@
 /**
- * The gate refusing a plaintext secrets file: each file `.sops.yaml` claims carries a `sops` block
- * and `ENC[` on every value. A repository's `secrets`, from its root; docs/toolchain.md.
+ * Refuses a plaintext secrets file, each `.sops.yaml` claims carrying a `sops` block and
+ * `ENC[` on every value. A repository's `secrets`, docs/toolchain.md.
  */
 let pathRegex = /path_regex:\s*(\S+)/g
 
@@ -73,7 +73,7 @@ let walk = root => {
   found
 }
 
-/** The gate: each guarded file encrypted, or every one that is not, by why. */
+/** The gate, which passes when each guarded file is encrypted and names each that is not. */
 let main = (~root=Node.cwd()) => {
   let patterns = guardedPatterns(root)
   if patterns->Array.length == 0 {

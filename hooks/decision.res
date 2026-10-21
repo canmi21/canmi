@@ -1,7 +1,6 @@
 /**
- * After a commit: when a feat, refactor, build or perf commit touched no rules, ask whether it
- * settled a question nobody wrote down. It never blocks -- many such commits settle nothing -- and
- * a fix is left out, since it records its cause at the test. See docs/commits.md, "Enforcement".
+ * After a feat, refactor, build or perf commit that touched no rules, asks whether it settled
+ * a question nobody wrote down, without blocking. See docs/commits.md, "Enforcement".
  */
 let deciding = ["feat", "refactor", "build", "perf"]
 /** The workspace keeps its rules in docs/ and model/, a project in spec/. */

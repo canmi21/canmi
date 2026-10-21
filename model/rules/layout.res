@@ -1,5 +1,5 @@
 /** How the workspace and the repositories under it are arranged; the repos and tools parts. */
-/** What a repository below inherits by position: never copied, and shown as a link where used. */
+/** What a repository below inherits by position, never copied and shown as a link where used. */
 let inherited = [
   ".editorconfig",
   "rustfmt.toml",
@@ -21,7 +21,7 @@ let deepest = 5
 /** A directory holding one of these is a package's root, where the depth counts from 1 again. */
 let manifests = ["Cargo.toml", "package.json", "rescript.json"]
 
-/** What sits at a root is configuration: a source file there belongs to a package below it. */
+/** A root holds configuration, so a source file there belongs to a package below it. */
 let sources = [".rs", ".res", ".ts", ".tsx", ".js", ".mjs", ".svelte", ".py", ".go"]
 let configuration = /\.config\.[a-z]+$/
 

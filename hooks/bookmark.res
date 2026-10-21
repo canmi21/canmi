@@ -1,4 +1,4 @@
-/** At the end of a turn: refuse to hand back commits main does not cover; never move it here. */
+/** Refuses to end a turn with commits main does not cover, and never moves main itself. */
 let bookmark = "main"
 
 /** Described, non-empty commits on the way to the working copy that the bookmark does not cover. */

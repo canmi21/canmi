@@ -63,7 +63,7 @@ def is_agent(env: dict[str, str]) -> bool:
 
 
 def operands(args: list[str]) -> list[str]:
-	"""BSD rm's getopt: options end at `--` or at the first argument that is not one."""
+	"""BSD rm's getopt, where options end at `--` or at the first argument that is not one."""
 	for i, arg in enumerate(args):
 		if arg == "--":
 			return args[i + 1 :]
@@ -73,7 +73,7 @@ def operands(args: list[str]) -> list[str]:
 
 
 def resolve(operand: str, cwd: str) -> str:
-	"""Where rm would act: the link itself for a symlink, the target once a slash follows it."""
+	"""Where rm would act, the link itself for a symlink and the target once a slash follows it."""
 	path = os.path.join(cwd, operand)
 	head, tail = os.path.split(path.rstrip("/"))
 	if tail in ("", ".", "..") or operand.endswith("/"):

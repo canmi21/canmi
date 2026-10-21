@@ -1,7 +1,6 @@
 /**
- * A pnpm lockfile's importers, read as text: each package directory's own section, what it asks for
- * and what that resolved to. Read by deployable.res, so a lockfile change rebuilds only the Node
- * images whose importers, or their packages' importers, moved. RFC l6r4u.
+ * A pnpm lockfile's importers read as text, so a lockfile change rebuilds only the Node images
+ * whose importers moved. Read by deployable.res. RFC l6r4u.
  */
 let lineBreak = /\r?\n/
 /** `  path:`, `  'path with spaces':`, or `  path: {}` for an importer that asks for nothing. */

@@ -1,4 +1,4 @@
-/** What a comment may not be past its length: a divider, or an oxlint directive with no reason. */
+/** Finds a divider comment and an oxlint directive that gives no reason. */
 let directive = /oxlint-disable(?:-next-line|-line)?\s+[\w\/@-]+/
 let reasoned = /oxlint-disable[^\n]*\s--\s\S/
 let stating = ["model/rules/code.res", "model/checks/notes.res"]

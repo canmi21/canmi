@@ -1,10 +1,6 @@
 /**
- * The base a push's Deploy run plans against, printed, and nothing to build everything: `node
- * base.res.mjs` in CI, from the repository's checkout. It is the head commit of the last Deploy run
- * on main that a push started and that succeeded, so every change since what was last built is
- * built now; `github.event.before` is the base only where the API cannot answer, since GitHub
- * cancels a pending run when another push queues. Reads `GITHUB_REPOSITORY`, `GH_TOKEN` and
- * `BEFORE`.
+ * Prints the base a push's Deploy run plans against, the head of the last successful Deploy run a
+ * push started on main, or nothing to build everything. Run as `node base.res.mjs` in CI.
  */
 let workflow = "deploy.yml"
 let branch = "main"
@@ -69,7 +65,7 @@ let lastBuilt = (repository: string, ~ask: run=run): option<string> => {
   | Object(answer) =>
     switch answer->Dict.get("workflow_runs") {
     | None => unreadable("no workflow_runs")
-    // No run at all: null, an empty list or an empty table.
+    // No run at all, as null, an empty list or an empty table.
     | Some(Null) | Some(Array([])) => None
     | Some(Object(runs)) if runs->Dict.keysToArray->Array.length == 0 => None
     | Some(Array(runs)) =>
@@ -96,7 +92,7 @@ let holds = (commit: string, ~checkout=?) =>
 
 let zeros = /^0+|0+$/g
 
-/** No commit at all: GitHub's `before` for a branch's first push is forty zeros. */
+/** No commit at all, GitHub's `before` for a branch's first push being forty zeros. */
 let isZero = commit => commit->String.replaceRegExp(zeros, "") == ""
 
 let fallback = (before, why) =>
@@ -105,8 +101,8 @@ let fallback = (before, why) =>
     : (before, `${why}: planning against github.event.before, ${before}`)
 
 /**
- * (base, why): the base to plan against, empty for everything. `asked()` answers the last commit
- * built or throws Unanswered; `descends(commit)` says whether HEAD descends from it.
+ * The base to plan against and why, empty for everything, from `asked()` answering the last
+ * commit built and `descends(commit)` saying whether HEAD descends from it.
  */
 let base = (
   asked: unit => option<string>,
@@ -117,7 +113,7 @@ let base = (
   switch asked() {
   | exception Unanswered(why) => fallback(before, `the API did not answer (${why})`)
   | None => ("", "no Deploy run a push started on main has succeeded: building everything")
-  // A run re-run at the commit already built: what its own push changed, as a re-run always built.
+  // A re-run at the commit already built plans what its own push changed.
   | Some(built) if built == head => fallback(before, `the last run built ${built}, which is HEAD`)
   | Some(built) if !descends(built) => (
       "",

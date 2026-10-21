@@ -1,7 +1,6 @@
 /**
- * The gate holding each app's directory to its declaration's `name`: the artifact is named for the
- * directory and the container for `name`, so two names for one app would deploy one and run the
- * other. Each repository whose apps carry a `service.toml` runs it from its `verify`. RFC l6r4u.
+ * Holds each app's directory to its declaration's `name`, since the artifact takes one and the
+ * container the other. Run from `verify` where apps carry a `service.toml`. RFC l6r4u.
  */
 /** Why each app's declaration does not name it as its directory does, in the order found. */
 let misnamed = (layout: Graph.layout): array<string> => {
@@ -32,7 +31,7 @@ let misnamed = (layout: Graph.layout): array<string> => {
   found
 }
 
-/** A repository's `check-names` task: every app named as its directory is, or each that is not. */
+/** A repository's `check-names` task, which reports each app not named as its directory is. */
 let main = (layout: Graph.layout) => {
   let found = misnamed(layout)
   if found->Array.length > 0 {

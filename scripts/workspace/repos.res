@@ -1,7 +1,6 @@
 /**
  * Every verb across the repositories, `repos <verb> [name | --all] [--dry-run]`, and the
- * workspace's own half of fmt, clean, update and verify. See docs/repos.md, "One verb, the
- * workspace unless told otherwise".
+ * workspace's own half of fmt, clean, update and verify. See docs/repos.md.
  */
 let root = Registry.root
 let repos = Registry.repos
@@ -180,7 +179,7 @@ let declares = (repo, verb) => {
 
 let task = (repo, verb) => `//repos/${Registry.label(repo)}:${verb}`
 
-/** The workspace's own fmt: oxfmt and ReScript's formatter over the files jujutsu.toml names. */
+/** The workspace's own fmt, oxfmt and ReScript's formatter over the files jujutsu.toml names. */
 let formatted = "**/*.{ts,tsx,mts,cts,js,mjs,cjs,jsx,css,json,jsonc,md,svelte}"
 let fmt = (~dry) =>
   if dry {
@@ -200,7 +199,7 @@ let fmt = (~dry) =>
     1
   }
 
-/** The workspace's own clean: the bytecode Python leaves beside the hooks it still runs. */
+/** The workspace's own clean, the bytecode Python leaves beside the hooks it still runs. */
 let clean = (~dry) => {
   let found = ["hooks", ".mise"]->Array.flatMap(top => {
     let rec walk = at =>
@@ -228,7 +227,7 @@ let clean = (~dry) => {
   0
 }
 
-/** The workspace's own update: [tools] within their pins, package.json within its ranges. */
+/** The workspace's own update, [tools] within their pins and package.json within its ranges. */
 let refresh = async (~dry, ~major) => {
   let tools = await Tools.up(~name="workspace", ~dry)
   Console.log("")
@@ -270,7 +269,9 @@ let summary = (verb, skipped, failed, ~paused=[]) =>
     }
   }
 
-/** fmt, clean or verify: the workspace's half here, each repository's own task, past a failure. */
+/**
+ * fmt, clean or verify, the workspace's half here and each repository's own task, past a failure.
+ */
 let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   let skipped = []
   let failed = []
@@ -450,7 +451,7 @@ type request = {
 let usage = "usage: repos list | clone | pull | push | fmt | update | clean | verify | publish  [name | --all] [--dry-run]"
 let across = ["update", "fmt", "clean", "verify", "pull", "push"]
 
-/** What was typed, or why it is refused: a name means that repository, and nothing is dropped. */
+/** What was typed, or why it is refused. A name means that repository, and nothing is dropped. */
 let parse = (argv: array<string>): request => {
   let flag = names => argv->Array.some(arg => names->Array.includes(arg))
   let known = ["-n", "--dry-run", "--major", "-a", "--all", "--pending"]

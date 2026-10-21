@@ -1,11 +1,10 @@
 /**
- * What a repository declares to the workspace above it, in `workspace.toml` at its root: where its
- * apps and packages are, the gates its `verify` runs, and what its `deployable` lists. A key the
- * workspace does not know is refused by where it is, never passed over.
+ * What a repository declares to the workspace in its root's `workspace.toml`, its layout, gates
+ * and deployables. A key the workspace does not know is refused.
  */
 type table = Dict.t<JSON.t>
 
-/** What a path reaches that no graph shows: under a prefix, these packages or crates. */
+/** What a path under a prefix reaches that no graph shows, these packages or crates. */
 type reach = {under: array<string>, packages: array<string>, crates: array<string>}
 
 type verify = {
@@ -19,7 +18,7 @@ type verify = {
   reaches: array<reach>,
 }
 
-/** A repository's Workers: none, every one, or those named. */
+/** A repository's Workers, none, every one or those named. */
 type workers = None | All | Only(array<string>)
 
 type deployable = {images: bool, workers: workers}

@@ -1,7 +1,6 @@
 /**
- * Every file of ours under `Code`'s line limits, docs/code.md, `lines [root ...]`: with no root,
- * the workspace and each registered repository keeping `[rules] lines`. What is generated, vendored
- * or binary is not ours; `lines=deferred` passes a file known to be over.
+ * Holds every file of ours to `Code`'s line limits, docs/code.md, `lines [root ...]`. What is
+ * generated, vendored or binary is not ours, and `lines=deferred` passes a file known to be over.
  */
 let soft = Code.softLines
 let hard = Code.hardLines
@@ -115,11 +114,11 @@ let measured = (root, ~workspace) => {
   (found, deferred)
 }
 
-/** The roots measured with none given: the workspace and each repository that keeps the rule. */
+/** The roots measured with none given, the workspace and each repository that keeps the rule. */
 let roots = () =>
   Array.concat(
     [Registry.root],
-    Registry.paths()
+    Waiting.active()
     ->Array.map(path => Node.join([Registry.repos, path]))
     ->Array.filter(where =>
       Node.existsSync(where) &&

@@ -1,14 +1,11 @@
 /**
- * What each crate is built from beyond its repository's files, read at two revisions: the packages
- * it resolves to, and the parts of the root Cargo.toml it inherits. Read by deployable.res, so a
- * change to either rebuilds only the images whose inputs moved. Cargo.lock is read first, as text;
- * a package it moved is asked of cargo, which says what each image's crate compiles, and where
- * cargo cannot answer, the lockfile's word stands.
+ * What each crate is built from beyond its repository's files, its resolved packages and what it
+ * inherits from the root Cargo.toml, read at two revisions. Read by deployable.res.
  */
 /** The profile every image is built with, `cargo build --profile container` in each Dockerfile. */
 let imageProfile = "container"
 
-/** What every image is built for: `$arch-unknown-linux-musl` in each Dockerfile. */
+/** The targets every image is built for, `$arch-unknown-linux-musl` in each Dockerfile. */
 let targets = ["aarch64-unknown-linux-musl", "x86_64-unknown-linux-musl"]
 
 /**
@@ -81,7 +78,7 @@ let closures = (lock: string, crates: array<string>): Map.t<string, option<Set.t
   | _ => ()
   }
 
-  // `name`, `name version` or `name version (source)`: as much as tells it apart.
+  // `name`, `name version` or `name version (source)`, as much as tells it apart.
   let resolve = (reference: string): array<package> => {
     let parts = reference->String.split(" ")
     let name = parts[0]->Option.getOr("")

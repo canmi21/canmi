@@ -1,7 +1,6 @@
 /**
- * After a rebase: hand back the rules that changed under the agent, the diff of the rules between
- * the working copy before the rebase and after it. The before is read from jj's operation log, so
- * nothing has to remember it; nothing is said when no rule moved. See docs/commits.md.
+ * After a rebase, hands back how the rules changed between the working copy before and after,
+ * the before read from jj's operation log. See docs/commits.md.
  */
 let rules = ["spec", "docs", "model", "AGENTS.md"]
 let rebasing = "rebase "

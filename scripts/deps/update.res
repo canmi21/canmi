@@ -1,8 +1,6 @@
 /**
- * A repository's `update`: its own `[tools]` within their pins, its crates and its packages within
- * their ranges, and with `--major` across them for what outdated.res calls behind -- a package
- * `versions.toml` allows at two majors left on both. See docs/toolchain.md, "Dependencies move the
- * way tools do". `--dry-run` says what would move and writes nothing.
+ * A repository's `update`, its tools, crates and packages within their bounds, and with `--major`
+ * across them for what outdated.res calls behind. See docs/toolchain.md.
  */
 let args = Node.args()
 let dry =

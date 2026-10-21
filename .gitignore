@@ -3,7 +3,7 @@ repos/*/
 
 node_modules/
 
-# What ReScript compiles the task scripts to, built before they run: mise run build.
+# What ReScript compiles the task scripts to, built by mise run build before they run.
 lib/
 *.res.mjs
 .DS_Store
