@@ -13,9 +13,27 @@ type item = {
   until: until,
   /** The workspace's rules not held over `repos` while the item waits. */
   waives?: array<string>,
+  /** `check --all` and `audit --all` pass over `repos` while the item waits. */
+  pauses?: bool,
 }
 
 let items: array<item> = [
+  {
+    id: "paused",
+    what: "only the workspace and monoflake are worked on, so every other repository is passed over by check --all and audit --all",
+    repos: [
+      "canmi/web",
+      "canmi/lib",
+      "canmi/rfcs",
+      "seam",
+      "apps/rdm",
+      "apps/cue",
+      "apps/still",
+      "console",
+    ],
+    until: Author,
+    pauses: true,
+  },
   {
     id: "machine-system-review",
     what: "monoflake/platform's machine system reviewed whole and slimmed where it can be -- crun's Python, libkrun, what else a set carries, its criu kept while monoflake/platform's C39 is open -- once the driver's abilities are built, capability first",

@@ -26,6 +26,19 @@ describe("a comment", () => {
     expect(Comments.prose("// 中文 https://example.com"))->toBe(true)
   })
 
+  test("is plain with two lines of prose, no colon and no dash, a token or a path aside", () => {
+    expect(Comments.marks(["// one line", "// and a second"]))->toEqual([])
+    expect(Comments.marks(["// a", "// b", "// c"]))->toEqual(["3 body lines, aiming at 2"])
+    expect(Comments.marks(["// says this: that"]))->toEqual(["a colon"])
+    expect(Comments.marks(["// one -- two", "// three \u2014 four"]))->toEqual(["a dash"])
+    expect(
+      Comments.marks(["// `a: b` and std::fs at 10:30, a well-made https://x.io/a:b"]),
+    )->toEqual([])
+    expect(
+      Comments.marks(["// SAFETY: the pointer outlives the call", "// - a list item"]),
+    )->toEqual([])
+  })
+
   test("block opening a file is told from one after code, a directive leading neither", () => {
     let lines = [
       "#!/usr/bin/env node",

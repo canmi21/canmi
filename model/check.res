@@ -102,6 +102,7 @@ let parts: array<(string, part)> = [
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
   ("tasks", Found(() => Tasks.main(~root))),
+  ("plain", Soft(() => Comments.plain(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
 ]
 
@@ -140,7 +141,7 @@ let outcome = part =>
     let warned = found()
     warned->Array.forEach(line => Console.log(`  warning: ${line}`))
     if warned == [] {
-      Console.log("  no drift")
+      Console.log("  no warning")
     }
     warned != [] && Node.envIs("AUDIT", "1") ? 1 : 0
   | Waivable(repo, found) =>
@@ -161,6 +162,8 @@ let over = (repo): array<(string, part)> => [
   ("tasks", Found(() => Tasks.main(~root=repo))),
   ("names", Found(() => Filenames.names(~root=repo))),
   ("commits", Found(() => commits(repo))),
+  ("comments", Script(() => Comments.main(~root=repo, ~given=[]))),
+  ("plain", Soft(() => Comments.plain(~root=repo))),
   ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
 ]
 

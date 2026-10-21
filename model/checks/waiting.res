@@ -102,6 +102,14 @@ let waiverIn = (items: array<item>, ~repo, ~rule) =>
 
 let waiver = (~repo, ~rule) => waiverIn(items, ~repo, ~rule)
 
+/** The item that pauses `repo`, if one does. */
+let pauserIn = (items: array<item>, ~repo) =>
+  items
+  ->Array.find(item => item.repos->Array.includes(repo) && item.pauses->Option.getOr(false))
+  ->Option.map(item => item.id)
+
+let pauser = (~repo) => pauserIn(items, ~repo)
+
 let red = text => Node.envOn("NO_COLOR") ? text : `\u001b[31m${text}\u001b[0m`
 
 /** Each item, or those naming `repo`, one line each, the due first. */
@@ -124,6 +132,7 @@ let shown = (~repo: option<string>) => {
     | Some(names) => `; waives ${names->Array.join(", ")}`
     | None => ""
     }
+    let waives = item.pauses->Option.getOr(false) ? `${waives}; paused` : waives
     red(
       `deferred ${item.id}${due(item) ? " (due)" : ""}: ${item.what} -- ${item.repos->Array.join(
           ", ",

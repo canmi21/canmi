@@ -134,6 +134,9 @@ describe("a deferred item", () => {
     )
     expect(Waiting.waiverIn([item], ~repo="apps/still", ~rule="rules-in-docs"))->toEqual(None)
     expect(Waiting.waiverIn([item], ~repo="seam", ~rule="tree-wide"))->toEqual(None)
+    expect(Waiting.pauserIn([item], ~repo="seam"))->toEqual(None)
+    expect(Waiting.pauserIn([{...item, pauses: true}], ~repo="seam"))->toEqual(Some("spec-to-docs"))
+    expect(Waiting.pauserIn([{...item, pauses: true}], ~repo="apps/still"))->toEqual(None)
     expect(Shape.ruled(["spec/a.md"], ~cargo=None))->toEqual([
       ("rules-in-docs", "spec/: the rules are docs/ now"),
     ])

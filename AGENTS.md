@@ -92,7 +92,8 @@ hook refuses a malformed message, and the commits part of the check reads every 
 commit waits until `mise run check <path>` passed at the working copy**; `SKIP=verify jj commit
 ...` names the escape. See [docs/commits.md](docs/commits.md).
 
-**Comments** -- a comment points rather than argues. The settled argument lives in the rules and
+**Comments** -- a comment points rather than argues, **in one or two lines of plain statement, its
+prose with no colon and no dash**. The settled argument lives in the rules and
 the comment names the file; **a decision nobody has made yet is a draft RFC**, cited by id in one
 line. Once it is made it becomes a rule plus the change that implements it, never a comment
 carrying the debate. See [docs/code.md](docs/code.md), "The rules hold what is settled; an RFC
@@ -147,8 +148,8 @@ width 2 in every language, YAML excepted; `.editorconfig` is the source of truth
 
 **One verb, the workspace unless told otherwise.** `mise run pull|push|fmt|check|update|clean|audit`
 alone runs on this workspace; add a path from `repos/registry.toml` -- `mise run check apps/rdm` --
-to run on that repository, or `--all` to run on every one, and `--dry-run` to any of them to be
-told what it would do. A name means that repository alone, in every verb, and never with `--all`.
+to run on that repository, or `--all` to run on every one, a paused one passed over by `check`
+and `audit`, and `--dry-run` to any of them to be told what it would do. A name means that repository alone, in every verb, and never with `--all`.
 `pull` and `push` are jj's and live here; the rest run each repository's own task -- `verify` for
 `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository without one,
 naming it. `check` then runs the workspace's rules over the repository, and its pass is what a

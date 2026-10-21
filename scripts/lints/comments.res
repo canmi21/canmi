@@ -168,19 +168,18 @@ let isPython = (path, lines) =>
 let widest = body => body->Array.reduce(0, (most, line) => Math.Int.max(most, columns(line)))
 let spoken = body => body->Array.filter(prose)->Array.length
 
-/** Every comment block in a file's `lines`, Python's docstrings given as `spans`. */
-let blocks = (lines: array<string>, ~spans: array<span>=[]): array<block> =>
+/** Each block in `lines`, by its first line, its lines and whether it opens the file. */
+let found = (lines: array<string>, ~spans: array<span>=[]): array<(int, array<string>, bool)> =>
   if generated(lines) {
     []
   } else {
     let found = []
     let claimed = Set.make()
     spans->Array.forEach(((first, last, module_)) => {
-      let body = lines->Array.slice(~start=first - 1, ~end=last)
       for number in first to last {
         claimed->Set.add(number)
       }
-      found->Array.push((first, spoken(body), widest(body), module_))
+      found->Array.push((first, lines->Array.slice(~start=first - 1, ~end=last), module_))
     })
     let codeSeen = ref(false)
     let index = ref(0)
@@ -201,30 +200,73 @@ let blocks = (lines: array<string>, ~spans: array<span>=[]): array<block> =>
         index := Math.Int.min(index.contents, lines->Array.length - 1)
         let body = lines->Array.slice(~start, ~end=index.contents + 1)
         index := index.contents + 1
-        found->Array.push((start + 1, spoken(body), widest(body), !codeSeen.contents))
+        found->Array.push((start + 1, body, !codeSeen.contents))
       } else if bare->String.startsWith("//") {
         while index.contents < lines->Array.length && at()->String.trim->String.startsWith("//") {
           index := index.contents + 1
         }
-        let body = lines->Array.slice(~start, ~end=index.contents)
-        found->Array.push((start + 1, spoken(body), widest(body), !codeSeen.contents))
+        found->Array.push((
+          start + 1,
+          lines->Array.slice(~start, ~end=index.contents),
+          !codeSeen.contents,
+        ))
       } else if hashed(bare) {
         while index.contents < lines->Array.length && hashed(at()->String.trim) {
           index := index.contents + 1
         }
-        let body = lines->Array.slice(~start, ~end=index.contents)
-        found->Array.push((start + 1, spoken(body), widest(body), !codeSeen.contents))
+        found->Array.push((
+          start + 1,
+          lines->Array.slice(~start, ~end=index.contents),
+          !codeSeen.contents,
+        ))
       } else {
         codeSeen := codeSeen.contents || bare != ""
         index := index.contents + 1
       }
     }
-    found->Array.toSorted(((a1, a2, a3, a4), (b1, b2, b3, b4)) =>
-      Int.toFloat(
-        a1 != b1 ? a1 - b1 : a2 != b2 ? a2 - b2 : a3 != b3 ? a3 - b3 : (a4 ? 1 : 0) - (b4 ? 1 : 0),
-      )
+    found
+  }
+
+/** Every comment block in a file's `lines`, Python's docstrings given as `spans`. */
+let blocks = (lines: array<string>, ~spans: array<span>=[]): array<block> =>
+  found(lines, ~spans)
+  ->Array.map(((first, body, opening)) => (first, spoken(body), widest(body), opening))
+  ->Array.toSorted(((a1, a2, a3, a4), (b1, b2, b3, b4)) =>
+    Int.toFloat(
+      a1 != b1 ? a1 - b1 : a2 != b2 ? a2 - b2 : a3 != b3 ? a3 - b3 : (a4 ? 1 : 0) - (b4 ? 1 : 0),
+    )
+  )
+
+/** A code span, which is a token rather than prose. */
+let span = /`[^`]*`/g
+/** A label a tool asks for, such as clippy's `SAFETY:`, and a list's leading hyphen. */
+let label = /^(?:[A-Z]+:|- )/
+/** A colon in prose, not a path's `::` nor a time's or a ratio's between digits. */
+let colon = /(?<![:\d]):(?![:\d])|(?<=\D):(?=\d)|(?<=\d):(?=\D)/
+/** A dash between words: two hyphens, an em or en dash, or a hyphen standing alone. */
+let dash = /--|\u2014|\u2013|\s-\s/
+
+/** What a block's prose holds that docs/code.md asks a comment to do without. */
+let marks = (body: array<string>): array<string> => {
+  let text =
+    body
+    ->Array.map(line => line->unlinked->textOf->String.replaceRegExp(label, ""))
+    ->Array.join(" ")
+    ->String.replaceRegExp(span, "")
+  let found = []
+  if spoken(body) > Code.aimLines {
+    found->Array.push(
+      `${Int.toString(spoken(body))} body lines, aiming at ${Int.toString(Code.aimLines)}`,
     )
   }
+  if colon->RegExp.test(text) {
+    found->Array.push("a colon")
+  }
+  if dash->RegExp.test(text) {
+    found->Array.push("a dash")
+  }
+  found
+}
 
 /** The files to measure: everything version control lists, untracked but unignored among them. */
 let files = (root, given) =>
@@ -240,6 +282,36 @@ let files = (root, given) =>
         name != "" && !(skipped->Array.some(suffix => name->String.endsWith(suffix)))
       )
       ->Array.map(name => Node.join([root, name]))
+
+/** Every block longer than `Code.aimLines` or carrying a colon or a dash, one warning each. */
+let plain = (~root=Node.cwd(), ~given=[]): array<string> => {
+  let read = files(root, given)->Array.map(path => (path, linesOf(path)))
+  let spans = docstringSpans(
+    read->Array.filterMap(((path, lines)) =>
+      switch lines {
+      | Some(lines) if isPython(path, lines) => Some(path)
+      | _ => None
+      }
+    ),
+  )
+  read->Array.flatMap(((path, lines)) =>
+    switch lines {
+    | Some(lines) =>
+      let name = Node.isAbsolute(path) ? Node.relative(root, path) : path
+      found(lines, ~spans=spans->Map.get(path)->Option.getOr([]))->Array.filterMap(((
+        first,
+        body,
+        _,
+      )) =>
+        switch marks(body) {
+        | [] => None
+        | why => Some(`${name}:${Int.toString(first)}  ${why->Array.join(", ")}`)
+        }
+      )
+    | None => []
+    }
+  )
+}
 
 /** The gate: every block inside its limits, or each that is not, by where and by how much. */
 let main = (~root=Node.cwd(), ~given=Node.args()) => {

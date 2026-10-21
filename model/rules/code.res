@@ -7,6 +7,9 @@ let blockLines = 6
 let openingLines = 10
 let columns = 100
 
+/** The body lines a block aims at, past which the plain part warns. */
+let aimLines = 2
+
 /** A divider of repeated characters, which a module boundary should be instead. */
 let separator = /^\s*(?:\/\/|#|\*|\/\*)\s*([-=*#~_])\1{2,}/
 
@@ -23,6 +26,12 @@ let rules: array<Rule.t> = [
     says: "A comment block is `blockLines` body lines, `openingLines` opening a file, `columns` wide",
     doc,
     held: Check("comments"),
+  },
+  {
+    name: "comment-plain",
+    says: "A comment aims at `aimLines` body lines and states, its prose with no colon and no dash",
+    doc,
+    held: Check("plain"),
   },
   {
     name: "no-separators",

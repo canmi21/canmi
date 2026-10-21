@@ -364,36 +364,26 @@ A comment block is at most **`Code.blockLines` body lines**, six. The block that
 introduces the whole of it gets **`Code.openingLines`**, ten. A body line is one carrying text: `/**`, `*/` and a blank `*` separator
 are punctuation, and a JSDoc block spends about two lines on them.
 
-Aim at one to three, and let five be the honest ceiling. Six is where a check fires, not where
-the writing should land, and the gap between the two is the point of it: prose aimed at three
-lands at three to five, and a limit with no slack reports that as a fault. Measured across web,
-blocks over five body lines are 18.7% of the blocks and carry 49.8% of all comment prose -- half
-the weight in a fifth of the places, which is how a tree ends up annotated everywhere and legible
-nowhere. Six is also where the return falls off: five to six exempts another 3.5% of blocks, and
-every line after that buys under three.
+Aim at one or two, **`Code.aimLines`**, and let six be where a check fires, not where the writing
+should land. Measured across web, blocks over five body lines were 18.7% of the blocks and carried
+49.8% of all comment prose -- half the weight in a fifth of the places, which is how a tree ends
+up annotated everywhere and legible nowhere. A block past the aim is a warning, and one past six a
+failure.
 
-**A configuration file aims shorter still, at one or two lines.** The six holds there as it holds
-everywhere, but a config file has no surrounding code to carry the context, and that absence is
-exactly what tempts a comment there into explaining the whole system. The thing a reader at that
-line cannot get wrong is almost always one sentence.
-
-The pair worth keeping in mind is the one where both are right. web's
-`apps/site/site.config.yaml` cut its IndexNow block from seven body lines to three, because every
-sentence it lost was already in web's `indexing.md` word for word. The platform's `apps/delivery/cdn/wrangler.jsonc`
-stopped at five, because one of its lines carries a measured fact nothing else records -- dev
-serving `max-age=0` where production serves a year. **Length follows load, not file type.**
+**Length follows load, not file type.** web's `apps/site/site.config.yaml` cut its IndexNow block
+from seven body lines to three, because every sentence it lost was already in web's `indexing.md`
+word for word. A line that carries a measured fact nothing else records, dev serving `max-age=0`
+where production serves a year, earns its place; a sentence the rules already hold does not.
 
 Every comment line stays inside **`Code.columns`**, 100, with tabs at two, the width oxfmt's `printWidth`
 and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so this one is
 held by hand.
 
-All three are counted rather than eyeballed. `scripts/lints/comments.res` measures every block in
-every language that carries one, is part of each project's `verify` and is the comments part of the
-workspace's own, which is where the percentages above
-come from. A file a tool generated is exempt: its comments are nobody's to fix, and a check
-naming a line that may not be edited teaches its reader to skip the rest of the output. The
-limits are this repository's; the check is each project's, because the site's repository needed one
-first and the platform and infra took it with them when they split from it.
+All of it is counted rather than eyeballed. `scripts/lints/comments.res` measures every block in
+every language that carries one, and is the comments and plain parts of the workspace's own check
+and of the workspace's rules over each repository below it. A file a tool generated is exempt:
+its comments are nobody's to fix, and a check naming a line that may not be edited teaches its
+reader to skip the rest of the output. The limits are this repository's, and so is the check.
 
 **A link is not length.** Only the plain text counts against either limit: a URL may sit in a block
 without spending a line of its budget, and a long one does not make the block too wide. Prose is
@@ -402,13 +392,23 @@ for it would push a comment into paraphrasing the page rather than pointing at i
 
 **What decides where a fact lives is who needs it, not how long it is.** If a second file would
 have to know it, it is a rule and belongs in the rules. If only this file does, it stays here
-however long it runs -- moving it sends the reader out for something nothing else uses. Length is
+in as few words as carry it -- moving it sends the reader out for something nothing else uses. Length is
 the symptom that makes the question worth asking, never the answer to it.
 
 **A pointer names the question, not the answer.** "See spec/search.md for why it is one and not
 nine" survives that file being rewritten; "the index is one because ..." does not, and nothing
 links the two, so nobody finds out. The exception is a value this file's own code uses: a
 constant states its own number here and points at the rules for why that number.
+
+### A plain statement, with no colon and no dash
+
+**A comment states what is, in a sentence or two, and argues nothing.** It is objective: what the
+code is, what it holds, which file has the reason. **Its prose carries no colon and no dash.** A
+colon announces an explanation the sentence should simply make, and a dash bolts on an aside the
+comment can drop; both are how a one-line comment grows a second clause and then a third. A code
+span, a link, a path's `::`, a time and a label a tool asks for, clippy's `SAFETY:` among them,
+are not prose. The plain part of the check warns at every block past `Code.aimLines` or carrying
+either, and `audit` counts the warning as a failure, `model/rules/code.res`.
 
 ### The rules hold what is settled; an RFC holds what is not
 

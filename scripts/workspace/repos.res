@@ -254,13 +254,16 @@ let refresh = async (~dry, ~major) => {
   }
 }
 
-let summary = (verb, skipped, failed) =>
-  if skipped != [] || failed != [] {
+let summary = (verb, skipped, failed, ~paused=[]) =>
+  if skipped != [] || failed != [] || paused != [] {
     Console.log("\n" ++ String.repeat("-", 72))
     if skipped != [] {
       Console.log(
         `warning: no ${verb} task of their own, so passed over: ${skipped->Array.join(", ")}`,
       )
+    }
+    if paused != [] {
+      Console.log(`paused, so passed over: ${paused->Array.join(", ")}`)
     }
     if failed != [] {
       Console.log(`failed: ${failed->Array.join(", ")}`)
@@ -271,7 +274,17 @@ let summary = (verb, skipped, failed) =>
 let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   let skipped = []
   let failed = []
-  Registry.selected(name, ~everything)->Array.forEach(repo => {
+  let paused = []
+  Registry.selected(name, ~everything)
+  ->Array.filter(repo =>
+    switch everything && verb == "verify" ? Waiting.pauser(~repo=Registry.label(repo)) : None {
+    | Some(id) =>
+      paused->Array.push(`${Registry.label(repo)} (deferred ${id})`)
+      false
+    | None => true
+    }
+  )
+  ->Array.forEach(repo => {
     let place = Registry.label(repo)
     let before = verb == "verify" && !dry ? Stamp.snapshot(repo) : ""
     let own = if repo == root {
@@ -310,7 +323,7 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       Stamp.write(repo, before)
     }
   })
-  summary(verb, skipped, failed)
+  summary(verb, skipped, failed, ~paused)
   failed == [] ? 0 : 1
 }
 
