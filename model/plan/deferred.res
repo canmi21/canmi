@@ -29,6 +29,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "envelope-operations-table",
+    what: "envelope generates a table of every operation by its interface and name, its output type among it, and monoflake/platform's runner reads that in place of bindings/generated.res reading the generated module as data",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "seam-rfcs",
     what: "seam's RFCs move out of canmi/rfcs into seam's own docs/rfcs",
     repos: ["seam", "canmi/rfcs"],
