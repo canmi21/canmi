@@ -199,7 +199,7 @@ let fmt = (~dry) =>
     1
   }
 
-/** The workspace's own clean, the bytecode Python leaves beside the hooks it still runs. */
+/** The workspace's own clean, what ReScript compiled and the hooks' bytecode, repos/ apart. */
 let clean = (~dry) => {
   let found = ["hooks", ".mise"]->Array.flatMap(top => {
     let rec walk = at =>
@@ -212,7 +212,8 @@ let clean = (~dry) => {
     let start = Node.join([root, top])
     Node.existsSync(start) ? walk(start) : []
   })
-  if found == [] {
+  let uncompiled = Clean.uncompile(root, ~dry, ~apart=["repos"])
+  if found == [] && !uncompiled {
     Console.log("nothing to clean")
   }
   found->Array.forEach(path => {

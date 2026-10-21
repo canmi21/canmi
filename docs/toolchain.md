@@ -667,6 +667,12 @@ safe to run without thinking first:
 - **cargo owns its own output.** `cargo clean` is what empties the target directory. `[build]
   target-dir` can move it anywhere, so a sweep matching the word `target` would miss the real one
   and find somebody else's -- and did, reporting a gigabyte of `target/debug/build` as its own.
+  A test may leave a directory read-only under `CARGO_TARGET_TMPDIR`, as the platform's container
+  driver does for a secret's, which stops `cargo clean`, so `clean` makes that directory writable
+  first.
+- **ReScript's output goes as well.** Each `lib/` beside a `rescript.json` and every `*.res.mjs`
+  compiled in place is removed, since every task builds them again before it runs. The
+  workspace's own `clean` takes its own and leaves `repos/` to each repository's.
 
 **What gets removed is decided twice, by a name and by version control.** A path a `clean` sweeps
 has to be one its tools write _and_ be ignored by the repository _and_ have nothing tracked

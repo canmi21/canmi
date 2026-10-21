@@ -1,6 +1,6 @@
 /**
- * A repository's `clean`, what cargo and the JavaScript tools built and never a dependency or local
- * state, docs/toolchain.md. Arguments name further caches.
+ * A repository's `clean`, what cargo, ReScript and the JavaScript tools built and never a
+ * dependency or local state, docs/toolchain.md. Arguments name further caches.
  */
 /** What `find` lists from `root`, a path a line, as the shell's `find` loops read them. */
 let find = (root, findArgs) =>
@@ -73,6 +73,80 @@ let size = (root, path) =>
   ->Option.flatMap(word => word)
   ->Option.getOr("")
 
+/** Those of `paths` git ignores, a tracked one never among them, asked once for all. */
+let ignoredOf = (root, paths) =>
+  paths == []
+    ? []
+    : Node.spawnSync(
+        "git",
+        ["check-ignore", "--stdin"],
+        {cwd: root, input: paths->Array.join("\n"), encoding: "utf8"},
+      ).stdout
+      ->Nullable.getOr("")
+      ->String.split("\n")
+      ->Array.filter(line => line != "")
+
+/** What ReScript compiled, each `lib/` by a `rescript.json` and every `*.res.mjs`, past `apart`. */
+let compiled = (root, ~apart=[]) => {
+  let away = apart->Array.flatMap(path => ["-o", "-path", `./${path}`])
+  let skip =
+    [["("], pruned, ["-o", "-name", "node_modules"], away, [")", "-prune", "-o"]]->Array.flat
+  let libraries =
+    find(root, [skip, ["-name", "rescript.json", "-print"]]->Array.flat)
+    ->Array.map(manifest => Node.join([Node.dirname(manifest), "lib"]))
+    ->Array.filter(path =>
+      Node.stat(Node.join([root, path]))->Option.mapOr(false, stats => stats->Node.statsIsDirectory)
+    )
+  let modules = find(root, [skip, ["-type", "f", "-name", "*.res.mjs", "-print"]]->Array.flat)
+  (ignoredOf(root, libraries), ignoredOf(root, modules))
+}
+
+/** Removes what ReScript compiled, each library's output named and the modules counted. */
+let uncompile = (root, ~dry, ~apart=[]) => {
+  let (libraries, modules) = compiled(root, ~apart)
+  libraries->Array.forEach(path =>
+    if dry {
+      Console.log(`would remove ${path}, ${size(root, path)}`)
+    } else {
+      Node.rmSync(Node.join([root, path]), {recursive: true, force: true})
+      Console.log(`removed ${path}`)
+    }
+  )
+  if modules != [] {
+    if !dry {
+      modules->Array.forEach(path =>
+        Node.rmSync(Node.join([root, path]), {recursive: false, force: true})
+      )
+    }
+    Console.log(
+      `${dry ? "would remove" : "removed"} ${Int.toString(
+          modules->Array.length,
+        )} compiled ReScript modules`,
+    )
+  }
+  libraries != [] || modules != []
+}
+
+/** Where cargo builds, its `build_directory` or else `target_directory`, by `cargo metadata`. */
+let buildDirectory = root =>
+  switch JSON.parseOrThrow(
+    Node.output(~cwd=root, "cargo", ["metadata", "--format-version", "1", "--no-deps"]),
+  ) {
+  | Object(metadata) =>
+    switch (metadata->Dict.get("build_directory"), metadata->Dict.get("target_directory")) {
+    | (Some(String(directory)), _) | (_, Some(String(directory))) => Some(directory)
+    | _ => None
+    }
+  | _ => None
+  }
+
+/** Makes the tests' `CARGO_TARGET_TMPDIR` writable, since one may leave a directory read-only. */
+let writable = root =>
+  switch buildDirectory(root)->Option.map(directory => Node.join([directory, "tmp"])) {
+  | Some(tmp) if Node.existsSync(tmp) => Node.run(~cwd=root, "chmod", ["-R", "u+w", tmp])
+  | _ => 0
+  }
+
 /** The task `clean [--dry-run] [extra cache...]`, run from the repository's root. */
 let main = (~root=Node.cwd(), ~args=Node.args()) => {
   let dry =
@@ -90,7 +164,7 @@ let main = (~root=Node.cwd(), ~args=Node.args()) => {
           ? size(root, "target")
           : ""}`,
     )
-  } else if Node.run(~cwd=root, "cargo", ["clean"]) != 0 {
+  } else if writable(root) != 0 || Node.run(~cwd=root, "cargo", ["clean"]) != 0 {
     Node.exit(1)
   }
   let found = ref(false)
@@ -110,6 +184,9 @@ let main = (~root=Node.cwd(), ~args=Node.args()) => {
       }
     }
   )
+  if uncompile(root, ~dry) {
+    found := true
+  }
   if !found.contents {
     Console.log("no tool caches to remove")
   }
