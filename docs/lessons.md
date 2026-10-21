@@ -60,6 +60,11 @@ into `model/rules/` with its check and leaves this file.
   pnpm 11 ahead of mise's pinned 12, so a bare `pnpm install` in a repository below rewrites its
   lockfile with the wrong one; `mise exec -- pnpm ...` or a mise task runs the pinned one. Seen
   on 2026-10-20.
+- **Nix reads a flake from git's index, which jj does not fill.** In a colocated repository a
+  file the working copy adds is in no commit git's index stands on, so a flake evaluated in place
+  misses it, silently unless it is `flake.nix` itself; `git add -N` would show it, and is git. A task
+  that runs Nix copies the flake's own files to a temporary directory and reads it as `path:`, as
+  `monoflake/platform`'s `nixfmt` and `nixed` do. Seen on 2026-10-20.
 - **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
   binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
 

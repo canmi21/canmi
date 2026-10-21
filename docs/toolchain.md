@@ -253,6 +253,15 @@ Three consequences worth knowing:
 Prefer the mise registry short name (`oxlint`) over a backend-qualified one (`npm:oxlint`);
 both resolve to the same package, and the short form keeps `mise.toml` readable.
 
+### Nix is installed on the machine, and pins its own tools
+
+Nix is a daemon and a store the whole machine shares, installed by the NixOS project's own
+installer, https://github.com/NixOS/nix-installer, the upstream Nix the machines run, with flakes on;
+mise cannot carry it. What Nix itself runs -- nixfmt, statix, deadnix -- comes from the nixpkgs a
+project's `flake.lock` pins, `nix run --inputs-from`, so that lock is their one manifest, as
+`mise.toml` is every other tool's. A task reaches Nix at `/nix/var/nix/profiles/default/bin`, which a
+project's `[env]` adds to its path. 2026-10-20.
+
 ### A machine tool is not a mise tool, and the line is what the tool acts on
 
 mise pins what a project is built and checked with, so every checkout of it agrees. A tool that

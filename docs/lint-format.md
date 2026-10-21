@@ -218,5 +218,9 @@ deliberately sets no indentation keys. rustfmt does not read it, so `rustfmt.tom
 `hard_tabs` and `tab_spaces` -- the one place the same fact is written twice, and only
 because rustfmt gives no alternative.
 
-YAML is the sole exception: the YAML specification forbids tabs for indentation, so
+YAML is one exception: the YAML specification forbids tabs for indentation, so
 `[*.{yml,yaml}]` uses 2 spaces. This is a language constraint, not a preference.
+
+Nix is the other: nixfmt, the formatter nixpkgs and the NixOS project hold their own Nix to, indents
+with spaces and has no way to write a tab, so `[*.nix]` uses 2 spaces, which is what it writes.
+The formatter owns layout, and the one Nix formatter that is a standard decides it, 2026-10-20.

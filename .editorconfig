@@ -15,3 +15,8 @@ trim_trailing_whitespace = false
 [*.{yml,yaml}]
 indent_style = space
 indent_size = 2
+
+# nixfmt, Nix's standard formatter, writes spaces and cannot write a tab.
+[*.nix]
+indent_style = space
+indent_size = 2
