@@ -11,6 +11,8 @@ config_roots = [
 	"repos/seam",
 	"repos/monoflake/platform",
 	"repos/monoflake/cloud",
+	"repos/monoflake/machine",
+	"repos/monoflake/runtime",
 	"repos/apps/rdm",
 	"repos/apps/cue",
 	"repos/apps/still",
