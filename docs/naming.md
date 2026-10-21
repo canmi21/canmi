@@ -121,6 +121,29 @@ the point of use you want to know what a module _does_, not who invoices for it.
 **The test.** If the vendor were replaced tomorrow, how many names would have to change?
 One. If the answer is more, the vendor has leaked past the boundary.
 
+### The project's own name is a vendor's name too
+
+Inside its own code, a project's name -- `monoflake` -- names nothing the code does, so it stays at
+the same boundary as anyone else's, decided by the author on 2026-10-20. It belongs in three
+places:
+
+- **A format the project defines, as data.** A magic, `MOFL`; a key derivation's context,
+  `monoflake:parcel:key:1`; a signed record's `typ`. There the name is not naming the code but
+  marking the bytes as the project's, and the bytes outlive any rename: changing it would break
+  every hash or every reader. Each is written once, in the module that owns the format.
+- **Its published identity.** A package's name or scope in its manifest, `@monoflake/codec`, as a
+  registry knows it.
+- **The surface a user meets.** A command, a header, a domain, an SDK's entry point: where someone
+  outside reads it, the name says whose it is.
+
+Everywhere else -- a namespace, a module, a type, a function, an import -- it is the subject's
+name alone. ReScript is the trap: a package with `"namespace": true` takes its namespace from the
+package's name, so `@monoflake/codec` is imported as `MonoflakeCodec.Cbor`, and every caller says
+whose it is; a package names its namespace for its subject instead, `"namespace": "Codec"`.
+
+**The test, for one's own name.** Renamed tomorrow, the formats keep the old name, being data and
+versioned; the manifests change; no identifier in the code changes.
+
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 
 **Twitter is Twitter here**, in identifiers, module names, spec files, commands and URLs, and it
