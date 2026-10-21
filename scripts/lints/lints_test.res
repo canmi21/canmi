@@ -37,6 +37,9 @@ describe("a comment", () => {
     expect(
       Comments.marks(["// SAFETY: the pointer outlives the call", "// - a list item"]),
     )->toEqual([])
+    expect(Comments.marks(["// names it -R or --repository, a well-made x-y"]))->toEqual([])
+    expect(Comments.marks(["// any of -2^64 to 2^64 - 1"]))->toEqual([])
+    expect(Comments.marks(["// one - two"]))->toEqual(["a dash"])
   })
 
   test("block opening a file is told from one after code, a directive leading neither", () => {

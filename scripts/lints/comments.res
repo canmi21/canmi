@@ -242,8 +242,8 @@ let span = /`[^`]*`/g
 let label = /^(?:[A-Z]+:|- )/
 /** A colon in prose, not a path's `::` nor a time's or a ratio's between digits. */
 let colon = /(?<![:\d]):(?![:\d])|(?<=\D):(?=\d)|(?<=\d):(?=\D)/
-/** A dash between words, two hyphens or one standing alone or an em or en dash, and not a flag. */
-let dash = /(?:^|\s)--?(?:\s|$)|\u2014|\u2013/
+/** A dash, two hyphens alone, one between words, or an em or en dash, never a flag or a minus. */
+let dash = /(?:^|\s)--(?:\s|$)|(?<=[A-Za-z,])\s-\s(?=[A-Za-z])|\u2014|\u2013/
 
 /** What a block's prose holds that docs/code.md asks a comment to do without. */
 let marks = (body: array<string>): array<string> => {
