@@ -17,6 +17,18 @@ type item = {
 
 let items: array<item> = [
   {
+    id: "machine-system-review",
+    what: "monoflake/platform's machine system reviewed whole and slimmed where it can be -- crun's criu and Python, libkrun, what else a set carries -- once the driver's abilities are built, capability first",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
+    id: "image-bases-pinned",
+    what: "the pins tool also moves the base images monoflake/platform's machine images pin by digest, distroless and busybox, as it moves workerd",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "seam-rfcs",
     what: "seam's RFCs move out of canmi/rfcs into seam's own docs/rfcs",
     repos: ["seam", "canmi/rfcs"],
