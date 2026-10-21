@@ -18,7 +18,7 @@ type item = {
 let items: array<item> = [
   {
     id: "machine-system-review",
-    what: "monoflake/platform's machine system reviewed whole and slimmed where it can be -- crun's criu and Python, libkrun, what else a set carries -- once the driver's abilities are built, capability first",
+    what: "monoflake/platform's machine system reviewed whole and slimmed where it can be -- crun's Python, libkrun, what else a set carries, its criu kept while monoflake/platform's C39 is open -- once the driver's abilities are built, capability first",
     repos: ["monoflake/platform"],
     until: Author,
   },
