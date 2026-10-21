@@ -245,6 +245,11 @@ that looks finished and is not.
 - **Do not touch the rules or `AGENTS.md`**, and do not reformat or tidy code the brief did not
   name. A neighboring improvement is indistinguishable from a mistake in a diff, and it lands in
   a commit about something else.
+- **A report longer than a few dozen lines is written to a file, and the message names its path.**
+  The notice a finished worker sends is cut at a fixed length, not where the worker stopped, so
+  asking for the report again meets the same cut; the conversation reads the file itself, or asks
+  for what follows the cut, or for a report kept under the length. Learned on 2026-10-21, the
+  author's observation after three reports in one session came back cut mid-sentence.
 - **Stop and report rather than improvise.** A brief that turns out to be wrong, a file it needs
   and does not own, a rule it cannot satisfy and follow at once: all of these come back as a
   report. Twice in one session a worker found a signature that disagreed with its brief and
