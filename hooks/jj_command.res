@@ -15,10 +15,18 @@ let words = (command: string): option<array<string>> => {
       word := ""
       open_ := false
     }
-  command
-  ->Node.codePoints
-  ->Array.forEach(char => {
-    if escaped.contents {
+  let chars = command->Node.codePoints
+  let skip = ref(false)
+  let operator = (text, ~pair) => {
+    close()
+    found->Array.push(text)
+    skip := pair
+  }
+  chars->Array.forEachWithIndex((char, at) => {
+    let next = chars[at + 1]
+    if skip.contents {
+      skip := false
+    } else if escaped.contents {
       // Inside double quotes a backslash escapes only a quote or itself, as shlex has it.
       word :=
         word.contents ++
@@ -37,6 +45,12 @@ let words = (command: string): option<array<string>> => {
       }
     } else if char == " " || char == "\t" || char == "\n" || char == "\r" {
       close()
+    } else if char == ";" {
+      operator(";", ~pair=false)
+    } else if char == "|" {
+      next == Some("|") ? operator("||", ~pair=true) : operator("|", ~pair=false)
+    } else if char == "&" && next == Some("&") {
+      operator("&&", ~pair=true)
     } else {
       open_ := true
       if char == "'" || char == "\"" {
@@ -56,7 +70,7 @@ let words = (command: string): option<array<string>> => {
   }
 }
 
-/** The command line cut at each separator that stands as a word of its own. */
+/** The command line cut at each separator, which `words` keeps as a word of its own. */
 let segments = command =>
   switch words(command) {
   | None => []

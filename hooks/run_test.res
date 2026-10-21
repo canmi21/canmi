@@ -115,6 +115,8 @@ describe("a jj command inside a shell line", () => {
       ("describe", ["-m", "fix: y"]),
     ])
     expect(Jj_command.invocations("echo jj commit -m x"))->toEqual([])
+    expect(Jj_command.invocations("true;jj commit -m x"))->toEqual([("commit", ["-m", "x"])])
+    expect(Jj_command.invocations("a 2>&1|b&&jj new; echo 'x;y'"))->toEqual([("new", [])])
   })
 
   test("a quote left open is no command at all", () => {
