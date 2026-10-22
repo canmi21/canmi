@@ -69,6 +69,23 @@ duplicating a section of the rules or a code comment written in the same change,
 reader goes looking for exactly that. The log was left carrying a second copy of the argument,
 in the one place this file says it must not be.
 
+### A lock a workflow moves names what moved
+
+A commit a workflow makes when it moves a lock names the packages that changed and their new
+versions, never a fixed line such as `flake.lock: Update` that every such commit repeats. Its
+type is `build` and its verb `update`. The subject names as many packages as fit its width,
+the rest counted as `and N more`; the body lists each as `name old -> new`, packed into its
+lines and counted the same way. Decided with the author on 2026-10-21 for `monoflake/machine`,
+whose `.github/update/message.nix` holds the order of the cases:
+
+- the packages a machine holds, where any changed: `build: update linux 6.18.58 and tmux 3.8a`;
+- else the versions changed below them: `build: update dependencies go 1.27.3`;
+- else a count: `build: update nixpkgs and unstable, 12 rebuilt, no version changed`;
+- and in each, a patch new in the tree named for a CVE adds `patch CVE-2026-1234 in libtiff`.
+
+A lock that moved is always committed. The workflow evaluates it first and commits only where
+it evaluates; the full check runs after, so a lock that breaks formatting lands and shows red.
+
 ## Language
 
 English only, no exceptions. See [voice.md](voice.md).
