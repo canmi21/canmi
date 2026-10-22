@@ -130,10 +130,18 @@ one lockfile, at its root, and web's whole anchor list is byte-identical either 
 invisible because the input that separates them had never been written, which is the argument for
 one implementation rather than two that look alike.
 
+**A script only one repository's CI runs lives beside the workflow that runs it, under that
+repository's `.github/`**, in a directory named for what the workflow does: machine's
+`.github/update/`, runtime's `.github/publish/`. A repository's `scripts/` keeps what is run by
+hand or by its tasks, and its top level keeps what the repository is for, an image's build or a
+machine's NixOS, so the root shows that before anything that only serves CI. Decided by the
+author on 2026-10-22.
+
 **A task two repositories run is written once, here, in ReScript under `scripts/`** -- RFC 17b3o.
 `scripts/change/` holds what a change reaches -- `graph`, `fingerprint`, `resolved` -- and the two
 engines built on it, `verify` and `deployable`; `scripts/deploy/` holds `base`, the commit a
-push's Deploy run plans against, and `artifact`, which puts a run's artifact in the bucket. **A
+push's Deploy run plans against. `artifact`, which put a run's artifact in a bucket, was removed
+with the pipeline that called it, decided by the author on 2026-10-22. **A
 repository declares what is its own as data, in `workspace.toml` at its root** -- where its apps
 and packages sit, its gates and what its files reach that no graph shows, whether it builds images,
 Workers or both -- read by `scripts/change/project.res`, which refuses a key it does not know.

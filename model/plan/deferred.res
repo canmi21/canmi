@@ -35,6 +35,12 @@ let items: array<item> = [
     pauses: true,
   },
   {
+    id: "ci-scripts-beside",
+    what: "each paused repository's scripts read once it is worked on again, and one only its own CI runs moved under its .github/ beside the workflow, as rdm's pkgs/package.sh, docs/repos.md",
+    repos: ["canmi/web", "canmi/lib", "apps/rdm", "apps/cue"],
+    until: Author,
+  },
+  {
     id: "rdm-machine-names",
     what: "apps/rdm's release assets named by the machine as uname -m prints it, rdm-nightly-linux-x86_64 and rdm-nightly-macos-aarch64 rather than x64 and arm64, docs/naming.md's rule for a release asset, once rdm is worked on again",
     repos: ["apps/rdm"],
