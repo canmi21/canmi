@@ -78,10 +78,12 @@ stops working. `Naming.assigned` lists the ones this repository holds; Next.js's
 
 ### Docker's files take Docker's plain names
 
-`Dockerfile`, `.dockerignore` and `docker-compose.yml`, and no variant of any of them: not
-`Dockerfile.dockerignore`, not a suffix naming a target. Docker finds the first two by those names
-without being told, and a reader finds all three the same way; a variant is a name somebody has to
-already know. Where an image needs a context larger than its own directory, the `.dockerignore` sits
+`Dockerfile`, `.dockerignore` and `docker-compose.yaml`, and no variant of any of them: not
+`Dockerfile.dockerignore`, not a suffix naming a target. Docker finds all three by those names
+without being told, and a reader finds them the same way; a variant is a name somebody has to
+already know. The Compose file is `docker-compose.yaml` rather than the shorter `compose.yaml` the
+Compose specification now prefers, or the `.yml` it still reads: its name says whose file it is,
+and its extension is written whole, as a name is, decided by the author on 2026-10-22. Where an image needs a context larger than its own directory, the `.dockerignore` sits
 at that context's root and serves every image built from it.
 
 ## Asset directories are singular; infrastructure is plural
