@@ -1,34 +1,37 @@
 # RFCs: why, kept apart from what
 
 **A rule in any repository's rules says what is done now; the reasons it was decided that way are an RFC**,
-one file in the `rfcs` repository, cloned at `repos/canmi/rfcs`. Its format, and why there is one, is the
-first of them, RFC 2ut6h; why they have a repository of their own is RFC 7f4xx. They are read as
-files, found by id, until their pages are drawn by the settled design system, which no address
-reaches before then -- RFC ggry5.
+one file in the repository nearest what it decides, `docs/rfcs/<area>/` there -- RFC 1dj2c. Its
+format, and why there is one, is RFC 2ut6h. They are read as files, found by id, until their pages
+are drawn by the settled design system, which no address reaches before then -- RFC ggry5.
 
-**A project that stands as its own product keeps its RFCs itself.** Decided by the author on
-2026-10-20: monoflake's drafts live in its own `docs/rfcs/`, under its license and beside the model
-they decide, and seam's are to move into seam the same way; until they do, seam's are among
-these. Everything else the author decides is an RFC here.
+**An id is unique within an id space, which a repository declares**, `[rfcs] ids` in its
+`workspace.toml`: `monoflake` for the organization's repositories, `workspace` for this one, its
+name `Planning.workspaceSpace`, and `canmi` for the author's other projects, kept in
+`repos/canmi/rfcs` with web's tools until that repository is taken up again. A citation may cross
+spaces and repositories, a public one citing a private id among them, which tells its reader the id
+and nothing more; `supersedes` and `blocked-by` stay within a space, where a bare id is one RFC.
+A commit an RFC names is `<repo>@<hash>`, `<repo>` being `workspace` or a path from
+`repos/registry.toml`.
 
 **A rule cites the RFC behind it by its id alone**, `RFC 2ut6h`, and the RFC is found by it,
-`repos/canmi/rfcs/*/*-2ut6h.md`, whatever its area and slug became. An RFC names no page and no spec, so
+`docs/rfcs/*/*-2ut6h.md` in a repository of its space, whatever its area and slug became. An RFC names no page and no spec, so
 which rules it settled is read off the citations.
 
 **An RFC is plain Markdown**, CommonMark with GFM, and calls no component of the design system it
 decides, so a frozen record never changes when the system does -- RFC ejy85.
 
-**The repository is documents and a few settings, nothing else.** The code that holds the files
-to the format and draws their pages is web's `apps/space/rfcs`, run on the sibling checkout, so
-web is cloned beside it. In `repos/canmi/rfcs`, `mise run new-rfc <name> <scope>` starts one, making its
-slug of its name and picking its id and its place in the day; `mise run check rfcs` holds every
-file to the format.
+**The tools are the workspace's, `scripts/rfcs/`.** `mise run new-rfc <name> <area> [--in <path>]`
+starts one in the workspace or in the repository named, making its slug of its name and picking its
+id and its place in the day within its space; the `rfcs` part of every check holds each file of a
+space to the format, reading every cloned repository of it. Web's `apps/space/rfcs` draws the
+pages and still checks `canmi/rfcs`.
 
 **Everything not done is an RFC too, by its status** -- RFC p992n and [planning.md](planning.md):
 `draft` for an open question or a finding, `accepted` for decided work or a milestone, `landed`
 once built and pushed, naming its commits, or `declined`. A draft or an accepted RFC is edited as
 the work moves; a landed or declined one is frozen. **`blocked-by` names the RFCs that must land
-first, by id**, the graph held acyclic by `check rfcs`; `mise run plan` in `repos/canmi/rfcs` lists what
+first, by id**, the graph held acyclic by the `rfcs` part of check; `mise run plan [space]` lists what
 nothing open blocks, then each of the rest behind the chain it waits on. `new-rfc` starts a draft
 unless given `--status`, and takes `--day` for a question older than its RFC.
 

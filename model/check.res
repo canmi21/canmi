@@ -100,6 +100,7 @@ let parts: array<(string, part)> = [
   ("settings", Found(() => Settings.main(~root))),
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
+  ("rfcs", Found(() => Rfc_check.repository(Planning.workspaceSpace))),
   ("tasks", Found(() => Tasks.main(~root))),
   ("plain", Soft(() => Comments.plain(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
@@ -156,16 +157,23 @@ let outcome = part =>
   }
 
 /** What the workspace holds over every repository below it, each part by its name. */
-let over = (repo): array<(string, part)> => [
-  ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
-  ("tasks", Found(() => Tasks.main(~root=repo))),
-  ("names", Found(() => Filenames.names(~root=repo))),
-  ("commits", Found(() => commits(repo))),
-  ("comments", Script(() => Comments.main(~root=repo, ~given=[]))),
-  ("workflows", Found(() => Workflows.main(~root=repo))),
-  ("plain", Soft(() => Comments.plain(~root=repo))),
-  ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
-]
+let over = (repo): array<(string, part)> =>
+  Array.concat(
+    [
+      ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
+      ("tasks", Found(() => Tasks.main(~root=repo))),
+      ("names", Found(() => Filenames.names(~root=repo))),
+      ("commits", Found(() => commits(repo))),
+      ("comments", Script(() => Comments.main(~root=repo, ~given=[]))),
+      ("workflows", Found(() => Workflows.main(~root=repo))),
+      ("plain", Soft(() => Comments.plain(~root=repo))),
+      ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
+    ],
+    switch Rfc_spaces.spaceOf(Registry.label(repo)) {
+    | Some(_) => [("rfcs", Found(() => Rfc_check.repository(Registry.label(repo))))]
+    | None => []
+    },
+  )
 
 /** The workspace's rules over one repository below it, each part logged, on past a failure. */
 let repository = (repo): int => {

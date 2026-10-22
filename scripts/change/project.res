@@ -35,6 +35,9 @@ type update = {
 /** The workspace's rules over what is inside a repository, each on unless turned off here. */
 type rules = {lines: bool}
 
+/** The id space a repository's docs/rfcs holds its RFCs in, its ids unique within it. */
+type rfcs = {ids: string}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -43,6 +46,7 @@ type declared = {
   deployable: option<deployable>,
   update: update,
   rules: rules,
+  rfcs: option<rfcs>,
 }
 
 exception Malformed(string)
@@ -179,6 +183,14 @@ let rulesOf = (table: table): rules => {
   }
 }
 
+let rfcsOf = (table: table): rfcs => {
+  only(table, "rfcs", ["ids"])
+  switch table->Dict.get("ids") {
+  | Some(String(ids)) if /^[a-z][a-z0-9-]*$/->RegExp.test(ids) => {ids: ids}
+  | _ => fail("rfcs.ids: not an id space's name in lowercase words and hyphens")
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -188,7 +200,11 @@ let read = (root: string): result<declared, string> => {
     try {
       switch Toml.parse(Node.readFileSync(path)) {
       | Object(top) =>
-        only(top, "workspace.toml", ["base", "layout", "verify", "deployable", "update", "rules"])
+        only(
+          top,
+          "workspace.toml",
+          ["base", "layout", "verify", "deployable", "update", "rules", "rfcs"],
+        )
         Ok({
           base: switch top->Dict.get("base") {
           | None => None
@@ -203,6 +219,7 @@ let read = (root: string): result<declared, string> => {
           deployable: tableAt(top, "deployable", "workspace.toml")->Option.map(deployableOf),
           update: updateOf(tableAt(top, "update", "workspace.toml")->Option.getOr(Dict.make())),
           rules: rulesOf(tableAt(top, "rules", "workspace.toml")->Option.getOr(Dict.make())),
+          rfcs: tableAt(top, "rfcs", "workspace.toml")->Option.map(rfcsOf),
         })
       | _ => Error(`${path}: not a table`)
       }

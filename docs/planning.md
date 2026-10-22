@@ -3,8 +3,8 @@
 Every repository's rules -- this workspace's `docs/` and `model/`, each project's `docs/` -- hold
 what holds now, and one file may hold what does not: `roadmap.md`, the long-term direction. The
 workspace keeps none now; its last direction was the platform's, which the author will set out
-afresh. Everything not done yet is an RFC in the `rfcs` repository, cloned at `repos/canmi/rfcs` --
-RFC p992n, and [rfcs.md](rfcs.md) for the rest.
+afresh. Everything not done yet is an RFC, in the repository nearest it -- RFC p992n, and
+[rfcs.md](rfcs.md) for the rest.
 
 | What                                  | Where                                                    |
 | ------------------------------------- | -------------------------------------------------------- |
@@ -13,7 +13,7 @@ RFC p992n, and [rfcs.md](rfcs.md) for the rest.
 | Work decided and waiting, a milestone | an `accepted` RFC                                        |
 | Chores decided, waiting on a moment   | a deferred item, `model/plan/deferred.res`               |
 | What waits on what                    | `blocked-by` on the RFC that waits, by id                |
-| What to take up next                  | `mise run plan` in `repos/canmi/rfcs`, from the rest     |
+| What to take up next                  | `mise run plan [space]`, from the rest                   |
 
 **What is not done is one of three, and each has one home.** Agreed with the author on 2026-10-20.
 

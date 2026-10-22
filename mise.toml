@@ -101,6 +101,17 @@ description = "Run a task in every repository that declares it, one after anothe
 depends = ["build"]
 run = "node scripts/workspace/each.res.mjs"
 
+# An RFC by its id space, the workspace's own or what a repository's `[rfcs] ids` names.
+[tasks.new-rfc]
+description = "Start an RFC: `new-rfc <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/rfcs/rfc_new.res.mjs"
+
+[tasks.plan]
+description = "What is left in every id space's RFCs, or in one: `plan [space]`"
+depends = ["build"]
+run = "node scripts/rfcs/rfc_plan.res.mjs"
+
 # What the scripts compile to, never committed, which every task running one depends on.
 [tasks.build]
 description = "Compile the scripts under scripts/ and the model under model/"

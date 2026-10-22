@@ -55,6 +55,9 @@ type removal = {recursive: bool, force: bool}
 @module("node:fs") external readFileSync: (string, @as("utf8") _) => string = "readFileSync"
 @module("node:fs") external readStdin: (@as(0) _, @as("utf8") _) => string = "readFileSync"
 @module("node:fs") external writeFileSync: (string, string) => unit = "writeFileSync"
+/** `directory` made, with every parent it lacks. */
+@module("node:fs")
+external mkdirAll: (string, @as(json`{"recursive": true}`) _) => unit = "mkdirSync"
 @module("node:fs") external readdir: string => array<string> = "readdirSync"
 @module("node:fs") external readdirTyped: (string, withTypes) => array<dirent> = "readdirSync"
 @module("node:fs") external statMaybe: (string, noThrow) => Nullable.t<stats> = "statSync"

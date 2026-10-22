@@ -61,9 +61,9 @@ Every rule the user states gets written down. Never leave one in chat only.
 - A rule that belongs to one project goes in that project's `docs/`, not here; one two projects
   share comes here.
 - Never restate the rules here. Link to them.
-- What is not done yet is an RFC in `repos/canmi/rfcs`: a `draft` for an open question, an
-  `accepted` one for decided work, blocked by others by id. **To know what is left, run `mise run
-  plan` in `repos/canmi/rfcs`**; a project's `docs/` keeps its rules and at most a short
+- What is not done yet is an RFC, in the repository nearest it: a `draft` for an open question,
+  an `accepted` one for decided work, blocked by others by id, each id unique in its repository's
+  id space. **To know what is left, run `mise run plan`**; a project's `docs/` keeps its rules and at most a short
   `roadmap.md`. What is decided and only waits on a moment is a deferred item,
   `model/plan/deferred.res`, listed in red at the end of every check. See
   [docs/planning.md](docs/planning.md).
