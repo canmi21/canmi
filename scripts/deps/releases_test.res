@@ -44,6 +44,20 @@ describe("a pin", () => {
     )
   })
 
+  test("reads a manifest of the one shape as it reads runtime's first", () => {
+    let one = JSON.parseOrThrow(`{"release": "2026.10.23", "artifacts": [
+      {"name": "driver-machine", "version": "0.1.0", "assets": [
+        {"target": "linux-x86_64", "kind": "binary", "file": "driver-machine-0.1.0-linux-x86_64.tar.gz", "sha256": "cc"}
+      ]}
+    ]}`)
+    expect(Releases.entryOf(one, ~name="driver-machine", ~version="0.1.0")->Option.isSome)->toBe(
+      true,
+    )
+    expect(
+      Releases.newest(["driver-machine-0.1.0-linux-x86_64.tar.gz"], ~name="driver-machine"),
+    )->toEqual(Some("0.1.0"))
+  })
+
   test("is written as TOML, its head saying who writes it and its release linked above it", () => {
     let pin = JSON.parseOrThrow(`{"version": "50.0.0", "release": "2026.10.22",
       "x86_64-linux": {"url": "https://x/a", "sha256": "aa"},

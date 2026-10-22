@@ -13,11 +13,14 @@ let system = target =>
   | _ => None
   }
 
-/** The highest version a release names an archive of for `name`, read from the archives' names. */
+/** The highest version a release names an archive of for `name`, read from the archives' names,
+ * an image's `.tar` or a program's `.tar.gz`. */
 let newest = (names: array<string>, ~name) =>
   names
   ->Array.filterMap(file =>
-    switch RegExp.fromString(`^${name}-(\\d[^-]*)-[a-z0-9]+-[a-z0-9_]+\\.tar$`)->RegExp.exec(file) {
+    switch RegExp.fromString(
+      `^${name}-(\\d[^-]*)-[a-z0-9]+-[a-z0-9_]+\\.tar(?:\\.gz)?$`,
+    )->RegExp.exec(file) {
     | Some(result) => result->RegExp.Result.matches->Array.get(0)->Option.flatMap(x => x)
     | None => None
     }
@@ -63,12 +66,13 @@ let pinned = (~version, ~release: JSON.t, entry: JSON.t) => {
   JSON.Encode.object(pin)
 }
 
-/** The entry a release's manifest gives `name` at `version`, where it lists it. */
+/** The entry a release's manifest gives `name` at `version`, where it lists it, the manifest in
+ * the one shape or in runtime's first, scripts/release/manifest.res telling them apart. */
 let entryOf = (manifest: JSON.t, ~name, ~version) =>
   manifest
-  ->list("runtimes")
+  ->Manifest.artifacts
   ->Array.find(entry =>
-    entry->text("runtime") == Some(name) && entry->text("version") == Some(version)
+    entry->text("name") == Some(name) && entry->text("version") == Some(version)
   )
 
 /** A TOML string, quoted with what it holds escaped. */

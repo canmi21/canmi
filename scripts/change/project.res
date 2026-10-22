@@ -38,6 +38,10 @@ type rules = {lines: bool}
 /** The id space a repository's docs/rfcs holds its RFCs in, its ids unique within it. */
 type rfcs = {ids: string}
 
+/** What scripts/release takes, `built` the path from the root to the `built.json` the repository's
+ * own build writes, and `columns` the head of the notes' table its rows fill. */
+type release = {built: string, columns: array<string>}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -47,6 +51,7 @@ type declared = {
   update: update,
   rules: rules,
   rfcs: option<rfcs>,
+  release: option<release>,
 }
 
 exception Malformed(string)
@@ -191,6 +196,20 @@ let rfcsOf = (table: table): rfcs => {
   }
 }
 
+let releaseOf = (table: table): release => {
+  only(table, "release", ["built", "columns"])
+  {
+    built: switch table->Dict.get("built") {
+    | Some(String(path)) if path->String.endsWith(".json") => path
+    | _ => fail("release.built: not the path of a .json file")
+    },
+    columns: switch texts(table, "columns", "release") {
+    | [] => fail("release.columns: no column for the notes' table")
+    | columns => columns
+    },
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -203,7 +222,7 @@ let read = (root: string): result<declared, string> => {
         only(
           top,
           "workspace.toml",
-          ["base", "layout", "verify", "deployable", "update", "rules", "rfcs"],
+          ["base", "layout", "verify", "deployable", "update", "rules", "rfcs", "release"],
         )
         Ok({
           base: switch top->Dict.get("base") {
@@ -220,6 +239,7 @@ let read = (root: string): result<declared, string> => {
           update: updateOf(tableAt(top, "update", "workspace.toml")->Option.getOr(Dict.make())),
           rules: rulesOf(tableAt(top, "rules", "workspace.toml")->Option.getOr(Dict.make())),
           rfcs: tableAt(top, "rfcs", "workspace.toml")->Option.map(rfcsOf),
+          release: tableAt(top, "release", "workspace.toml")->Option.map(releaseOf),
         })
       | _ => Error(`${path}: not a table`)
       }

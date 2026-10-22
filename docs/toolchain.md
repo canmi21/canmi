@@ -765,6 +765,23 @@ archive is named by, and locks it only once that release's `manifest.json` lists
 the release's own download and each hash the manifest's. The source holds the delay already, a
 runtime released a day after upstream, so none is waited out again. Decided with the author on 2026-10-22.
 
+### A release is the workspace's script, each repository building what it releases
+
+A repository that releases on GitHub declares `[release]` in its `workspace.toml`, read by
+`scripts/change/project.res`: `built`, the path of the `built.json` its own build writes, and
+`columns`, the head of the notes' table. Its build stays its own, runtime's images or the driver's
+archives, and names each artifact in `built.json` with its `name`, `version`, `commit`, each asset's
+`target`, `kind` and `path`, an image's `digest`, the fields that are its alone, and its `row` in
+the table, where `{release}` stands for the day's tag. `scripts/release/release.res`, run as the
+repository's `release` task, does the rest: a UTC day's release, `2026.10.22`, drafted whole and
+published last when new, or added to when it stands, each file uploaded with `--clobber`, a row
+added, and one `manifest.json` merged and uploaded last. An artifact counts as released only once
+a published release's manifest lists its version, and `release listed` prints every one so a build
+can skip what is out. Every manifest has one shape, `{release, artifacts}`,
+`scripts/release/manifest.res`; runtime's first, `{release, runtimes}` with each entry's `runtime`
+for its `name`, is still read and is written over in the one shape the next time its day is added
+to. Decided by the author on 2026-10-22, monoflake/driver's RFC 8c0rg.
+
 ### An advisory in a development-only dependency is not a production one
 
 Where a vulnerable package runs decides how much it costs. A deployed Worker uses workerd's own
