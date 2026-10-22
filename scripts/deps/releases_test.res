@@ -38,9 +38,40 @@ describe("a pin", () => {
     expect(entry->Option.isSome)->toBe(true)
     expect(Releases.entryOf(manifest, ~name="workerd", ~version="1.20261020.1"))->toEqual(None)
     expect(Releases.pinned(~version="1.20261021.1", ~release, entry->Option.getOrThrow))->toEqual(
-      JSON.parseOrThrow(`{"version": "1.20261021.1",
+      JSON.parseOrThrow(`{"version": "1.20261021.1", "release": "2026.10.22",
         "x86_64-linux": {"url": "https://x/workerd-1.20261021.1-linux-x86_64.tar", "sha256": "aa"},
         "aarch64-linux": {"url": "https://x/workerd-1.20261021.1-linux-aarch64.tar", "sha256": "bb"}}`),
+    )
+  })
+
+  test("is written as TOML, its head saying who writes it and its release linked above it", () => {
+    let pin = JSON.parseOrThrow(`{"version": "50.0.0", "release": "2026.10.22",
+      "x86_64-linux": {"url": "https://x/a", "sha256": "aa"},
+      "aarch64-linux": {"url": "https://x/b", "sha256": "bb"}}`)
+    let text = Releases.written(~source="monoflake/runtime", [("wasmtime", pin)])
+    expect(
+      text,
+    )->toBe(`# Written by \`mise run update\` from monoflake/runtime's releases, the workspace's
+# scripts/deps/releases.res; edited by hand, it is written over at the next update.
+source = "monoflake/runtime"
+
+# https://github.com/monoflake/runtime/releases/tag/2026.10.22
+[wasmtime]
+version = "50.0.0"
+release = "2026.10.22"
+
+[wasmtime.x86_64-linux]
+url = "https://x/a"
+sha256 = "aa"
+
+[wasmtime.aarch64-linux]
+url = "https://x/b"
+sha256 = "bb"
+`)
+    expect(Toml.parse(text)->JSON.stringify)->toBe(
+      JSON.parseOrThrow(`{"source": "monoflake/runtime", "wasmtime": {"version": "50.0.0", "release": "2026.10.22",
+        "x86_64-linux": {"url": "https://x/a", "sha256": "aa"},
+        "aarch64-linux": {"url": "https://x/b", "sha256": "bb"}}}`)->JSON.stringify,
     )
   })
 })

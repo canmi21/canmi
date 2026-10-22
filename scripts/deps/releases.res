@@ -1,6 +1,6 @@
 /**
- * `releases.res.mjs <pins.json> [--dry-run]`, each artifact a pins file names moved to the newest
- * version its source repository's releases list in their manifests. See docs/toolchain.md.
+ * `releases.res.mjs <manifest.toml> [--dry-run]`, each artifact a manifest names moved to the
+ * newest version its source repository's releases list in their manifests. See docs/toolchain.md.
  */
 let field = (json, key) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(key))
 let text = (json, key) => json->field(key)->Option.flatMap(JSON.Decode.string)
@@ -39,6 +39,9 @@ let pinned = (~version, ~release: JSON.t, entry: JSON.t) => {
     ),
   )
   let pin = dict{"version": JSON.Encode.string(version)}
+  release
+  ->text("tag_name")
+  ->Option.forEach(tag => pin->Dict.set("release", JSON.Encode.string(tag)))
   entry
   ->list("assets")
   ->Array.forEach(asset =>
@@ -67,6 +70,49 @@ let entryOf = (manifest: JSON.t, ~name, ~version) =>
   ->Array.find(entry =>
     entry->text("runtime") == Some(name) && entry->text("version") == Some(version)
   )
+
+/** A TOML string, quoted with what it holds escaped. */
+let quoted = value => JSON.stringifyAny(value)->Option.getOr(`""`)
+
+/** The manifest as it is written, its head saying who writes it, each artifact's release linked
+ * above its table, and each system's address and SHA-256 in a table of its own. */
+let written = (~source, pins: array<(string, JSON.t)>) => {
+  let head = [
+    `# Written by \`mise run update\` from ${source}'s releases, the workspace's`,
+    "# scripts/deps/releases.res; edited by hand, it is written over at the next update.",
+    `source = ${quoted(source)}`,
+  ]
+  let tables = pins->Array.flatMap(((name, pin)) => {
+    let fields = pin->JSON.Decode.object->Option.getOr(Dict.make())
+    let link =
+      fields
+      ->Dict.get("release")
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.mapOr([], tag => [`# https://github.com/${source}/releases/tag/${tag}`])
+    let scalars = ["version", "release"]->Array.filterMap(key =>
+      fields
+      ->Dict.get(key)
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.map(value => `${key} = ${quoted(value)}`)
+    )
+    let systems =
+      fields
+      ->Dict.toArray
+      ->Array.filter(((_, value)) => value->JSON.Decode.object->Option.isSome)
+      ->Array.toSorted(((a, _), (b, _)) => String.compare(b, a))
+      ->Array.flatMap(((system, value)) =>
+        [
+          "",
+          `[${name}.${system}]`,
+          ...["url", "sha256"]->Array.filterMap(
+            key => value->text(key)->Option.map(found => `${key} = ${quoted(found)}`),
+          ),
+        ]
+      )
+    ["", ...link, `[${name}]`, ...scalars, ...systems]
+  })
+  [...head, ...tables]->Array.join("\n") ++ "\n"
+}
 
 /** A JSON document from GitHub, with the token where the environment holds one. */
 let github = async url => {
@@ -127,7 +173,7 @@ let main = async () => {
   let dry = args->Array.includes("--dry-run") || args->Array.includes("-n")
   switch args->Array.filter(arg => !(arg->String.startsWith("-"))) {
   | [file] =>
-    let pins = JSON.parseOrThrow(Node.readFileSync(file))
+    let pins = Toml.parse(Node.readFileSync(file))
     let source = pins->text("source")->Option.getOr("")
     let failed = ref(false)
     switch await github(`https://api.github.com/repos/${source}/releases?per_page=100`) {
@@ -137,7 +183,12 @@ let main = async () => {
     | Ok(releases) =>
       let releases = releases->JSON.Decode.array->Option.getOr([])
       let current =
-        pins->field("pins")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+        pins
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+        ->Dict.toArray
+        ->Array.filter(((_, value)) => value->JSON.Decode.object->Option.isSome)
+        ->Dict.fromArray
       let moved = Dict.make()
       let names = current->Dict.keysToArray
       for index in 0 to names->Array.length - 1 {
@@ -154,7 +205,7 @@ let main = async () => {
           moved->Dict.set(name, was)
         | Ok(Some(pin)) if pin->text("version") == Some(version) =>
           Console.log(`releases: ${file} ${name} ${version}, the newest released`)
-          moved->Dict.set(name, was)
+          moved->Dict.set(name, pin)
         | Ok(Some(pin)) =>
           Console.log(
             `releases: ${file} ${name} ${version} -> ${pin->text("version")->Option.getOr("")}`,
@@ -162,17 +213,14 @@ let main = async () => {
           moved->Dict.set(name, pin)
         }
       }
-      let written =
-        JSON.Encode.object(
-          dict{"source": JSON.Encode.string(source), "pins": JSON.Encode.object(moved)},
-        )->JSON.stringify(~space=2) ++ "\n"
+      let written = written(~source, names->Array.map(name => (name, moved->Dict.getUnsafe(name))))
       if !dry && written != Node.readFileSync(file) {
         Node.writeFileSync(file, written)
       }
       Node.exit(failed.contents ? 1 : 0)
     }
   | _ =>
-    Console.error("usage: releases.res.mjs <pins.json> [--dry-run]")
+    Console.error("usage: releases.res.mjs <manifest.toml> [--dry-run]")
     Node.exit(1)
   }
 }
