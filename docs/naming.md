@@ -86,6 +86,17 @@ Compose specification now prefers, or the `.yml` it still reads: its name says w
 and its extension is written whole, as a name is, decided by the author on 2026-10-22. Where an image needs a context larger than its own directory, the `.dockerignore` sits
 at that context's root and serves every image built from it.
 
+### A release asset names its system before its machine
+
+A file a release publishes is named `<name>-<version>-<system>-<machine>.<extension>`, the version
+slot holding a channel such as `nightly` where the release moves: `wasmtime-49.0.4-linux-x86_64.tar`,
+`rdm-nightly-macos-aarch64.dmg`. The machine is the kernel's name for it, as `uname -m` on Linux,
+Rust's targets and Nix's systems write it, `x86_64` and `aarch64`, rather than OCI's `amd64` and
+`arm64` or Node's `x64`; a manifest beside the files writes each target the same way,
+`linux-x86_64`. Where a format inside the file has its own name for the machine, as an OCI image's
+platform does, the file keeps that name inside and only its own name changes. Decided by the author
+on 2026-10-22.
+
 ## Asset directories are singular; infrastructure is plural
 
 Under `data/`, a directory holding addressable resources is named in the singular:

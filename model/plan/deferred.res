@@ -35,6 +35,12 @@ let items: array<item> = [
     pauses: true,
   },
   {
+    id: "rdm-machine-names",
+    what: "apps/rdm's release assets named by the machine as uname -m prints it, rdm-nightly-linux-x86_64 and rdm-nightly-macos-aarch64 rather than x64 and arm64, docs/naming.md's rule for a release asset, once rdm is worked on again",
+    repos: ["apps/rdm"],
+    until: Author,
+  },
+  {
     id: "machine-system-review",
     what: "monoflake/platform's machine system reviewed whole and slimmed where it can be -- crun's Python, libkrun, what else a set carries, its criu kept while monoflake/platform's C39 is open -- once the driver's abilities are built, capability first",
     repos: ["monoflake/platform"],
