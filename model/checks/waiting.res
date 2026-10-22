@@ -6,40 +6,29 @@ let waivable = ["shape"]
 
 let finished = ["landed", "declined"]
 
-let rec markdown = directory =>
-  Node.entries(directory)->Array.flatMap(entry => {
-    let name = entry->Node.name
-    let path = Node.join([directory, name])
-    if entry->Node.isDirectory {
-      name->String.startsWith(".") || name == "node_modules" ? [] : markdown(path)
-    } else if name->String.endsWith(".md") {
-      [path]
-    } else {
-      []
-    }
-  })
+/** The id space an item's RFC is in, the first its repositories declare, else the workspace's. */
+let spaceOf = (item: item) =>
+  item.repos->Array.findMap(Rfc_spaces.spaceOf)->Option.getOr(Planning.workspaceSpace)
 
-/** Every RFC's status by its id, from canmi/rfcs whole and each repository's docs/rfcs. */
-let statuses = (): Dict.t<string> => {
-  let found = Dict.make()
-  let places =
-    Registry.paths()->Array.map(path =>
-      Node.join([Registry.repos, path, path == "canmi/rfcs" ? "" : "docs/rfcs"])
-    )
-  places
-  ->Array.filter(Node.existsSync)
-  ->Array.flatMap(markdown)
-  ->Array.forEach(path =>
-    switch Node.basename(path)->String.match(/-([a-z0-9]{5})\.md$/) {
-    | Some([_, Some(id)]) =>
-      switch Node.readFileSync(path)->String.match(/\nstatus:\s*(\w+)/) {
-      | Some([_, Some(status)]) => found->Dict.set(id, status)
-      | _ => ()
-      }
-    | _ => ()
+/** Each item's statuses by id, those of its RFC's space, each space read once. */
+let statuses = (): (item => Dict.t<string>) => {
+  let spaces = Dict.make()
+  item => {
+    let space = spaceOf(item)
+    switch spaces->Dict.get(space) {
+    | Some(found) => found
+    | None =>
+      let found = Dict.make()
+      Rfc_spaces.read(space).files->Array.forEach(file =>
+        switch Node.readFileSync(file.path)->String.match(/\nstatus:\s*(\w+)/) {
+        | Some([_, Some(status)]) => found->Dict.set(file.id, status)
+        | _ => ()
+        }
+      )
+      spaces->Dict.set(space, found)
+      found
     }
-  )
-  found
+  }
 }
 
 /** Whatever an item names that is not there, each one line. */
@@ -47,7 +36,7 @@ let problemsIn = (
   items: array<item>,
   ~repos: array<string>,
   ~rules: array<Rule.t>,
-  ~statuses: Dict.t<string>,
+  ~statuses: item => Dict.t<string>,
 ): array<string> => {
   let found = []
   let seen = []
@@ -81,7 +70,7 @@ let problemsIn = (
       }
     )
     switch item.until {
-    | Closes(id) if statuses->Dict.get(id)->Option.isNone =>
+    | Closes(id) if statuses(item)->Dict.get(id)->Option.isNone =>
       found->Array.push(`${at}: waits on ${id}, which is no RFC`)
     | _ => ()
     }
@@ -120,7 +109,7 @@ let shown = (~repo: option<string>) => {
   let known = statuses()
   let due = item =>
     switch item.until {
-    | Closes(id) => known->Dict.get(id)->Option.mapOr(false, s => finished->Array.includes(s))
+    | Closes(id) => known(item)->Dict.get(id)->Option.mapOr(false, s => finished->Array.includes(s))
     | Author => false
     }
   items

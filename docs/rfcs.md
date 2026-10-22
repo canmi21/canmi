@@ -12,7 +12,8 @@ name `Planning.workspaceSpace`, and `canmi` for the author's other projects, kep
 spaces and repositories, a public one citing a private id among them, which tells its reader the id
 and nothing more; `supersedes` and `blocked-by` stay within a space, where a bare id is one RFC.
 A commit an RFC names is `<repo>@<hash>`, `<repo>` being `workspace` or a path from
-`repos/registry.toml`.
+`repos/registry.toml`. A commit in a retired repository, named in `Planning.retired`, is kept as
+written and not checked.
 
 **A rule cites the RFC behind it by its id alone**, `RFC 2ut6h`, and the RFC is found by it,
 `docs/rfcs/*/*-2ut6h.md` in a repository of its space, whatever its area and slug became. An RFC names no page and no spec, so

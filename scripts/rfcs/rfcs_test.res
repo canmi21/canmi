@@ -187,4 +187,23 @@ describe("an id space", () => {
       "a/aaaaa.md: names web@d25effc4, whose repository repos/registry.toml does not list",
     ])
   })
+
+  test(
+    "keeps a commit in a retired repository as written, and still refuses an unknown one",
+    () => {
+      let landed = commits =>
+        front(~status="landed")
+        ->String.replace("commits: []", `commits: [${commits}]`)
+        ->String.concat("\n## Decision\n\nPairs.\n")
+      let entries = [
+        {
+          Rfc_check.file: file(~repo="a", "aaaaa"),
+          text: landed("platform@0000000, infra@0000000, gone@0000000"),
+        },
+      ]
+      expect(held(entries))->toEqual([
+        "a/aaaaa.md: names gone@0000000, whose repository repos/registry.toml does not list",
+      ])
+    },
+  )
 })

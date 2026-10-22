@@ -101,7 +101,7 @@ describe("a deferred item", () => {
         [item, {...item, until: Closes("p992n")}],
         ~repos=["seam"],
         ~rules,
-        ~statuses,
+        ~statuses=_ => statuses,
       ),
     )->toEqual(["deferred spec-to-docs: its id is taken by another item"])
     expect(
@@ -117,7 +117,7 @@ describe("a deferred item", () => {
         ],
         ~repos=["seam"],
         ~rules,
-        ~statuses,
+        ~statuses=_ => statuses,
       ),
     )->toEqual([
       "deferred Bad id: its id is not lowercase words joined by hyphens",

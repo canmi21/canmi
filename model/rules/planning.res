@@ -4,6 +4,9 @@ let doc = "docs/planning.md"
 /** The id space of the workspace's own RFCs, which a repository's `[rfcs] ids` may also name. */
 let workspaceSpace = "workspace"
 
+/** Repositories retired, a commit in one kept as written in an RFC and never checked. */
+let retired = ["platform", "infra"]
+
 /** Where a repository keeps its RFCs, one directory deep in areas. */
 let rfcDirectory = "docs/rfcs"
 

@@ -2,7 +2,7 @@
 name: 'RFCs Beside What They Decide'
 title: 'An RFC lives in the repository nearest what it decides, its id unique in an id space a repository declares'
 status: accepted
-supersedes: []
+supersedes: [7f4xx]
 blocked-by: []
 commits: []
 references: []

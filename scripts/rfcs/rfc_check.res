@@ -103,6 +103,7 @@ let held = (
       own->Array.pushMany(Rfc_graph.checkBlockers(file.id, graph))
       front.commits->Array.forEach(commit =>
         switch commit->String.split("@") {
+        | [repo, _] if Planning.retired->Array.includes(repo) => ()
         | [repo, _] if !(repos->Array.includes(repo)) =>
           own->Array.push(`names ${commit}, whose repository repos/registry.toml does not list`)
         | [repo, hash] if exists(repo, hash) == Some(false) =>
