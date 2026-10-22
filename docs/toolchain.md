@@ -706,6 +706,21 @@ compromises are found and yanked inside that window.
 `minimumReleaseAgeExclude` holds the exemptions. Keep the list short: every entry is an
 accepted risk, justified only when the wait costs more than it protects.
 
+### A workflow's actions are pinned by commit and moved by `update`
+
+A workflow names each action it uses by the commit a release tag points at, with the release
+beside it as a comment: `uses: actions/checkout@3d3c42e5... # v7.0.1`. A tag can be moved to
+other code after the fact; a commit cannot. A value a workflow passes that is itself a release of
+some repository, such as the Nix an installer action installs, carries that repository as its
+comment, `installer-version: 2.35.3 # NixOS/nix-installer`, so it is moved the same way.
+
+A repository with workflows calls the workspace's `scripts/deps/actions.res` from its own
+`update`. It moves each pin to the newest release that has been public for a day -- the same
+wait as `minimumReleaseAge` -- within its major, or across it with `--major`, following an
+annotated tag to its commit. A release still inside its first day, or past the major, is named
+and left. The move is local: it is reviewed and pushed by hand, as every `update` is, and no
+workflow moves its own actions. Decided with the author on 2026-10-21.
+
 ### An advisory in a development-only dependency is not a production one
 
 Where a vulnerable package runs decides how much it costs. A deployed Worker uses workerd's own

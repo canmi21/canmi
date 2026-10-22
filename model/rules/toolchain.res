@@ -72,6 +72,18 @@ let rules: array<Rule.t> = [
     held: Pending("each pnpm repository's pnpm-workspace.yaml read for minimumReleaseAge"),
   },
   {
+    name: "actions-pinned",
+    says: "A workflow pins each action by commit, its release a comment beside it",
+    doc,
+    held: Pending("each repository's .github/workflows read for a uses not pinned by commit"),
+  },
+  {
+    name: "actions-age",
+    says: "update moves an action's pin to a release a day old, within its major unless --major",
+    doc,
+    held: Gate("scripts/deps/actions.res"),
+  },
+  {
     name: "ports-strict",
     says: "Every dev server binds a fixed port and fails when it is taken",
     doc,
