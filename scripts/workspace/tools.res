@@ -21,6 +21,8 @@ let channels = Dict.fromArray([
   ("oxlint", ("npm", "oxlint")),
   ("cargo-deny", ("github", "EmbarkStudios/cargo-deny")),
   ("jj", ("github", "jj-vcs/jj")),
+  ("actionlint", ("github", "rhysd/actionlint")),
+  ("shellcheck", ("github", "koalaman/shellcheck")),
   ("rclone", ("github", "rclone/rclone")),
   ("watchexec", ("github", "watchexec/watchexec")),
   ("node", ("node", "")),

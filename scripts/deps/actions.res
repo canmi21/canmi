@@ -131,8 +131,23 @@ let main = () => {
   let args = Node.args()
   let dry = args->Array.includes("--dry-run") || args->Array.includes("-n")
   let across = args->Array.includes("--major")
-  let directory = Node.join([Node.cwd(), ".github", "workflows"])
-  if !Node.existsSync(directory) {
+  let github = Node.join([Node.cwd(), ".github"])
+  let yaml = file => file->String.endsWith(".yml") || file->String.endsWith(".yaml")
+  let within = (directory, keep) => {
+    let at = Node.join([github, directory])
+    Node.existsSync(at) ? Node.readdir(at)->Array.filterMap(keep(at)) : []
+  }
+  // A workflow, or a composite action a workflow calls, each at `.github/actions/<name>/`.
+  let files = Array.concat(
+    within("workflows", _ => file => yaml(file) ? Some(`workflows/${file}`) : None),
+    within("actions", at =>
+      name =>
+        ["action.yml", "action.yaml"]
+        ->Array.find(file => Node.existsSync(Node.join([at, name, file])))
+        ->Option.map(file => `actions/${name}/${file}`)
+    ),
+  )
+  if files == [] {
     Console.log("actions: no workflow here")
     Node.exit(0)
   }
@@ -147,11 +162,10 @@ let main = () => {
       releases
     }
   let failed = ref(false)
-  Node.readdir(directory)
-  ->Array.filter(file => file->String.endsWith(".yml") || file->String.endsWith(".yaml"))
+  files
   ->Array.toSorted(String.compare)
   ->Array.forEach(file => {
-    let path = Node.join([directory, file])
+    let path = Node.join([github, file])
     let lines = Node.readFileSync(path)->String.split("\n")
     let changed = ref(false)
     pins(lines->Array.join("\n"))->Array.forEach(pin => {

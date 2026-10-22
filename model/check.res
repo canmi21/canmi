@@ -96,6 +96,7 @@ let parts: array<(string, part)> = [
   ("names", Found(() => Filenames.main(~root))),
   ("words", Found(() => Words.main(~root))),
   ("pins", Found(() => Pins.main(~root))),
+  ("workflows", Found(() => Workflows.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
@@ -161,6 +162,7 @@ let over = (repo): array<(string, part)> => [
   ("names", Found(() => Filenames.names(~root=repo))),
   ("commits", Found(() => commits(repo))),
   ("comments", Script(() => Comments.main(~root=repo, ~given=[]))),
+  ("workflows", Found(() => Workflows.main(~root=repo))),
   ("plain", Soft(() => Comments.plain(~root=repo))),
   ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
 ]

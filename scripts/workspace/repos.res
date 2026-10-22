@@ -228,9 +228,39 @@ let clean = (~dry) => {
   0
 }
 
-/** The workspace's own update, [tools] within their pins and package.json within its ranges. */
+let mover = name => Node.join([root, "scripts", "deps", `${name}.res.mjs`])
+
+/** Each mover run from `repo`, logged as typed, on past a failure. */
+let moved = (repo, movers: array<array<string>>) =>
+  movers->Array.reduce(0, (status, commandArgs) => {
+    let shown = commandArgs->Array.map(arg => arg->String.replace(`${root}/`, ""))
+    Console.log(`\n$ node ${shown->Array.join(" ")}`)
+    Node.run(~cwd=repo, "node", commandArgs) != 0 ? 1 : status
+  })
+
+/** The workspace's movers a repository's `[update]` asks for, beside its own task. */
+let movers = (repo, ~dry, ~major): array<array<string>> => {
+  let n = dry ? ["--dry-run"] : []
+  let crossing = Array.concat(n, major ? ["--major"] : [])
+  switch Project.read(repo) {
+  | Ok({update}) =>
+    Array.concat(
+      [
+        update.packages ? Some([mover("update"), ...crossing]) : None,
+        update.actions ? Some([mover("actions"), ...crossing]) : None,
+        update.images ? Some([mover("images"), ...n]) : None,
+      ]->Array.filterMap(found => found),
+      update.releases->Array.map(manifest => [mover("releases"), manifest, ...n]),
+    )
+  | Error(_) => []
+  }
+}
+
+/** The workspace's own update, [tools] within their pins, its action, and package.json. */
 let refresh = async (~dry, ~major) => {
   let tools = await Tools.up(~name="workspace", ~dry)
+  let flags = Array.concat(dry ? ["--dry-run"] : [], major ? ["--major"] : [])
+  let tools = tools != 0 ? tools : moved(root, [[mover("actions"), ...flags]])
   Console.log("")
   if dry {
     Console.log("$ pnpm outdated")
@@ -346,7 +376,10 @@ let restore = (repo, before, paths) => {
   jj(~cwd=repo, ["restore", "--from", before, ...paths->Array.map(literal)])->ignore
 }
 
-/** Each repository's own update, kept only where its verify still passes. See docs/toolchain.md. */
+/**
+ * Each repository's own update and the movers its `[update]` declares, kept only where its verify
+ * still passes. See docs/toolchain.md.
+ */
 let update = async (name, ~dry, ~major, ~everything) => {
   let skipped = []
   let failed = []
@@ -357,15 +390,22 @@ let update = async (name, ~dry, ~major, ~everything) => {
     let repo = chosen->Array.getUnsafe(index)
     let place = Registry.label(repo)
     let own = repo == root
-    if !own && !declares(repo, "update") {
+    let shared = own ? [] : movers(repo, ~dry, ~major)
+    let tasked = !own && declares(repo, "update")
+    if !own && !tasked && shared == [] {
       skipped->Array.push(place)
     } else {
-      let shown = own ? "workspace update" : task(repo, "update")
+      let shown = own ? "workspace update" : tasked ? task(repo, "update") : `${place} update`
       Console.log(`\n=== ${[shown, ...flags]->Array.join(" ")} ===`)
       let move = async () =>
-        own
-          ? await refresh(~dry, ~major)
-          : Node.run(~cwd=root, "mise", ["run", task(repo, "update"), ...flags])
+        if own {
+          await refresh(~dry, ~major)
+        } else {
+          let ran = tasked
+            ? Node.run(~cwd=root, "mise", ["run", task(repo, "update"), ...flags])
+            : 0
+          moved(repo, shared) + ran > 0 ? 1 : 0
+        }
       if dry {
         if (await move()) != 0 {
           failed->Array.push(place)

@@ -34,22 +34,30 @@ let ownTools = () => {
   names
 }
 
+// A bare mise upgrade moves every tool it sees, the workspace's too, so it is given names alone.
 let own = ownTools()
-Console.log(`$ mise upgrade ${own->Array.join("\n")}${dry ? " --dry-run" : ""}`)
-Node.run("mise", Array.concat(Array.concat(["upgrade"], own), n))->ignore
-Console.log("")
-if major {
-  if (
-    Node.spawnSync("sh", ["-c", "command -v cargo-upgrade"], {stdio: "ignore"}).status ==
-      Nullable.make(0)
-  ) {
-    Node.run("cargo", Array.concat(["upgrade", "--incompatible"], n))->ignore
-  } else {
-    Console.log("cargo-edit is not installed: the crates' majors were not checked")
-  }
+if own != [] {
+  Console.log(`$ mise upgrade ${own->Array.join(" ")}${dry ? " --dry-run" : ""}`)
+  Node.run("mise", Array.concat(Array.concat(["upgrade"], own), n))->ignore
+  Console.log("")
 }
-Node.run("cargo", Array.concat(["update"], n))->ignore
-Console.log("")
+if Node.existsSync("Cargo.toml") {
+  if major {
+    if (
+      Node.spawnSync("sh", ["-c", "command -v cargo-upgrade"], {stdio: "ignore"}).status ==
+        Nullable.make(0)
+    ) {
+      Node.run("cargo", Array.concat(["upgrade", "--incompatible"], n))->ignore
+    } else {
+      Console.log("cargo-edit is not installed: the crates' majors were not checked")
+    }
+  }
+  Node.run("cargo", Array.concat(["update"], n))->ignore
+  Console.log("")
+}
+if !Node.existsSync("package.json") {
+  Node.exit(0)
+}
 if dry {
   Console.log(Outdated.report(Node.cwd(), false)->Array.join("\n"))
   Node.exit(0)

@@ -142,3 +142,33 @@ describe("a deferred item", () => {
     ])
   })
 })
+
+describe("a workflow's actions", () => {
+  let owned = ["canmi21", "monoflake"]
+  test("pins an outside action by commit, its release beside it", () => {
+    let text =
+      [
+        "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1",
+        "      - uses: actions/checkout@v7",
+        "      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "      - uses: ./.github/actions/local",
+        "      - uses: docker://alpine:3",
+      ]->Array.join("\n")
+    expect(Workflows.problems(text, ~file="a.yml", ~owned))->toEqual([
+      "a.yml:2: actions/checkout@v7 is pinned by v7, not by a commit",
+      "a.yml:3: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 has no comment naming its release",
+      "a.yml:5: docker://alpine:3 names an image by its tag alone, not its digest",
+    ])
+  })
+
+  test("takes the author's own at main", () => {
+    let text =
+      [
+        "      - uses: canmi21/canmi/.github/actions/workspace@main",
+        "      - uses: monoflake/runtime@3d3c42e5aac5ba805825da76410c181273ba90b1 # v1.0.0",
+      ]->Array.join("\n")
+    expect(Workflows.problems(text, ~file="a.yml", ~owned))->toEqual([
+      "a.yml:2: monoflake/runtime@3d3c42e5aac5ba805825da76410c181273ba90b1 is the author's own, taken at main and not pinned",
+    ])
+  })
+})

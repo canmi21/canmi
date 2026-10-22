@@ -144,21 +144,24 @@ push's Deploy run plans against. `artifact`, which put a run's artifact in a buc
 with the pipeline that called it, decided by the author on 2026-10-22. **A
 repository declares what is its own as data, in `workspace.toml` at its root** -- where its apps
 and packages sit, its gates and what its files reach that no graph shows, whether it builds images,
-Workers or both -- read by `scripts/change/project.res`, which refuses a key it does not know.
+Workers or both, which of the workspace's movers its `update` takes -- read by `scripts/change/project.res`, which refuses a key it does not know.
 **Its one top-level key, `base`, names the workspace it sits under by that one's `.git` address**,
 decided by the author on 2026-10-20, so a reader of the repository alone learns where its rules
 and its linked configuration come from; the declared part holds it to this workspace's origin. A
-repository with nothing else to declare carries that line alone. Its
-`mise.toml` reaches each script as `node {{env.WORKSPACE}}/scripts/....res.mjs`, depending on
-`//:build`, since what ReScript compiles is never committed.
+repository with nothing else to declare carries that line alone. A shared capability is taken by
+declaring it, as `[update]` takes a mover, [toolchain.md](toolchain.md), and a task of a
+repository's own that still calls a script reaches it as `node {{env.WORKSPACE}}/scripts/....res.mjs`,
+depending on `//:build`, since what ReScript compiles is never committed.
 
 **The workspace checks what it holds**: the scripts part of `check workspace` runs the tests of
 `scripts/` and `model/`, which nothing below holds. A repository's test of its
 own configuration stays in that repository.
 
 **CI checks the workspace out where it sits at home.** A job that runs a repository's own task
-checks the workspace out at the root and the repository under `repos/<name>`, installs the
-workspace's dependencies without its tools, and runs from `repos/<name>`; a job that runs one
+takes the workspace's composite action, `canmi21/canmi/.github/actions/workspace@main`, with the
+repository's path: it checks the workspace out at the root and the repository under
+`repos/<path>`, installs the tools the two pin, and with `scripts: true` compiles the workspace's
+scripts, and the job runs from `repos/<path>`; a job that runs one
 dependency-free script checks out that file and the `mise.toml` that pins its Node. Every job reads
 the workspace's `main` as it is, so a change to a shared task reaches each repository's next run,
 and the workspace is pushed before a repository that needs it.

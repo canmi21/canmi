@@ -73,9 +73,15 @@ let rules: array<Rule.t> = [
   },
   {
     name: "actions-pinned",
-    says: "A workflow pins each action by commit, its release a comment beside it",
+    says: "A workflow pins an outside action by commit, its release beside it, and takes the author's own at main",
     doc,
-    held: Pending("each repository's .github/workflows read for a uses not pinned by commit"),
+    held: Check("workflows"),
+  },
+  {
+    name: "workflows-linted",
+    says: "Every repository's workflows pass actionlint, with shellcheck over each step's shell",
+    doc,
+    held: Check("workflows"),
   },
   {
     name: "actions-age",

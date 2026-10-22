@@ -576,6 +576,16 @@ repository needed between two places: rdm's Zed tag in rdm, its cargo half here.
 repository's `update` is the whole of how it moves, and what it owes is the contract in
 [repos.md](repos.md), "What a repository's task owes the verb".
 
+**What the workspace moves alike in many repositories is declared, not called.** A repository's
+`workspace.toml` names under `[update]` the workspace's movers it takes -- `packages` for its own
+tools, crates and npm packages, `scripts/deps/update.res`; `actions` for its workflows' actions;
+`images` for its Dockerfiles' base images; `releases`, a list of the `manifest.toml` files whose
+locks are moved -- and the dispatcher runs each from the repository's root after its own `update`
+task, `--dry-run` and `--major` handed on, the whole kept only where its verify passes. The
+repository's own task keeps what is its alone, a flake's inputs or a Dockerfile's runtime version,
+and a repository whose movers are all declared has none. A new repository takes a mover with one
+line rather than a copy of the call. Decided with the author on 2026-10-22.
+
 **A name means that repository and nothing else.** `update rdm` runs rdm's `update` and writes
 nothing outside `repos/rdm`. The workspace's `[tools]` is the one set of pins every repository
 reads by walking up, so raising it is `update workspace`, the dispatcher's own half, or `update` with
@@ -706,16 +716,22 @@ compromises are found and yanked inside that window.
 `minimumReleaseAgeExclude` holds the exemptions. Keep the list short: every entry is an
 accepted risk, justified only when the wait costs more than it protects.
 
-### A workflow's actions are pinned by commit and moved by `update`
+### An outside action is pinned by commit, the author's own taken at `main`
 
-A workflow names each action it uses by the commit a release tag points at, with the release
+A workflow names each action from outside by the commit a release tag points at, with the release
 beside it as a comment: `uses: actions/checkout@3d3c42e5... # v7.0.1`. A tag can be moved to
-other code after the fact; a commit cannot. A value a workflow passes that is itself a release of
+other code after the fact; a commit cannot. An action of the author's own, any owner
+`repos/registry.toml` lists, is inside the boundary and trusted, so it is taken at `main`, as the
+workspace's `canmi21/canmi/.github/actions/workspace@main` is, and a change to it reaches every
+repository's next run with no pin to move. The workflows part of check holds both, and runs
+actionlint, with shellcheck over each step's shell, on every repository's workflows. Decided with
+the author on 2026-10-22. A value a workflow passes that is itself a release of
 some repository, such as the Nix an installer action installs, carries that repository as its
 comment, `installer-version: 2.35.3 # NixOS/nix-installer`, so it is moved the same way.
 
-A repository with workflows calls the workspace's `scripts/deps/actions.res` from its own
-`update`. It moves each pin to the newest release that has been public for a day -- the same
+A repository with workflows declares `actions = true` under `[update]`, and the workspace's own
+action is moved by the workspace's `update`. `scripts/deps/actions.res`, reading each workflow and
+each composite action at `.github/actions/<name>/action.yml`, moves each pin to the newest release that has been public for a day -- the same
 wait as `minimumReleaseAge` -- within its major, or across it with `--major`, following an
 annotated tag to its commit. A release still inside its first day, or past the major, is named
 and left. The move is local: it is reviewed and pushed by hand, as every `update` is, and no
@@ -726,8 +742,8 @@ workflow moves its own actions. Decided with the author on 2026-10-21.
 A Dockerfile names each base image by its tag and the digest the tag named when it was pinned,
 `FROM busybox:1.37.0-glibc@sha256:42a9...`, so a build takes the same base until somebody moves
 it, and a tag republished with a security fix is taken by a move rather than by chance. A
-repository with Dockerfiles calls the workspace's `scripts/deps/images.res` from its own `update`,
-one line as `actions.res` is called: it finds every file named `Dockerfile` below the repository,
+repository with Dockerfiles declares `images = true` under `[update]`, and
+`scripts/deps/images.res` finds every file named `Dockerfile` below the repository,
 passing over what a tool wrote or a checkout holds, asks each tag's registry for the digest it
 names now, by `HEAD` with the anonymous token the registry's challenge asks for, and moves the pin
 where it changed, the tag kept. A tag moved to another version, as busybox from 1.37 to 1.38, is
@@ -743,9 +759,8 @@ repository and lists what is taken from it. A `manifest.lock` beside it, written
 alone, holds for each artifact its version, the release it came from, and each system's address and
 SHA-256, the system named as Nix names it, `x86_64-linux`. Both are TOML, since Nix reads TOML
 itself, `builtins.fromTOML`, and TOML takes comments: the lock opens saying who writes it, and each
-artifact's release is linked above its table. The repository's `update` calls the workspace's
-`scripts/deps/releases.res` with the manifest, one line as `actions.res` is called, and a scheduled
-workflow may run it too. It reads the source's published releases, takes the highest version an
+artifact's release is linked above its table. The repository names the manifest under `[update]`'s
+`releases`, and `scripts/deps/releases.res` is run with it; a scheduled workflow may run it too. It reads the source's published releases, takes the highest version an
 archive is named by, and locks it only once that release's `manifest.json` lists it, each address
 the release's own download and each hash the manifest's. The source holds the delay already, a
 runtime released a day after upstream, so none is waited out again. Decided with the author on 2026-10-22.

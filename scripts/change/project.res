@@ -1,6 +1,6 @@
 /**
- * What a repository declares to the workspace in its root's `workspace.toml`, its layout, gates
- * and deployables. A key the workspace does not know is refused.
+ * What a repository declares to the workspace in its root's `workspace.toml`, its layout, gates,
+ * deployables and what update moves. A key the workspace does not know is refused.
  */
 type table = Dict.t<JSON.t>
 
@@ -23,6 +23,15 @@ type workers = None | All | Only(array<string>)
 
 type deployable = {images: bool, workers: workers}
 
+/** The workspace's movers its update runs, besides the repository's own task. */
+type update = {
+  packages: bool,
+  actions: bool,
+  images: bool,
+  /** Each manifest.toml whose manifest.lock is moved. */
+  releases: array<string>,
+}
+
 /** The workspace's rules over what is inside a repository, each on unless turned off here. */
 type rules = {lines: bool}
 
@@ -32,6 +41,7 @@ type declared = {
   layout: Graph.layout,
   verify: option<verify>,
   deployable: option<deployable>,
+  update: update,
   rules: rules,
 }
 
@@ -141,6 +151,23 @@ let deployableOf = (table: table): deployable => {
   }
 }
 
+let switchOf = (table: table, key, where) =>
+  switch table->Dict.get(key) {
+  | None => false
+  | Some(Boolean(on)) => on
+  | Some(_) => fail(`${where}.${key}: not true or false`)
+  }
+
+let updateOf = (table: table): update => {
+  only(table, "update", ["packages", "actions", "images", "releases"])
+  {
+    packages: switchOf(table, "packages", "update"),
+    actions: switchOf(table, "actions", "update"),
+    images: switchOf(table, "images", "update"),
+    releases: texts(table, "releases", "update"),
+  }
+}
+
 let rulesOf = (table: table): rules => {
   only(table, "rules", ["lines"])
   {
@@ -161,7 +188,7 @@ let read = (root: string): result<declared, string> => {
     try {
       switch Toml.parse(Node.readFileSync(path)) {
       | Object(top) =>
-        only(top, "workspace.toml", ["base", "layout", "verify", "deployable", "rules"])
+        only(top, "workspace.toml", ["base", "layout", "verify", "deployable", "update", "rules"])
         Ok({
           base: switch top->Dict.get("base") {
           | None => None
@@ -174,6 +201,7 @@ let read = (root: string): result<declared, string> => {
           ),
           verify: tableAt(top, "verify", "workspace.toml")->Option.map(verifyOf),
           deployable: tableAt(top, "deployable", "workspace.toml")->Option.map(deployableOf),
+          update: updateOf(tableAt(top, "update", "workspace.toml")->Option.getOr(Dict.make())),
           rules: rulesOf(tableAt(top, "rules", "workspace.toml")->Option.getOr(Dict.make())),
         })
       | _ => Error(`${path}: not a table`)

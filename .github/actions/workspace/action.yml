@@ -1,0 +1,35 @@
+# The workspace at the root and the calling repository at repos/<path> below it, as they sit at
+# home, with the workspace's tools, docs/repos.md. A repository takes it at main.
+name: workspace
+description: Check out the workspace around the calling repository and install the workspace's tools
+
+inputs:
+  path:
+    description: Where the calling repository sits under repos/, as repos/registry.toml names it
+    required: true
+  credentials:
+    description: Keep the token in the repository's checkout, for a job that pushes to it
+    default: "false"
+  scripts:
+    description: Install the workspace's packages and compile its scripts, for a job that runs one
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: canmi21/canmi
+        persist-credentials: false
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        path: repos/${{ inputs.path }}
+        persist-credentials: ${{ inputs.credentials }}
+    - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
+      with:
+        working_directory: repos/${{ inputs.path }}
+    - if: inputs.scripts == 'true'
+      shell: bash
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm exec rescript build
