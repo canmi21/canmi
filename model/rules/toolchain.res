@@ -84,6 +84,18 @@ let rules: array<Rule.t> = [
     held: Gate("scripts/deps/actions.res"),
   },
   {
+    name: "images-pinned",
+    says: "A Dockerfile pins each base image by its tag and a digest",
+    doc,
+    held: Pending("each repository's Dockerfiles read for a FROM with no digest"),
+  },
+  {
+    name: "images-current",
+    says: "update moves a base image's pin to the digest its tag names now, the tag kept",
+    doc,
+    held: Gate("scripts/deps/images.res"),
+  },
+  {
     name: "ports-strict",
     says: "Every dev server binds a fixed port and fails when it is taken",
     doc,

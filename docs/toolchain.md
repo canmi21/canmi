@@ -721,6 +721,19 @@ annotated tag to its commit. A release still inside its first day, or past the m
 and left. The move is local: it is reviewed and pushed by hand, as every `update` is, and no
 workflow moves its own actions. Decided with the author on 2026-10-21.
 
+### A Dockerfile's base images are pinned by digest and moved by `update`
+
+A Dockerfile names each base image by its tag and the digest the tag named when it was pinned,
+`FROM busybox:1.37.0-glibc@sha256:42a9...`, so a build takes the same base until somebody moves
+it, and a tag republished with a security fix is taken by a move rather than by chance. A
+repository with Dockerfiles calls the workspace's `scripts/deps/images.res` from its own `update`,
+one line as `actions.res` is called: it finds every file named `Dockerfile` below the repository,
+passing over what a tool wrote or a checkout holds, asks each tag's registry for the digest it
+names now, by `HEAD` with the anonymous token the registry's challenge asks for, and moves the pin
+where it changed, the tag kept. A tag moved to another version, as busybox from 1.37 to 1.38, is
+an edit by hand. No day is waited out, since a registry records no time a digest was published.
+Decided with the author on 2026-10-22.
+
 ### An advisory in a development-only dependency is not a production one
 
 Where a vulnerable package runs decides how much it costs. A deployed Worker uses workerd's own

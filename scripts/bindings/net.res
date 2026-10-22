@@ -1,5 +1,5 @@
 /**
- * Node's buffers, hashes, compression, file descriptors and HTTP, as the deploy scripts call them.
+ * Node's buffers, hashes, compression, file descriptors and HTTP, as the scripts call them.
  */
 type bytes = Node.bytes
 
@@ -88,3 +88,13 @@ let readBytesOf = path =>
   try Some(Node.readBytes(path)) catch {
   | _ => None
   }
+
+type response
+type headers
+type init = {headers: Dict.t<string>, method?: string}
+@val external fetch: (string, init) => promise<response> = "fetch"
+@get external ok: response => bool = "ok"
+@get external status: response => int = "status"
+@get external responseHeaders: response => headers = "headers"
+@send external header: (headers, string) => Nullable.t<string> = "get"
+@send external responseText: response => promise<string> = "text"
