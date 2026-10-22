@@ -1,10 +1,10 @@
 ---
 name: 'RFCs Beside What They Decide'
 title: 'An RFC lives in the repository nearest what it decides, its id unique in an id space a repository declares'
-status: accepted
+status: landed
 supersedes: [7f4xx]
 blocked-by: []
-commits: []
+commits: [workspace@29cebcce, workspace@424b561f, canmi/rfcs@367b2d84]
 references: []
 ---
 
@@ -30,4 +30,5 @@ Decided by the author on 2026-10-22.
   decided.
 - **The tools are the workspace's**, `scripts/rfcs/`: `mise run new-rfc`, `mise run plan`, and the
   `rfcs` part of every check, each reading every cloned repository of a space.
-- **The workspace's own RFCs come home** from `canmi/rfcs` into its `docs/rfcs/`.
+- **The workspace's own RFCs come home** from `canmi/rfcs` into its `docs/rfcs/`; one decided in
+  part for a project and in part for the workspace stays where it is and is cited across.
