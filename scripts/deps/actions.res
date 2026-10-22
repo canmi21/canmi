@@ -1,6 +1,7 @@
 /**
  * The releases a repository's workflows pin, each moved to the newest one a day old within its
- * major unless `--major`. See docs/toolchain.md.
+ * major unless `--major`, and the branches pinned by a commit, each moved to its head. See
+ * docs/toolchain.md.
  */
 type release = {
   @as("tag_name") tag: string,
@@ -64,6 +65,37 @@ let pins = (text: string): array<pin> =>
   )
   ->Array.filterMap(pin => pin)
 
+/** A commit whose comment names the repository and the branch it follows. */
+let followed = /^(\s*(?:-\s+)?[\w-]+:\s+)([0-9a-f]{40})(\s+#\s+)([\w.-]+\/[\w.-]+)@([\w.\/-]+)\s*$/
+
+/** One line a branch is pinned on by a commit, and how it is written again with another. */
+type head = {
+  index: int,
+  repository: string,
+  branch: string,
+  current: string,
+  write: string => string,
+}
+
+/** Every branch pinned in a workflow's text, by its line. */
+let heads = (text: string): array<head> =>
+  text
+  ->String.split("\n")
+  ->Array.mapWithIndex((line, index) =>
+    switch groups(followed, line) {
+    | Some([prefix, current, separator, repository, branch]) =>
+      Some({
+        index,
+        repository,
+        branch,
+        current,
+        write: commit => `${prefix}${commit}${separator}${repository}@${branch}`,
+      })
+    | _ => None
+    }
+  )
+  ->Array.filterMap(head => head)
+
 /** A version without the `v` a tag may open with. */
 let bare = version => version->String.startsWith("v") ? version->String.slice(~start=1) : version
 
@@ -109,6 +141,7 @@ let api = path => {
 }
 
 type target = {@as("type") kind: string, sha: string}
+type tip = {sha: string}
 type pointer = {@as("object") target: target}
 
 /** The commit a tag names, an annotated tag followed to the commit it points at. */
@@ -196,6 +229,21 @@ let main = () => {
             changed := true
           }
         }
+      }
+    })
+    heads(lines->Array.join("\n"))->Array.forEach(head => {
+      let name = `${file} ${head.repository}@${head.branch}`
+      let short = commit => commit->String.slice(~start=0, ~end=12)
+      switch api(`repos/${head.repository}/commits/${head.branch}`) {
+      | None =>
+        Console.log(`actions: ${name} ${short(head.current)}, its head could not be read`)
+        failed := true
+      | Some(tip: tip) if tip.sha == head.current =>
+        Console.log(`actions: ${name} ${short(head.current)}, its head`)
+      | Some(tip: tip) =>
+        Console.log(`actions: ${name} ${short(head.current)} -> ${short(tip.sha)}`)
+        lines->Array.setUnsafe(head.index, head.write(tip.sha))
+        changed := true
       }
     })
     if changed.contents && !dry {

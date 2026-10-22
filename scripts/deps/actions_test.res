@@ -104,3 +104,30 @@ describe("a plan", () => {
     expect(Actions.plan(releases, "v5.0.0", ~across=true, ~now).move)->toEqual(Some("v7.0.1"))
   })
 })
+
+describe("a followed branch", () => {
+  let commit = "0ae9cea166b8849d61ccaccfc5c73d330d4e38b9"
+  let text = `      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: monoflake/platform
+          ref: ${commit} # monoflake/platform@main
+          installer-version: 2.35.3 # NixOS/nix-installer`
+
+  test("is a commit whose comment names a repository and its branch, and no release", () => {
+    expect(
+      Actions.heads(text)->Array.map(
+        head => (head.index, head.repository, head.branch, head.current),
+      ),
+    )->toEqual([(3, "monoflake/platform", "main", commit)])
+    expect(Actions.pins(text)->Array.map(pin => pin.repository))->toEqual([
+      "actions/checkout",
+      "NixOS/nix-installer",
+    ])
+  })
+
+  test("is written again with the head's commit, keeping the rest of its line", () => {
+    expect(Actions.heads(text)->Array.map(head => head.write("f"->String.repeat(40))))->toEqual([
+      `          ref: ${"f"->String.repeat(40)} # monoflake/platform@main`,
+    ])
+  })
+})

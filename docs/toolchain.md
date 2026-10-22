@@ -734,7 +734,9 @@ action is moved by the workspace's `update`. `scripts/deps/actions.res`, reading
 each composite action at `.github/actions/<name>/action.yml`, moves each pin to the newest release that has been public for a day -- the same
 wait as `minimumReleaseAge` -- within its major, or across it with `--major`, following an
 annotated tag to its commit. A release still inside its first day, or past the major, is named
-and left. The move is local: it is reviewed and pushed by hand, as every `update` is, and no
+and left. A repository of the author's own that a workflow checks out is pinned by the commit,
+the branch it follows beside it, `ref: 0ae9cea1... # monoflake/platform@main`, and moved to the
+branch's head with no wait, as the author's own is trusted; `monoflake/platform`'s RFC x6hf9. The move is local: it is reviewed and pushed by hand, as every `update` is, and no
 workflow moves its own actions. Decided with the author on 2026-10-21.
 
 ### A Dockerfile's base images are pinned by digest and moved by `update`
