@@ -86,4 +86,5 @@ with the author on 2026-10-11. `monoflake/platform` is MIT OR Apache-2.0
 throughout, its two texts at the root as Rust's projects keep them, and `monoflake/cloud`, the glue
 and configuration that run it as the hosted platform, is private; platform's RFC fhg6w keeps the
 why, decided with the author on 2026-10-20. `monoflake/machine`, the NixOS a platform host runs,
-is MIT alone, one `LICENSE` at its root, decided with the author on 2026-10-21.
+and `monoflake/runtime`, the images of the runtimes it runs, are MIT alone, one `LICENSE` at the
+root of each, decided with the author on 2026-10-21.
