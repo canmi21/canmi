@@ -1,6 +1,6 @@
 /**
- * `releases.res.mjs <manifest.toml> [--dry-run]`, each artifact a manifest names moved to the
- * newest version its source repository's releases list in their manifests. See docs/toolchain.md.
+ * `releases.res.mjs <manifest.toml> [--dry-run]`, each artifact a manifest names locked beside
+ * it in manifest.lock at the newest version its source's releases list. See docs/toolchain.md.
  */
 let field = (json, key) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(key))
 let text = (json, key) => json->field(key)->Option.flatMap(JSON.Decode.string)
@@ -76,9 +76,9 @@ let quoted = value => JSON.stringifyAny(value)->Option.getOr(`""`)
 
 /** The manifest as it is written, its head saying who writes it, each artifact's release linked
  * above its table, and each system's address and SHA-256 in a table of its own. */
-let written = (~source, pins: array<(string, JSON.t)>) => {
+let written = (~source, ~manifest, pins: array<(string, JSON.t)>) => {
   let head = [
-    `# Written by \`mise run update\` from ${source}'s releases, the workspace's`,
+    `# Written by \`mise run update\` from ${manifest} and ${source}'s releases, the workspace's`,
     "# scripts/deps/releases.res; edited by hand, it is written over at the next update.",
     `source = ${quoted(source)}`,
   ]
@@ -168,13 +168,40 @@ let resolve = async (releases: array<JSON.t>, ~name) => {
   }
 }
 
+/** The lock a manifest is written into, its name with `.lock` for `.toml`, beside it. */
+let lockOf = file =>
+  file->String.endsWith(".toml") ? `${file->String.slice(~start=0, ~end=-5)}.lock` : `${file}.lock`
+
+/** The names a manifest asks for, its one list of strings, whatever it is called there. */
+let named = manifest =>
+  switch manifest
+  ->JSON.Decode.object
+  ->Option.getOr(Dict.make())
+  ->Dict.valuesToArray
+  ->Array.filterMap(JSON.Decode.array)
+  ->Array.map(values => values->Array.filterMap(JSON.Decode.string)) {
+  | [names] => Ok(names)
+  | [] => Error("names no list of what to lock")
+  | _ => Error("names more than one list, so which to lock is not known")
+  }
+
 let main = async () => {
   let args = Node.args()
   let dry = args->Array.includes("--dry-run") || args->Array.includes("-n")
   switch args->Array.filter(arg => !(arg->String.startsWith("-"))) {
   | [file] =>
-    let pins = Toml.parse(Node.readFileSync(file))
-    let source = pins->text("source")->Option.getOr("")
+    let manifest = Toml.parse(Node.readFileSync(file))
+    let source = manifest->text("source")->Option.getOr("")
+    let lock = lockOf(file)
+    let locked = Node.existsSync(lock)
+      ? Toml.parse(Node.readFileSync(lock))
+      : JSON.Encode.object(dict{})
+    let names = switch named(manifest) {
+    | Ok(names) => names
+    | Error(why) =>
+      Console.log(`releases: ${file} ${why}`)
+      Node.exit(1)
+    }
     let failed = ref(false)
     switch await github(`https://api.github.com/repos/${source}/releases?per_page=100`) {
     | Error(why) =>
@@ -182,29 +209,21 @@ let main = async () => {
       Node.exit(1)
     | Ok(releases) =>
       let releases = releases->JSON.Decode.array->Option.getOr([])
-      let current =
-        pins
-        ->JSON.Decode.object
-        ->Option.getOr(Dict.make())
-        ->Dict.toArray
-        ->Array.filter(((_, value)) => value->JSON.Decode.object->Option.isSome)
-        ->Dict.fromArray
       let moved = Dict.make()
-      let names = current->Dict.keysToArray
       for index in 0 to names->Array.length - 1 {
         let name = names->Array.getUnsafe(index)
-        let was = current->Dict.getUnsafe(name)
+        let was = locked->field(name)->Option.getOr(JSON.Encode.object(dict{}))
         let version = was->text("version")->Option.getOr("none")
         switch await resolve(releases, ~name) {
         | Error(why) =>
-          Console.log(`releases: ${file} ${name}, not moved, ${why}`)
+          Console.log(`releases: ${lock} ${name}, not moved, ${why}`)
           failed := true
           moved->Dict.set(name, was)
         | Ok(None) =>
-          Console.log(`releases: ${file} ${name} ${version}, nothing released to move to`)
+          Console.log(`releases: ${lock} ${name} ${version}, nothing released to move to`)
           moved->Dict.set(name, was)
         | Ok(Some(pin)) if pin->text("version") == Some(version) =>
-          Console.log(`releases: ${file} ${name} ${version}, the newest released`)
+          Console.log(`releases: ${lock} ${name} ${version}, the newest released`)
           moved->Dict.set(name, pin)
         | Ok(Some(pin)) =>
           Console.log(
@@ -213,9 +232,13 @@ let main = async () => {
           moved->Dict.set(name, pin)
         }
       }
-      let written = written(~source, names->Array.map(name => (name, moved->Dict.getUnsafe(name))))
-      if !dry && written != Node.readFileSync(file) {
-        Node.writeFileSync(file, written)
+      let written = written(
+        ~source,
+        ~manifest=Node.basename(file),
+        names->Array.map(name => (name, moved->Dict.getUnsafe(name))),
+      )
+      if !dry && (!Node.existsSync(lock) || written != Node.readFileSync(lock)) {
+        Node.writeFileSync(lock, written)
       }
       Node.exit(failed.contents ? 1 : 0)
     }

@@ -48,10 +48,14 @@ describe("a pin", () => {
     let pin = JSON.parseOrThrow(`{"version": "50.0.0", "release": "2026.10.22",
       "x86_64-linux": {"url": "https://x/a", "sha256": "aa"},
       "aarch64-linux": {"url": "https://x/b", "sha256": "bb"}}`)
-    let text = Releases.written(~source="monoflake/runtime", [("wasmtime", pin)])
+    let text = Releases.written(
+      ~source="monoflake/runtime",
+      ~manifest="manifest.toml",
+      [("wasmtime", pin)],
+    )
     expect(
       text,
-    )->toBe(`# Written by \`mise run update\` from monoflake/runtime's releases, the workspace's
+    )->toBe(`# Written by \`mise run update\` from manifest.toml and monoflake/runtime's releases, the workspace's
 # scripts/deps/releases.res; edited by hand, it is written over at the next update.
 source = "monoflake/runtime"
 
@@ -73,5 +77,19 @@ sha256 = "bb"
         "x86_64-linux": {"url": "https://x/a", "sha256": "aa"},
         "aarch64-linux": {"url": "https://x/b", "sha256": "bb"}}}`)->JSON.stringify,
     )
+  })
+
+  test("is locked beside its manifest, the manifest's one list naming what to lock", () => {
+    expect(Releases.lockOf("system/containers/manifest.toml"))->toBe(
+      "system/containers/manifest.lock",
+    )
+    expect(Releases.lockOf("pins"))->toBe("pins.lock")
+    let manifest = text => Releases.named(Toml.parse(text))
+    expect(manifest(`source = "monoflake/runtime"\nimages = ["workerd", "wasmtime"]`))->toEqual(
+      Ok(["workerd", "wasmtime"]),
+    )
+    expect(manifest(`source = "monoflake/driver"\nbinaries = ["driver"]`))->toEqual(Ok(["driver"]))
+    expect(manifest(`source = "x"`)->Result.isError)->toBe(true)
+    expect(manifest(`source = "x"\na = ["b"]\nc = ["d"]`)->Result.isError)->toBe(true)
   })
 })

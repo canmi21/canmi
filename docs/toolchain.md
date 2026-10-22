@@ -734,20 +734,21 @@ where it changed, the tag kept. A tag moved to another version, as busybox from 
 an edit by hand. No day is waited out, since a registry records no time a digest was published.
 Decided with the author on 2026-10-22.
 
-### What one repository takes from another's releases is pinned in a file and moved by `update`
+### What one repository takes from another's releases is locked beside a manifest by `update`
 
 Where a repository takes an artifact another of the author's repositories releases, as
-`monoflake/machine` takes `monoflake/runtime`'s images, it pins each in a `manifest.toml`: the
-source repository, and for each artifact its version, the release it came from and each system's
-address and SHA-256, the system named as Nix names it, `x86_64-linux`. It is TOML because Nix reads
-TOML itself, `builtins.fromTOML`, and TOML takes comments: the file opens saying it is written by
-`update` and not by hand, and each artifact's release is linked above its table. The repository's
-`update` calls the workspace's `scripts/deps/releases.res` with the file, one line as `actions.res`
-is called, and a scheduled workflow may run it too. It reads the source's published releases,
-takes the highest version an archive is named by, and pins it only once that release's
-`manifest.json` lists it, each address the release's own download and each hash the manifest's.
-The source holds the delay already, a runtime released a day after upstream, so none is waited out
-again. Decided with the author on 2026-10-22.
+`monoflake/machine` takes `monoflake/runtime`'s images, it pairs the two files a package manager
+does, `Cargo.toml` and `Cargo.lock`. A `manifest.toml`, written by hand, names the source
+repository and lists what is taken from it. A `manifest.lock` beside it, written by `update`
+alone, holds for each artifact its version, the release it came from, and each system's address and
+SHA-256, the system named as Nix names it, `x86_64-linux`. Both are TOML, since Nix reads TOML
+itself, `builtins.fromTOML`, and TOML takes comments: the lock opens saying who writes it, and each
+artifact's release is linked above its table. The repository's `update` calls the workspace's
+`scripts/deps/releases.res` with the manifest, one line as `actions.res` is called, and a scheduled
+workflow may run it too. It reads the source's published releases, takes the highest version an
+archive is named by, and locks it only once that release's `manifest.json` lists it, each address
+the release's own download and each hash the manifest's. The source holds the delay already, a
+runtime released a day after upstream, so none is waited out again. Decided with the author on 2026-10-22.
 
 ### An advisory in a development-only dependency is not a production one
 
