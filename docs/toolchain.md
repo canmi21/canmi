@@ -734,6 +734,18 @@ where it changed, the tag kept. A tag moved to another version, as busybox from 
 an edit by hand. No day is waited out, since a registry records no time a digest was published.
 Decided with the author on 2026-10-22.
 
+### What one repository takes from another's releases is pinned in a file and moved by `update`
+
+Where a repository takes an artifact another of the author's repositories releases, as
+`monoflake/machine` takes `monoflake/runtime`'s images, it pins each in a JSON file: the source
+repository, and for each artifact its version and each system's address and SHA-256, the system
+named as Nix names it, `x86_64-linux`. The repository's `update` calls the workspace's
+`scripts/deps/releases.res` with the file, one line as `actions.res` is called. It reads the
+source's published releases, takes the highest version an archive is named by, and pins it only
+once that release's `manifest.json` lists it, each address the release's own download and each
+hash the manifest's. The source holds the delay already, a runtime released a day after
+upstream, so none is waited out again. Decided with the author on 2026-10-22.
+
 ### An advisory in a development-only dependency is not a production one
 
 Where a vulnerable package runs decides how much it costs. A deployed Worker uses workerd's own

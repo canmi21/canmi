@@ -96,6 +96,12 @@ let rules: array<Rule.t> = [
     held: Gate("scripts/deps/images.res"),
   },
   {
+    name: "releases-pinned",
+    says: "update moves what a repository takes from another's releases to the newest version a manifest lists",
+    doc,
+    held: Gate("scripts/deps/releases.res"),
+  },
+  {
     name: "ports-strict",
     says: "Every dev server binds a fixed port and fails when it is taken",
     doc,
