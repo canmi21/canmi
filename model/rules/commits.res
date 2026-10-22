@@ -19,6 +19,7 @@ let since = [
   ("seam", "ae2feb96"),
   ("monoflake/platform", "607b60cb"),
   ("monoflake/cloud", "root()"),
+  ("monoflake/driver", "root()"),
   ("monoflake/machine", "root()"),
   ("monoflake/runtime", "root()"),
   ("apps/rdm", "ecaa6b03"),

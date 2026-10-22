@@ -85,6 +85,7 @@ prose badly. Its README's line reads `CC BY-NC-SA 4.0 © 2026 [Canmi](https://ca
 with the author on 2026-10-11. `monoflake/platform` is MIT OR Apache-2.0
 throughout, its two texts at the root as Rust's projects keep them, and `monoflake/cloud`, the glue
 and configuration that run it as the hosted platform, is private; platform's RFC fhg6w keeps the
-why, decided with the author on 2026-10-20. `monoflake/machine`, the NixOS a platform host runs,
+why, decided with the author on 2026-10-20. `monoflake/driver`, the drivers, is MIT OR Apache-2.0
+as platform is, its RFC 7ykg6, decided with the author on 2026-10-22. `monoflake/machine`, the NixOS a platform host runs,
 and `monoflake/runtime`, the images of the runtimes it runs, are MIT alone, one `LICENSE` at the
 root of each, decided with the author on 2026-10-21.

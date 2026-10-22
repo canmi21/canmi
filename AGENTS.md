@@ -213,6 +213,7 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `repos/canmi/web`          | the site, its API, the status page, the service domains' pages, the CMS, `local` and the corpus -- [repos/canmi/web/spec/](repos/canmi/web/spec/)                                   |
 | `repos/monoflake/platform` | the platform's design and every component a user runs, MIT OR Apache-2.0 -- its own [AGENTS.md](repos/monoflake/platform/AGENTS.md) and [docs/](repos/monoflake/platform/docs/)     |
+| `repos/monoflake/driver`   | the drivers, what each vendor gives the platform through a kind's contract, MIT OR Apache-2.0 -- its own [AGENTS.md](repos/monoflake/driver/AGENTS.md)                              |
 | `repos/monoflake/cloud`    | private: what runs the platform as the hosted one -- its control, anchor, console and the two deployments' configuration                                                            |
 | `repos/apps/still`         | a macOS application; no spec yet                                                                                                                                                    |
 | `repos/canmi/lib`          | the author's own library, every package and crate they publish that depends on nothing else of theirs, `axum-governor` among them -- [repos/canmi/lib/spec/](repos/canmi/lib/spec/) |
