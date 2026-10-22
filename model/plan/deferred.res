@@ -48,14 +48,8 @@ let items: array<item> = [
   },
   {
     id: "machine-system-review",
-    what: "monoflake/platform's machine system reviewed whole and slimmed where it can be -- crun's Python, libkrun, what else a set carries, its criu kept while monoflake/platform's C39 is open -- once the driver's abilities are built, capability first",
-    repos: ["monoflake/platform"],
-    until: Author,
-  },
-  {
-    id: "image-bases-pinned",
-    what: "the pins tool also moves the base images monoflake/platform's machine images pin by digest, distroless and busybox, as it moves workerd",
-    repos: ["monoflake/platform"],
+    what: "monoflake/machine's system reviewed whole and slimmed where it can be -- crun's Python, libkrun, what else a set carries, its criu kept while monoflake/platform's C39 is open -- once monoflake/platform's driver's abilities are built, capability first",
+    repos: ["monoflake/machine"],
     until: Author,
   },
   {
