@@ -25,6 +25,9 @@ into `model/rules/` with its check and leaves this file.
 - **A check can void its own stamp.** A crate added to a workspace's members is written into
   `Cargo.lock` by the cargo the check runs, so the tree it leaves is not the one it passed: on
   2026-10-20 a commit after it was refused. A check after a change of members runs twice.
+- **A worker sent a message is working again until it says it is idle.** Its report done, a
+  question answered still sets it editing, so its repository is committed only after its last
+  idle: on 2026-10-23 a test it added after answering was swept into a docs commit beside it.
 - **No check runs while a worker builds.** A check builds every block, and two builds of one
   ReScript package at once collide on its lock, failing whichever started second, so the
   conversation's checks and commits wait until the wave has returned.
