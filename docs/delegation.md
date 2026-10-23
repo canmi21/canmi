@@ -286,6 +286,17 @@ that afternoon ended by moving the shape into a package both import, so the eigh
 would have been a compile error. A rule that asks people to be careful is what gets written when
 the rule that makes carelessness fail loudly is not yet available.
 
+### Across repositories, a repository and a machine are the unit
+
+Found on 2026-10-23 running two workers on one thread, RFC 54q45, the author having turned
+parallel work on. Within one repository a worker's file set is not enough: a crate half written
+breaks the workspace another worker builds, so **two workers never share a repository**. Each owns
+a repository and the test machines it deploys to, never another's; **neither runs `mise run
+check`**, since two repositories' checks may build one ReScript package at once, and the
+conversation runs every check once both have returned. What one worker needs of the other's side
+is said to the conversation, which passes it on: neither edits the other's files, nor asks the
+other directly.
+
 ## File ownership partitions files, and that is all it partitions
 
 The section above is the whole of the concurrency control for editing. Five things sit outside

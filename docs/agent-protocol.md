@@ -172,6 +172,38 @@ Calibration matters in both directions. Escalating every trivial choice wastes t
 attention; silently settling a structural one takes a decision that was never yours. When
 genuinely unsure of one thing, ask one focused question.
 
+### A thread runs on its own between a charter and a ledger
+
+Decided by the author on 2026-10-23, after a day of building in threads, RFC n0o4l and those
+after it. Supervision step by step kept the architecture right and was slow, and what drifted was
+what nobody watched: a name chosen in passing, a component placed for convenience, each small and
+each taken by the next step as given. So the author's attention goes where only the author can
+decide, and mechanisms keep the rest.
+
+- **The author decides** direction and boundaries -- the layers, a contract's shape, a vendor or a
+  product chosen; **every fixed value that is policy** -- a limit, a timeout, a retention, a name
+  seen outside the system; and every act that is outward or hard to undo -- a publish, an account,
+  money spent, data deleted, a credential.
+- **The agent decides the rest within a thread** -- how it is built, the order steps are accepted
+  in, the tests, the names inside the system within `docs/naming.md` -- and carries on without
+  asking, stopping only for a decision of the author's kind, a failure it cannot resolve, or money.
+  Test machines and test accounts are rebuilt and wiped freely until the platform keeps data.
+- **A thread is touched twice**: at its start the author takes its charter, the RFC naming its
+  goal, its acceptance and the values to fix; at its end the author reads its ledger, every choice
+  made provisionally and every policy value given a default, kept in the thread's RFC, and the
+  reviewer's report below.
+- **What replaces watching is a mechanism**:
+  - **A rule is checked from the day it is stated.** When the author states a rule a program can
+    decide, its check is written then, not recorded `Pending`; `Pending` is for a check that cannot
+    yet be written, naming what it needs. A rule left to memory is broken by the first agent that
+    did not read it, as the project's own name was across four repositories.
+  - **A rehearsal is the acceptance**: a command that can fail, run against what is deployed --
+    `conform`, `lose`, `replace` -- decides that a step is done.
+  - **A reviewer with a fresh context reads each thread at its end**, a spawned agent that built
+    none of it, given the diff, the model's direction (the design RFCs the thread touches), the
+    naming and code rules, and nothing of the builders' reasoning; it reports where the work left
+    them, and the conversation fixes or brings each to the author.
+
 ### The questions of one block are asked together
 
 **When a piece of work leaves several decisions open, they are gathered first and brought in one
