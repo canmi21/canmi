@@ -198,6 +198,35 @@ describe("the project's own name", () => {
     )->toEqual([])
     expect(found(`ids = "monoflake"`, ~file="workspace.toml"))->toEqual([])
     expect(found(`spelled = ["monoflake:"]`, ~file="workspace.toml"))->toEqual([])
+    expect(
+      found(`spelled = [\n\t"monoflake:",\n\t"monoflake-challenge",\n]`, ~file="workspace.toml"),
+    )->toEqual([])
+    expect(found(`owner = "monoflake";`, ~file="a.nix"))->toEqual([])
+  })
+
+  test("refuses a name a path, a host or a dotted key only resembles", () => {
+    expect(
+      found(
+        [
+          `state = "/var/lib/monoflake/driver"`,
+          `secrets = "/run/monoflake/machine/secrets"`,
+          `at = "/etc/systemd.d/monoflake/x"`,
+          `url = "http://localhost.test/monoflake/state"`,
+          `options.monoflake.dev.enable = true;`,
+          `label = "monoflake.app.runs"`,
+          `spelled = ["monoflake:"]`,
+        ]->Array.join("\n"),
+        ~file="a.nix",
+      ),
+    )->toEqual([
+      "a.nix:1: /var/lib/monoflake/driver spells monoflake",
+      "a.nix:2: /run/monoflake/machine/secrets spells monoflake",
+      "a.nix:3: /etc/systemd.d/monoflake/x spells monoflake",
+      "a.nix:4: http://localhost.test/monoflake/state spells monoflake",
+      "a.nix:5: options.monoflake.dev.enable spells monoflake",
+      "a.nix:6: monoflake.app.runs spells monoflake",
+      "a.nix:7: monoflake: spells monoflake",
+    ])
   })
 
   test("passes a declared spelling in its own file alone", () => {
@@ -244,6 +273,7 @@ describe("the project's own name", () => {
         [
           {file: "src/gone.res", spelled: ["monoflake:"]},
           {file: "src/context.res", spelled: ["parcel:", "monoflake:journal:", "monoflake:"]},
+          {file: "src/context.res", spelled: ["Monoflake"]},
         ],
         ~owner,
         ~read,
@@ -252,6 +282,7 @@ describe("the project's own name", () => {
       "workspace.toml: names.data names src/gone.res, which is not there",
       "workspace.toml: names.data spells parcel: in src/context.res, no own name",
       "workspace.toml: names.data spells monoflake:journal:, which src/context.res no longer holds",
+      "workspace.toml: names.data spells Monoflake bare in src/context.res, passing it all",
     ])
   })
 

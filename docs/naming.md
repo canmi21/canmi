@@ -171,6 +171,8 @@ system and meet other people's.
 `own-name` in [model/rules/naming.res](../model/rules/naming.res) is the rule, and the names part
 of `check <repository>` holds a repository's code to it, its documents unread; where the name is
 data, the repository's `workspace.toml` names each file and its spelling under `[[names.data]]`.
+It holds every owner the registry lists but the author's own account, whose name is a person's,
+so a project under that account is held by judgment alone.
 
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 

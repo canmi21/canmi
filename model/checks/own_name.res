@@ -14,17 +14,25 @@ let prose = relative =>
     relative->String.split("/")->Array.getUnsafe(0),
   )
 
-/** A scope, a published address, a bound domain or a sibling repository named whole. */
+/** Where an organization's code is published, the hosts an address names it under. */
+let registries = ["github.com", "githubusercontent.com", "ghcr.io", "docker.io", "crates.io"]
+
+/**
+ * A scope, an address at a registry, a bound domain, an organization named as an owner, or a
+ * sibling repository named whole and never inside a path but `repos/`.
+ */
 let published = owner => {
   let name = escaped(owner.name)
   let siblings = owner.repositories->Array.map(escaped)->Array.join("|")
+  let hosts = registries->Array.map(escaped)->Array.join("|")
   RegExp.fromString(
     [
       `@${name}\\/`,
       `github:${name}\\/`,
-      `[a-z0-9-]+(?:\\.[a-z0-9-]+)+[\\/:]${name}(?![\\w.-])`,
-      `\\b(?:[a-z0-9-]+\\.)*${name}\\.(?:${Naming.domains->Array.join("|")})(?![\\w-])`,
-      `\\b${name}\\/(?:${siblings})(?![\\w-])`,
+      `(?<![\\w.-])(?:[a-z0-9-]+\\.)*(?:${hosts})[\\/:]${name}(?![\\w.-])`,
+      `\\b(?:[a-z0-9-]+\\.)*${name}\\.(?:${Naming.domains->Array.join("|")})(?![\\w.-])`,
+      `\\bowner\\s*[:=]\\s*"${name}"`,
+      `(?:(?<![\\w.\\/@:-])|(?<=(?:^|[^\\w.-])repos\\/))${name}\\/(?:${siblings})(?![\\w-])`,
     ]->Array.join("|"),
     ~flags="gi",
   )
@@ -37,14 +45,31 @@ let whole = (line, ~file) =>
   (Layout.manifests->Array.includes(Node.basename(file)) && manifestName->RegExp.test(line)) ||
     (file == "workspace.toml" && declared->RegExp.test(line))
 
+/** The lines a `spelled` list wrapped across lines holds in `workspace.toml`, by number. */
+let wrapped = (lines: array<string>, ~file) => {
+  let inside = ref(false)
+  lines->Array.map(line =>
+    if file != "workspace.toml" {
+      false
+    } else if inside.contents {
+      inside := !(line->String.includes("]"))
+      true
+    } else {
+      inside := /^\s*spelled\s*=\s*\[[^\]]*$/->RegExp.test(line)
+      false
+    }
+  )
+}
+
 /** Each spelling of the own name one file's text holds outside what passes, by `file:line`. */
 let problems = (text, ~file, ~owner, ~spelled: array<string>): array<string> => {
   let passing = published(owner)
   let token = RegExp.fromString(`[\\w.\\/:@-]*${escaped(owner.name)}[\\w.\\/:@-]*`, ~flags="gi")
-  text
-  ->String.split("\n")
+  let lines = text->String.split("\n")
+  let listed = wrapped(lines, ~file)
+  lines
   ->Array.mapWithIndex((line, index) => (index + 1, line))
-  ->Array.filter(((_, line)) => !whole(line, ~file))
+  ->Array.filter(((number, line)) => !whole(line, ~file) && !(listed->Array.getUnsafe(number - 1)))
   ->Array.flatMap(((number, line)) => {
     let left =
       spelled
@@ -65,6 +90,8 @@ let stale = (data: array<Project.datum>, ~owner, ~read: string => option<string>
       spelled->Array.filterMap(spelling =>
         !(spelling->String.toLowerCase->String.includes(owner.name->String.toLowerCase))
           ? Some(`workspace.toml: names.data spells ${spelling} in ${file}, no own name`)
+          : spelling->String.toLowerCase == owner.name->String.toLowerCase
+          ? Some(`workspace.toml: names.data spells ${spelling} bare in ${file}, passing it all`)
           : !(text->String.includes(spelling))
           ? Some(`workspace.toml: names.data spells ${spelling}, which ${file} no longer holds`)
           : None

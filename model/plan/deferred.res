@@ -78,6 +78,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "machine-platform",
+    what: "the machine's option naming the platform it belongs to, one configured value, RFC y6lg7, is added by the first code that reads the name",
+    repos: ["monoflake/machine"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
