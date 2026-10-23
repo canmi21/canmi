@@ -172,3 +172,99 @@ describe("a workflow's actions", () => {
     ])
   })
 })
+
+describe("the project's own name", () => {
+  let owner: Own_name.owner = {name: "monoflake", repositories: ["platform", "driver", "machine"]}
+  let found = (text, ~file, ~spelled=[]) => Own_name.problems(text, ~file, ~owner, ~spelled)
+
+  test("passes a manifest's name, a scope, a published address and a repository named", () => {
+    expect(
+      found(`\t"name": "@monoflake/codec",\n\t\t"@monoflake/keys": "1"`, ~file="package.json"),
+    )->toEqual([])
+    expect(found(`name = "monoflake"`, ~file="Cargo.toml"))->toEqual([])
+    expect(found(`@module("@monoflake/envelope/generated/a.res.mjs")`, ~file="a.res"))->toEqual([])
+    expect(
+      found(
+        [
+          `url = "https://github.com/monoflake/runtime/releases/download/1/a.tar"`,
+          `machine.url = "github:monoflake/machine";`,
+          `image = "ghcr.io/monoflake/driver:1"`,
+          `flake = "git+ssh://git@github.com/monoflake/cloud?dir=machines/buf";`,
+          `let withheld = ["monoflake.net", "api.monoflake.com"]`,
+          `// The fill monoflake/platform's model reads, from repos/monoflake/driver.`,
+        ]->Array.join("\n"),
+        ~file="a.nix",
+      ),
+    )->toEqual([])
+    expect(found(`ids = "monoflake"`, ~file="workspace.toml"))->toEqual([])
+    expect(found(`spelled = ["monoflake:"]`, ~file="workspace.toml"))->toEqual([])
+  })
+
+  test("passes a declared spelling in its own file alone", () => {
+    let text = `  | Salt => "monoflake:organization:salt:1"`
+    expect(found(text, ~file="src/context.res", ~spelled=["monoflake:"]))->toEqual([])
+    expect(found(text, ~file="tests/context_test.res"))->toEqual([
+      "tests/context_test.res:1: monoflake:organization:salt:1 spells monoflake",
+    ])
+  })
+
+  test("refuses it in any case anywhere else inside the system", () => {
+    expect(
+      found(
+        [
+          `let unit = "monoflake-driver"`,
+          `let env = "MONOFLAKE_FOOTING"`,
+          `module Cbor = MonoflakeCodec.Cbor`,
+          `default_value = "/var/lib/monoflake/dev"`,
+          `name: pin: "monoflake/images/a.tar"`,
+          `const OUTPUT: &str = "monoflake.output";`,
+          `see monoflake/driverless`,
+          `name = "monoflake"`,
+          `ids = "monoflake"`,
+        ]->Array.join("\n"),
+        ~file="a.nix",
+      ),
+    )->toEqual([
+      "a.nix:1: monoflake-driver spells monoflake",
+      "a.nix:2: MONOFLAKE_FOOTING spells monoflake",
+      "a.nix:3: MonoflakeCodec.Cbor spells monoflake",
+      "a.nix:4: /var/lib/monoflake/dev spells monoflake",
+      "a.nix:5: monoflake/images/a.tar spells monoflake",
+      "a.nix:6: monoflake.output spells monoflake",
+      "a.nix:7: monoflake/driverless spells monoflake",
+      "a.nix:8: monoflake spells monoflake",
+      "a.nix:9: monoflake spells monoflake",
+    ])
+  })
+
+  test("names a declaration that passes nothing", () => {
+    let read = file => file == "src/context.res" ? Some(`"monoflake:parcel:key:1"`) : None
+    expect(
+      Own_name.stale(
+        [
+          {file: "src/gone.res", spelled: ["monoflake:"]},
+          {file: "src/context.res", spelled: ["parcel:", "monoflake:journal:", "monoflake:"]},
+        ],
+        ~owner,
+        ~read,
+      ),
+    )->toEqual([
+      "workspace.toml: names.data names src/gone.res, which is not there",
+      "workspace.toml: names.data spells parcel: in src/context.res, no own name",
+      "workspace.toml: names.data spells monoflake:journal:, which src/context.res no longer holds",
+    ])
+  })
+
+  test("leaves documents unread", () => {
+    expect(
+      [
+        "docs/rfcs/plan.txt",
+        "AGENTS.md",
+        "code/README.md",
+        "LICENSE-MIT",
+        "spec/a.txt",
+      ]->Array.every(Own_name.prose),
+    )->toBe(true)
+    expect(Own_name.prose("code/libs/a.res"))->toBe(false)
+  })
+})

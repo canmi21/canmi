@@ -1,6 +1,6 @@
 /**
  * What a repository declares to the workspace in its root's `workspace.toml`, its layout, gates,
- * deployables and what update moves. A key the workspace does not know is refused.
+ * deployables, what update moves and its own name as data. A key it does not know is refused.
  */
 type table = Dict.t<JSON.t>
 
@@ -42,6 +42,9 @@ type rfcs = {ids: string}
  * own build writes, and `columns` the head of the notes' table its rows fill. */
 type release = {built: string, columns: array<string>}
 
+/** A file whose code spells the project's own name as data, and the spellings it holds. */
+type datum = {file: string, spelled: array<string>}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -52,6 +55,8 @@ type declared = {
   rules: rules,
   rfcs: option<rfcs>,
   release: option<release>,
+  /** Where the own name is data, docs/naming.md, each spelling passed in its file alone. */
+  names: array<datum>,
 }
 
 exception Malformed(string)
@@ -210,6 +215,33 @@ let releaseOf = (table: table): release => {
   }
 }
 
+let namesOf = (table: table): array<datum> => {
+  only(table, "names", ["data"])
+  switch table->Dict.get("data") {
+  | None => []
+  | Some(Array(entries)) =>
+    entries->Array.mapWithIndex((entry, index) => {
+      let at = `names.data[${Int.toString(index)}]`
+      switch entry {
+      | Object(entry) =>
+        only(entry, at, ["file", "spelled"])
+        {
+          file: switch entry->Dict.get("file") {
+          | Some(String(file)) => file
+          | _ => fail(`${at}.file: not a path from the root`)
+          },
+          spelled: switch texts(entry, "spelled", at) {
+          | [] => fail(`${at}.spelled: no spelling of the name`)
+          | spelled => spelled
+          },
+        }
+      | _ => fail(`${at}: not a table`)
+      }
+    })
+  | Some(_) => fail("names.data: not a list of tables")
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -222,7 +254,7 @@ let read = (root: string): result<declared, string> => {
         only(
           top,
           "workspace.toml",
-          ["base", "layout", "verify", "deployable", "update", "rules", "rfcs", "release"],
+          ["base", "layout", "verify", "deployable", "update", "rules", "rfcs", "release", "names"],
         )
         Ok({
           base: switch top->Dict.get("base") {
@@ -240,6 +272,7 @@ let read = (root: string): result<declared, string> => {
           rules: rulesOf(tableAt(top, "rules", "workspace.toml")->Option.getOr(Dict.make())),
           rfcs: tableAt(top, "rfcs", "workspace.toml")->Option.map(rfcsOf),
           release: tableAt(top, "release", "workspace.toml")->Option.map(releaseOf),
+          names: tableAt(top, "names", "workspace.toml")->Option.mapOr([], namesOf),
         })
       | _ => Error(`${path}: not a table`)
       }

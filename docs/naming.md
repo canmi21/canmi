@@ -168,6 +168,10 @@ being data and versioned; the manifests, the domain and the one configured value
 identifier in the code changes. A new case is judged by the principle: does this datum leave the
 system and meet other people's.
 
+`own-name` in [model/rules/naming.res](../model/rules/naming.res) is the rule, and the names part
+of `check <repository>` holds a repository's code to it, its documents unread; where the name is
+data, the repository's `workspace.toml` names each file and its spelling under `[[names.data]]`.
+
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 
 **Twitter is Twitter here**, in identifiers, module names, spec files, commands and URLs, and it

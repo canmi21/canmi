@@ -162,7 +162,7 @@ let over = (repo): array<(string, part)> =>
     [
       ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
       ("tasks", Found(() => Tasks.main(~root=repo))),
-      ("names", Found(() => Filenames.names(~root=repo))),
+      ("names", Found(() => Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)))),
       ("commits", Found(() => commits(repo))),
       ("comments", Script(() => Comments.main(~root=repo, ~given=[]))),
       ("workflows", Found(() => Workflows.main(~root=repo))),

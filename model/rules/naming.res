@@ -20,6 +20,9 @@ let assigned = [
 /** No instruction file but AGENTS.md, since one would stop Claude Code reading it. */
 let refused = ["CLAUDE.md"]
 
+/** The top-level domains a domain bound to the platform sits under, a published address. */
+let domains = ["com", "net", "org", "dev", "io", "app"]
+
 let doc = "docs/naming.md"
 let rules: array<Rule.t> = [
   {
@@ -50,9 +53,7 @@ let rules: array<Rule.t> = [
     name: "own-name",
     says: "The project's own name appears only where a datum leaves the system and meets others'",
     doc,
-    held: Pending(
-      "a scan of code for each owner the registry lists, outside manifests' names, published addresses and declared formats",
-    ),
+    held: Check("names"),
   },
   {
     name: "data-keys",
