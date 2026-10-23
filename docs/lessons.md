@@ -73,6 +73,14 @@ into `model/rules/` with its check and leaves this file.
 - **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
   binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
 
+- **An address is redacted by a pattern BSD `sed` reads.** macOS's `sed -E` has no `\b`, so a
+  pattern built on it matches nothing and prints every address it was meant to hide; on 2026-10-23
+  tailnet addresses reached a transcript so. Replace digits outright, `tr '0-9' '#'`, or use Python.
+- **A socket unit's address changed is not taken by a switch.** NixOS left
+  `driver-machine-entry.socket` holding its old address, so the entry bound the new one itself and
+  refused connections while it restarted, found by `replace` on 2026-10-23; the socket is restarted
+  once by hand after such a switch, and `replace` run after it.
+
 ## Remotes, and what cannot be taken back
 
 - **An outward step asked is done alone.** "Push it, and then it is archived" asked for a push; the
