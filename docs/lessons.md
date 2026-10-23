@@ -77,9 +77,12 @@ into `model/rules/` with its check and leaves this file.
 
 - **An outward step asked is done alone.** "Push it, and then it is archived" asked for a push; the
   archiving, and the settings the author changed first, were theirs. 2026-10-20.
-- **A push that publishes is asked for first.** A repository whose CI publishes on a push to main
-  is pushed only once the author says so -- `canmi/lib`'s releases its packages. On 2026-10-15 two
-  pushes published npm versions nobody asked for.
+- **A push that publishes the author's own code to a registry is asked for first.** A repository
+  whose CI publishes a crate or an npm package on a push to main is pushed only once the author says
+  so -- `canmi/lib`'s releases its packages. On 2026-10-15 two pushes published npm versions nobody
+  asked for. An image or a GitHub release that repackages upstream's code, as `monoflake/runtime`
+  and `monoflake/machine` do, is pushed without asking, the author said on 2026-10-23, and so is the
+  author's own code whose CI publishes nothing.
 - **A write naming a Worker first finds the Worker by that name.** A non-interactive `wrangler
   secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
   named as the config said, while the real one was deployed under the dashboard's name.

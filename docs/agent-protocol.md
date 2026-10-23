@@ -190,7 +190,8 @@ decide, and mechanisms keep the rest.
   Test machines and test accounts are rebuilt and wiped freely until the platform keeps data.
 - **A thread is touched twice**: at its start the author takes its charter, the RFC naming its
   goal, its acceptance and the values to fix; at its end the author reads its ledger, every choice
-  made provisionally and every policy value given a default, kept in the thread's RFC, and the
+  made provisionally and every policy value given a default, kept in the thread's RFC as a
+  `### Ledger` under its `## Decision`, and the
   reviewer's report below.
 - **What replaces watching is a mechanism**:
   - **A rule is checked from the day it is stated.** When the author states a rule a program can
