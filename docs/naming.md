@@ -137,25 +137,36 @@ One. If the answer is more, the vendor has leaked past the boundary.
 ### The project's own name is a vendor's name too
 
 Inside its own code, a project's name -- `monoflake` -- names nothing the code does, so it stays at
-the same boundary as anyone else's, decided by the author on 2026-10-20. It belongs in three
-places:
+the same boundary as anyone else's, decided by the author on 2026-10-20 and sharpened on
+2026-10-23. **The name appears only where a piece of data leaves the system and is mixed with
+other people's, where it must still be told as the project's.** Everything inside the system --
+a table, a unit, a directory, a bridge, a label, an option, a namespace, a module, a type, a
+function, an import -- is only one of the system's own tables, and is named for its subject alone.
+The places the name belongs:
 
-- **A format the project defines, as data.** A magic, `MOFL`; a key derivation's context,
-  `monoflake:parcel:key:1`; a signed record's `typ`. There the name is not naming the code but
-  marking the bytes as the project's, and the bytes outlive any rename: changing it would break
-  every hash or every reader. Each is written once, in the module that owns the format.
-- **Its published identity.** A package's name or scope in its manifest, `@monoflake/codec`, as a
-  registry knows it.
-- **The surface a user meets.** A command, a header, a domain, an SDK's entry point: where someone
-  outside reads it, the name says whose it is.
+- **A domain bound to the platform**, among every other name in DNS.
+- **Its published identity**, among everyone else's in a registry: a package's name or scope,
+  `@monoflake/codec`; an organization's name; an image repository's.
+- **A format the project defines, as data**: a magic, `MOFL`; a signed record's `typ`. A file or a
+  record carried away is told by these bytes, and they outlive any rename, so each is written once,
+  in the module that owns the format.
+- **A key derivation's context**, `monoflake:parcel:key:1`, among every other use of the same key;
+  changing it changes every key derived.
+- **Where a machine's operating system is joined to the platform**, as a value its configuration
+  sets: the platform a machine belongs to is written there once, as configuration, and code that
+  needs it reads that value rather than spelling the name. A machine's own options, units and
+  paths stay neutral, `machine.driver`, `driver-machine`.
+- **The surface a user meets beside other vendors'**: a command on their path, a header on a
+  request, an SDK's entry point in their code.
 
-Everywhere else -- a namespace, a module, a type, a function, an import -- it is the subject's
-name alone. ReScript is the trap: a package with `"namespace": true` takes its namespace from the
-package's name, so `@monoflake/codec` is imported as `MonoflakeCodec.Cbor`, and every caller says
-whose it is; a package names its namespace for its subject instead, `"namespace": "Codec"`.
+ReScript is the trap: a package with `"namespace": true` takes its namespace from the package's
+name, so `@monoflake/codec` is imported as `MonoflakeCodec.Cbor`, and every caller says whose it
+is; a package names its namespace for its subject instead, `"namespace": "Codec"`.
 
-**The test, for one's own name.** Renamed tomorrow, the formats keep the old name, being data and
-versioned; the manifests change; no identifier in the code changes.
+**The test, for one's own name.** Renamed tomorrow, the formats and contexts keep the old name,
+being data and versioned; the manifests, the domain and the one configured value change; no
+identifier in the code changes. A new case is judged by the principle: does this datum leave the
+system and meet other people's.
 
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 

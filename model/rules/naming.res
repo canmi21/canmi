@@ -47,6 +47,14 @@ let rules: array<Rule.t> = [
     held: Check("names"),
   },
   {
+    name: "own-name",
+    says: "The project's own name appears only where a datum leaves the system and meets others'",
+    doc,
+    held: Pending(
+      "a scan of code for each owner the registry lists, outside manifests' names, published addresses and declared formats",
+    ),
+  },
+  {
     name: "data-keys",
     says: "A key in a serialized format of ours is lowercase, words joined by an underscore",
     doc,
