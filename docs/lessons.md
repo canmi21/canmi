@@ -16,7 +16,9 @@ into `model/rules/` with its check and leaves this file.
 - **A check and a commit are two calls.** The verify gate judges a command before any of it runs,
   so `mise run check && jj commit` is refused however the check ends. A check's status is read
   before anything outward, never through a pipe -- `check | tail && commit` takes `tail`'s -- and
-  never past a `;`: on 2026-10-05 and 2026-10-07 failing trees were pushed that way.
+  never past a `;`: on 2026-10-05 and 2026-10-07 failing trees were pushed that way. An edit sent
+  in the commit's own call is judged by the stamp from before it, so the gate lets it through: on
+  2026-10-22 a platform commit passed so, its check having failed past a `;`.
 - **A commit by path can void the stamp.** `jj commit <paths>` runs the hook's `jj fix`, which may
   reformat what it commits, so the tree left is no longer the one that passed: check again before
   the next commit. Seen on 2026-10-20.
