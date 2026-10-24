@@ -31,7 +31,7 @@ let since = [
 /** The jj subcommands that make a commit, and so wait on a passing verify. */
 let committing = ["commit", "ci"]
 
-/** The escape a command names to pass a gate, `SKIP=verify jj commit ...`, as pre-commit has it. */
+/** The escape a command names to pass a gate, `SKIP=verify` a commit's and `SKIP=scan` a push's. */
 let skip = "SKIP"
 let skippable = ["verify", "scan"]
 

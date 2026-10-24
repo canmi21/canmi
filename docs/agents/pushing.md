@@ -65,6 +65,7 @@ account comes in. **A leak the scan finds is also written as a record of frictio
 commit messages it sends are refused on a hit**, each identifier matched as a whole word. **Every
 file it tracks is scanned too, and a hit there is reported, never refused**: what is already on the
 remote cannot be held back by refusing, so the integrator reads each hit and fixes a real leak on
-the spot. A hit in the lines sent that is no leak, as a field git names alike, passes by the escape named on the
-command, `SKIP=scan mise run push ...`, as `SKIP=verify` names a commit's, and each use is a record
-of friction naming the word and why it was none; the list itself carries no exceptions.
+the spot. A hit in what it sends, a line or a commit message, that is no leak, as a field git names
+alike, passes by the escape named on the command, `SKIP=scan mise run push ...`, as `SKIP=verify`
+names a commit's, and each use is a record of friction naming the word and why it was none; the list
+itself carries no exceptions.
