@@ -28,13 +28,13 @@ Decided by the author on 2026-10-24. **A `PostToolUse` hook formats each file af
 Write, that file alone**, looking its suffix up in the table: where one is found its formatter runs;
 where none is, or the suffix is registered as formatted by nothing, nothing runs; and a formatter
 that fails, as on a file that does not parse yet, blocks nobody. A formatter finds its
-configuration by walking up from the file's directory. `formatted-on-write`, pending.
+configuration by walking up from the file's directory. `formatted-on-write`, held by that hook
+since 2026-10-24.
 
 **The hook hangs in the implementer's definition alone**, `.claude/agents/implementer.md`, and
-acts only while an implementer runs; `.claude/settings.json` is not touched. `edit-after-format` is
-proven on the implementer: two Edits of one file in a row, the hook changing it between them.
-Whether the hook then spreads to `.claude/settings.json` the author decides alone, once that has
-passed.
+acts only while an implementer runs; `.claude/settings.json` is not touched. `edit-after-format`
+was proven on an implementer, an Edit after the hook changed its file. Whether the hook then
+spreads to `.claude/settings.json` the author decides alone.
 
 **A suffix too rare to be worth a formatter is registered as formatted by nothing**, explicitly. A
 repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`.

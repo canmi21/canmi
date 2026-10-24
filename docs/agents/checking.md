@@ -15,10 +15,11 @@ implementer's work passes it for its own block before it is handed back**: the b
 check, lint and tests, never a whole repository's check.
 
 **The form layer** is a directory's width and depth, `tree-wide` and `tree-deep` of the shape part
-alone; a file's length; and a comment's lines. **Once `formatted-on-write` lands, formatting is in
+alone; a file's length; and a comment's lines. **Since `formatted-on-write` landed, formatting is in
 neither layer**: a hook formats each file as it is written, [lint-format.md](../lint-format.md), "A
 file is formatted as it is written", and `accept`'s check of formatting always passes in a lane.
-Until then formatting is checked as it is now, by each repository's own check.
+The hook hangs in the implementer's definition alone, so what anyone else writes is still checked
+by each repository's own check.
 
 ### The form layer holds at gates, never while code is written
 

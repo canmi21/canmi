@@ -31,9 +31,9 @@ the diff that looks finished and is not.
 
 **An implementer's brief is what `mise run brief <name>` prints**, with its lane's path, the set of
 files it owns, and the dependencies it waits on that are still waiting, decided by the author on
-2026-10-24. Until `accept-in-lane` lands, what `brief` prints still says `accept` runs without
-`--from` beside other blocks in one tree, which is the behavior now; once it lands, `accept --from
-<base>` in a lane holds, [lanes.md](lanes.md). **A reader's brief names the four things**
+2026-10-24. What `brief` prints ends in the completion protocol, `built` while writing and
+`accept <name> --from <base>` once, [implementer.md](implementer.md); until `accept-in-lane` lands,
+`accept` still lets another block's files stand, [lanes.md](lanes.md). **A reader's brief names the four things**
 [reading.md](reading.md), "Reading is delegated; the judgment on what comes back is not", gives.
 
 **Samples come before an implementer.** The integrator writes a block's samples from the contract
