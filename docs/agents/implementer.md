@@ -13,9 +13,20 @@ and only that, choosing the most exact and most technically neutral word,
 the dependencies still waiting, [briefs.md](briefs.md), "What a brief holds". **Its model is the
 one the integrator picks in that brief**: Sonnet at low, medium or high effort, or Opus at medium.
 
-**It judges its own work with `mise run built <name>` and `mise run accept <name> --from <base>`**,
-the logic layer for its own block alone, [checking.md](checking.md), "The check has two layers",
-which its work passes before it is handed back. **It types no jj command**; a task it runs, as
+**It works by a completion protocol**, decided by the author on 2026-10-24, which the end of every
+brief `mise run brief` prints says again, written by monoflake/platform's model:
+
+- **while writing, it runs `mise run built <name>`**, as often as it likes;
+- **once written, it runs `mise run accept <name> --from <base>` once**, and when both pass it stops
+  and hands back;
+- **it writes unit tests only for logic inside its block that the samples do not reach**; the
+  samples are not its to write or to change;
+- **it never needs a whole repository's check, `fmt`, a deploy, a rehearsal or jj**, and where it
+  believes it does it escapes, [escapes.md](escapes.md).
+
+Its own block's tests alone cost little and their scope is plain; running none would leave a failure
+to the merge, where several blocks are already mixed. That is the logic layer for its own block
+alone, [checking.md](checking.md), "The check has two layers". **It types no jj command**; a task it runs, as
 `accept --from`, may read its own lane's history. Such a task snapshots its own lane's working copy
 first, as every jj read does to see the latest edits; that touches its own lane's working-copy
 commit alone, and records one operation in the shared store, where jj merges the operations several
@@ -23,9 +34,9 @@ workspaces make at once by itself. It does not deploy, does not run the whole of
 and spawns no agent; **where what it writes is one part of the workspace's check, it may run that
 part alone**, `mise run check workspace <part>`, and in any other repository, whose check runs
 whole, it runs its block's `built` and `accept`, [checking.md](checking.md); it does not use Agent,
-SendMessage, Workflow or Artifact. Once `implementer-commands` in
-[model/rules/delegation.res](../../model/rules/delegation.res) lands, a hook holds its commands, as
-that rule says them.
+SendMessage, Workflow or Artifact. A hook in its definition holds its commands, four kinds alone,
+`implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res) and
+[delegation.md](delegation.md); it was proven to run in a subagent on 2026-10-24.
 
 **It escapes to the integrator**, [escapes.md](escapes.md), when a contract cannot express the
 behavior its block needs, when its samples contradict each other, when the work cannot go on

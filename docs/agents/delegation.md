@@ -33,8 +33,24 @@ other. Implementers run side by side again once there are independent pieces; th
 
 **The command hooks guard against a slip, not against malice**, decided by the author on
 2026-10-24: an implementer works with the integrator, so the hooks cover the common spellings of a
-command and no more. Known to pass unseen: `pnpm --filter <name> exec <command>`, an option before
-`exec`; and a backtick span inside double quotes, judged as a command where the shell would run it.
+command and no more. **An implementer is refused four kinds of command alone**, decided by the
+author on 2026-10-24, `implementer-commands`:
+
+- **version control**, jj and git alike;
+- **the machinery of a whole repository's check**: `check`, `verify`, `audit`, and `--pending`
+  even beside one part, the one exception being a single part of the workspace's own check;
+- **a task that deploys or releases**, `Delegation.releasing`;
+- **`ssh`, `rsync` and `wrangler`.**
+
+**A refactorer is refused the same four**, being a role that writes code as an implementer does,
+with no part of the workspace's check excepted, `refactorer-commands`. That git, `--pending` and the
+refactorer fall under these four was read from the author's decision by the advisor on 2026-10-24.
+
+A list of what to refuse is never complete, and the completion protocol,
+[implementer.md](implementer.md), leaves an implementer no reason to go around it. **Every other way
+around the four is a known limit, and a review does not count it a defect.** Known to pass unseen:
+`pnpm --filter <name> exec <command>`, an option before `exec`; a backtick span inside double
+quotes, judged as a command where the shell would run it; and any spelling the hooks do not parse.
 
 ## A role is named by the user, and each has a file
 

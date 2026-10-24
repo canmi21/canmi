@@ -4,11 +4,17 @@ A subagent, defined in [.claude/agents/reviewer.md](../../.claude/agents/reviewe
 effort. Decided by the author on 2026-10-24.
 
 **A reviewer only reads.** It starts in a fresh context, and its brief holds the diff, the rules and
-the RFCs alone, **never an implementer's reasoning or report.** It runs jj only to read: `diff`,
-`log`, `show` and `file show`, `reviewer-commands` in
-[model/rules/delegation.res](../../model/rules/delegation.res). **It runs no check, no `audit` and
-no `--pending`**, decided by the author on 2026-10-24: a check writes what it builds, which a role
-that only reads must not, and what a check concludes is the integrator's.
+the RFCs alone, **never an implementer's reasoning or report.** **Its commands are a whitelist**,
+decided by the author on 2026-10-24, `reviewer-commands` in
+[model/rules/delegation.res](../../model/rules/delegation.res):
+
+- jj as `diff`, `log`, `show`, `file show` and `file list`, never `status`, which snapshots the
+  working copy;
+- `cat`, `head`, `tail`, `sed`, `grep`, `rg`, `ls`, `find`, `wc` and `diff`; sed only quiet, `-n`,
+  and never `-i`; find never with `-exec` or `-delete`.
+
+**Every other command is refused, every mise task among them**: a check writes what it builds,
+which a role that only reads must not, and what a check concludes is the integrator's.
 
 **In a public repository's wave it also reads the diff for leaks**, [pushing.md](pushing.md), "A
 push carries nothing private".

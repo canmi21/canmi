@@ -23,8 +23,19 @@ let remote = ["ssh", "rsync", "wrangler"]
 /** Version control no subagent types, jj aside, which `reading` holds for a reviewer. */
 let versioning = ["git"]
 
-/** The jj subcommands a reviewer may run, `file show` beside them, `reviewer-commands`. */
+/** The jj subcommands a reviewer may run, `file` with `readingFile` beside them, `reviewer-commands`. */
 let reading = ["diff", "log", "show"]
+let readingFile = ["show", "list"]
+
+/** The programs a reviewer may run beside jj's reading, every other refused, `reviewer-commands`. */
+let inspecting = ["cat", "head", "tail", "sed", "grep", "rg", "ls", "find", "wc", "diff"]
+
+/** sed runs for a reviewer only quiet, given -n, and never in place. */
+let sedQuiet = ["-n", "--quiet", "--silent"]
+let sedInPlace = ["-i", "--in-place"]
+
+/** What find is never given by a reviewer. */
+let findWriting = ["-exec", "-delete"]
 
 /** What runs another program by its name, which the command hooks look through. */
 let launchers = ["npx", "bunx", "pnpx", "pnpm", "yarn"]
@@ -107,15 +118,13 @@ let rules: array<Rule.t> = [
   },
   {
     name: "implementer-commands",
-    says: "An implementer types no jj, no whole mise run check (one part of the workspace's aside), no audit, no --pending, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
+    says: "An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, and --pending, one part of the workspace's check aside; a task that deploys; and ssh, rsync or wrangler. A task it runs may read its own lane's history",
     doc: "docs/agents/implementer.md",
-    held: Pending(
-      "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
-    ),
+    held: Hook("hooks/agent_commands"),
   },
   {
     name: "reviewer-commands",
-    says: "A reviewer runs jj only to read, its diff, log, show and file show, and runs no check, no audit, no --pending and no task that deploys",
+    says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, and the programs in `inspecting`, sed quiet and never in place and find given nothing in `findWriting`; every other command is refused, every mise task among them",
     doc: "docs/agents/reviewer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
@@ -130,7 +139,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "refactorer-commands",
-    says: "A refactorer types no jj, no mise run check, no audit, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
+    says: "A refactorer is refused the four kinds an implementer is, no part of the workspace's check aside; a task it runs may read its own lane's history",
     doc: "docs/agents/refactorer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",

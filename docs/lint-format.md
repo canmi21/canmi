@@ -44,8 +44,12 @@ is passed over**, told by its content as git tells it, so an image needs no entr
 **The integrator still runs `mise run fmt` when it merges a wave**, as the net beneath the hook.
 Formatting is therefore no part of the form layer, [agents/checking.md](agents/checking.md).
 
-**Still to be proven**: whether an Edit made after the hook rewrote its file fails on content it no
-longer finds. It is tried in one lane before the hook spreads, `edit-after-format`.
+**An Edit after the hook rewrote its file meets no stale-file error, but text the hook reformatted
+is no longer found**, so the file is Read before such an Edit, `edit-after-format`. Proven by a
+probe implementer on 2026-10-24: a Write of `let   x =   1` was formatted to `let x = 1`, the
+harness saying the next Edit would not fail as stale, and an Edit of `=   1` without a Read failed
+with "String to replace not found in file". The hook ran in that subagent, which holds
+`formatted-on-write`. Whether the hook spreads to `.claude/settings.json` is still the author's.
 
 ## Formatting is applied, never negotiated
 

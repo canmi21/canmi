@@ -67,9 +67,7 @@ let rules: array<Rule.t> = [
     name: "formatted-on-write",
     says: "After each Edit or Write, a PostToolUse hook formats that file alone by its suffix in `owners`, doing nothing for none or `Unformatted`, and blocking nobody when the formatter fails",
     doc,
-    held: Pending(
-      "hooks/agent_commands.res format, hung in the implementer's definition, proven to run in a subagent; on 2026-10-24 it ran in none",
-    ),
+    held: Hook("hooks/agent_commands"),
     escape: ByTool,
   },
   {
@@ -80,9 +78,11 @@ let rules: array<Rule.t> = [
   },
   {
     name: "edit-after-format",
-    says: "Whether an Edit after the hook rewrote its file fails on content it no longer finds is proven in a lane before the hook spreads",
+    says: "An Edit after the hook rewrote its file meets no stale-file error, but text the hook reformatted is no longer found, so the file is Read before such an Edit",
     doc,
-    held: Pending("the hook tried in one lane, an Edit made after it formatted the file"),
+    held: Pending(
+      "the harness's own behavior, proven once by a probe in a subagent on 2026-10-24 and rechecked by nothing",
+    ),
   },
   {
     name: "disable-has-reason",
