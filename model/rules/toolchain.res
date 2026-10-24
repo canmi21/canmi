@@ -33,6 +33,9 @@ let documentation = {
 /** The private identifiers a push is scanned for, kept local and in no repository. */
 let privateIdentifiers = "~/.config/workspace/private-identifiers"
 
+/** What a repository's [push] declares as its visibility, public where it declares none. */
+let visibilities = ["public", "private"]
+
 let doc = "docs/toolchain.md"
 let pushing = "docs/agents/pushing.md"
 let rules: array<Rule.t> = [
@@ -149,7 +152,9 @@ let rules: array<Rule.t> = [
     name: "push-declared",
     says: "A repository's workspace.toml declares under [push] its visibility, the CI a push starts and any release",
     doc: pushing,
-    held: Pending("a [push] key read by a script, which declared-known then admits"),
+    held: Pending(
+      "visibility is read by push since 2026-10-24; the CI a push starts and any release wait on a script reading them",
+    ),
   },
   {
     name: "push-workflows-declared",
@@ -161,7 +166,9 @@ let rules: array<Rule.t> = [
     name: "push-scanned",
     says: "A public repository's push carries no private identifier, credential, high-entropy string, or address or domain outside `documentation`",
     doc: pushing,
-    held: Pending("a scan of the diff a push sends, reading `privateIdentifiers`"),
+    held: Pending(
+      "push refuses a private identifier in the lines and messages a public repository sends since 2026-10-24; credentials, high-entropy strings and addresses wait",
+    ),
   },
   {
     name: "push-form-clear",

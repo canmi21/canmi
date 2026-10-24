@@ -36,8 +36,10 @@ repackaged, which [lessons.md](../lessons.md) lets be pushed as it is.
 private, which CI a push starts, and whether any of it releases a version.** A workflow under
 `.github/workflows/` that runs on a push and is not declared there is refused. Both are
 `push-declared` and `push-workflows-declared` in
-[model/rules/toolchain.res](../../model/rules/toolchain.res), pending; the table is not added yet,
-since a key no script reads is refused.
+[model/rules/toolchain.res](../../model/rules/toolchain.res). **`visibility = "public"` or
+`"private"` is read since 2026-10-24**, by the scan below; a repository declaring none, the
+workspace itself among them, is scanned as public. The CI and the release keys wait on a script
+reading them, since a key no script reads is refused.
 
 ## A push carries nothing private
 
@@ -58,3 +60,11 @@ Three layers.
 **The private identifiers are listed in a file local to the machine and in no repository**, at
 `Toolchain.privateIdentifiers`. The integrator keeps it as a new machine, domain or
 account comes in. **A leak the scan finds is also written as a record of friction.**
+
+**Push scans a public repository twice**, decided by the author on 2026-10-24. **The lines and the
+commit messages it sends are refused on a hit**, each identifier matched as a whole word. **Every
+file it tracks is scanned too, and a hit there is reported, never refused**: what is already on the
+remote cannot be held back by refusing, so the integrator reads each hit and fixes a real leak on
+the spot. A hit in the lines sent that is no leak, as git's `sha`, passes by the escape named on the
+command, `SKIP=scan mise run push ...`, as `SKIP=verify` names a commit's, and each use is a record
+of friction naming the word and why it was none; the list itself carries no exceptions.
