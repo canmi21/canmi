@@ -145,6 +145,58 @@ let ahead = repo => {
 }
 
 /**
+ * Each public repository with commits to push scanned for the private identifiers, a hit in what
+ * it sends refusing every push unless SKIP names the scan, a hit in what it tracks only warned of.
+ * See docs/agents/pushing.md, "A push carries nothing private".
+ */
+let scanned = (pending: array<(string, option<array<string>>)>, ~dry) => {
+  let nothing = dry ? "a push would push nothing" : "push pushes nothing"
+  let public = pending->Array.filterMap(((repo, commits)) =>
+    switch commits {
+    | None | Some([]) => None
+    | Some(_) =>
+      switch Project.visibilityAt(repo) {
+      | Ok(visibility) => visibility == Project.public ? Some(repo) : None
+      | Error(why) => Registry.fail(`${why}, so ${nothing}`)
+      }
+    }
+  )
+  if public != [] {
+    let identifiers = switch Scan.identifiers() {
+    | Some(identifiers) => identifiers
+    | None =>
+      Registry.fail(
+        `no readable list of private identifiers at ${Toolchain.privateIdentifiers}, which a ` ++
+        `public repository's push is scanned against, so ${nothing}`,
+      )
+    }
+    let skip = Node.env->Dict.get(Commits.skip)
+    let refused = public->Array.flatMap(repo => {
+      let place = Registry.label(repo)
+      switch Scan.repository(repo, identifiers) {
+      | Error(why) => Registry.fail(`${place} cannot be scanned, ${why}, so ${nothing}`)
+      | Ok((sent, tracked)) =>
+        tracked
+        ->Array.filter(hit => !(sent->Array.some(other => other == hit)))
+        ->Array.forEach(hit => Console.log(`warning: ${Scan.shown(place, hit)}, already tracked`))
+        let (passed, refused) = Scan.verdict(sent, ~skip)
+        passed->Array.forEach(hit =>
+          Console.log(`passed by ${Commits.skip}=${Scan.gate}: ${Scan.shown(place, hit)}`)
+        )
+        refused->Array.map(hit => Scan.shown(place, hit))
+      }
+    })
+    if refused != [] {
+      refused->Array.forEach(line => Console.error(line))
+      Registry.fail(
+        `a private identifier stands in what would be sent, so ${nothing}; one that is no leak ` ++
+        `passes by \`${Commits.skip}=${Scan.gate} mise run push ...\``,
+      )
+    }
+  }
+}
+
+/**
  * Push main wherever origin is behind it, an origin with no main yet behind by all of it, once the
  * form layer holds nothing in any of them.
  */
@@ -166,6 +218,7 @@ let push = (name, ~dry, ~everything) => {
         ->Array.join(", ")}, so ${dry ? "a push would push" : "push pushes"} nothing`,
     )
   }
+  scanned(pending, ~dry)
   pending->Array.forEach(((repo, commits)) => {
     let place = Registry.label(repo)
     switch commits {

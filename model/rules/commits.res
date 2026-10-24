@@ -33,7 +33,7 @@ let committing = ["commit", "ci"]
 
 /** The escape a command names to pass a gate, `SKIP=verify jj commit ...`, as pre-commit has it. */
 let skip = "SKIP"
-let skippable = ["verify"]
+let skippable = ["verify", "scan"]
 
 let doc = "docs/commits.md"
 let rules: array<Rule.t> = [
