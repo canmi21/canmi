@@ -19,6 +19,12 @@ type item = {
 
 let items: array<item> = [
   {
+    id: "d1-per-item",
+    what: "driver(cloudflare) gives each database item a D1 of its own, made for it and removed with it, replacing the one database and its clearing lease, monoflake/driver's RFC nrs5v, once database is first offered on a Cloudflare binding",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "release-push",
     what: "a push that releases a version of our own code is given whatever further gate it needs once the first such push comes, docs/agents/pushing.md",
     repos: ["workspace"],
