@@ -17,13 +17,16 @@ and does not support `\b` word boundaries -- use `perl -pi -e` for word-boundary
 mise activation is directory-scoped and shell-based, so a command run from a shell
 without mise sees none of the pinned versions. And **there is no `timeout`**: it is GNU
 coreutils, `gtimeout` is not linked either, and
-[agent-protocol.md](agent-protocol.md) asks every command of unknown duration to carry a
+[agent-protocol.md](agents/agent-protocol.md) asks every command of unknown duration to carry a
 ceiling. `perl -e 'alarm N; exec @ARGV' <command>` is the one that is always present.
 
-### An agent deletes with `trash`, never with `rm`
+### An agent deletes with `trash`, and a cache with its tool's clean
 
-`/usr/bin/trash` takes files and directories alike, so every deletion an agent types goes
-through it. The reason is recovery: what `trash` removes can be put back, and what `rm` removes
+`/usr/bin/trash` takes files and directories alike, so every deletion an agent types goes through
+it, but for two kinds, as `AGENTS.md` has it since 2026-10-24: **a cache that can be written again
+is cleared by its own tool's clean**, as `cargo clean`, since `trash` frees no space; and **a cache
+with no clean, as `node_modules`, and a lane's directory being closed are removed with `rm` inside
+the workspace**. The reason is recovery: what `trash` removes can be put back, and what `rm` removes
 cannot, and every deletion accident worth recording here was an ordinary command meeting an
 unexpected value. `rm` is caught when an agent reaches for it anyway -- see "rm is guarded, not
 banned" below -- but the guard is the net, not the method.
@@ -201,7 +204,24 @@ moves when told to is a bookmark whose position means something.
 Commit and move the bookmark; when to push is [commits.md](commits.md), "When a change is done,
 and when it is pushed".
 
-### Rejected: parallel workspaces
+### Parallel workspaces, superseded by lanes
+
+**A lane is a working copy of its own, one jj workspace for each implementer**, and lanes supersede
+the rejection this section once held, decided by the author on 2026-10-24. Each of the three costs
+the record below names is answered:
+
+- **A conflict a person had to reconcile.** The file sets are disjoint, a shared file is written by
+  the integrator alone, and a lockfile is derived; the diff `accept --from <base>` reads holds all
+  three by machine.
+- **Dev servers fighting over ports.** A lane starts no dev server and does no deploy or rehearsal;
+  those are done by the integrator in the main checkout alone, and a test binds port 0.
+- **An overlay workspace grown to hold what the others agree on.** What every lane abides by is the
+  model and the contracts, frozen in the base commit; they exist already, and are no structure made
+  for the concurrency.
+
+How a lane is opened, merged and closed is [lanes.md](agents/lanes.md).
+
+What was written when the rejection stood, kept as the record of it:
 
 **One checkout per repository, and every agent working in it shares that one checkout.** jj
 offers `jj workspace` for the obvious alternative -- a working copy per concurrent piece of work,
@@ -216,7 +236,8 @@ the work it was started for. And the arrangement grew rules of its own to stay c
 sign that a structure is being propped up rather than used.
 
 **What replaces it is one checkout, one line of commits, and concurrency partitioned by file.**
-See [delegation.md](delegation.md), "File ownership is the whole of the concurrency control".
+See [lanes.md](agents/lanes.md), "File ownership is the whole of the concurrency control".
+_Superseded on 2026-10-24: each lane is a checkout of its own, as above._
 
 **The cost is real and is accepted rather than hidden: a commit here is not guaranteed to build
 on its own.** Several pieces of work land in one sequence, so checking out a commit in the middle
@@ -806,7 +827,7 @@ that, its comment says what was verified afterwards.
 | Scripts and tasks         | ReScript                   |
 
 These are defaults, not a whitelist. Reaching outside them is a structural decision and
-belongs to the user -- see [agent-protocol.md](agent-protocol.md).
+belongs to the user -- see [agent-protocol.md](agents/agent-protocol.md).
 
 ### A script is ReScript, compiled before it runs
 

@@ -1,6 +1,9 @@
 # Each repository under repos/ is its own, never a submodule; registry.toml is tracked.
 repos/*/
 
+# A wave's lanes, each a jj workspace beside repos/, docs/agents/lanes.md.
+lanes/
+
 node_modules/
 
 # What ReScript compiles the task scripts to, built by mise run build before they run.

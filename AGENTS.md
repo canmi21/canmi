@@ -14,11 +14,12 @@ Claude Code reading this file.
 
 ## Start here
 
-Read this file, then the rules covering your task: this workspace's `docs/` and `model/rules/`
-for the ones that follow the author everywhere, and the project's own `AGENTS.md` and `docs/` --
-`spec/` until it is renamed -- for the ones belonging to the project you are about to touch. If
-none answers a decision you are about to make, ask the user. Decisions belong to the user, not to
-you -- unless their described approach already implies the answer. See [docs/agent-protocol.md](docs/agent-protocol.md).
+Read this file, then the rules covering your task: this workspace's `docs/` and `model/rules/` for
+the ones that follow the author everywhere, and the project's own `AGENTS.md` and `docs/` -- `spec/`
+until it is renamed -- for the ones belonging to the project you are about to touch. If none answers
+a decision you are about to make, ask the user. Decisions belong to the user, not to you -- unless
+their described approach already implies the answer. See
+[docs/agents/agent-protocol.md](docs/agents/agent-protocol.md).
 
 ## What this repository is
 
@@ -55,7 +56,8 @@ Every rule the user states gets written down. Never leave one in chat only.
 - **A rule a program can decide goes in `model/rules/`, with the check that holds it**, or marked
   `Pending` with what the check would need; its why goes in `docs/`, which names the model file
   rather than repeating a value. `mise run check workspace --pending` lists what no check holds
-  yet. See [docs/model.md](docs/model.md).
+  yet; **a pending rule is the goal, and until its check lands the present behavior holds**. See
+  [docs/model.md](docs/model.md).
 - Anything only judgment can keep gets a topic file in `docs/`, split by aspect, linked from the
   index.
 - A rule that belongs to one project goes in that project's `docs/`, not here; one two projects
@@ -71,17 +73,21 @@ Every rule the user states gets written down. Never leave one in chat only.
   hard way is written into [docs/lessons.md](docs/lessons.md).
 - When the user says "remember this" or "update yourself": do not write to agent memory. Audit
   `docs/`, `model/rules/` and this file instead, then verify a zero-memory agent could recover the
-  arrangement from `AGENTS.md` alone. See [docs/agent-protocol.md](docs/agent-protocol.md).
+  arrangement from `AGENTS.md` alone. See
+  [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md).
 
 ## Core rules
 
 **Delegation** -- **a session works directly unless the user says it delegates.** Whether to spawn
-agents is the user's call, made per session, and the default is no. Once the user turns it on,
-work is split between this conversation and the agents it spawns: the conversation paraphrases
-the user's intent, decides, owns the rules, reads every worker's diff, runs the one type check per
-wave and writes every commit; the workers edit, each owning a declared set of files and touching
-nothing else. Testing belongs to the user -- they are faster than any verification loop -- so a
-turn ends with something to click, not with a report. See [docs/delegation.md](docs/delegation.md).
+agents is the user's call, made per session, and the default is no. The user names a session's
+role at its start. **Where an advisor is named, the paraphrase, the judgment and the decisions
+belong to the user and the advisor; the sequence, who owns which file, the commits and writing the
+rules belong to the integrator**, which reads every implementer's diff and runs the check once per
+wave. Where no role is named, one session holds both. The implementers edit, each in a lane of its
+own, owning a declared set of files and touching nothing else. Testing belongs to the user -- they
+are faster than any verification loop -- so a round of work ends with something the user can try
+by hand, a page to click or a curl to run, and where there is nothing to try, with a rehearsal that
+passed. See [docs/agents/delegation.md](docs/agents/delegation.md).
 
 **Commits** -- Conventional Commits, the types and widths in `model/rules/commits.res`. Omit the
 scope in most cases. Subject starts lowercase, imperative mood, 96 characters at most. Plain text
@@ -118,8 +124,10 @@ Vendor names stay at the binding edge -- name a module for what it does, not for
 See [docs/naming.md](docs/naming.md).
 
 **Shape** -- a tree grows by nesting, never by spreading: no directory but a root holds more than
-`Layout.widest` entries or lies more than `Layout.deepest` deep, and a root holds configuration,
-not source. See [docs/repos.md](docs/repos.md), "A tree grows by nesting, never by spreading".
+`Layout.widest` entries or lies more than `Layout.deepest` deep, and a root holds configuration, not
+source. It refuses a commit now; once `form-at-commit` lands it only warns at a commit and stops a
+push, [docs/agents/checking.md](docs/agents/checking.md). See [docs/repos.md](docs/repos.md), "A
+tree grows by nesting, never by spreading".
 
 **Lint vs format** -- a linter owns semantics, a formatter owns layout. Whatever the formatter
 rewrites, the linter must not report; disable the overlap on the linter side. Holds for every
@@ -128,12 +136,15 @@ language. See [docs/lint-format.md](docs/lint-format.md).
 ## Toolchain
 
 **The user's shell is fish.** Any command written for them to run must be fish syntax --
-`set -gx X y`, not `export X=y`; `$(cmd)` is not fish. Commands an agent runs through its own
-tool go through that tool's shell instead, which is usually not fish, so the two are written
-differently on purpose. **An agent deletes with `trash`, never with `rm`** -- files and
-directories alike, because what `trash` removes can be put back. `trash old.log`, `trash dist/`,
-`trash a b c` -- no recursive flag exists or is needed. An `rm` typed anyway meets a guard that
-allows it only inside the workspace, temp and caches, and refuses the rest.
+`set -gx X y`, not `export X=y`; `$(cmd)` is not fish. Commands an agent runs through its own tool
+go through that tool's shell instead, which is usually not fish, so the two are written differently
+on purpose.
+**An agent deletes with `trash`** -- files and directories alike, because what `trash` removes can
+be put back. `trash old.log`, `trash dist/`, `trash a b c` -- no recursive flag exists or is needed.
+**A cache that can be written again is cleared by its own tool's clean**, as `cargo clean`; one with
+no clean, as `node_modules`, and a lane's directory being closed are removed with `rm` inside the
+workspace. An `rm` typed anyway meets a guard that allows it only inside the workspace, temp and
+caches, and refuses the rest.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
@@ -179,17 +190,18 @@ that is not cloned is a warning, not an error, so a machine holding one project 
 
 **Starting, and working with the user**
 
-| Topic                                                                                                   | File                                             |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [docs/agent-protocol.md](docs/agent-protocol.md) |
-| Lessons learned the hard way: commits, other sessions, shells, remotes, reading                         | [docs/lessons.md](docs/lessons.md)               |
-| The model: what a program decides, what holds each rule, what is pending                                | [docs/model.md](docs/model.md)                   |
-| Spawning workers: briefs, file ownership, who tests, who checks, who commits                            | [docs/delegation.md](docs/delegation.md)         |
-| Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                   |
-| Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [docs/planning.md](docs/planning.md)             |
-| READMEs, repository descriptions and license years                                                      | [docs/readme.md](docs/readme.md)                 |
-| Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [docs/rfcs.md](docs/rfcs.md)                     |
-| Commit conventions, when to commit and push, and their enforcement                                      | [docs/commits.md](docs/commits.md)               |
+| Topic                                                                                                   | File                                                           |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Cold start, decision authority, citing a section or a count, reading upstream, long commands, verifying | [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md) |
+| When the user names a role at a session's start, read that role's file first                            | [docs/agents/](docs/agents/)                                   |
+| Lessons learned the hard way: commits, other sessions, shells, remotes, reading                         | [docs/lessons.md](docs/lessons.md)                             |
+| The model: what a program decides, what holds each rule, what is pending                                | [docs/model.md](docs/model.md)                                 |
+| Spawning implementers: briefs, lanes, who tests, who checks, who commits                                | [docs/agents/delegation.md](docs/agents/delegation.md)         |
+| Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                                 |
+| Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [docs/planning.md](docs/planning.md)                           |
+| READMEs, repository descriptions and license years                                                      | [docs/readme.md](docs/readme.md)                               |
+| Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [docs/rfcs.md](docs/rfcs.md)                                   |
+| Commit conventions, when to commit and push, and their enforcement                                      | [docs/commits.md](docs/commits.md)                             |
 
 **How the arrangement is shaped**
 

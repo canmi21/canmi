@@ -19,7 +19,7 @@ delegate. A project keeps its own `spec/` as before; a citation names which it m
 The test for a sentence in `docs/`: if someone changed the code, would this sentence need editing?
 If yes, it is describing implementation and belongs in a comment next to that code. If it would
 still be true, it is a decision and belongs here. **A value the decision fixes is the model's**,
-and the doc names the file that holds it rather than the number -- see [model.md](model.md).
+and the doc names the file that holds it rather than the number -- see [model.md](../model.md).
 
 ## One fact, one home, linked from everywhere else
 
@@ -116,7 +116,7 @@ another. `jj workspace root` says which repository the working directory belongs
 `repos/web` it answers about web, not about this one, which is the same fact the hook
 resolver depends on. A task begins with `jj new main` in whichever repository is being changed,
 so the rules read in step 2 are the ones `main` currently holds rather than the ones a previous
-task left the working copy on. See [repos.md](repos.md).
+task left the working copy on. See [repos.md](../repos.md).
 
 ## Working beside other agents
 
@@ -131,22 +131,22 @@ file exists to prevent.
 
 There is no longer an arrangement for two agents inside one repository; projects are separate
 repositories, so two pieces of work are two directories. What crosses between them is a commit
-and nothing else. See [repos.md](repos.md).
+and nothing else. See [repos.md](../repos.md).
 
 ### A supervisor and the agents it spawns are the exception
 
 The rule above is about _peer sessions_ -- two conversations that found each other on a machine.
-An agent that spawns workers and directs them is a different arrangement, and it works: five
+An agent that spawns implementers and directs them is a different arrangement, and it works: five
 agents wrote five parts of one feature against a written contract, never compiling together, and
 the tree built on the first try when the parts were declared.
 
 It is not the default. The user says whether a session delegates, and a session they have not
-said so of works directly, spawning nothing. Once they have, [delegation.md](delegation.md) is
-the whole of it -- what the conversation keeps, what a brief
-must carry, how concurrent workers are kept off each other's files, who tests, who checks, and who
-commits.
+said so of works directly, spawning nothing. Once they have, [delegation.md](delegation.md) and
+the files beside it are the whole of it -- what the top level keeps, what a brief must carry, how
+concurrent implementers are kept off each other's files, who tests, who checks, and who commits.
 
-What makes it legitimate rather than a violation of the rule above is one line of that file:
+What makes it legitimate rather than a violation of the rule above is one line of
+[briefs.md](briefs.md):
 **every decision reached in a message is written into the tree before the work is called done.**
 A message is where a decision is reached; it is never where one lives. The failure this section
 names is real, and that is what answers it.
@@ -267,8 +267,8 @@ written, add the check that holds the two together, so the next change is measur
 than by memory. Writing ours first and reading afterwards is what produces code shaped around a
 guess. This is forward development: every step is a check on the one before it.
 
-Where a project's whole design rests on an upstream's behavior, that project's `spec/` says so
-and names the files. See [repos/seam/spec/references.md](../repos/seam/spec/references.md) for the
+Where a project's whole design rests on an upstream's behavior, that project's `spec/` says so and
+names the files. See [repos/seam/spec/references.md](../../repos/seam/spec/references.md) for the
 shape of that.
 
 ## A long command never holds the conversation
@@ -317,7 +317,7 @@ Four consequences:
   that started it did. Stop it when the work it was for is done, or end the reply by saying it is
   still up and how to stop it.
 - **Docker is left as it was found.** Whoever runs a test in Docker on the author's Mac -- the
-  conversation or a worker -- takes it down when the test is done: its containers stopped and
+  conversation or an implementer -- takes it down when the test is done: its containers stopped and
   removed (`docker compose down -v` for a project, `docker rm -f` for a container run alone), and
   the networks and volumes it made removed with them. Every image built locally for the test is
   removed once the test has used it, and so is any image pulled that is large -- past a few hundred
@@ -380,7 +380,7 @@ the build already catch the failures that class of edit can have, and the user i
 judge of the rest than any screenshot. They will say when something is wrong.
 
 Chrome DevTools MCP for a page, and the `tauri` MCP server for the CMS window
-([toolchain.md](toolchain.md)), are for debugging that is genuinely hard without them: a value
+([toolchain.md](../toolchain.md)), are for debugging that is genuinely hard without them: a value
 that renders differently from what the source says and nobody can say why, a layout that only
 breaks at one size, something that misbehaves after hydration and not before. The signal is that
 a question about the running application cannot be answered by reading the code -- not that a
@@ -421,7 +421,7 @@ the user's hand, not the page: reload it, or open a fresh one, and carry on meas
 that comes back after a fresh tab is worth the user's attention. Decided with the author on
 2026-10-10.
 
-[delegation.md](delegation.md), "Testing is the user's; checking is the conversation's", narrows
+[checking.md](checking.md), "Testing is the user's; checking is the integrator's", narrows
 this by one turn: even where reading the code cannot answer the question, the answer has to be a
 number -- geometry, timing, drift, a count -- before the round trip is worth what it costs.
 
@@ -433,11 +433,11 @@ shape.
 Do not write to agent memory or any agent-private store. That content does not survive into
 the next session's view of this project and is invisible to every other agent. **Agent memory
 keeps only what is private and the state of work in progress; a lesson learned the hard way goes
-to [lessons.md](lessons.md).** Instead:
+to [lessons.md](../lessons.md).** Instead:
 
 1. Decide where the rule belongs: an existing `docs/` file, or a new one named for its aspect;
    and, when a program can decide it, its values and check in `model/rules/` -- see
-   [model.md](model.md). A project's rule goes in its own `docs/`.
+   [model.md](../model.md). A project's rule goes in its own `docs/`.
 2. Write it there.
 3. Re-read `AGENTS.md` and check it still holds. Are the rules it promotes still the most
    important ones? Is the index complete? Has anything drifted, duplicated, or gone stale?

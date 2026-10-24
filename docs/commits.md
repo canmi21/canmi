@@ -143,10 +143,9 @@ and moves the `main` bookmark before handing the result back. A separate request
 not required. Partial or blocked work stays uncommitted, and unrelated changes already in the
 working copy are never swept into the task's commit merely to make the tree clean.
 
-**A spawned worker is the exception, and never commits at all.** Several of them share one
-working copy, so a commit taken by one sweeps up whatever its neighbors have half-written. The
-conversation that spawned them commits, by path list, after the user has said the change is
-right. See [delegation.md](delegation.md), "Commits separate concerns, not buildable states",
+**A spawned implementer is the exception, and never commits at all.** The integrator that spawned
+them commits, by path list, and the wave is accepted before it is pushed. See
+[checking.md](agents/checking.md), "Commits separate concerns, not buildable states",
 which also records why a commit here is not required to build on its own.
 
 **Beside another session, a session commits its own files by path and leaves the rest.** Another
@@ -164,10 +163,13 @@ situations, told apart by what the user is doing rather than by how much has cha
 - **Something being built together, where a push is how it takes effect** -- a deploy, a release
   another repository has to install, a page that only exists once it is served. Each step that
   passes its checks is committed and pushed then, because the next step depends on it.
-- **A run of requests the user is still shaping.** While they are adjusting how something looks or
-  behaves and have not said it is right, every attempt is not a commit: a dozen commits of a
-  dozen tries record nothing anybody will look for. When they move on to the next request, the
-  one before is settled -- commit it then, and it may be pushed.
+- **A run of requests the user is still shaping**, worked live in a session with no role. While
+  they are adjusting how something looks or behaves and have not said it is right, every attempt is
+  not a commit: a dozen commits of a dozen tries record nothing anybody will look for. When they
+  move on to the next request, the one before is settled -- commit it then, and it may be pushed.
+  **A wave is the other mode**: its commit is local and may come before acceptance, and a fix
+  acceptance asks for is squashed into it before the push, [checking.md](agents/checking.md),
+  "Acceptance comes before the push".
 - **A bug with a clear sign of being fixed**: the failure it is fixed against, or the behavior
   it should have. When that holds, the fix is done, and done is the commit.
 
@@ -176,6 +178,16 @@ work is settled in one of the senses above, or when a push is what makes it take
 exception is the user's word -- one who says, in a session, not to push, or that pushing is
 theirs, has it so for that session. A push is `mise run push <repo>`, named, never the bare verb
 that pushes every repository, and is said in a line.
+
+**Which agent pushes follows the roles**, decided by the author on 2026-10-24. Where roles are
+named, the integrator pushes on its own: when a wave ends, when a step of a thread is done, and
+before it ends a round of work with commits still unpushed. Where none is named, the one session
+holding both halves pushes its own work, as above: once the check passes and the work is done. **The
+push gate**, a reviewer's read and the wave accepted, [pushing.md](agents/pushing.md), **holds for a
+wave worked in roles alone.**
+
+**A push that releases a version of our own code is asked of the user first**, in either mode,
+until the deferred item `release-push` is settled; canmi/lib's `held-back` is one such push.
 
 ### Leave the working copy above `main`, not on it
 
@@ -198,9 +210,11 @@ the agent took, which is the whole of the difference and the whole of the reason
 
 ### When `main` moved meanwhile
 
-`main` can be ahead of where the task started -- a fetch, or the same repository worked on
-another machine. There are no sibling workspaces to race with; see
-[toolchain.md](toolchain.md), "Rejected: parallel workspaces". When it has advanced,
+`main` can be ahead of where the task started -- a fetch, the same repository worked on another
+machine, or a wave's merge. The lanes are sibling workspaces, but none of them moves `main`: an
+implementer does not commit, and the integrator joins the lanes in one merge, so the merge is the
+one place they meet; see [toolchain.md](toolchain.md), "Parallel workspaces, superseded by lanes",
+and [lanes.md](agents/lanes.md). When it has advanced,
 `jj bookmark move` refuses to move it sideways, and that refusal is the synchronization point:
 `jj rebase -d main`, run `mise run verify` again on the rebased result, then move. The order
 matters. The change was verified against the tree it was written on; the rebased commit is the
@@ -215,7 +229,7 @@ has seen and accepted is a claim they made, and rebasing it to tidy the history 
 record of the afternoon.
 
 The rebase is also where rule changes arrive: the rules move with `main` like everything else,
-and [agent-protocol.md](agent-protocol.md) says what to do with the delta.
+and [agent-protocol.md](agents/agent-protocol.md) says what to do with the delta.
 
 ## Enforcement
 

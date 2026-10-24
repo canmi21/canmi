@@ -93,8 +93,8 @@ let context = (payload: Payload.t): option<string> =>
         Some(
           "The rebase brought rule changes from main into this working copy. Read them before the " ++
           "next commit -- they were written elsewhere while this task was underway, and " ++
-          "docs/agent-protocol.md says a rebase is where they are taken in. If one changes what " ++
-          "this task should do, adjust; if none does, carry on.\n\n" ++
+          "docs/agents/agent-protocol.md says a rebase is where they are taken in. " ++
+          "If one changes what this task should do, adjust; if none does, carry on.\n\n" ++
           shown,
         )
       }

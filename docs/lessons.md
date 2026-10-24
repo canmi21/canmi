@@ -1,10 +1,10 @@
 # Lessons
 
-What an agent working here learned the hard way, each the habit it left and what happened. They
-were kept in agent memory once; the author asked on 2026-10-20 that they stand here, where every
-agent reads them. Agent memory keeps only what is private and the state of work in progress --
-[agent-protocol.md](agent-protocol.md), "Selfcheck". A lesson a program can come to decide moves
-into `model/rules/` with its check and leaves this file.
+What an agent working here learned the hard way, each the habit it left and what happened. They were
+kept in agent memory once; the author asked on 2026-10-20 that they stand here, where every agent
+reads them. Agent memory keeps only what is private and the state of work in progress --
+[agent-protocol.md](agents/agent-protocol.md), "Selfcheck". A lesson a program can come to decide
+moves into `model/rules/` with its check and leaves this file.
 
 ## Commits
 
@@ -25,12 +25,12 @@ into `model/rules/` with its check and leaves this file.
 - **A check can void its own stamp.** A crate added to a workspace's members is written into
   `Cargo.lock` by the cargo the check runs, so the tree it leaves is not the one it passed: on
   2026-10-20 a commit after it was refused. A check after a change of members runs twice.
-- **A worker sent a message is working again until it says it is idle.** Its report done, a
+- **An implementer sent a message is working again until it says it is idle.** Its report done, a
   question answered still sets it editing, so its repository is committed only after its last
   idle: on 2026-10-23 a test it added after answering was swept into a docs commit beside it.
-- **No check runs while a worker builds.** A check builds every block, and two builds of one
+- **No check runs while an implementer builds.** A check builds every block, and two builds of one
   ReScript package at once collide on its lock, failing whichever started second, so the
-  conversation's checks and commits wait until the wave has returned.
+  integrator's checks and commits wait until the wave has returned.
 - **Each commit is its own call, alone in its message, opened by `jj root &&`.** Calls sent in one
   message run in one shell, so one's `cd` lands in the other's: on 2026-10-13 a commit sent in a
   parallel batch landed empty in the workspace and a chained push sent it, and on 2026-10-20 a

@@ -44,7 +44,7 @@ let context = (payload: Payload.t): option<string> =>
         "accepted a tradeoff, added a tool, established a convention -- record the decision and " ++
         "its reasoning now, while it is still in context: a value a program can check in " ++
         "model/rules/, the why in docs/. Put it in the commit itself rather than a follow-up. If " ++
-        "it settled nothing, say so briefly and move on. docs/agent-protocol.md defines what " ++ "belongs in the rules and what in a code comment.",
+        "it settled nothing, say so briefly and move on. docs/agents/agent-protocol.md defines " ++ "what belongs in the rules and what in a code comment.",
       )
     }
   }

@@ -233,6 +233,11 @@ When a bug is found, the fix and a test that would have caught it land together,
 cause noted at the assertion. A regression test whose reason is not written down gets deleted
 by whoever next finds it confusing.
 
+**A test binds no fixed port.** It asks for port 0 and is handed a free one, decided by the author
+on 2026-10-24, `test-port-zero` in [model/rules/toolchain.res](../model/rules/toolchain.res). Its
+values reserved for documentation are [agents/pushing.md](agents/pushing.md), "A push carries
+nothing private".
+
 ## Nothing is committed unverified
 
 `mise run verify` -- types, lint, tests -- passes before a commit is made. The commit hook
@@ -250,9 +255,9 @@ Correctness first, and over any distance that stops being a matter of care. Four
 hold of a rule, and one missing is enough for it to decay without anybody noticing.
 
 **Violating it makes something fail.** A rule nothing enforces is a sentence. The rule that a
-configuration file's comment stays short lived in a conversation only, was then cited to a worker
-as though it were on the page, and two comments were cut on that authority -- with nothing in the
-tree able to say whether the citation was real.
+configuration file's comment stays short lived in a conversation only, was then cited to an
+implementer as though it were on the page, and two comments were cut on that authority -- with
+nothing in the tree able to say whether the citation was real.
 
 **The failure has been demonstrated.** A gate never seen to fail is a name rather than a gate.
 `mise run audit` counts every warning -- [lint-format.md](lint-format.md), "Strict mode" -- and was
@@ -331,7 +336,7 @@ line does.
 The specific comment worth writing more often than feels natural: the one next to a value that
 looks arbitrary. A config number, a strictness flag, a rule turned off. Those are the ones a
 future reader will "clean up" unless the reason is sitting right there. Larger decisions go in
-the rules instead -- see [agent-protocol.md](agent-protocol.md) for which is which.
+the rules instead -- see [agent-protocol.md](agents/agent-protocol.md) for which is which.
 
 ### Few, short, and only where the reason is not recoverable
 

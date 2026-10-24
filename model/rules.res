@@ -9,4 +9,5 @@ let all: array<Rule.t> = [
   Voice.rules,
   Readme.rules,
   Planning.rules,
+  Delegation.rules,
 ]->Array.flat

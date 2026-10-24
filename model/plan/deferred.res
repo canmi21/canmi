@@ -19,6 +19,12 @@ type item = {
 
 let items: array<item> = [
   {
+    id: "release-push",
+    what: "a push that releases a version of our own code is given whatever further gate it needs once the first such push comes, docs/agents/pushing.md",
+    repos: ["workspace"],
+    until: Author,
+  },
+  {
     id: "paused",
     what: "only the workspace and monoflake are worked on, so every other repository is passed over by check --all and audit --all",
     repos: [

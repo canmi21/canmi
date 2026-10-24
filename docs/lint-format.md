@@ -12,10 +12,29 @@ re-triggers the formatter. Deleting the overlap is the only stable arrangement.
 
 ## Assignment
 
-`Format.owners` in [model/rules/format.res](../model/rules/format.res) names each language's
-formatter and linter: oxfmt and oxlint for TypeScript, JavaScript and Svelte, rustfmt and clippy for
-Rust, and ReScript's own compiler for both halves of ReScript. Each is versioned by mise or by the
-package manager whose resolution it takes part in; see [toolchain.md](toolchain.md).
+`Format.owners` in [model/rules/format.res](../model/rules/format.res) names the formatter of each
+suffix the repositories share, or registers it as formatted by nothing, and `Format.linters` each
+language's linter. A suffix only one repository uses is in that repository's own model. Each is
+versioned by mise or by the package manager whose resolution it takes part in; see
+[toolchain.md](toolchain.md).
+
+## A file is formatted as it is written
+
+Decided by the author on 2026-10-24. **A `PostToolUse` hook formats each file after an Edit or a
+Write, that file alone**, looking its suffix up in the table: where one is found its formatter runs;
+where none is, or the suffix is registered as formatted by nothing, nothing runs; and a formatter
+that fails, as on a file that does not parse yet, blocks nobody. A formatter finds its
+configuration by walking up from the file's directory. `formatted-on-write`, pending.
+
+**A suffix too rare to be worth a formatter is registered as formatted by nothing**, explicitly. A
+repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`,
+pending.
+
+**The integrator still runs `mise run fmt` when it merges a wave**, as the net beneath the hook.
+Formatting is therefore no part of the form layer, [agents/checking.md](agents/checking.md).
+
+**Still to be proven**: whether an Edit made after the hook rewrote its file fails on content it no
+longer finds. It is tried in one lane before the hook spreads, `edit-after-format`.
 
 ## Formatting is applied, never negotiated
 

@@ -39,6 +39,10 @@ with the author on 2026-10-20, so what is left is a count rather than a memory: 
 `check workspace` ends with how many rules are pending, and `check workspace --pending` lists them.
 The rules part holds each `Check` to a part that exists and each `Hook` and `Gate` to a file.
 
+**A rule marked `Pending` describes the goal, and until its check lands the behavior of now is
+what holds**, decided by the author on 2026-10-24. A document citing a pending rule says so: what
+it describes holds "once `<rule>` lands", and until then the present behavior does.
+
 **A check is proven before it is trusted**: a violation is planted, the check is seen to name it,
 and the plant is removed. A check never seen to fail is a name, not a check.
 

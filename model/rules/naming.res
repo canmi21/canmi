@@ -23,6 +23,9 @@ let refused = ["CLAUDE.md"]
 /** The top-level domains a domain bound to the platform sits under, a published address. */
 let domains = ["com", "net", "org", "dev", "io", "app"]
 
+/** The vendors' names held to the edge, each unmistakably a vendor's and no plain English word. */
+let vendors = ["cloudflare", "cloudflared", "r2", "d1", "aws"]
+
 let doc = "docs/naming.md"
 let rules: array<Rule.t> = [
   {
@@ -54,6 +57,27 @@ let rules: array<Rule.t> = [
     says: "The project's own name appears only where a datum leaves the system and meets others'",
     doc,
     held: Check("names"),
+  },
+  {
+    name: "vendor-name",
+    says: "A name in `vendors` appears only in a file the vendor defines, a dependency's package name, a declared adapter module, where a model declares its ground and drivers, or a rule's list of words",
+    doc,
+    held: Pending(
+      "own-name's scan over `vendors`, and each repository's adapters declared in workspace.toml",
+    ),
+  },
+  {
+    name: "qualified-meanings",
+    says: "A module or a contract using both meanings of one word writes each by its qualified name",
+    doc,
+    held: Pending("a scan for two opened modules whose bare names one module uses alike"),
+  },
+  {
+    name: "global-names-modeled",
+    says: "A contract's, a component's and a role's name is declared in the model alone",
+    doc,
+    held: Pending("each repository's declarations of those names read against its model"),
+    layer: Logic,
   },
   {
     name: "data-keys",

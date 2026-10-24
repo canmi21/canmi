@@ -20,12 +20,14 @@ let rules: array<Rule.t> = [
     says: "A file of ours aims under `softLines`, and one over `hardLines` fails",
     doc,
     held: Check("lines"),
+    layer: Form,
   },
   {
     name: "comment-short",
     says: "A comment block is `blockLines` body lines, `openingLines` opening a file, `columns` wide",
     doc,
     held: Check("comments"),
+    layer: Form,
   },
   {
     name: "comment-plain",
@@ -42,7 +44,7 @@ let rules: array<Rule.t> = [
   {
     name: "citations-resolve",
     says: "A link, a cited doc and a section quoted beside it all exist",
-    doc: "docs/agent-protocol.md",
+    doc: "docs/agents/agent-protocol.md",
     held: Check("refs"),
   },
   {

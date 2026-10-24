@@ -97,12 +97,14 @@ let rules: array<Rule.t> = [
     says: "No directory but a repository's root holds more than `widest` entries",
     doc,
     held: Check("shape"),
+    layer: Form,
   },
   {
     name: "tree-deep",
     says: "No directory lies more than `deepest` below a top-level directory or a package's root",
     doc,
     held: Check("shape"),
+    layer: Form,
   },
   {
     name: "root-configuration",

@@ -15,7 +15,26 @@ let indentation = [("indent_style", "tab"), ("tab_width", "2")]
 /** A mise task's run, in lines; past it the task is a script and the task its one-line entry. */
 let taskLines = 5
 
+/** What a test and its fixtures may write out, docs/agents/pushing.md, RFCs 5737, 3849 and 2606. */
+let documentation = {
+  "addresses": ["192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24", "2001:db8::/32"],
+  "domains": [
+    "example.com",
+    "example.net",
+    "example.org",
+    ".test",
+    ".example",
+    ".invalid",
+    ".localhost",
+  ],
+  "allowed": ["10.200.0.0/16"],
+}
+
+/** The private identifiers a push is scanned for, kept local and in no repository. */
+let privateIdentifiers = "~/.config/workspace/private-identifiers"
+
 let doc = "docs/toolchain.md"
+let pushing = "docs/agents/pushing.md"
 let rules: array<Rule.t> = [
   {
     name: "pin-major",
@@ -46,6 +65,7 @@ let rules: array<Rule.t> = [
     says: ".editorconfig sets tabs at width 2, YAML at two spaces, and rustfmt.toml says it again",
     doc: "docs/lint-format.md",
     held: Check("settings"),
+    escape: ByTool,
   },
   {
     name: "localhost",
@@ -112,6 +132,44 @@ let rules: array<Rule.t> = [
     says: "Every dev server binds a fixed port and fails when it is taken",
     doc,
     held: Pending("each repository's dev configuration read for strictPort"),
+  },
+  {
+    name: "test-port-zero",
+    says: "A test binds port 0 and is handed a free one, never a fixed port",
+    doc: "docs/code.md",
+    held: Pending("each repository's tests read for a listen on a literal port"),
+  },
+  {
+    name: "test-documentation-values",
+    says: "A test and its fixtures write out only the addresses, domains and placeholders `documentation` holds",
+    doc: pushing,
+    held: Pending("each repository's tests and fixtures read for literals outside `documentation`"),
+  },
+  {
+    name: "push-declared",
+    says: "A repository's workspace.toml declares under [push] its visibility, the CI a push starts and any release",
+    doc: pushing,
+    held: Pending("a [push] key read by a script, which declared-known then admits"),
+  },
+  {
+    name: "push-workflows-declared",
+    says: "A workflow under .github/workflows/ that runs on a push is declared under [push]",
+    doc: pushing,
+    held: Pending("each repository's workflows read against its [push]"),
+  },
+  {
+    name: "push-scanned",
+    says: "A public repository's push carries no private identifier, credential, high-entropy string, or address or domain outside `documentation`",
+    doc: pushing,
+    held: Pending("a scan of the diff a push sends, reading `privateIdentifiers`"),
+  },
+  {
+    name: "push-gated",
+    says: "A wave's push in roles waits on the full check, the form layer holding nothing, a reviewer's read and the wave accepted",
+    doc: pushing,
+    held: Pending(
+      "push counting the form layer's warnings as failures, as audit does, and reading that a reviewer read the wave and the wave was accepted",
+    ),
   },
   {
     name: "custom-domains",

@@ -16,7 +16,7 @@ patch, and each entry carries two files of its own:
 - `VENDOR.md`, saying which upstream, which tag and commit, what was taken and what was not, how
   it is consumed, what checks run over it and which command prints what they report, and how it
   is upgraded. The report itself is the command's, not copied here -- see
-  [agent-protocol.md](agent-protocol.md), "A number a command prints is cited, not copied".
+  [agent-protocol.md](agents/agent-protocol.md), "A number a command prints is cited, not copied".
 
 ## How it is taken
 

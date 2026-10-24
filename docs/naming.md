@@ -17,10 +17,21 @@ without a single line of its code changing.
 **A database is a database, never a `DB`**, in prose, names and identifiers alike; the word is short
 enough already, and an abbreviation is one more spelling to search for.
 
-**A name chosen in design is chosen for how exactly it fits, and need only be unique here.** While
-an architecture is worked out, whether a package registry or a domain has the name free is not
-asked; the most technically fitting word wins, so long as nothing else in the project uses it.
-Availability is a question for publishing, met when something is published.
+**A name chosen in design is chosen for how exactly it fits.** While an architecture is worked
+out, whether a package registry or a domain has the name free is not asked; the most technically
+fitting word wins. Availability is a question for publishing, met when something is published.
+
+**One word may carry two meanings, so long as the two are never needed where one reader reads.**
+Decided by the author on 2026-10-24, in place of a name having to be unique in the project. In
+code, a module or a contract that uses both meanings writes each by its qualified name, never
+opening both sides and using the bare word, `qualified-meanings` in
+[model/rules/naming.res](../model/rules/naming.res). In a document it is judgment: one that
+discusses both meanings qualifies the word each time.
+
+**A global name is the model's.** A contract's, a component's and a role's name is given by the
+model alone, written by the integrator as the author decided it,
+[agents/integrator.md](agents/integrator.md). An implementer names only what is local to its own
+block, choosing the most exact and most technically neutral word, `global-names-modeled`.
 
 **One concept is one word, and where it varies is a dimension of it, never a second word.** Agreed
 with the author on 2026-10-18: a control of the platform and a control of an organization are both
@@ -125,11 +136,21 @@ touches every layer, or a name that now lies -- an `r2.ts` that talks to S3. And
 the bet is still good, the name carries less information than the alternative, because at
 the point of use you want to know what a module _does_, not who invoices for it.
 
-**Where a vendor name is correct.** Three places, all of them the boundary:
+**Where a vendor name is correct.** Five places, all of them the boundary:
 
 - Files the vendor defines. `wrangler.jsonc` is wrangler's file; renaming it breaks it.
 - Dependency identifiers. `@cloudflare/workers-types` names a real package.
 - The single adapter module that speaks the vendor's protocol and exposes your interface.
+- Where a model declares its ground and its drivers.
+- The lists of words a rule holds.
+
+**A vendor's name is held by the same means as the project's own**, `vendor-name` in
+[model/rules/naming.res](../model/rules/naming.res), with a set of names of its own, decided by
+the author on 2026-10-24. The set takes only words that are unmistakably a vendor's,
+`Naming.vendors`, never a plain English word. They may appear in a file the vendor defines, as a
+package's name in a declaration of a dependency, in an adapter module each repository declares in
+its `workspace.toml`, where a model declares its ground and its drivers, and in the lists of words a
+rule holds, as `voice.res` and `Naming.vendors`. Documents and RFCs are not read.
 
 **The test.** If the vendor were replaced tomorrow, how many names would have to change?
 One. If the answer is more, the vendor has leaked past the boundary.
