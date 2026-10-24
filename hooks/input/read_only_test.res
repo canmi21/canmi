@@ -367,6 +367,24 @@ describe("a reviewer's commands", () => {
     )
   })
 
+  test("refuse env, exec, xargs and an assignment before a command", () => {
+    [
+      "env -u cat rm a",
+      "env ls",
+      "exec -a cat rm a",
+      "exec ls",
+      "xargs --arg-file cat rm",
+      "find . -name x | xargs cat",
+      "RIPGREP_CONFIG_PATH=x rg y",
+      "JJ_CONFIG=x jj log",
+      "ls && LC_ALL=C grep x f",
+      "rg --hostname-bin=x y",
+      "rg --hostname-bin x y",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
   test("name the rule in every refusal", () => {
     [
       "jj st",

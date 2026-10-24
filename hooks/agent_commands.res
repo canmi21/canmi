@@ -122,7 +122,7 @@ let ruleOf = role =>
   switch role {
   | Implementer => "implementer-commands"
   | Refactorer => "refactorer-commands"
-  | Reviewer => Reader.rule
+  | Reviewer => Read_only.rule
   }
 
 /** The nearest directory at or above `directory` whose mise.toml declares a check task. */
@@ -191,7 +191,7 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
 let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<string>) =>
   switch (role, Jj_command.programOf(segment)) {
   | (_, None) => None
-  | (Reviewer, _) => Reader.segmentReason(segment)
+  | (Reviewer, _) => Read_only.segmentReason(segment)
   | (_, Some(program, _)) if Delegation.versioning->Array.includes(program) =>
     Some("git is not typed here")
   | (_, Some("mise", words)) if execOf(givenOf(words), words) != None =>
@@ -233,7 +233,7 @@ and shellReason = (~cwd, role, segment) =>
   }
 and reason = (~cwd=Registry.root, role, command) =>
   role == Reviewer
-    ? Reader.reason(command)
+    ? Read_only.reason(command)
     : Jj_command.segments(command)->Array.findMap(segment => segmentReason(~cwd, role, segment))
 
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */

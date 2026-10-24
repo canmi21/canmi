@@ -118,8 +118,8 @@ let backgrounded = (command: string): result<string, string> => {
   }
 }
 
-/** Why one segment is refused a reviewer, which runs jj's reading and `Delegation.inspecting`. */
-let segmentReason = (segment: array<string>) =>
+/** Why a program is refused a reviewer, which runs jj's reading and `Delegation.inspecting`. */
+let programReason = (segment: array<string>) =>
   switch Jj_command.programOf(segment) {
   | None => None
   | Some("jj", words) =>
@@ -156,6 +156,24 @@ let segmentReason = (segment: array<string>) =>
     why->Option.map(why => `${why}, ${rule} holds it`)
   | Some(program, _) => Some(`${program} is not a reader's command, ${rule} holds it`)
   }
+
+/** Why one segment is refused a reviewer, a wrapper or an assignment before it, or its program. */
+let segmentReason = (segment: array<string>) => {
+  let before =
+    segment->Array.slice(
+      ~start=0,
+      ~end=Jj_command.commandAt(segment)->Option.getOr(segment->Array.length),
+    )
+  let wrapped =
+    before->Array.find(word =>
+      Delegation.wrapping->Array.includes(Node.basename(word)) ||
+        (word->String.includes("=") && !(word->String.startsWith("=")))
+    )
+  switch wrapped {
+  | Some(found) => Some(`${found} never stands before a reviewer's command, ${rule} holds it`)
+  | None => programReason(segment)
+  }
+}
 
 /**
  * Why a reviewer's command line is refused, its redirections read first, then each segment and
