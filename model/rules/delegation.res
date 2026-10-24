@@ -30,9 +30,9 @@ let readingFile = ["show", "list"]
 /** The programs a reviewer may run beside jj's reading, every other refused, `reviewer-commands`. */
 let inspecting = ["cat", "head", "tail", "sed", "grep", "rg", "ls", "find", "wc", "diff"]
 
-/** sed runs for a reviewer only quiet, given -n, and never in place. */
+/** sed runs for a reviewer only quiet, given -n, and never in place, -I being macOS's own. */
 let sedQuiet = ["-n", "--quiet", "--silent"]
-let sedInPlace = ["-i", "--in-place"]
+let sedInPlace = ["-i", "-I", "--in-place"]
 
 /** What find is never given by a reviewer. */
 let findWriting = ["-exec", "-delete"]
