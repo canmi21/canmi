@@ -48,6 +48,9 @@ type datum = {file: string, spelled: array<string>}
 /** What the repository formats by nothing, its own suffixes and its directories of test data. */
 type format = {unformatted: array<string>, testData: array<string>}
 
+/** What push reads, the visibility one of `Toolchain.visibilities`. */
+type push = {visibility: string}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -61,6 +64,7 @@ type declared = {
   /** Where the own name is data, docs/naming.md, each spelling passed in its file alone. */
   names: array<datum>,
   format: format,
+  push: push,
 }
 
 exception Malformed(string)
@@ -254,6 +258,20 @@ let formatOf = (table: table): format => {
   }
 }
 
+/** The visibility a repository declaring none holds. */
+let public = "public"
+
+let pushOf = (table: table): push => {
+  only(table, "push", ["visibility"])
+  {
+    visibility: switch table->Dict.get("visibility") {
+    | None => public
+    | Some(String(visibility)) if Toolchain.visibilities->Array.includes(visibility) => visibility
+    | Some(_) => fail(`push.visibility: not one of ${Toolchain.visibilities->Array.join(", ")}`)
+    },
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -277,6 +295,7 @@ let read = (root: string): result<declared, string> => {
             "release",
             "names",
             "format",
+            "push",
           ],
         )
         Ok({
@@ -297,6 +316,7 @@ let read = (root: string): result<declared, string> => {
           release: tableAt(top, "release", "workspace.toml")->Option.map(releaseOf),
           names: tableAt(top, "names", "workspace.toml")->Option.mapOr([], namesOf),
           format: formatOf(tableAt(top, "format", "workspace.toml")->Option.getOr(Dict.make())),
+          push: pushOf(tableAt(top, "push", "workspace.toml")->Option.getOr(Dict.make())),
         })
       | _ => Error(`${path}: not a table`)
       }
@@ -332,6 +352,14 @@ let layout = task =>
   }
 
 let noFormat: format = {unformatted: [], testData: []}
+
+/** The visibility of the repository at `root`, public where it has no workspace.toml. */
+let visibilityAt = (root: string): result<string, string> =>
+  if !Node.existsSync(Node.join([root, "workspace.toml"])) {
+    Ok(public)
+  } else {
+    read(root)->Result.map(declared => declared.push.visibility)
+  }
 
 /** The `[format]` table of the repository at `root`, empty where it declares none or none reads. */
 let formatAt = (root: string): format =>
