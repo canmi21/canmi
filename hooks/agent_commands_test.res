@@ -10,8 +10,26 @@ describe("an implementer's commands", () => {
       "env jj st",
       "bash -c 'jj st'",
       "mise run check",
-      "mise run check workspace words",
       "mise check",
+      "mise run check workspace",
+      "mise run check --all",
+      "mise run check workspace words --all",
+      "mise run check apps/rdm",
+      "mise run audit",
+      "mise audit apps/rdm",
+      "mise -C repos/apps/rdm run check workspace words",
+      "mise exec -- jj st",
+      "mise x node@22 -- jj st",
+      "mise exec -C repos/apps/rdm -- mise run check",
+      "mise exec -C repos/apps/rdm -- mise run check workspace words",
+      "mise run build ::: //repos/monoflake/cloud:switch",
+      "mise run built control ::: check",
+      "mise run built control ::: built other ::: //repos/monoflake/cloud:switch",
+      "mise x -- git status",
+      "mise exec -- ssh host",
+      "mise x -- wrangler deploy",
+      "mise exec -c 'jj st'",
+      "mise exec -- bash -c 'jj st'",
       "mise run //repos/monoflake/platform:check",
       "mise run //repos/monoflake/platform:deploy",
       "mise //repos/monoflake/cloud:switch",
@@ -45,6 +63,8 @@ describe("an implementer's commands", () => {
   test("allow the logic layer and ordinary commands", () => {
     [
       "mise run built control",
+      "mise exec -- ls",
+      "mise x node@22 -- node a.js",
       "mise run accept control --from main",
       "mise run //repos/monoflake/platform:build",
       "mise run //repos/monoflake/driver:deploy",
@@ -61,9 +81,35 @@ describe("an implementer's commands", () => {
   })
 })
 
+describe("one part of the check", () => {
+  test("is an implementer's, named after a repository, and no refactorer's", () => {
+    [
+      "mise run check workspace words",
+      "mise run check workspace rules names",
+      "mise check apps/rdm tasks",
+      "mise run -j 4 check workspace words",
+      "mise x -- mise run check workspace words",
+      "mise exec -- mise run check workspace words",
+    ]->Array.forEach(
+      command => {
+        expect((command, refused(Implementer, command)))->toEqual((command, false))
+        expect((command, refused(Refactorer, command)))->toEqual((command, true))
+      },
+    )
+  })
+})
+
 describe("a reviewer's commands", () => {
   test("allow jj only to read", () => {
-    ["jj diff -r @-", "jj file show -r @ x", "jj log", "jj -R a show @", "ls"]->Array.forEach(
+    [
+      "jj diff -r @-",
+      "jj file show -r @ x",
+      "jj log",
+      "jj -R a show @",
+      "ls",
+      "mise exec -- jj log",
+      "mise x -- ls",
+    ]->Array.forEach(
       command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
     )
     [
@@ -79,6 +125,8 @@ describe("a reviewer's commands", () => {
       "pnpm exec jj st",
       "echo $(jj st)",
       "echo `jj st`",
+      "mise exec -- jj st",
+      "mise x -- git log",
     ]->Array.forEach(
       command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
     )

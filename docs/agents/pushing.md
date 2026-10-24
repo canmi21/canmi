@@ -9,11 +9,11 @@ it is pushed".
 **Every push waits on the form layer holding nothing**, in either mode, decided by the author on
 2026-10-24, `push-form-clear`: the gate exists so that a debt never outlives the next push, and a
 session with no role pushing past its warnings would keep that promise by half. **The gate measures
-the tree of each commit pushed, read from the repository**, never from the disk and never checked
-out: for each bookmark pushed, the commit it points to is measured once, a directory's width and
-depth from `jj file list -r <commit>` and a file's length and its comments from `jj file show -r
-<commit>`. A check that refuses reads only what the repository holds, so its result can be had
-again, and the working copy is local state.
+the tree of the commit each pushed bookmark points to, read from the repository**, never from the
+disk and never checked out: each such commit is measured once, a directory's width and depth from
+`jj file list -r <commit>` and a file's length and its comments from `jj file show -r <commit>`. A
+check that refuses reads only what the repository holds, so its result can be had again, and the
+working copy is local state.
 
 **A wave worked in roles also waits on the full check passing, a reviewer having read the wave, and
 the wave accepted**, `push-gated`, [checking.md](checking.md), "Acceptance comes before the push". A

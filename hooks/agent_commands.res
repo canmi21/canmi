@@ -12,11 +12,6 @@ let roleOf = name =>
   | _ => None
   }
 
-let versioning = ["git"]
-let launchers = ["npx", "bunx", "pnpx", "pnpm", "yarn"]
-let shells = ["sh", "bash", "zsh", "fish"]
-let reading = ["diff", "log", "show"]
-
 let firstWord = (words: array<string>) => words->Array.find(word => !(word->String.startsWith("-")))
 
 // The mise options that take a value, global and of run.
@@ -44,9 +39,12 @@ let miseValued = [
   "--affected-head",
 ]
 
-/** The task a mise invocation runs, named as `run` or as the shorthand does, scoped by -C. */
-let taskOf = (words: array<string>) => {
+/** What a mise invocation was given, its operands past options, the flags and the -C directory. */
+type given = {operands: array<string>, flags: array<string>, directory: option<string>}
+
+let givenOf = (words: array<string>) => {
   let operands = []
+  let flags = []
   let directory = ref(None)
   let at = ref(0)
   while at.contents < words->Array.length {
@@ -59,27 +57,70 @@ let taskOf = (words: array<string>) => {
     } else {
       if word->String.startsWith("--cd=") {
         directory := Some(word->String.slice(~start="--cd="->String.length))
-      } else if !(word->String.startsWith("-")) {
+      } else if word->String.startsWith("-") {
+        flags->Array.push(word)
+      } else {
         operands->Array.push(word)
       }
       at := at.contents + 1
     }
   }
-  let task = switch (operands[0], operands[1], operands[2]) {
-  | (Some("run" | "r"), task, _) => task
-  | (Some("tasks"), Some("run"), task) => task
-  | (Some("tasks"), _, _) => None
-  | (task, _, _) => task
+  {operands, flags, directory: directory.contents}
+}
+
+/** The task a mise invocation runs, named as `run` or as the shorthand does, scoped by -C. */
+let taskOf = (given: given) => {
+  let {operands, directory} = given
+  let (task, after) = switch (operands[0], operands[1], operands[2]) {
+  | (Some("run" | "r"), task, _) => (task, 2)
+  | (Some("tasks"), Some("run"), task) => (task, 3)
+  | (Some("tasks"), _, _) => (None, 0)
+  | (task, _, _) => (task, 1)
   }
-  task->Option.map(task =>
-    task->String.includes(":")
-      ? task
-      : directory.contents->Option.mapOr(task, dir => `${dir}:${task}`)
+  task->Option.map(task => (
+    task->String.includes(":") ? task : directory->Option.mapOr(task, dir => `${dir}:${task}`),
+    operands->Array.slice(~start=after),
+  ))
+}
+
+/** Every task a mise invocation runs, those after a `:::` judged as the first is. */
+let tasksOf = (given: given) => {
+  let groups = [[]]
+  given.operands->Array.forEach(operand =>
+    if operand == ":::" {
+      groups->Array.push([])
+    } else {
+      groups->Array.getUnsafe(groups->Array.length - 1)->Array.push(operand)
+    }
+  )
+  groups->Array.mapWithIndex((group, at) =>
+    taskOf({...given, operands: at == 0 ? group : ["run", ...group]})
   )
 }
 
-/** Why a mise task is refused to an agent that deploys nothing and checks nothing. */
-let taskReason = (task: string) => {
+/** What `mise exec` or `mise x` runs, a segment after `--` or a line given -c. */
+type inner =
+  | Segment(array<string>)
+  | Line(string)
+  | Bare
+
+let execOf = (given: given, words: array<string>) =>
+  switch given.operands[0] {
+  | Some("exec" | "x") =>
+    let dashes = words->Array.findIndex(word => word == "--")
+    let command = words->Array.findIndex(word => word == "-c" || word == "--command")
+    Some(
+      switch (dashes, command, words[command + 1]) {
+      | (-1, -1, _) | (-1, _, None) => Bare
+      | (-1, _, Some(line)) => Line(line)
+      | (at, _, _) => Segment(words->Array.slice(~start=at + 1))
+      },
+    )
+  | _ => None
+  }
+
+/** Why a mise task is refused to a role, the check bar one part of it, an audit or a deploy. */
+let taskReason = (role, (task: string, rest: array<string>), ~flags) => {
   let colon = task->String.lastIndexOf(":")
   let name = colon < 0 ? task : task->String.slice(~start=colon + 1)
   let scope = colon < 0 ? None : Some(task->String.slice(~start=0, ~end=colon))
@@ -89,8 +130,16 @@ let taskReason = (task: string) => {
     Delegation.releasing->Array.filter(((known, _)) => known == repo)
   | _ => Delegation.releasing
   }
-  if name == "check" {
-    Some("mise run check is the integrator's")
+  // One part of the verb, named after a repository, is what an implementer writes aside.
+  let aPart =
+    role == Implementer &&
+    (scope == None || scope == Some("//")) &&
+    rest->Array.length >= 2 &&
+    !(flags->Array.includes("--all"))
+  if name == "check" && !aPart {
+    Some("mise run check is the integrator's, bar one part of it an implementer writes")
+  } else if name == "audit" {
+    Some("mise run audit is the integrator's")
   } else if tasks->Array.some(((_, found)) => found->Array.includes(name)) {
     Some(`the task ${name} deploys or releases, which is the integrator's`)
   } else {
@@ -99,14 +148,22 @@ let taskReason = (task: string) => {
 }
 
 /** Why one segment is refused to a role, or none. */
-let rec segmentReason = (role, segment: array<string>) =>
+let rec segmentReason = (~directory=?, role, segment: array<string>) =>
   switch (role, Jj_command.programOf(segment)) {
   | (_, None) => None
-  | (_, Some(program, _)) if versioning->Array.includes(program) => Some("git is not typed here")
+  | (_, Some(program, _)) if Delegation.versioning->Array.includes(program) =>
+    Some("git is not typed here")
+  | (_, Some("mise", words)) if execOf(givenOf(words), words) != None =>
+    switch execOf(givenOf(words), words) {
+    | Some(Segment(inner)) =>
+      segmentReason(~directory=?givenOf(words).directory->Option.orElse(directory), role, inner)
+    | Some(Line(line)) => reason(role, line)
+    | _ => None
+    }
   | (Reviewer, Some("jj", _)) =>
     switch Jj_command.invocationOf(segment) {
     | Some(("file", rest)) if rest->firstWord == Some("show") => None
-    | Some(subcommand, _) if reading->Array.includes(subcommand) => None
+    | Some(subcommand, _) if Delegation.reading->Array.includes(subcommand) => None
     | Some(subcommand, _) => Some(`jj ${subcommand} is not a reader's command`)
     | None => None
     }
@@ -114,8 +171,13 @@ let rec segmentReason = (role, segment: array<string>) =>
   | (_, Some("jj", _)) => Some("jj is not typed here")
   | (_, Some(program, _)) if Delegation.remote->Array.includes(program) =>
     Some(`${program} is the integrator's`)
-  | (_, Some("mise", words)) => taskOf(words)->Option.flatMap(taskReason)
-  | (_, Some(program, words)) if launchers->Array.includes(program) =>
+  | (_, Some("mise", words)) =>
+    let given = givenOf(words)
+    let given = {...given, directory: given.directory->Option.orElse(directory)}
+    tasksOf(given)->Array.findMap(found =>
+      found->Option.flatMap(found => taskReason(role, found, ~flags=given.flags))
+    )
+  | (_, Some(program, words)) if Delegation.launchers->Array.includes(program) =>
     words
     ->Array.find(word => Delegation.remote->Array.includes(Node.basename(word)))
     ->Option.map(found => `${Node.basename(found)} is the integrator's`)
@@ -124,7 +186,7 @@ let rec segmentReason = (role, segment: array<string>) =>
 // A shell given -c runs a command line of its own, which is judged as one.
 and shellReason = (role, segment) =>
   switch Jj_command.programOf(segment) {
-  | Some(program, words) if shells->Array.includes(program) =>
+  | Some(program, words) if Delegation.shells->Array.includes(program) =>
     switch words->Array.findIndex(word => word == "-c") {
     | -1 => None
     | at => words[at + 1]->Option.flatMap(line => reason(role, line))

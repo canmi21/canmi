@@ -117,7 +117,7 @@ run = "node scripts/rfcs/rfc_plan.res.mjs"
 
 # What the scripts compile to, never committed, which every task running one depends on.
 [tasks.build]
-description = "Compile the scripts under scripts/ and the model under model/"
-run = "rescript build"
-sources = ["scripts/**/*.res", "model/**/*.res", "rescript.json"]
+description = "Compile the scripts, the model and the hooks, and remove what no source compiles to"
+run = "rescript build && node scripts/prune.res.mjs"
+sources = ["scripts/**/*.res", "model/**/*.res", "hooks/**/*.res", "rescript.json"]
 outputs = { auto = true }

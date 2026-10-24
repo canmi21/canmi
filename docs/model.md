@@ -25,7 +25,8 @@ and the history check read one `Commits.subjectWidth`, the comment gate and the 
 
 - **`Check(part)`** -- a part of `check workspace`, which the workspace's own check runs.
 - **`Hook(path)`** -- a hook under `hooks/`, refusing at the moment an agent acts.
-- **`Gate(path)`** -- a script under `scripts/` that each repository runs from its own verify.
+- **`Gate(name)`** -- a gate a change passes outside the check, named in `Rule.gates`, as `push`;
+  or, by its path, a script under `scripts/` that each repository runs from its own verify.
 - **`Pending(owed)`** -- decidable, and nothing holds it yet; `owed` says what the check would need.
 
 **A soft rule is held by a part whose findings are warnings**, which fail only under `audit`: drift
@@ -37,7 +38,8 @@ parts -- over it.
 **A decidable rule enters with its check, or as `Pending`, and never as a sentence alone.** Agreed
 with the author on 2026-10-20, so what is left is a count rather than a memory: every run of
 `check workspace` ends with how many rules are pending, and `check workspace --pending` lists them.
-The rules part holds each `Check` to a part that exists and each `Hook` and `Gate` to a file.
+The rules part holds each `Check` to a part that exists, each `Hook` to a file, and each `Gate` to a
+file or a name in `Rule.gates`.
 
 **A rule marked `Pending` describes the goal, and until its check lands the behavior of now is
 what holds**, decided by the author on 2026-10-24. A document citing a pending rule says so: what

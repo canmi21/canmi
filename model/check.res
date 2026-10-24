@@ -110,22 +110,23 @@ let parts: array<(string, part)> = [
 
 let known = parts->Array.map(((name, _)) => name)
 
+let written = path =>
+  ["", ".res", ".py"]->Array.some(suffix => Node.existsSync(Node.join([root, path ++ suffix])))
+
+/** Why a rule's holder does not exist, or none where it does. */
+let unheldRule = (rule: Rule.t) =>
+  switch rule.held {
+  | Check(part) if part != "rules" && !(known->Array.includes(part)) =>
+    Some(`${rule.name} is held by a part ${part}, which this check does not have`)
+  | Gate(name) if Rule.gates->Array.includes(name) => None
+  | Hook(path) if !written(path) => Some(`${rule.name} is held by ${path}, which is no file`)
+  | Gate(path) if !written(path) =>
+    Some(`${rule.name} is held by ${path}, which is no file and no gate in Rule.gates`)
+  | _ => None
+  }
+
 /** Each rule held by a part, a hook or a gate that does not exist. */
-let unheld = (): array<string> =>
-  Rules.all->Array.filterMap(rule =>
-    switch rule.held {
-    | Check(part) if !(known->Array.includes(part)) =>
-      Some(`${rule.name} is held by a part ${part}, which this check does not have`)
-    | Hook(path) | Gate(path)
-      if !(
-        ["", ".res", ".py"]->Array.some(suffix =>
-          Node.existsSync(Node.join([root, path ++ suffix]))
-        )
-      ) =>
-      Some(`${rule.name} is held by ${path}, which does not exist`)
-    | _ => None
-    }
-  )
+let unheld = (): array<string> => Rules.all->Array.filterMap(unheldRule)
 
 let pending = () =>
   Rules.all->Array.filterMap(rule =>

@@ -342,3 +342,14 @@ describe("a tracked suffix", () => {
     expect(Project.formatAt(root).unformatted->Array.includes(".sql"))->toBe(true)
   })
 })
+
+describe("a rule's gate", () => {
+  let held = (held: Rule.held): Rule.t => {name: "r", says: "s", doc: "d", held}
+
+  test("is a name in Rule.gates or a file, and nothing else", () => {
+    expect(Check.unheldRule(held(Gate("push"))))->toEqual(None)
+    expect(Check.unheldRule(held(Gate("scripts/lints/secrets.res"))))->toEqual(None)
+    expect(Check.unheldRule(held(Gate("nowhere")))->Option.isSome)->toBe(true)
+    expect(Check.unheldRule(held(Hook("push")))->Option.isSome)->toBe(true)
+  })
+})

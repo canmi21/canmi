@@ -165,12 +165,16 @@ let rules: array<Rule.t> = [
   },
   {
     name: "push-form-clear",
-    says: "Every push waits on the form layer holding nothing in the tree of each commit it pushes, read from the repository",
+    says: "Every push waits on the form layer holding nothing in the commit each pushed bookmark points to, read from the repository; a commit may carry form warnings, only the state pushed must be clean",
     doc: pushing,
-    held: Pending(
-      "a kind of held for push itself; scripts/workspace/repos.res holds it since 2026-10-24, reading each pushed commit",
-    ),
+    held: Gate("push"),
     layer: Form,
+  },
+  {
+    name: "gate-named",
+    says: "A rule held by a Gate names a file, or a gate in `Rule.gates`",
+    doc: "docs/model.md",
+    held: Check("rules"),
   },
   {
     name: "push-gated",

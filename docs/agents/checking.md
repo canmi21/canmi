@@ -25,9 +25,10 @@ Until then formatting is checked as it is now, by each repository's own check.
 **Nobody checks the form layer while code is being written.** At a commit it only warns, and the
 commit goes through, `form-at-commit`; **before a push it is an error, and the push stops**, by the
 means `audit` already has, counting the form layer's warnings as failures, in either mode,
-`push-form-clear`, [pushing.md](pushing.md). Push holds it since 2026-10-24 over the tree of each
-commit pushed. A warning of the form layer says the commit it first appeared in and how many commits
-have passed since, worked out from the repository's history; that is a hint, and changes no result.
+`push-form-clear`, [pushing.md](pushing.md). Push holds it since 2026-10-24 over the tree of the
+commit each pushed bookmark points to. A warning of the form layer says the commit it first appeared
+in and how many commits have passed since, worked out from the repository's history; that is a hint,
+and changes no result.
 
 **The refactorer tidies only what an implementer wrote.** A warning in a file with one writer that
 the integrator wrote is tidied by the integrator itself, with no refactorer dispatched.
@@ -89,7 +90,9 @@ what the checker would have said for free.
 never a whole repository's check**, decided by the author on 2026-10-24. Checking the whole is a
 question only the party that sees the whole wave can ask. The older rule, that a spawned agent ran
 no tests and no type checker, came from one working copy shared by every agent, where several would
-run one suite against one tree at once; it does not hold once each has a lane of its own.
+run one suite against one tree at once; it does not hold once each has a lane of its own. **Where
+what it writes is one part of the check, it may run that part alone**, `mise run check <repository>
+<part>`, and never the whole, decided by the author on 2026-10-24.
 
 **A block a project's model holds alone is the case it is made for**: where each block builds, lints
 and tests apart from every other, as `monoflake/platform`'s `docs/code.md` makes them, its

@@ -20,6 +20,16 @@ let singleWriter = [
 /** The programs an implementer and a refactorer never run, `implementer-commands`. */
 let remote = ["ssh", "rsync", "wrangler"]
 
+/** Version control no subagent types, jj aside, which `reading` holds for a reviewer. */
+let versioning = ["git"]
+
+/** The jj subcommands a reviewer may run, `file show` beside them, `reviewer-commands`. */
+let reading = ["diff", "log", "show"]
+
+/** What runs another program by its name, which the command hooks look through. */
+let launchers = ["npx", "bunx", "pnpx", "pnpm", "yarn"]
+let shells = ["sh", "bash", "zsh", "fish"]
+
 /** The tasks that deploy or release, by repository, the workspace's own by no name. */
 let releasing = [
   ("", ["push", "publish"]),
@@ -97,7 +107,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "implementer-commands",
-    says: "An implementer types no jj, no mise run check, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
+    says: "An implementer types no jj, no whole mise run check (one part of it it writes aside), no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
     doc: "docs/agents/implementer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",

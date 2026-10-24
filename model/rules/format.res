@@ -74,7 +74,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "suffix-owned",
-    says: "Every suffix a repository tracks has a formatter in `owners` or its model's table, or is registered `Unformatted`",
+    says: "Every suffix a repository tracks has a formatter in `owners`, or is registered `Unformatted` there or in its workspace.toml's [format]",
     doc,
     held: Check("suffixes"),
   },

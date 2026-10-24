@@ -31,6 +31,11 @@ other. Implementers run side by side again once there are independent pieces; th
 **No implementers run in parallel until the hooks holding their commands have landed**,
 `implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res).
 
+**The command hooks guard against a slip, not against malice**, decided by the author on
+2026-10-24: an implementer works with the integrator, so the hooks cover the common spellings of a
+command and no more. Known to pass unseen: `pnpm --filter <name> exec <command>`, an option before
+`exec`; and a backtick span inside double quotes, judged as a command where the shell would run it.
+
 ## A role is named by the user, and each has a file
 
 **The user names a session's role in words at its start**, with no hook and no command to start

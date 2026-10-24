@@ -2,8 +2,12 @@
 type held =
   | Check(string)
   | Hook(string)
+  /** A gate by its name in `gates`, or a script a repository's verify runs, by its path. */
   | Gate(string)
   | Pending(string)
+
+/** The gates a change passes outside the check, each by its name. */
+let gates = ["push"]
 
 /** The layer of the check a rule belongs to, docs/agents/checking.md, a rule marked none Logic. */
 type layer =
