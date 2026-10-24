@@ -31,10 +31,14 @@ that fails, as on a file that does not parse yet, blocks nobody. A formatter fin
 configuration by walking up from the file's directory. `formatted-on-write`, held by that hook
 since 2026-10-24.
 
-**The hook hangs in the implementer's definition alone**, `.claude/agents/implementer.md`, and
-acts only while an implementer runs; `.claude/settings.json` is not touched. `edit-after-format`
-was proven on an implementer, an Edit after the hook changed its file. Whether the hook then
-spreads to `.claude/settings.json` the author decides alone.
+**The hook hangs on the implementer alone, in the base workspace**, and acts only while an
+implementer runs; it spreads neither to `.claude/settings.json` nor to any other session, decided
+by the author on 2026-10-24 as settled, not deferred. `edit-after-format` was proven on an
+implementer, an Edit after the hook changed its file.
+
+**The hook's logic lives in `hooks/`, which Claude Code and Codex share**; the frontmatter of
+`.claude/agents/implementer.md` is only Claude Code's entry to it. How Codex gives the implementer's
+role the same hook is added once Codex dispatches an implementer, and not before.
 
 **A suffix too rare to be worth a formatter is registered as formatted by nothing**, explicitly. A
 repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`.
@@ -49,7 +53,7 @@ is no longer found**, so the file is Read before such an Edit, `edit-after-forma
 probe implementer on 2026-10-24: a Write of `let   x =   1` was formatted to `let x = 1`, the
 harness saying the next Edit would not fail as stale, and an Edit of `=   1` without a Read failed
 with "String to replace not found in file". The hook ran in that subagent, which holds
-`formatted-on-write`. Whether the hook spreads to `.claude/settings.json` is still the author's.
+`formatted-on-write`.
 
 ## Formatting is applied, never negotiated
 
