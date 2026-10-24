@@ -29,7 +29,15 @@ other. Implementers run side by side again once there are independent pieces; th
 2026-10-14.
 
 **No implementers run in parallel until the hooks holding their commands have landed**,
-`implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res).
+`implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res). They
+landed and were proven on 2026-10-24, for implementers spawned without a name.
+
+**The integrator schedules the queue itself**, decided by the author on 2026-10-24: it judges what
+is independent and runs those pieces side by side, neither all serial nor split hard. A piece waits
+only on what it truly depends on; each implementer has a lane of its own and a declared set of
+files no other lane touches, so two lanes never own one file. Review, verification and the check
+once per wave stay as they are. How many run at once is `implementersAtOnce` in
+[model/rules/delegation.res](../../model/rules/delegation.res).
 
 **The command hooks guard against a slip, not against malice**, decided by the author on
 2026-10-24: an implementer works with the integrator, so the hooks cover the common spellings of a

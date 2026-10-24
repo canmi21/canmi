@@ -74,6 +74,12 @@ let releasing = [
 /** Where the lanes live, beside repos/, one `<name>/monoflake/<repository>` each. */
 let lanes = "lanes"
 
+/**
+ * At most three implementers at once, provisional, chosen by the advisor on 2026-10-24, each in a
+ * lane of its own owning files no other lane touches, docs/agents/delegation.md.
+ */
+let implementersAtOnce = 3
+
 /** The most a lane's `target` holds, in gigabytes, before `cargo clean` clears it. */
 let laneTarget = 10
 
