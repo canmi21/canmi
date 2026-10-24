@@ -83,6 +83,12 @@ checkout would meet on one lock. The integrator opens one with `mise run lane op
 once its change is in the main line**: its jj workspaces are forgotten, `cargo clean` runs,
 `node_modules` is removed, and then the directory.
 
+**Before a lane opens, the base workspace's working copy is frozen with `jj new`, and while a lane
+is open that working copy is not edited**, learned on 2026-10-24: an edit to the commit a lane
+stands on rebases the lane's commit, the lane's working copy goes stale, and `jj workspace
+update-stale` then overwrites the edits on the lane's disk; that wave's were recovered from a
+divergent copy jj had snapshotted.
+
 **A lane's `target` holds no more than `Delegation.laneTarget`**, and is cleared with `cargo clean`
 past that. **A cache that can be written again is cleared by its own tool's clean**, never
 with `trash`, which frees no space; one with no clean, as `node_modules`, and a lane's directory
