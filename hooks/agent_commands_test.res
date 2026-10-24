@@ -185,23 +185,34 @@ describe("a reviewer's commands", () => {
     )
   })
 
-  test("allow jj only to read", () => {
+  test("allow jj only as diff, log, show, file show and file list", () => {
     [
       "jj diff -r @-",
-      "jj file show -r @ x",
       "jj log",
+      "jj show @",
       "jj -R a show @",
-      "ls",
-      "mise exec -- jj log",
-      "mise x -- ls",
+      "jj file show -r @ x",
+      "jj file list",
+      "jj file list -r @-",
+      "jj log --no-graph | head",
     ]->Array.forEach(
       command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
     )
+  })
+
+  test("refuse every other jj subcommand, jj status included, and a bare jj", () => {
     [
+      "jj",
       "jj commit -m x",
       "jj st",
-      "jj file list",
+      "jj status",
+      "jj new",
+      "jj file",
+      "jj file annotate x",
+      "jj file track x",
+      "jj -R a st",
       "git status",
+      "git log",
       "ls && jj new",
       "ls\njj st",
       "timeout 60 jj st",
@@ -210,10 +221,185 @@ describe("a reviewer's commands", () => {
       "pnpm exec jj st",
       "echo $(jj st)",
       "echo `jj st`",
-      "mise exec -- jj st",
-      "mise x -- git log",
     ]->Array.forEach(
       command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("allow the programs that only inspect", () => {
+    [
+      "cat a",
+      "head -n 5 a",
+      "tail -f a",
+      "grep -rn x .",
+      "rg x",
+      "rg -n x src",
+      "ls",
+      "ls -la docs",
+      "wc -l a",
+      "diff a b",
+      "find . -name '*.res'",
+      "find . -type f -print",
+      "/usr/bin/cat a",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("refuse every program beside them, a shell and mise among them", () => {
+    [
+      "rm a",
+      "trash a",
+      "touch a",
+      "mkdir a",
+      "cp a b",
+      "mv a b",
+      "echo hi",
+      "tee a",
+      "node a.js",
+      "python3 a.py",
+      "curl localhost",
+      "xargs rm",
+      "bash -c 'ls'",
+      "sh -c 'cat a'",
+      "zsh -c ls",
+      "fish -c ls",
+      "bash a.sh",
+      "ssh host",
+      "wrangler deploy",
+      "npx wrangler deploy",
+      "mise run built control",
+      "mise exec -- ls",
+      "mise exec -- jj log",
+      "mise x -- ls",
+      "mise x node@22 -- cat a",
+      "mise exec -c 'ls'",
+      "mise run //repos/apps/rdm:verify",
+      "mise ls",
+      "mise tasks",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("allow sed only quiet", () => {
+    [
+      "sed -n 5p a",
+      "sed -n '1,10p' a",
+      "sed --quiet 5p a",
+      "sed --silent 5p a",
+      "sed -nE 's/a/b/p' a",
+      "sed -En 's/a/b/p' a",
+      "sed -n -e 5p a",
+      "sed -ne 5p a",
+      "sed 5p -n a",
+      "sed -n '/-i/p' a",
+      "sed -n -- 5p a",
+      "cat a | sed -n 2p",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+    [
+      "sed 5p a",
+      "sed 's/a/b/' a",
+      "sed -E 's/a/b/' a",
+      "sed -e 5p a",
+      "sed -s 5p a",
+      "sed 5p a --",
+      "sed -- -n a",
+      "sed",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("refuse sed in place, in any spelling", () => {
+    [
+      "sed -i 's/a/b/' a",
+      "sed -n -i 's/a/b/' a",
+      "sed -ni 's/a/b/' a",
+      "sed -in 's/a/b/' a",
+      "sed -Ei 's/a/b/' a",
+      "sed -i.bak 's/a/b/' a",
+      "sed -n -i.bak 's/a/b/' a",
+      "sed -i'' 's/a/b/' a",
+      "sed -i '' 's/a/b/' a",
+      "sed -n -i '' 's/a/b/' a",
+      "sed -I 's/a/b/' a",
+      "sed --in-place 's/a/b/' a",
+      "sed --in-place=.bak 's/a/b/' a",
+      "sed --in-pl 's/a/b/' a",
+      "sed -n --in-place 's/a/b/' a",
+      "sed --quiet --in-place 's/a/b/' a",
+      "sed --silent --in-place=.bak 's/a/b/' a",
+      "ls | sed -n -i 5p a",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("refuse find given -exec or -delete", () => {
+    [
+      "find . -exec rm {} ;",
+      "find . -name a -exec cat {} +",
+      "find . -delete",
+      "find . -type f -name '*.tmp' -delete",
+      "find . -name a -print -delete",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+    expect(refused(Reviewer, "find . -name '-exec'"))->toEqual(true)
+    expect(refused(Reviewer, "find . -name exec"))->toEqual(false)
+  })
+
+  test("judge each segment of a chain or a pipeline", () => {
+    [
+      "rg x | head",
+      "rg x | head -n 5 | wc -l",
+      "ls && cat a",
+      "ls; jj log",
+      "cat a || jj diff",
+      "ls\njj show @",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+    [
+      "ls && mise run fmt",
+      "ls && rm a",
+      "rg x | xargs rm",
+      "cat a | sh",
+      "ls; jj new",
+      "ls\nrm a",
+      "ls | sed -i 5p a",
+      "ls && find . -delete",
+      "ls $(rm a)",
+      "cat `rm a`",
+      "cat \"$(mise run fmt)\"",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("name the rule in every refusal", () => {
+    [
+      "jj st",
+      "jj",
+      "git status",
+      "rm a",
+      "bash -c ls",
+      "mise exec -- ls",
+      "sed 5p a",
+      "sed -i 5p a",
+      "find . -delete",
+    ]->Array.forEach(
+      command =>
+        expect((
+          command,
+          Agent_commands.reason(Reviewer, command)->Option.mapOr(
+            false,
+            why => why->String.includes("reviewer-commands"),
+          ),
+        ))->toEqual((command, true)),
     )
   })
 })

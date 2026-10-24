@@ -189,10 +189,99 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
   }
 }
 
+/** The letters a short flag is written with, `-n` as `n`, the long flags left out. */
+let letters = flags =>
+  flags
+  ->Array.filter(flag => !(flag->String.startsWith("--")))
+  ->Array.map(flag => flag->String.slice(~start=1))
+
+// The sed short flags that take a value, the rest of the cluster or the next word.
+let sedValued = ["e", "f", "l"]
+
+/** Why sed is refused a reviewer, not given -n or given an in-place flag, or none. */
+let sedReason = (words: array<string>) => {
+  let quiet = ref(false)
+  let inPlace = ref(false)
+  let options = ref(true)
+  let at = ref(0)
+  while options.contents && at.contents < words->Array.length {
+    let word = words->Array.getUnsafe(at.contents)
+    at := at.contents + 1
+    if word == "--" {
+      options := false
+    } else if word->String.startsWith("--") {
+      let name = word->String.split("=")->Array.getUnsafe(0)
+      quiet := quiet.contents || Delegation.sedQuiet->Array.includes(name)
+      // sed takes a long flag by any prefix of it, so any prefix of an in-place flag counts.
+      inPlace :=
+        inPlace.contents ||
+        (name->String.length >= 3 &&
+          Delegation.sedInPlace->Array.some(flag =>
+            flag->String.startsWith("--") && flag->String.startsWith(name)
+          ))
+    } else if word->String.startsWith("-") && word->String.length > 1 {
+      let chars = word->String.slice(~start=1)->String.split("")
+      let scanning = ref(true)
+      chars->Array.forEachWithIndex((char, index) =>
+        if scanning.contents {
+          if sedValued->Array.includes(char) {
+            scanning := false
+            if index == chars->Array.length - 1 {
+              at := at.contents + 1
+            }
+          } else if letters(Delegation.sedQuiet)->Array.includes(char) {
+            quiet := true
+          } else if letters(Delegation.sedInPlace)->Array.concat(["I"])->Array.includes(char) {
+            // -I is the in-place flag of the sed macOS ships.
+            inPlace := true
+          }
+        }
+      )
+    }
+  }
+  if inPlace.contents {
+    Some("sed is never run in place")
+  } else if !quiet.contents {
+    Some("sed is run only quiet, given -n")
+  } else {
+    None
+  }
+}
+
+/** Why one segment is refused a reviewer, which runs jj's reading and `Delegation.inspecting`. */
+let readerReason = (segment: array<string>) =>
+  switch Jj_command.programOf(segment) {
+  | None => None
+  | Some("jj", _) =>
+    let rule = ruleOf(Reviewer)
+    switch Jj_command.invocationOf(segment) {
+    | Some("file", rest)
+      if rest
+      ->firstWord
+      ->Option.mapOr(false, word => Delegation.readingFile->Array.includes(word)) =>
+      None
+    | Some(subcommand, _) if Delegation.reading->Array.includes(subcommand) => None
+    | Some(subcommand, _) => Some(`jj ${subcommand} is not a reader's command, ${rule} holds it`)
+    | None => Some(`a bare jj is not a reader's command, ${rule} holds it`)
+    }
+  | Some(program, words) if Delegation.inspecting->Array.includes(program) =>
+    let why = switch program {
+    | "sed" => sedReason(words)
+    | "find" =>
+      words
+      ->Array.find(word => Delegation.findWriting->Array.includes(word))
+      ->Option.map(found => `find is never given ${found}`)
+    | _ => None
+    }
+    why->Option.map(why => `${why}, ${ruleOf(Reviewer)} holds it`)
+  | Some(program, _) => Some(`${program} is not a reader's command, ${ruleOf(Reviewer)} holds it`)
+  }
+
 /** Why one segment is refused to a role, or none. */
 let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<string>) =>
   switch (role, Jj_command.programOf(segment)) {
   | (_, None) => None
+  | (Reviewer, _) => readerReason(segment)
   | (_, Some(program, _)) if Delegation.versioning->Array.includes(program) =>
     Some("git is not typed here")
   | (_, Some("mise", words)) if execOf(givenOf(words), words) != None =>
@@ -207,20 +296,12 @@ let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<
     | Some(Line(line)) => reason(~cwd, role, line)
     | _ => None
     }
-  | (Reviewer, Some("jj", _)) =>
-    switch Jj_command.invocationOf(segment) {
-    | Some(("file", rest)) if rest->firstWord == Some("show") => None
-    | Some(subcommand, _) if Delegation.reading->Array.includes(subcommand) => None
-    | Some(subcommand, _) => Some(`jj ${subcommand} is not a reader's command`)
-    | None => None
-    }
   | (_, Some("mise", words)) =>
     let given = givenOf(words)
     let given = {...given, directory: given.directory->Option.orElse(directory)}
     tasksOf(given)->Array.findMap(found =>
       found->Option.flatMap(found => taskReason(role, found, ~flags=given.flags, ~cwd))
     )
-  | (Reviewer, _) => shellReason(~cwd, role, segment)
   | (_, Some("jj", _)) => Some("jj is not typed here")
   | (_, Some(program, _)) if Delegation.remote->Array.includes(program) =>
     Some(`${program} is the integrator's`)
