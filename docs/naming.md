@@ -189,6 +189,12 @@ being data and versioned; the manifests, the domain and the one configured value
 identifier in the code changes. A new case is judged by the principle: does this datum leave the
 system and meet other people's.
 
+`own-name` in [model/rules/naming.res](../model/rules/naming.res) is the rule, and the names part
+of `check <repository>` holds a repository's code to it, its documents unread; where the name is
+data, the repository's `workspace.toml` names each file and its spelling under `[[names.data]]`.
+It holds every owner the registry lists but the author's own account, whose name the next section
+holds instead.
+
 ### The author's account name is a vendor's name too
 
 The author's public account name, `canmi21`, is treated as a vendor's, decided by the author on
@@ -197,12 +203,6 @@ repository defines, and a comment that mentions it. **It never stands in the str
 module, function or variable is named for it, and no code decides by it. It is no secret, so it is
 kept off the list of private identifiers, and it is not dwelt on. `account-name` in
 [model/rules/naming.res](../model/rules/naming.res).
-
-`own-name` in [model/rules/naming.res](../model/rules/naming.res) is the rule, and the names part
-of `check <repository>` holds a repository's code to it, its documents unread; where the name is
-data, the repository's `workspace.toml` names each file and its spelling under `[[names.data]]`.
-It holds every owner the registry lists but the author's own account, whose name is a person's,
-so a project under that account is held by judgment alone.
 
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 
