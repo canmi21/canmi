@@ -380,6 +380,158 @@ describe("a reviewer's commands", () => {
     )
   })
 
+  test("refuse an output redirection to a file and a process substitution", () => {
+    [
+      "cat a > b",
+      "cat a >b",
+      "cat a >> b",
+      "cat a 2> b",
+      "cat a &> b",
+      "cat a &>> b",
+      "cat a >| b",
+      "cat a >& b",
+      "cat a <> b",
+      "cat a > \"b\"",
+      "cat a > $HOME/b",
+      "cat a >",
+      "rg x > /dev/nullx",
+      "diff <(rm a) b",
+      "diff a >(rm b)",
+      "diff <(cat a) b",
+      "cat \"$(cat a > b)\"",
+      "cat `cat a > b`",
+      "cat $(ls > b)",
+      "rm $'\\'' a",
+      "cat 'a",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("allow /dev/null, a duplicated descriptor and input read from a file", () => {
+    [
+      "cat a 2>/dev/null",
+      "cat a >/dev/null",
+      "cat a > /dev/null 2>&1",
+      "grep -n x f 2>&1 | head",
+      "rg x 2>/dev/null | head",
+      "cat a &>/dev/null",
+      "wc -l < a",
+      "rg '>' a",
+      "grep \"a > b\" f",
+      "grep 'a & b' f",
+      "rg x | head",
+      "cat a 1>&2",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("judge a command run by & as one of its own", () => {
+    [
+      "ls & rm a",
+      "ls &rm a",
+      "cat a & mise run fmt",
+      "ls & jj st",
+      "cat a |& rm b",
+      "cat $(ls & rm a)",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+    ["ls & cat a", "rg x & jj log"]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("refuse sed given a writing or running script, or a script file", () => {
+    [
+      "sed -n -l -i '' 's/a/b/' f",
+      "sed -nl -i 's/a/b/' f",
+      "sed -n 'w out' f",
+      "sed -n '1w out' f",
+      "sed -n '/x/w out' f",
+      "sed -n 's/a/b/w out' f",
+      "sed -n 's/a/b/gw out' f",
+      "sed -n 's/a/b/e' f",
+      "sed -n e f",
+      "sed -n '1e' f",
+      "sed -n 'W out' f",
+      "sed -n '1,5W out' f",
+      "sed -n -e p -e 'w out' f",
+      "sed -n --expression='w out' f",
+      "sed -n --expr 'w out' f",
+      "sed -ne 'w out' f",
+      "sed -n -e '1{w out' -e '}' f",
+      "sed -n '1{w out}' f",
+      "sed -n 'p;w out' f",
+      "sed -n ':a;w out' f",
+      "sed -n '/[a/b]/w out' f",
+      "sed -n '\\,x,w out' f",
+      "sed -n '1!w out' f",
+      "sed -n 's/a/b' f",
+      "sed -n '/x' f",
+      "sed -n 1 f",
+      "sed -n -f script.sed f",
+      "sed -nf script.sed f",
+      "sed -n --file=script.sed f",
+      "sed -n 'k' f",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+    [
+      "sed -n '1,20p' f",
+      "sed -n '/error/p' f",
+      "sed -n 's/hello/world/gp' f",
+      "sed -n '/x/,/y/p' f",
+      "sed -n '$p' f",
+      "sed -n '1!p' f",
+      "sed -n '/[/]/p' f",
+      "sed -n 's|a|b|p' f",
+      "sed -n '\\,x,p' f",
+      "sed -n '1{p;p}' f",
+      "sed -n -e '1p' -e '2p' f",
+      "sed -n -l '1p' f",
+      "sed -n 'y/abc/xyz/;p' f",
+      "sed -n '/x/{=;p}' f",
+      "sed -n '1~2p' f",
+      "sed -n '5q' f",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("refuse find, rg and jj given a flag that writes or runs a program", () => {
+    [
+      "find . -fprint out",
+      "find . -fprint0 out",
+      "find . -fprintf out %p",
+      "find . -fls out",
+      "find . -ok rm {} ;",
+      "find . -okdir rm {} ;",
+      "find . -execdir rm {} ;",
+      "rg --pre cat x",
+      "rg --pre=cat x",
+      "rg -n --pre ./run x .",
+      "jj diff --tool meld",
+      "jj diff --tool=meld",
+      "jj --config ui.pager=x log",
+      "jj log --config=ui.pager=x",
+      "jj --config-file x log",
+      "jj show --config-file=x @",
+      "jj --tool x diff",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+    [
+      "jj diff --from a --to b",
+      "find . -name '*.res'",
+      "rg --pretty x",
+      "rg -n x src | head",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
   test("name the rule in every refusal", () => {
     [
       "jj st",

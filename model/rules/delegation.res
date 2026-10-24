@@ -23,11 +23,11 @@ let remote = ["ssh", "rsync", "wrangler"]
 /** Version control no subagent types, jj aside, which `reading` holds for a reviewer. */
 let versioning = ["git"]
 
-/** The jj subcommands a reviewer may run, `file` with `readingFile` beside them, `reviewer-commands`. */
+/** The jj subcommands a reviewer may run, `file` with `readingFile` beside them. */
 let reading = ["diff", "log", "show"]
 let readingFile = ["show", "list"]
 
-/** The programs a reviewer may run beside jj's reading, every other refused, `reviewer-commands`. */
+/** The programs a reviewer may run beside jj's reading, every other refused. */
 let inspecting = ["cat", "head", "tail", "sed", "grep", "rg", "ls", "find", "wc", "diff"]
 
 /** sed runs for a reviewer only quiet, given -n, and never in place, -I being macOS's own. */
