@@ -145,23 +145,22 @@ let ahead = repo => {
 }
 
 /**
- * Each public repository with commits to push scanned for the private identifiers, a hit in what
- * it sends refusing every push unless SKIP names the scan, a hit in what it tracks only warned of.
- * See docs/agents/pushing.md, "A push carries nothing private".
+ * Each public repository with commits to push scanned by `Scan.judged`, a hit sent refusing every
+ * push. See docs/agents/pushing.md, "A push carries nothing private".
  */
 let scanned = (pending: array<(string, option<array<string>>)>, ~dry) => {
   let nothing = dry ? "a push would push nothing" : "push pushes nothing"
-  let public = pending->Array.filterMap(((repo, commits)) =>
+  let outgoing = pending->Array.filterMap(((repo, commits)) =>
     switch commits {
     | None | Some([]) => None
     | Some(_) =>
       switch Project.visibilityAt(repo) {
-      | Ok(visibility) => visibility == Project.public ? Some(repo) : None
+      | Ok(visibility) => Some((repo, visibility == Project.public))
       | Error(why) => Registry.fail(`${why}, so ${nothing}`)
       }
     }
   )
-  if public != [] {
+  if outgoing->Array.some(((_, public)) => public) {
     let identifiers = switch Scan.identifiers() {
     | Some(identifiers) => identifiers
     | None =>
@@ -171,15 +170,14 @@ let scanned = (pending: array<(string, option<array<string>>)>, ~dry) => {
       )
     }
     let skip = Node.env->Dict.get(Commits.skip)
-    let refused = public->Array.flatMap(repo => {
+    let refused = outgoing->Array.flatMap(((repo, public)) => {
       let place = Registry.label(repo)
-      switch Scan.repository(repo, identifiers) {
+      switch Scan.judged(~public, ~skip, () => Scan.repository(repo, identifiers)) {
       | Error(why) => Registry.fail(`${place} cannot be scanned, ${why}, so ${nothing}`)
-      | Ok((sent, tracked)) =>
-        tracked
-        ->Array.filter(hit => !(sent->Array.some(other => other == hit)))
-        ->Array.forEach(hit => Console.log(`warning: ${Scan.shown(place, hit)}, already tracked`))
-        let (passed, refused) = Scan.verdict(sent, ~skip)
+      | Ok({refused, passed, warned}) =>
+        warned->Array.forEach(hit =>
+          Console.log(`warning: ${Scan.shown(place, hit)}, already tracked`)
+        )
         passed->Array.forEach(hit =>
           Console.log(`passed by ${Commits.skip}=${Scan.gate}: ${Scan.shown(place, hit)}`)
         )
