@@ -21,8 +21,8 @@ let parentOf = path => {
   parts->Array.length == 1 ? "." : parts->Array.slice(~start=0, ~end=-1)->Array.join("/")
 }
 
-/** Every way `files` break the layout rules, each by rule; `cargo` is the root Cargo.toml. */
-let ruled = (files: array<string>, ~cargo: option<string>): array<(string, string)> => {
+/** Every way `files` break the layout rules, by rule and path; `cargo` is the root Cargo.toml. */
+let located = (files: array<string>, ~cargo: option<string>): array<(string, string, string)> => {
   let tree = directories(files)
   let inside = path => tree->Dict.get(path)->Option.getOr([])
   let isPackage = path => Layout.manifests->Array.some(name => inside(path)->Array.includes(name))
@@ -37,6 +37,7 @@ let ruled = (files: array<string>, ~cargo: option<string>): array<(string, strin
       if count > Layout.widest {
         found->Array.push((
           "tree-wide",
+          path,
           `${path}/: ${Int.toString(count)} entries, past ${Int.toString(Layout.widest)}`,
         ))
       }
@@ -52,6 +53,7 @@ let ruled = (files: array<string>, ~cargo: option<string>): array<(string, strin
       if depth == Layout.deepest + 1 {
         found->Array.push((
           "tree-deep",
+          path,
           `${path}/: ${Int.toString(depth)} deep, past ${Int.toString(Layout.deepest)}`,
         ))
       }
@@ -65,6 +67,7 @@ let ruled = (files: array<string>, ~cargo: option<string>): array<(string, strin
     ) {
       found->Array.push((
         "root-configuration",
+        name,
         `${name}: a source file at the root, where configuration alone sits`,
       ))
     }
@@ -75,31 +78,50 @@ let ruled = (files: array<string>, ~cargo: option<string>): array<(string, strin
     | JSON.Object(manifest) if manifest->Dict.get("package")->Option.isSome =>
       found->Array.push((
         "root-configuration",
+        "Cargo.toml",
         "Cargo.toml: a [package] at the root, where a virtual manifest alone is",
       ))
     | _ => ()
-    | exception _ => found->Array.push(("root-configuration", "Cargo.toml: does not parse"))
+    | exception _ =>
+      found->Array.push(("root-configuration", "Cargo.toml", "Cargo.toml: does not parse"))
     }
   | None => ()
   }
   if tree->Dict.get(Layout.retired)->Option.isSome {
     found->Array.push((
       "rules-in-docs",
+      Layout.retired,
       `${Layout.retired}/: the rules are ${Layout.rulesHome}/ now`,
     ))
   }
   found
 }
 
+let ruled = (files, ~cargo) => located(files, ~cargo)->Array.map(((rule, _, says)) => (rule, says))
+
 let problems = (files, ~cargo) => ruled(files, ~cargo)->Array.map(((_, says)) => says)
 
-/** A repository's findings over what version control keeps, its vendored source passed over. */
-let tagged = (~root): array<(string, string)> => {
-  let cargo = Node.join([root, "Cargo.toml"])
-  ruled(
-    Lines.tracked(root)->Array.filter(path => !Layout.vendored(path)),
-    ~cargo=Node.existsSync(cargo) ? Some(Node.readFileSync(cargo)) : None,
-  )
-}
+/** Since when a directory too wide or too deep has been so, by the files under it. */
+let onset = (~root, rule, path, ~at=?) =>
+  switch rule {
+  | "tree-wide" =>
+    Onset.directory(~root, path, ~at?, ~holds=files => Onset.entries(path, files) > Layout.widest)
+  | "tree-deep" => Onset.directory(~root, path, ~at?, ~holds=files => files != [])
+  | _ => None
+  }
 
-let main = (~root) => tagged(~root)->Array.map(((_, says)) => says)
+/** A tree's findings over what version control keeps, its vendored source passed over. */
+let measured = (tree: Lines.tree): array<Form_layer.finding> =>
+  located(
+    tree.paths->Array.filter(path => !Layout.vendored(path)),
+    ~cargo=tree.bytes("Cargo.toml")->Option.map(Node.chunkText),
+  )->Array.map(((rule, path, says)): Form_layer.finding => {
+    rule,
+    says,
+    onset: () => onset(~root=tree.root, rule, path, ~at=?tree.at),
+  })
+
+/** A repository's findings over its working copy. */
+let tagged = (~root) => measured(Lines.disk(root))
+
+let main = (~root) => tagged(~root)->Array.map(finding => finding.says)

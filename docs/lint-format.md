@@ -14,9 +14,13 @@ re-triggers the formatter. Deleting the overlap is the only stable arrangement.
 
 `Format.owners` in [model/rules/format.res](../model/rules/format.res) names the formatter of each
 suffix the repositories share, or registers it as formatted by nothing, and `Format.linters` each
-language's linter. A suffix only one repository uses is in that repository's own model. Each is
-versioned by mise or by the package manager whose resolution it takes part in; see
-[toolchain.md](toolchain.md).
+language's linter. **A suffix only one repository uses is registered in that repository's
+`workspace.toml`, under `[format]`**, which the suffixes part reads, decided by the author on
+2026-10-24: a repository's own model would not do, since monoflake/machine and monoflake/runtime
+have no model directory. The same table declares a directory of test data, which the suffixes part
+and the hook pass over. Each formatter is versioned by mise or by the package manager whose
+resolution it takes part in, nixfmt by the `flake.lock` of the repository it formats, as
+[toolchain.md](toolchain.md), "Nix is installed on the machine, and pins its own tools", has it.
 
 ## A file is formatted as it is written
 
@@ -26,9 +30,16 @@ where none is, or the suffix is registered as formatted by nothing, nothing runs
 that fails, as on a file that does not parse yet, blocks nobody. A formatter finds its
 configuration by walking up from the file's directory. `formatted-on-write`, pending.
 
+**The hook hangs in the implementer's definition alone**, `.claude/agents/implementer.md`, and
+acts only while an implementer runs; `.claude/settings.json` is not touched. `edit-after-format` is
+proven on the implementer: two Edits of one file in a row, the hook changing it between them.
+Whether the hook then spreads to `.claude/settings.json` the author decides alone, once that has
+passed.
+
 **A suffix too rare to be worth a formatter is registered as formatted by nothing**, explicitly. A
-repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`,
-pending.
+repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`.
+**A lockfile is never formatted**: a tool writes it, and the hook never touches it. **A binary file
+is passed over**, told by its content as git tells it, so an image needs no entry.
 
 **The integrator still runs `mise run fmt` when it merges a wave**, as the net beneath the hook.
 Formatting is therefore no part of the form layer, [agents/checking.md](agents/checking.md).

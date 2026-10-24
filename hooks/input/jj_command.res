@@ -43,9 +43,9 @@ let words = (command: string): option<array<string>> => {
       } else {
         word := word.contents ++ char
       }
-    } else if char == " " || char == "\t" || char == "\n" || char == "\r" {
+    } else if char == " " || char == "\t" || char == "\r" {
       close()
-    } else if char == ";" {
+    } else if char == ";" || char == "\n" {
       operator(";", ~pair=false)
     } else if char == "|" {
       next == Some("|") ? operator("||", ~pair=true) : operator("|", ~pair=false)
@@ -70,8 +70,56 @@ let words = (command: string): option<array<string>> => {
   }
 }
 
-/** The command line cut at each separator, which `words` keeps as a word of its own. */
-let segments = command =>
+/** The text inside each outermost `$(...)` or backtick span, past single quotes. */
+let substitutions = (command: string): array<string> => {
+  let chars = command->Node.codePoints
+  let length = chars->Array.length
+  let found = []
+  let single = ref(false)
+  let double = ref(false)
+  let at = ref(0)
+  while at.contents < length {
+    let char = chars->Array.getUnsafe(at.contents)
+    if single.contents {
+      single := char != "'"
+      at := at.contents + 1
+    } else if char == "'" && !double.contents {
+      single := true
+      at := at.contents + 1
+    } else if char == "\"" {
+      double := !double.contents
+      at := at.contents + 1
+    } else if char == "\\" {
+      at := at.contents + 2
+    } else if char == "$" && chars[at.contents + 1] == Some("(") {
+      let depth = ref(1)
+      let stop = ref(at.contents + 2)
+      while depth.contents > 0 && stop.contents < length {
+        let inner = chars->Array.getUnsafe(stop.contents)
+        depth := depth.contents + (inner == "(" ? 1 : inner == ")" ? -1 : 0)
+        stop := stop.contents + 1
+      }
+      let last = depth.contents == 0 ? stop.contents - 1 : stop.contents
+      found->Array.push(chars->Array.slice(~start=at.contents + 2, ~end=last)->Array.join(""))
+      at := stop.contents
+    } else if char == "`" {
+      let stop = ref(at.contents + 1)
+      while stop.contents < length && chars->Array.getUnsafe(stop.contents) != "`" {
+        stop := stop.contents + (chars->Array.getUnsafe(stop.contents) == "\\" ? 2 : 1)
+      }
+      found->Array.push(
+        chars->Array.slice(~start=at.contents + 1, ~end=stop.contents)->Array.join(""),
+      )
+      at := stop.contents + 1
+    } else {
+      at := at.contents + 1
+    }
+  }
+  found
+}
+
+/** The command line cut at each separator, then each command substitution's own segments. */
+let rec segments = command =>
   switch words(command) {
   | None => []
   | Some(all) =>
@@ -81,19 +129,68 @@ let segments = command =>
         ? cut->Array.push([])
         : cut[cut->Array.length - 1]->Option.forEach(last => last->Array.push(word))
     )
-    cut->Array.filter(segment => segment != [])
+    cut
+    ->Array.filter(segment => segment != [])
+    ->Array.concat(substitutions(command)->Array.flatMap(segments))
   }
 
-/** Whether the word at `at` is the command its segment runs, past assignments, env or command. */
-let isCommand = (segment: array<string>, at) =>
-  at == 0 || {
-      let prefix = segment->Array.slice(~start=0, ~end=at)
-      prefix[at - 1] == Some("--") ||
-      prefix->Array.every(word => word->String.includes("=") && !(word->String.startsWith("="))) ||
-      prefix[0]->Option.mapOr(false, first =>
-        ["command", "env"]->Array.includes(Node.basename(first))
-      )
+/** Where the program of a segment sits, past assignments and the wrappers that run what follows. */
+let commandAt = (segment: array<string>): option<int> => {
+  let length = segment->Array.length
+  let at = ref(0)
+  let skipping = ref(true)
+  let word = index => segment->Array.getUnsafe(index)
+  // Dash words, and the word after each one that takes a value.
+  let options = (~valued) =>
+    while at.contents < length && word(at.contents)->String.startsWith("-") {
+      at := at.contents + (valued->Array.includes(word(at.contents)) ? 2 : 1)
     }
+  while skipping.contents && at.contents < length {
+    let current = word(at.contents)
+    if current->String.includes("=") && !(current->String.startsWith("=")) {
+      at := at.contents + 1
+    } else {
+      switch Node.basename(current) {
+      | "command" | "env" | "exec" | "nohup" | "time" | "setsid" =>
+        at := at.contents + 1
+        options(~valued=[])
+      | "nice" =>
+        at := at.contents + 1
+        options(~valued=["-n", "--adjustment"])
+      | "timeout" =>
+        at := at.contents + 1
+        options(~valued=["-s", "--signal", "-k", "--kill-after"])
+        at := at.contents + 1
+      | "xargs" =>
+        at := at.contents + 1
+        options(
+          ~valued=["-I", "-n", "-P", "-L", "-E", "-d", "-s", "-a", "-J", "-R", "-S", "--max-args"],
+        )
+      | "npx" | "bunx" | "pnpx" =>
+        at := at.contents + 1
+        options(~valued=["-p", "--package"])
+      | "pnpm" | "yarn" | "npm"
+        if ["exec", "dlx"]->Array.includes(segment[at.contents + 1]->Option.getOr("")) =>
+        at := at.contents + 2
+        options(~valued=["-p", "--package"])
+      | _ => skipping := false
+      }
+    }
+  }
+  at.contents < length ? Some(at.contents) : None
+}
+
+/** Whether the word at `at` is the command its segment runs, past assignments and wrappers. */
+let isCommand = (segment: array<string>, at) =>
+  at == 0 ||
+  commandAt(segment) == Some(at) || {
+    let prefix = segment->Array.slice(~start=0, ~end=at)
+    prefix[at - 1] == Some("--") ||
+    prefix->Array.every(word => word->String.includes("=") && !(word->String.startsWith("="))) ||
+    prefix[0]->Option.mapOr(false, first =>
+      ["command", "env"]->Array.includes(Node.basename(first))
+    )
+  }
 
 /** The jj subcommand one segment runs and the arguments after it, if it runs jj. */
 let invocationOf = (segment: array<string>): option<(string, array<string>)> => {
@@ -193,3 +290,10 @@ let placed = (command, ~cwd, subcommands): array<string> => {
   )
   found
 }
+
+/** The program one segment runs and the words after it, past assignments and wrappers. */
+let programOf = (segment: array<string>): option<(string, array<string>)> =>
+  commandAt(segment)->Option.map(at => (
+    Node.basename(segment->Array.getUnsafe(at)),
+    segment->Array.slice(~start=at + 1),
+  ))

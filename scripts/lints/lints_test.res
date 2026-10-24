@@ -59,15 +59,10 @@ describe("a comment", () => {
 })
 
 describe("a Python file's docstrings", () => {
-  let dir = ref("")
-  beforeEach(() => dir := Node.mkdtempSync(Node.join([Node.tmpdir(), "comments-"])))
-  afterEach(() => Node.rmSync(dir.contents, {recursive: true, force: true}))
-
   test("are found by Python's parser: the module's opens the file, a function's does not", () => {
-    let path = Node.join([dir.contents, "a.py"])
+    let path = "a.py"
     let text = "\"\"\"The module,\nsaid twice.\"\"\"\n\n\ndef f():\n\t\"\"\"A function.\"\"\"\n\treturn 1\n"
-    Node.writeFileSync(path, text)
-    let spans = Comments.docstringSpans([path])->Map.get(path)->Option.getOr([])
+    let spans = Comments.docstringSpans([(path, text)])->Map.get(path)->Option.getOr([])
     expect(spans->Array.toSorted(((a, _, _), (b, _, _)) => Int.toFloat(a - b)))->toEqual([
       (1, 2, true),
       (6, 6, false),

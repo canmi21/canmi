@@ -164,11 +164,20 @@ let rules: array<Rule.t> = [
     held: Pending("a scan of the diff a push sends, reading `privateIdentifiers`"),
   },
   {
-    name: "push-gated",
-    says: "A wave's push in roles waits on the full check, the form layer holding nothing, a reviewer's read and the wave accepted",
+    name: "push-form-clear",
+    says: "Every push waits on the form layer holding nothing in the tree of each commit it pushes, read from the repository",
     doc: pushing,
     held: Pending(
-      "push counting the form layer's warnings as failures, as audit does, and reading that a reviewer read the wave and the wave was accepted",
+      "a kind of held for push itself; scripts/workspace/repos.res holds it since 2026-10-24, reading each pushed commit",
+    ),
+    layer: Form,
+  },
+  {
+    name: "push-gated",
+    says: "A wave's push in roles also waits on the full check, a reviewer's read and the wave accepted",
+    doc: pushing,
+    held: Pending(
+      "push running the full check and reading that a reviewer read the wave and the wave was accepted",
     ),
   },
   {

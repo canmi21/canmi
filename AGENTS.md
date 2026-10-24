@@ -125,9 +125,9 @@ See [docs/naming.md](docs/naming.md).
 
 **Shape** -- a tree grows by nesting, never by spreading: no directory but a root holds more than
 `Layout.widest` entries or lies more than `Layout.deepest` deep, and a root holds configuration, not
-source. It refuses a commit now; once `form-at-commit` lands it only warns at a commit and stops a
-push, [docs/agents/checking.md](docs/agents/checking.md). See [docs/repos.md](docs/repos.md), "A
-tree grows by nesting, never by spreading".
+source. It only warns at a commit and stops a push,
+[docs/agents/checking.md](docs/agents/checking.md). See [docs/repos.md](docs/repos.md), "A tree
+grows by nesting, never by spreading".
 
 **Lint vs format** -- a linter owns semantics, a formatter owns layout. Whatever the formatter
 rewrites, the linter must not report; disable the overlap on the linter side. Holds for every

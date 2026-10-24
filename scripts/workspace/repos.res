@@ -121,40 +121,65 @@ let pull = (name, ~dry, ~everything) => {
   0
 }
 
-/** Push main wherever origin is behind it; an origin with no main yet is behind by all of it. */
+/** What main holds that origin lacks, or None where jj cannot tell. */
+let ahead = repo => {
+  let result = capture(
+    ~cwd=repo,
+    "jj",
+    [
+      "log",
+      "--no-graph",
+      "-r",
+      `remote_bookmarks(exact:"main", exact:"origin")..main ~ root()`,
+      "-T",
+      `commit_id.short() ++ "\\n"`,
+    ],
+  )
+  if result.status != 0 {
+    Console.log(`${Registry.label(repo)}: cannot tell what to push`)
+    Console.error(result.err)
+    None
+  } else {
+    Some(result.out->lines)
+  }
+}
+
+/**
+ * Push main wherever origin is behind it, an origin with no main yet behind by all of it, once the
+ * form layer holds nothing in any of them.
+ */
 let push = (name, ~dry, ~everything) => {
-  Registry.selected(name, ~everything)
-  ->Array.filter(Registry.isRepository)
-  ->Array.forEach(repo => {
-    let place = Registry.label(repo)
-    let result = capture(
-      ~cwd=repo,
-      "jj",
-      [
-        "log",
-        "--no-graph",
-        "-r",
-        `remote_bookmarks(exact:"main", exact:"origin")..main ~ root()`,
-        "-T",
-        `commit_id.short() ++ "\\n"`,
-      ],
+  let pending =
+    Registry.selected(name, ~everything)
+    ->Array.filter(Registry.isRepository)
+    ->Array.map(repo => (repo, ahead(repo)))
+  let held = pending->Array.filter(((repo, commits)) =>
+    switch commits {
+    | Some([]) | None => false
+    | Some(_) => Check.gate(repo, ~bookmarks=["main"]) != 0
+    }
+  )
+  if held != [] {
+    Registry.fail(
+      `the form layer holds a warning in ${held
+        ->Array.map(((repo, _)) => Registry.label(repo))
+        ->Array.join(", ")}, so ${dry ? "a push would push" : "push pushes"} nothing`,
     )
-    if result.status != 0 {
-      Console.log(`${place}: cannot tell what to push`)
-      Console.error(result.err)
-    } else {
-      switch result.out->lines {
-      | [] => Console.log(`${place}: nothing to push`)
-      | ahead =>
-        Console.log(
-          `${place}: ${dry ? "would push" : "pushing"} ${Int.toString(
-              ahead->Array.length,
-            )} commit(s)`,
-        )
-        let flags = dry ? ["--dry-run"] : []
-        if Node.run(~cwd=repo, "jj", ["git", "push", "--bookmark", "main", ...flags]) != 0 {
-          Registry.fail(`jj git push failed in ${place}`)
-        }
+  }
+  pending->Array.forEach(((repo, commits)) => {
+    let place = Registry.label(repo)
+    switch commits {
+    | None => ()
+    | Some([]) => Console.log(`${place}: nothing to push`)
+    | Some(commits) =>
+      Console.log(
+        `${place}: ${dry ? "would push" : "pushing"} ${Int.toString(
+            commits->Array.length,
+          )} commit(s)`,
+      )
+      let flags = dry ? ["--dry-run"] : []
+      if Node.run(~cwd=repo, "jj", ["git", "push", "--bookmark", "main", ...flags]) != 0 {
+        Registry.fail(`jj git push failed in ${place}`)
       }
     }
   })

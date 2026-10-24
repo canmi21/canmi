@@ -40,6 +40,8 @@ oxlint = "1"
 # What the workflows part of check lints each workflow with, and what it reads a step's shell with.
 actionlint = "1"
 shellcheck = "0.11" # pre-1.0, where a minor is the breaking release
+# What formats a shell script, reading .editorconfig, docs/lint-format.md.
+shfmt = "3"
 
 # One verb, for the workspace alone, a path from repos/registry.toml, or --all for every one.
 [tasks.pull]

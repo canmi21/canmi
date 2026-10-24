@@ -6,14 +6,15 @@ let root = Registry.root
 let python = "/usr/bin/python3"
 
 /**
- * A Soft part's findings are warnings, failing only under AUDIT, as soft rules are read; a Waivable
- * part's each name the rule broken, passed over in the repository a deferred item waives it for.
+ * A Soft part warns, failing only under AUDIT; a Waivable part's findings name their rule, waived
+ * by a deferred item. A Waivable or Formed part fails the form layer under AUDIT or at a push.
  */
 type part =
   | Script(unit => int)
   | Found(unit => array<string>)
   | Soft(unit => array<string>)
-  | Waivable(string, unit => array<(string, string)>)
+  | Waivable(string, unit => array<Form_layer.finding>)
+  | Formed(bool => int)
 
 let report = found => {
   found->Array.forEach(line => Console.log(`  x ${line}`))
@@ -81,13 +82,13 @@ let parts: array<(string, part)> = [
           : 1,
     ),
   ),
-  ("lines", Script(() => Lines.main())),
+  ("lines", Formed(pushing => Lines.main(~pushing))),
   ("refs", Script(() => Refs.main())),
   (
     "comments",
-    Script(
-      () => {
-        let measured = Comments.main(~root, ~given=[])
+    Formed(
+      pushing => {
+        let measured = Comments.main(~root, ~given=[], ~pushing)
         report(Notes.main(~root)) + measured > 0 ? 1 : 0
       },
     ),
@@ -98,6 +99,7 @@ let parts: array<(string, part)> = [
   ("pins", Found(() => Pins.main(~root))),
   ("workflows", Found(() => Workflows.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
+  ("suffixes", Found(() => Suffix_owned.main(~root, ~label="workspace"))),
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
   ("rfcs", Found(() => Rfc_check.repository(Planning.workspaceSpace))),
@@ -133,9 +135,10 @@ let pending = () =>
     }
   )
 
-let outcome = part =>
+let outcome = (part, ~pushing=false) =>
   switch part {
   | Script(run) => run()
+  | Formed(run) => run(pushing)
   | Found(found) => report(found())
   | Soft(found) =>
     let warned = found()
@@ -145,7 +148,7 @@ let outcome = part =>
     }
     warned != [] && Node.envIs("AUDIT", "1") ? 1 : 0
   | Waivable(repo, found) =>
-    let kept = found()->Array.filter(((rule, says)) =>
+    let kept = found()->Array.filter(({rule, says}) =>
       switch Waiting.waiver(~repo, ~rule) {
       | Some(id) =>
         Console.log(`  waived by deferred ${id}: ${says}`)
@@ -153,7 +156,12 @@ let outcome = part =>
       | None => true
       }
     )
-    report(kept->Array.map(((_, says)) => says))
+    let (formed, logical) = kept->Array.partition(({rule}) => Form_layer.holds(rule))
+    let failing = Form_layer.fails(~pushing)
+    if !failing {
+      formed->Array.forEach(finding => Console.log(`  warning: ${Form_layer.shown(finding)}`))
+    }
+    report(Array.concat(logical, failing ? formed : [])->Array.map(Form_layer.shown))
   }
 
 /** What the workspace holds over every repository below it, each part by its name. */
@@ -164,8 +172,9 @@ let over = (repo): array<(string, part)> =>
       ("tasks", Found(() => Tasks.main(~root=repo))),
       ("names", Found(() => Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)))),
       ("commits", Found(() => commits(repo))),
-      ("comments", Script(() => Comments.main(~root=repo, ~given=[]))),
+      ("comments", Formed(pushing => Comments.main(~root=repo, ~given=[], ~pushing))),
       ("workflows", Found(() => Workflows.main(~root=repo))),
+      ("suffixes", Found(() => Suffix_owned.main(~root=repo, ~label=Registry.label(repo)))),
       ("plain", Soft(() => Comments.plain(~root=repo))),
       ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
     ],
@@ -186,6 +195,67 @@ let repository = (repo): int => {
     Console.log("")
     waiting->Array.forEach(line => Console.log(line))
   }
+  failed->Array.length > 0 ? 1 : 0
+}
+
+/** Whether `repo` keeps the lines rule, as the lines part reads it with no root given. */
+let keepsLines = repo =>
+  repo == root ||
+    switch Project.read(repo) {
+    | Ok(declared) => declared.rules.lines
+    | Error(_) => true
+    }
+
+/** The form layer's parts over a tree of `repo`, only their form findings, for a push. */
+let formed = (repo, tree: Lines.tree): array<(string, part)> =>
+  [
+    (
+      "shape",
+      Waivable(
+        Registry.label(repo),
+        () => Shape.measured(tree)->Array.filter(({rule}) => Form_layer.holds(rule)),
+      ),
+    ),
+    ("lines", Formed(pushing => keepsLines(repo) ? Lines.judged([tree], ~pushing) : 0)),
+    ("comments", Formed(pushing => Comments.measured(tree, ~pushing))),
+  ]->Array.filter(((name, _)) => Form_layer.parts->Array.includes(name))
+
+/** The commits `bookmarks` point to in `repo`, each once. */
+let pointed = (repo, bookmarks: array<string>) =>
+  bookmarks->Array.reduce([], (found, bookmark) =>
+    Onset.read(
+      ~root=repo,
+      [
+        "--ignore-working-copy",
+        "log",
+        "--no-graph",
+        "-r",
+        `bookmarks(exact:${Onset.quoted(bookmark)})`,
+        "-T",
+        `commit_id ++ "\\n"`,
+      ],
+    )
+    ->Option.mapOr([], Onset.lines)
+    ->Array.reduce(found, (found, commit) =>
+      found->Array.includes(commit) ? found : [...found, commit]
+    )
+  )
+
+/**
+ * The form layer over the tree of each commit `bookmarks` point to, read from the repository and
+ * never the disk, its warnings failing and each part logged past a failure.
+ */
+let gate = (repo, ~bookmarks): int => {
+  let failed = pointed(repo, bookmarks)->Array.flatMap(commit => {
+    let tree = Lines.committed(repo, commit)
+    let short = commit->String.slice(~start=0, ~end=12)
+    formed(repo, tree)->Array.filter(((name, part)) => {
+      Console.log(
+        `\n=== ${Registry.label(repo)} ${name} at ${short}, the form layer before a push ===`,
+      )
+      outcome(part, ~pushing=true) != 0
+    })
+  })
   failed->Array.length > 0 ? 1 : 0
 }
 

@@ -1,13 +1,33 @@
 /** How a wave's lanes are kept, merged and checked, docs/agents/lanes.md and checking.md. */
-/** What only the integrator changes, a directory ending in a slash. */
+/** What only the integrator changes, a directory ending in a slash; a check program is code. */
 let singleWriter = [
-  "model/",
+  "model/rules/",
+  "model/plan/",
+  "model/rules.res",
+  "model/graph/",
+  "model/contracts/",
+  "model/ground/",
+  "model/bootstrap/",
+  "model/names/",
   "docs/",
   "AGENTS.md",
   "Cargo.toml",
   "pnpm-workspace.yaml",
   "workspace.toml",
   "model/plan/work.res",
+]
+
+/** The programs an implementer and a refactorer never run, `implementer-commands`. */
+let remote = ["ssh", "rsync", "wrangler"]
+
+/** The tasks that deploy or release, by repository, the workspace's own by no name. */
+let releasing = [
+  ("", ["push", "publish"]),
+  ("platform", ["deploy", "conform", "lose", "replace"]),
+  ("driver", ["release"]),
+  ("cloud", ["switch", "tunnel", "install", "bind", "stand", "operate"]),
+  ("runtime", ["publish", "release"]),
+  ("machine", ["builder", "local"]),
 ]
 
 /** Where the lanes live, beside repos/, one `<name>/monoflake/<repository>` each. */
@@ -80,7 +100,7 @@ let rules: array<Rule.t> = [
     says: "An implementer types no jj, no mise run check, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
     doc: "docs/agents/implementer.md",
     held: Pending(
-      "a PreToolUse hook in its definition's frontmatter, in ReScript, at hooks/, beside jj_command.res",
+      "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
     ),
   },
   {
@@ -88,7 +108,7 @@ let rules: array<Rule.t> = [
     says: "A reviewer runs jj only to read, its diff, log, show and file show",
     doc: "docs/agents/reviewer.md",
     held: Pending(
-      "a PreToolUse hook in its definition's frontmatter, in ReScript, at hooks/, beside jj_command.res",
+      "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
     ),
   },
   {
@@ -103,7 +123,7 @@ let rules: array<Rule.t> = [
     says: "A refactorer types no jj, no mise run check, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
     doc: "docs/agents/refactorer.md",
     held: Pending(
-      "a PreToolUse hook in its definition's frontmatter, in ReScript, at hooks/, beside jj_command.res",
+      "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
     ),
   },
   {
@@ -134,7 +154,7 @@ let rules: array<Rule.t> = [
     name: "form-at-commit",
     says: "At a commit the form layer only warns, saying the commit it first appeared in and how many since",
     doc: checking,
-    held: Pending("check telling the form layer apart and reading each warning's history"),
+    held: Check("shape"),
     layer: Form,
   },
 ]

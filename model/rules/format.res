@@ -4,7 +4,7 @@ type formatter =
   | Formats(string)
   | Unformatted
 
-/** Each suffix the repositories share and its formatter; one repository's own is in its model. */
+/** Each suffix the repositories share and its formatter; one repository's own is its [format]. */
 let owners = [
   (".ts", Formats("oxfmt")),
   (".tsx", Formats("oxfmt")),
@@ -26,6 +26,10 @@ let owners = [
   (".yaml", Unformatted),
   (".yml", Unformatted),
   (".py", Unformatted),
+  (".lock", Unformatted),
+  (".txt", Unformatted),
+  (".nix", Formats("nixfmt")),
+  (".sh", Formats("shfmt")),
 ]
 
 /** Each language's linter, its semantic half alone. */
@@ -33,6 +37,7 @@ let linters = [
   ("TypeScript, JavaScript, Svelte", "oxlint"),
   ("Rust", "clippy"),
   ("ReScript", "rescript"),
+  ("Shell", "shellcheck"),
 ]
 
 /** oxlint rules off because the formatter already rewrites what they report. */
@@ -63,7 +68,7 @@ let rules: array<Rule.t> = [
     says: "After each Edit or Write, a PostToolUse hook formats that file alone by its suffix in `owners`, doing nothing for none or `Unformatted`, and blocking nobody when the formatter fails",
     doc,
     held: Pending(
-      "the PostToolUse hook, its formatter finding its configuration upward from the file",
+      "hooks/agent_commands.res format, hung in the implementer's definition, proven to run in a subagent; on 2026-10-24 it ran in none",
     ),
     escape: ByTool,
   },
@@ -71,7 +76,7 @@ let rules: array<Rule.t> = [
     name: "suffix-owned",
     says: "Every suffix a repository tracks has a formatter in `owners` or its model's table, or is registered `Unformatted`",
     doc,
-    held: Pending("each repository's tracked files read against `owners` and its own table"),
+    held: Check("suffixes"),
   },
   {
     name: "edit-after-format",

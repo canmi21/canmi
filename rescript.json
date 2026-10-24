@@ -10,7 +10,8 @@
 			"subdirs": true
 		},
 		{
-			"dir": "hooks"
+			"dir": "hooks",
+			"subdirs": true
 		}
 	],
 	"dependencies": [],

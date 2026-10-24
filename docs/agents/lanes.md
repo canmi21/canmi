@@ -45,9 +45,14 @@ integrator, which passes it on: neither edits the other's files, nor asks the ot
 
 ### Some files have one writer, the integrator
 
-**Only the integrator changes these**, decided by the author on 2026-10-24: `model/`, every RFC,
-`docs/`, `AGENTS.md`, and a root manifest, which is a Cargo workspace's member list,
-`pnpm-workspace.yaml`, `workspace.toml` and `model/plan/work.res`. `Delegation.singleWriter` in
+**Only the integrator changes these**, decided by the author on 2026-10-24: the model's rules and
+declarations, every RFC, `docs/`, `AGENTS.md`, and a root manifest, which is a Cargo workspace's
+member list, `pnpm-workspace.yaml`, `workspace.toml` and `model/plan/work.res`. **The model's rules
+and declarations** are the workspace's `model/rules/`, `model/plan/` and `model/rules.res`, and a
+repository's declaring files, as monoflake/platform's `model/graph/` and `model/contracts/`. **A
+check program is code, an implementer's**: `model/check.res` and `model/checks/`, of the workspace
+and of a repository alike. The one exception is a rule's `held` moved from `Pending` to `Check`,
+a registration the integrator writes at the merge. `Delegation.singleWriter` in
 [model/rules/delegation.res](../../model/rules/delegation.res) lists them. **A lockfile is
 derived**: never merged by hand, it is written again by the integrator when a wave is merged.
 **An implementer's diff that touches a file outside its own directory is refused by `accept`.**

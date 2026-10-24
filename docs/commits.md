@@ -182,9 +182,9 @@ that pushes every repository, and is said in a line.
 **Which agent pushes follows the roles**, decided by the author on 2026-10-24. Where roles are
 named, the integrator pushes on its own: when a wave ends, when a step of a thread is done, and
 before it ends a round of work with commits still unpushed. Where none is named, the one session
-holding both halves pushes its own work, as above: once the check passes and the work is done. **The
-push gate**, a reviewer's read and the wave accepted, [pushing.md](agents/pushing.md), **holds for a
-wave worked in roles alone.**
+holding both halves pushes its own work, as above: once the check passes, the form layer holds
+nothing and the work is done. **Every push waits on the form layer holding nothing**; a reviewer's
+read and the wave accepted hold for a wave worked in roles alone, [pushing.md](agents/pushing.md).
 
 **A push that releases a version of our own code is asked of the user first**, in either mode,
 until the deferred item `release-push` is settled; canmi/lib's `held-back` is one such push.

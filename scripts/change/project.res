@@ -45,6 +45,9 @@ type release = {built: string, columns: array<string>}
 /** A file whose code spells the project's own name as data, and the spellings it holds. */
 type datum = {file: string, spelled: array<string>}
 
+/** What the repository formats by nothing, its own suffixes and its directories of test data. */
+type format = {unformatted: array<string>, testData: array<string>}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -57,6 +60,7 @@ type declared = {
   release: option<release>,
   /** Where the own name is data, docs/naming.md, each spelling passed in its file alone. */
   names: array<datum>,
+  format: format,
 }
 
 exception Malformed(string)
@@ -242,6 +246,14 @@ let namesOf = (table: table): array<datum> => {
   }
 }
 
+let formatOf = (table: table): format => {
+  only(table, "format", ["unformatted", "test_data"])
+  {
+    unformatted: texts(table, "unformatted", "format"),
+    testData: texts(table, "test_data", "format"),
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -254,7 +266,18 @@ let read = (root: string): result<declared, string> => {
         only(
           top,
           "workspace.toml",
-          ["base", "layout", "verify", "deployable", "update", "rules", "rfcs", "release", "names"],
+          [
+            "base",
+            "layout",
+            "verify",
+            "deployable",
+            "update",
+            "rules",
+            "rfcs",
+            "release",
+            "names",
+            "format",
+          ],
         )
         Ok({
           base: switch top->Dict.get("base") {
@@ -273,6 +296,7 @@ let read = (root: string): result<declared, string> => {
           rfcs: tableAt(top, "rfcs", "workspace.toml")->Option.map(rfcsOf),
           release: tableAt(top, "release", "workspace.toml")->Option.map(releaseOf),
           names: tableAt(top, "names", "workspace.toml")->Option.mapOr([], namesOf),
+          format: formatOf(tableAt(top, "format", "workspace.toml")->Option.getOr(Dict.make())),
         })
       | _ => Error(`${path}: not a table`)
       }
@@ -306,3 +330,19 @@ let layout = task =>
     Console.error(`${task}: ${why}`)
     Node.exit(1)
   }
+
+let noFormat: format = {unformatted: [], testData: []}
+
+/** The `[format]` table of the repository at `root`, empty where it declares none or none reads. */
+let formatAt = (root: string): format =>
+  switch read(root) {
+  | Ok(declared) => declared.format
+  | Error(_) => noFormat
+  }
+
+/** Whether `relative`, a path from the root, lies under one of `format`'s test data directories. */
+let inTestData = (format: format, relative: string) =>
+  format.testData->Array.some(directory => {
+    let prefix = directory->String.endsWith("/") ? directory : directory ++ "/"
+    relative->String.startsWith(prefix)
+  })

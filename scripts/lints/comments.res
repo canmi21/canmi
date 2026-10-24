@@ -97,10 +97,10 @@ type span = (int, int, bool)
 let docstrings = `
 import ast, json, sys
 spans = {}
-for path in json.load(sys.stdin):
+for path, text in json.load(sys.stdin):
 	try:
-		tree = ast.parse(open(path, encoding="utf-8").read())
-	except (OSError, SyntaxError, ValueError, UnicodeDecodeError):
+		tree = ast.parse(text)
+	except (SyntaxError, ValueError):
 		continue
 	found = []
 	for node in ast.walk(tree):
@@ -116,15 +116,15 @@ for path in json.load(sys.stdin):
 print(json.dumps(spans))
 `
 
-/** Each Python file's docstring spans, asked of python3 once for every file. */
-let docstringSpans = (paths: array<string>): Map.t<string, array<span>> =>
-  if paths->Array.length == 0 {
+/** Each Python file's docstring spans by its path, asked of python3 once for every file's text. */
+let docstringSpans = (texts: array<(string, string)>): Map.t<string, array<span>> =>
+  if texts->Array.length == 0 {
     Map.make()
   } else {
     let answer = Node.execFileSync(
       "python3",
       ["-c", docstrings],
-      {input: JSON.stringifyAny(paths)->Option.getOr("[]"), encoding: "utf8", maxBuffer: 67108864},
+      {input: JSON.stringifyAny(texts)->Option.getOr("[]"), encoding: "utf8", maxBuffer: 268435456},
     )
     switch JSON.parseOrThrow(answer) {
     | Object(found) =>
@@ -149,20 +149,32 @@ let docstringSpans = (paths: array<string>): Map.t<string, array<span>> =>
     }
   }
 
-/** A file's lines, or None where it cannot be read as UTF-8, as a decoder cannot read a binary. */
-let linesOf = (path: string): option<array<string>> =>
+/** A file's lines from its bytes, or None where they are not UTF-8, as a binary's are not. */
+let decoded = (bytes: Node.bytes): option<array<string>> =>
   try {
     // Newlines read as Python's text mode reads them, a byte-order mark kept as a character.
-    let text =
-      Node.textDecoder("utf-8", {fatal: true, ignoreBOM: true})->Node.decode(Node.readBytes(path))
+    let text = Node.textDecoder("utf-8", {fatal: true, ignoreBOM: true})->Node.decode(bytes)
     Some(text->String.replaceRegExp(lineEnding, "\n")->String.split("\n"))
   } catch {
   | _ => None
   }
 
+/** A file's lines, or None where it cannot be read or decoded. */
+let linesOf = (path: string): option<array<string>> =>
+  Net.readBytesOf(path)->Option.flatMap(decoded)
+
 /** Whether a file is Python, by its suffix or its first line. */
 let isPython = (path, lines) =>
   path->String.endsWith(".py") || lines[0]->Option.getOr("")->String.includes("python")
+
+/** The Python files among those read, each by its path with its text. */
+let pythonTexts = (read: array<(string, option<array<string>>)>) =>
+  read->Array.filterMap(((path, lines)) =>
+    switch lines {
+    | Some(lines) if isPython(path, lines) => Some((path, lines->Array.join("\n")))
+    | _ => None
+    }
+  )
 
 let widest = body => body->Array.reduce(0, (most, line) => Math.Int.max(most, columns(line)))
 let spoken = body => body->Array.filter(prose)->Array.length
@@ -285,14 +297,7 @@ let files = (root, given) =>
 /** Every block longer than `Code.aimLines` or carrying a colon or a dash, one warning each. */
 let plain = (~root=Node.cwd(), ~given=[]): array<string> => {
   let read = files(root, given)->Array.map(path => (path, linesOf(path)))
-  let spans = docstringSpans(
-    read->Array.filterMap(((path, lines)) =>
-      switch lines {
-      | Some(lines) if isPython(path, lines) => Some(path)
-      | _ => None
-      }
-    ),
-  )
+  let spans = docstringSpans(pythonTexts(read))
   read->Array.flatMap(((path, lines)) =>
     switch lines {
     | Some(lines) =>
@@ -312,16 +317,9 @@ let plain = (~root=Node.cwd(), ~given=[]): array<string> => {
   )
 }
 
-/** The gate, which names each block past its limits by where and by how much. */
-let main = (~root=Node.cwd(), ~given=Node.args()) => {
-  let read = files(root, given)->Array.map(path => (path, linesOf(path)))
-  let python = read->Array.filterMap(((path, lines)) =>
-    switch lines {
-    | Some(lines) if isPython(path, lines) => Some(path)
-    | _ => None
-    }
-  )
-  let spans = docstringSpans(python)
+/** Each block past its limits in the files `read`, by where and how much, failing at a push. */
+let judged = (~root, read: array<(string, option<array<string>>)>, ~at=?, ~pushing) => {
+  let spans = docstringSpans(pythonTexts(read))
   let over = []
   let counted = ref(0)
   read->Array.forEach(((path, lines)) =>
@@ -330,44 +328,78 @@ let main = (~root=Node.cwd(), ~given=Node.args()) => {
     | Some(lines) =>
       let inside = !Node.isAbsolute(path) || !(Node.relative(root, path)->String.startsWith(".."))
       let name = inside && Node.isAbsolute(path) ? Node.relative(root, path) : path
-      blocks(lines, ~spans=spans->Map.get(path)->Option.getOr([]))->Array.forEach(((
-        line,
-        body,
-        widest,
-        opening,
-      )) => {
+      found(lines, ~spans=spans->Map.get(path)->Option.getOr([]))
+      ->Array.toSorted(((a, _, _), (b, _, _)) => Int.toFloat(a - b))
+      ->Array.forEach(((line, body, opening)) => {
         counted := counted.contents + 1
         let limit = opening ? openingLimit : bodyLimit
+        let numbered = body->Array.mapWithIndex((text, at) => (line + at, text))
+        let wide = numbered->Array.filter(((_, text)) => columns(text) > width)
+        let spokenLines = numbered->Array.filter(((_, text)) => prose(text))
         let why = []
-        if widest > width {
-          why->Array.push(`${Int.toString(widest)} columns over ${Int.toString(width)}`)
+        if wide != [] {
+          why->Array.push(`${Int.toString(widest(body))} columns over ${Int.toString(width)}`)
         }
-        if body > limit {
-          why->Array.push(`${Int.toString(body)} body lines over ${Int.toString(limit)}`)
+        if spokenLines->Array.length > limit {
+          why->Array.push(
+            `${Int.toString(spokenLines->Array.length)} body lines over ${Int.toString(limit)}`,
+          )
         }
         if why->Array.length > 0 {
-          over->Array.push(`${name}:${Int.toString(line)}  ${why->Array.join(", ")}`)
+          let onset = inside
+            ? Onset.block(
+                ~root,
+                Node.relative(root, Node.resolve([path])),
+                ~spoken=spokenLines->Array.map(((number, _)) => number),
+                ~limit,
+                ~wide=wide->Array.map(((number, _)) => number),
+                ~at?,
+              )
+            : None
+          over->Array.push(
+            `${name}:${Int.toString(line)}  ${why->Array.join(", ")}${Onset.said(onset)}`,
+          )
         }
       })
     }
   )
+  let failing = Form_layer.fails(~pushing)
   if over->Array.length > 0 {
-    Console.error("Comment blocks over a limit:\n")
-    over->Array.forEach(problem => Console.error(`  ${problem}`))
-    Console.error(
+    let say = failing ? Console.error : Console.log
+    say(
+      failing
+        ? "Comment blocks over a limit:\n"
+        : "Comment blocks over a limit, warned until a push:\n",
+    )
+    over->Array.forEach(problem => say(`  ${problem}`))
+    say(
       "\nCut to the line that carries the point. A fact a second file would need is a rule and " ++
       "belongs in the rules; one only this file needs stays here, in fewer words. See the " ++ "workspace's docs/code.md, \"How long, and where the rest of it goes\".",
     )
-    1
   } else {
     Console.log(
       `comments OK: ${Int.toString(counted.contents)} blocks inside ${Int.toString(
           bodyLimit,
         )}/${Int.toString(openingLimit)} body lines and ${Int.toString(width)} columns`,
     )
-    0
   }
+  failing && over->Array.length > 0 ? 1 : 0
 }
+
+/** The gate over the working copy, or over the paths given. */
+let main = (~root=Node.cwd(), ~given=Node.args(), ~pushing=false) =>
+  judged(~root, files(root, given)->Array.map(path => (path, linesOf(path))), ~pushing)
+
+/** The gate over a tree, its files read as they are there. */
+let measured = (tree: Lines.tree, ~pushing) =>
+  judged(
+    ~root=tree.root,
+    tree.paths
+    ->Array.filter(name => !(skipped->Array.some(suffix => name->String.endsWith(suffix))))
+    ->Array.map(name => (Node.join([tree.root, name]), tree.bytes(name)->Option.flatMap(decoded))),
+    ~at=?tree.at,
+    ~pushing,
+  )
 
 if Node.isMain {
   Node.exit(main())

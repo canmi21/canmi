@@ -299,3 +299,46 @@ describe("the project's own name", () => {
     expect(Own_name.prose("code/libs/a.res"))->toBe(false)
   })
 })
+
+describe("a tracked suffix", () => {
+  test("needs a formatter in the table or to be Unformatted, a file with none passed over", () => {
+    expect(
+      Suffix_owned.problems(
+        ~label="x",
+        ["a.ts", "b.toml", "LICENSE", "hooks/rm", ".gitignore", "c.lock", "d.lock", "e.png"],
+      ),
+    )->toEqual(["x: .png has no formatter in Format.owners and is not Unformatted, as e.png"])
+  })
+
+  test("is registered by a repository's own unformatted list", () => {
+    expect(Suffix_owned.problems(~label="x", ~unformatted=[".sql"], ["a.sql", "b.wit"]))->toEqual([
+      "x: .wit has no formatter in Format.owners and is not Unformatted, as b.wit",
+    ])
+  })
+
+  test("passes over test data and a binary file, and reads the rest", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "suffix-"]))
+    Node.mkdirAll(Node.join([root, "data"]))
+    Node.writeFileSync(Node.join([root, "data/a.sql"]), "select 1\n")
+    Node.writeFileSync(Node.join([root, "b.png"]), "PNG\u0000data")
+    Node.writeFileSync(Node.join([root, "c.sql"]), "select 1\n")
+    let format: Project.format = {unformatted: [], testData: ["data"]}
+    expect(
+      ["data/a.sql", "b.png", "c.sql"]->Array.filter(
+        relative => Suffix_owned.read(~root, ~format, relative),
+      ),
+    )->toEqual(["c.sql"])
+  })
+
+  test("is declared in a repository's workspace.toml without being refused", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "declared-"]))
+    Node.writeFileSync(
+      Node.join([root, "workspace.toml"]),
+      "[format]\nunformatted = [\".sql\", \".wit\"]\ntest_data = [\"some/dir\"]\n",
+    )
+    expect(Project.read(root)->Result.map(declared => declared.format))->toEqual(
+      Ok({Project.unformatted: [".sql", ".wit"], testData: ["some/dir"]}),
+    )
+    expect(Project.formatAt(root).unformatted->Array.includes(".sql"))->toBe(true)
+  })
+})

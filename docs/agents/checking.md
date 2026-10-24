@@ -22,12 +22,12 @@ Until then formatting is checked as it is now, by each repository's own check.
 
 ### The form layer holds at gates, never while code is written
 
-**Nobody checks the form layer while code is being written.** Once `form-at-commit` lands, at a
-commit it only warns, and the commit goes through; **before a push it is an error, and the push
-stops**, by the means `audit` already has, counting the form layer's warnings as failures, once
-`push-gated` lands. Until then the form layer's rules fail a commit as they do now. A warning of the
-form layer says the commit it first appeared in and how many commits have passed since, worked out
-from the repository's history; that is a hint, and changes no result.
+**Nobody checks the form layer while code is being written.** At a commit it only warns, and the
+commit goes through, `form-at-commit`; **before a push it is an error, and the push stops**, by the
+means `audit` already has, counting the form layer's warnings as failures, in either mode,
+`push-form-clear`, [pushing.md](pushing.md). Push holds it since 2026-10-24 over the tree of each
+commit pushed. A warning of the form layer says the commit it first appeared in and how many commits
+have passed since, worked out from the repository's history; that is a hint, and changes no result.
 
 **The refactorer tidies only what an implementer wrote.** A warning in a file with one writer that
 the integrator wrote is tidied by the integrator itself, with no refactorer dispatched.
@@ -38,7 +38,7 @@ the integrator wrote is tidied by the integrator itself, with no refactorer disp
    `implementer-commands` lands, and one at a time until then.
 2. The integrator merges the lanes in one merge with a parent for each, runs `mise run fmt` on the
    merge, and runs the logic layer's check.
-3. The integrator commits, the form layer only warning once `form-at-commit` lands.
+3. The integrator commits, the form layer only warning, `form-at-commit`.
 4. Where the form layer warns, the refactorer is dispatched.
 5. A reviewer reads the diff.
 6. The wave is accepted, as "Acceptance comes before the push" gives.
