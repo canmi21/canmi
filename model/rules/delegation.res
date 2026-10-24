@@ -54,9 +54,6 @@ let sedWriting = ["w", "W", "e"]
 let rgRunning = ["--pre", "--hostname-bin"]
 let jjRunning = ["--tool", "--config", "--config-file"]
 
-/** What never stands before a reviewer's command, an assignment to the environment beside it. */
-let wrapping = ["env", "exec", "xargs"]
-
 /** The one place a reviewer's command may redirect its output to. */
 let redirectedTo = ["/dev/null"]
 
@@ -147,7 +144,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "reviewer-commands",
-    says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; nothing in `wrapping` and no assignment stands before a command; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own",
+    says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; each segment's first word is its program, no wrapper and no assignment before it; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own",
     doc: "docs/agents/reviewer.md",
     held: Hook("hooks/agent_commands"),
   },

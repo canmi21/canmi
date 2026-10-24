@@ -367,7 +367,7 @@ describe("a reviewer's commands", () => {
     )
   })
 
-  test("refuse env, exec, xargs and an assignment before a command", () => {
+  test("refuse a wrapper or an assignment before a command, and rg's --hostname-bin", () => {
     [
       "env -u cat rm a",
       "env ls",
@@ -380,6 +380,10 @@ describe("a reviewer's commands", () => {
       "ls && LC_ALL=C grep x f",
       "rg --hostname-bin=x y",
       "rg --hostname-bin x y",
+      "npx cat",
+      "time -o cat rm a",
+      "timeout 60 ls",
+      "command ls",
     ]->Array.forEach(
       command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
     )

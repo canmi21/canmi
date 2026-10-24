@@ -157,23 +157,12 @@ let programReason = (segment: array<string>) =>
   | Some(program, _) => Some(`${program} is not a reader's command, ${rule} holds it`)
   }
 
-/** Why one segment is refused a reviewer, a wrapper or an assignment before it, or its program. */
-let segmentReason = (segment: array<string>) => {
-  let before =
-    segment->Array.slice(
-      ~start=0,
-      ~end=Jj_command.commandAt(segment)->Option.getOr(segment->Array.length),
-    )
-  let wrapped =
-    before->Array.find(word =>
-      Delegation.wrapping->Array.includes(Node.basename(word)) ||
-        (word->String.includes("=") && !(word->String.startsWith("=")))
-    )
-  switch wrapped {
-  | Some(found) => Some(`${found} never stands before a reviewer's command, ${rule} holds it`)
-  | None => programReason(segment)
+/** Why one segment is refused a reviewer, its first word not its program, or its program. */
+let segmentReason = (segment: array<string>) =>
+  switch (Jj_command.commandAt(segment), segment[0]) {
+  | (Some(0), _) | (_, None) => programReason(segment)
+  | (_, Some(first)) => Some(`${first} stands before the program it runs, ${rule} holds it`)
   }
-}
 
 /**
  * Why a reviewer's command line is refused, its redirections read first, then each segment and

@@ -15,8 +15,8 @@ decided by the author on 2026-10-24, `reviewer-commands` in
   never given one in `rgRunning`;
 - output redirected only to `redirectedTo`, and a command run by `&`, a substitution or a pipe
   judged as one of its own;
-- nothing in `wrapping`, `env`, `exec` and `xargs`, and no assignment to the environment, standing
-  before a command, decided by the author on 2026-10-24.
+- each segment's first word is its program: no wrapper before it and no assignment to the
+  environment, decided by the author on 2026-10-24.
 
 Each list beyond the author's own words, the flags that write or run a program, was added by the
 integrator on 2026-10-24 from a review, as what "only reads" already asks.
