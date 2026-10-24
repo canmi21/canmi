@@ -36,7 +36,10 @@ part alone**, `mise run check workspace <part>`, and in any other repository, wh
 whole, it runs its block's `built` and `accept`, [checking.md](checking.md); it does not use Agent,
 SendMessage, Workflow or Artifact. A hook in its definition holds its commands, four kinds alone,
 `implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res) and
-[delegation.md](delegation.md); it was proven to run in a subagent on 2026-10-24.
+[delegation.md](delegation.md); it was proven to run in a subagent on 2026-10-24. **It runs only in
+an implementer spawned without a name**: one spawned by name, as a teammate a message can reach, ran
+`git status` unrefused where one spawned plainly beside it was refused, a probe of 2026-10-24, so an
+implementer is spawned plainly and a later word reaches it by its id.
 
 **It escapes to the integrator**, [escapes.md](escapes.md), when a contract cannot express the
 behavior its block needs, when its samples contradict each other, when the work cannot go on
