@@ -189,7 +189,7 @@ describe("the project's own name", () => {
           `url = "https://github.com/monoflake/runtime/releases/download/1/a.tar"`,
           `machine.url = "github:monoflake/machine";`,
           `image = "ghcr.io/monoflake/driver:1"`,
-          `flake = "git+ssh://git@github.com/monoflake/cloud?dir=machines/buf";`,
+          `flake = "git+ssh://git@github.com/monoflake/cloud?dir=machines/example";`,
           `let withheld = ["monoflake.net", "api.monoflake.com"]`,
           `// The fill monoflake/platform's model reads, from repos/monoflake/driver.`,
         ]->Array.join("\n"),
