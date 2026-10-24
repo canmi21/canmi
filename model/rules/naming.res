@@ -67,6 +67,12 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "account-name",
+    says: "The author's account name, canmi21, appears in no identifier and no code that decides by it, only as data and in comments",
+    doc,
+    held: Pending("a scan of identifiers in every repository's code for the account name"),
+  },
+  {
     name: "qualified-meanings",
     says: "A module or a contract using both meanings of one word writes each by its qualified name",
     doc,
