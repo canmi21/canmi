@@ -91,8 +91,11 @@ never a whole repository's check**, decided by the author on 2026-10-24. Checkin
 question only the party that sees the whole wave can ask. The older rule, that a spawned agent ran
 no tests and no type checker, came from one working copy shared by every agent, where several would
 run one suite against one tree at once; it does not hold once each has a lane of its own. **Where
-what it writes is one part of the check, it may run that part alone**, `mise run check <repository>
-<part>`, and never the whole, decided by the author on 2026-10-24.
+what it writes is one part of the workspace's check, it may run that part alone**, `mise run check
+workspace <part>`, and never the whole, decided by the author on 2026-10-24. **The workspace's check
+alone runs by part**, every other repository's running whole, as monoflake's platform, driver and
+cloud do, so an implementer there runs its block's `built` and `accept` alone. **No agent the
+integrator spawns runs `--pending`**, which is the integrator's reading of the model.
 
 **A block a project's model holds alone is the case it is made for**: where each block builds, lints
 and tests apart from every other, as `monoflake/platform`'s `docs/code.md` makes them, its

@@ -119,8 +119,37 @@ let execOf = (given: given, words: array<string>) =>
   | _ => None
   }
 
-/** Why a mise task is refused to a role, the check bar one part of it, an audit or a deploy. */
-let taskReason = (role, (task: string, rest: array<string>), ~flags) => {
+/** The rule that holds a role's commands, named in each refusal. */
+let ruleOf = role =>
+  switch role {
+  | Implementer => "implementer-commands"
+  | Refactorer => "refactorer-commands"
+  | Reviewer => "reviewer-commands"
+  }
+
+/** The nearest directory at or above `directory` whose mise.toml declares a check task. */
+let rec checkHolder = directory => {
+  let file = Node.join([directory, "mise.toml"])
+  if Node.existsSync(file) && Node.readFileSync(file)->String.includes("[tasks.check]") {
+    Some(directory)
+  } else if Node.dirname(directory) == directory {
+    None
+  } else {
+    checkHolder(Node.dirname(directory))
+  }
+}
+
+/** Whether a check task named by `scope` from `cwd` is the workspace's own, the dispatcher. */
+let workspaceCheck = (scope, ~cwd) =>
+  switch scope {
+  | Some(path) if path->String.startsWith("//") =>
+    Node.resolve([Registry.root, path->String.slice(~start=2)]) == Registry.root
+  | Some(path) => checkHolder(Node.resolve([cwd, path])) == Some(Registry.root)
+  | None => checkHolder(Node.resolve([cwd])) == Some(Registry.root)
+  }
+
+/** Why a role is refused a mise task, check or verify bar one part, --pending, audit or deploy. */
+let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
   let colon = task->String.lastIndexOf(":")
   let name = colon < 0 ? task : task->String.slice(~start=colon + 1)
   let scope = colon < 0 ? None : Some(task->String.slice(~start=0, ~end=colon))
@@ -130,25 +159,38 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags) => {
     Delegation.releasing->Array.filter(((known, _)) => known == repo)
   | _ => Delegation.releasing
   }
-  // One part of the verb, named after a repository, is what an implementer writes aside.
+  // A part is one part of the workspace's own check, docs/agents/checking.md.
   let aPart =
     role == Implementer &&
-    (scope == None || scope == Some("//")) &&
-    rest->Array.length >= 2 &&
+    workspaceCheck(scope, ~cwd) &&
+    rest[0] == Some("workspace") &&
+    rest->Array.length == 2 &&
     !(flags->Array.includes("--all"))
-  if name == "check" && !aPart {
-    Some("mise run check is the integrator's, bar one part of it an implementer writes")
+  if name == "check" && flags->Array.includes("--pending") {
+    Some(`--pending is the integrator's, ${ruleOf(role)} holds it`)
+  } else if name == "check" && !aPart {
+    Some(
+      role == Implementer
+        ? `mise run check is the integrator's, bar parts of the workspace's, ${ruleOf(
+              role,
+            )} holds it`
+        : `mise run check is the integrator's, ${ruleOf(role)} holds it`,
+    )
+  } else if name == "verify" {
+    Some(`mise run verify is a whole check, which is the integrator's, ${ruleOf(role)} holds it`)
   } else if name == "audit" {
-    Some("mise run audit is the integrator's")
+    Some(`mise run audit is the integrator's, ${ruleOf(role)} holds it`)
   } else if tasks->Array.some(((_, found)) => found->Array.includes(name)) {
-    Some(`the task ${name} deploys or releases, which is the integrator's`)
+    Some(
+      `the task ${name} deploys or releases, which is the integrator's, ${ruleOf(role)} holds it`,
+    )
   } else {
     None
   }
 }
 
 /** Why one segment is refused to a role, or none. */
-let rec segmentReason = (~directory=?, role, segment: array<string>) =>
+let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<string>) =>
   switch (role, Jj_command.programOf(segment)) {
   | (_, None) => None
   | (_, Some(program, _)) if Delegation.versioning->Array.includes(program) =>
@@ -156,8 +198,13 @@ let rec segmentReason = (~directory=?, role, segment: array<string>) =>
   | (_, Some("mise", words)) if execOf(givenOf(words), words) != None =>
     switch execOf(givenOf(words), words) {
     | Some(Segment(inner)) =>
-      segmentReason(~directory=?givenOf(words).directory->Option.orElse(directory), role, inner)
-    | Some(Line(line)) => reason(role, line)
+      segmentReason(
+        ~directory=?givenOf(words).directory->Option.orElse(directory),
+        ~cwd,
+        role,
+        inner,
+      )
+    | Some(Line(line)) => reason(~cwd, role, line)
     | _ => None
     }
   | (Reviewer, Some("jj", _)) =>
@@ -167,38 +214,38 @@ let rec segmentReason = (~directory=?, role, segment: array<string>) =>
     | Some(subcommand, _) => Some(`jj ${subcommand} is not a reader's command`)
     | None => None
     }
-  | (Reviewer, _) => shellReason(role, segment)
-  | (_, Some("jj", _)) => Some("jj is not typed here")
-  | (_, Some(program, _)) if Delegation.remote->Array.includes(program) =>
-    Some(`${program} is the integrator's`)
   | (_, Some("mise", words)) =>
     let given = givenOf(words)
     let given = {...given, directory: given.directory->Option.orElse(directory)}
     tasksOf(given)->Array.findMap(found =>
-      found->Option.flatMap(found => taskReason(role, found, ~flags=given.flags))
+      found->Option.flatMap(found => taskReason(role, found, ~flags=given.flags, ~cwd))
     )
+  | (Reviewer, _) => shellReason(~cwd, role, segment)
+  | (_, Some("jj", _)) => Some("jj is not typed here")
+  | (_, Some(program, _)) if Delegation.remote->Array.includes(program) =>
+    Some(`${program} is the integrator's`)
   | (_, Some(program, words)) if Delegation.launchers->Array.includes(program) =>
     words
     ->Array.find(word => Delegation.remote->Array.includes(Node.basename(word)))
     ->Option.map(found => `${Node.basename(found)} is the integrator's`)
-  | _ => shellReason(role, segment)
+  | _ => shellReason(~cwd, role, segment)
   }
 // A shell given -c runs a command line of its own, which is judged as one.
-and shellReason = (role, segment) =>
+and shellReason = (~cwd, role, segment) =>
   switch Jj_command.programOf(segment) {
   | Some(program, words) if Delegation.shells->Array.includes(program) =>
     switch words->Array.findIndex(word => word == "-c") {
     | -1 => None
-    | at => words[at + 1]->Option.flatMap(line => reason(role, line))
+    | at => words[at + 1]->Option.flatMap(line => reason(~cwd, role, line))
     }
   | _ => None
   }
-and reason = (role, command) =>
-  Jj_command.segments(command)->Array.findMap(segment => segmentReason(role, segment))
+and reason = (~cwd=Registry.root, role, command) =>
+  Jj_command.segments(command)->Array.findMap(segment => segmentReason(~cwd, role, segment))
 
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let handle = (role, payload: Payload.t): int =>
-  switch reason(role, Payload.command(payload)) {
+  switch reason(~cwd=Payload.cwd(payload), role, Payload.command(payload)) {
   | None => 0
   | Some(why) =>
     Console.error(`Command refused by hooks/agent_commands.res: ${why}.`)

@@ -14,7 +14,19 @@ describe("an implementer's commands", () => {
       "mise run check workspace",
       "mise run check --all",
       "mise run check workspace words --all",
+      "mise run check workspace rules names",
+      "mise run verify",
+      "mise -C repos/monoflake/platform run verify",
+      "mise run //repos/apps/rdm:verify",
+      "mise run //repos/apps/rdm:check workspace words",
+      "mise -C repos/monoflake/platform run check workspace words",
       "mise run check apps/rdm",
+      "mise run check apps/rdm tasks",
+      "mise check apps/rdm tasks",
+      "mise run check monoflake/platform model",
+      "mise run check workspace --pending",
+      "mise run check workspace rules --pending",
+      "mise run check --pending",
       "mise run audit",
       "mise audit apps/rdm",
       "mise -C repos/apps/rdm run check workspace words",
@@ -85,8 +97,8 @@ describe("one part of the check", () => {
   test("is an implementer's, named after a repository, and no refactorer's", () => {
     [
       "mise run check workspace words",
-      "mise run check workspace rules names",
-      "mise check apps/rdm tasks",
+      "mise run check workspace hooks",
+      "mise run //:check workspace words",
       "mise run -j 4 check workspace words",
       "mise x -- mise run check workspace words",
       "mise exec -- mise run check workspace words",
@@ -99,7 +111,80 @@ describe("one part of the check", () => {
   })
 })
 
+describe("a part from a repository's directory", () => {
+  let platform = Node.join([Registry.root, "repos", "monoflake", "platform"])
+  let inside = Node.join([platform, "model"])
+
+  test("is refused where the nearest check task is not the workspace's", () => {
+    [inside, platform]->Array.forEach(
+      cwd =>
+        expect((
+          cwd,
+          Agent_commands.reason(~cwd, Implementer, "mise run check workspace words") != None,
+        ))->toEqual((cwd, true)),
+    )
+  })
+
+  test("is allowed from the workspace root, or by the scoped workspace task", () => {
+    expect(
+      Agent_commands.reason(~cwd=Registry.root, Implementer, "mise run check workspace words"),
+    )->toEqual(None)
+    expect(
+      Agent_commands.reason(~cwd=platform, Implementer, "mise run //:check workspace words"),
+    )->toEqual(None)
+    expect(
+      Agent_commands.reason(
+        ~cwd=platform,
+        Implementer,
+        "mise -C ../../.. run check workspace words",
+      ),
+    )->toEqual(None)
+  })
+})
+
+describe("a refusal", () => {
+  test("says which rule holds it", () => {
+    [
+      (Agent_commands.Implementer, "mise run check apps/rdm tasks", "implementer-commands"),
+      (
+        Agent_commands.Implementer,
+        "mise run check workspace rules --pending",
+        "implementer-commands",
+      ),
+      (Agent_commands.Refactorer, "mise run check workspace words", "refactorer-commands"),
+      (Agent_commands.Reviewer, "mise run check workspace words", "reviewer-commands"),
+      (Agent_commands.Reviewer, "mise run audit", "reviewer-commands"),
+    ]->Array.forEach(
+      ((role, command, rule)) =>
+        expect((
+          command,
+          Agent_commands.reason(role, command)->Option.mapOr(
+            false,
+            why => why->String.includes(rule),
+          ),
+        ))->toEqual((command, true)),
+    )
+  })
+})
+
 describe("a reviewer's commands", () => {
+  test("refuse every check, part or whole, every audit and --pending", () => {
+    [
+      "mise run check",
+      "mise check workspace words",
+      "mise run check workspace hooks",
+      "mise run check apps/rdm tasks",
+      "mise run check --all",
+      "mise run audit",
+      "mise audit apps/rdm",
+      "mise run check workspace --pending",
+      "mise run check workspace rules --pending",
+      "mise exec -- mise run check workspace words",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
   test("allow jj only to read", () => {
     [
       "jj diff -r @-",

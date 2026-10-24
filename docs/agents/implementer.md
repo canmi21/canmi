@@ -20,11 +20,12 @@ which its work passes before it is handed back. **It types no jj command**; a ta
 first, as every jj read does to see the latest edits; that touches its own lane's working-copy
 commit alone, and records one operation in the shared store, where jj merges the operations several
 workspaces make at once by itself. It does not deploy, does not run the whole of `mise run check`
-and spawns no agent; **where what it writes is one part of the check, it may run that part alone**,
-`mise run check <repository> <part>`, [checking.md](checking.md); it does not use Agent,
+and spawns no agent; **where what it writes is one part of the workspace's check, it may run that
+part alone**, `mise run check workspace <part>`, and in any other repository, whose check runs
+whole, it runs its block's `built` and `accept`, [checking.md](checking.md); it does not use Agent,
 SendMessage, Workflow or Artifact. Once `implementer-commands` in
-[model/rules/delegation.res](../../model/rules/delegation.res) lands, a hook holds its commands: no
-jj typed, no whole `mise run check` nor any `audit`, no task that deploys, no `ssh`, `rsync` or `wrangler`.
+[model/rules/delegation.res](../../model/rules/delegation.res) lands, a hook holds its commands, as
+that rule says them.
 
 **It escapes to the integrator**, [escapes.md](escapes.md), when a contract cannot express the
 behavior its block needs, when its samples contradict each other, when the work cannot go on

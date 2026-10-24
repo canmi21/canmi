@@ -107,7 +107,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "implementer-commands",
-    says: "An implementer types no jj, no whole mise run check (one part of it it writes aside), no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
+    says: "An implementer types no jj, no whole mise run check (one part of the workspace's aside), no audit, no --pending, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
     doc: "docs/agents/implementer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
@@ -115,7 +115,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "reviewer-commands",
-    says: "A reviewer runs jj only to read, its diff, log, show and file show",
+    says: "A reviewer runs jj only to read, its diff, log, show and file show, and runs no check, no audit, no --pending and no task that deploys",
     doc: "docs/agents/reviewer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",
@@ -130,7 +130,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "refactorer-commands",
-    says: "A refactorer types no jj, no mise run check, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
+    says: "A refactorer types no jj, no mise run check, no audit, no task that deploys, and no ssh, rsync or wrangler; a task it runs may read its own lane's history",
     doc: "docs/agents/refactorer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a subagent; on 2026-10-24 it ran in none",

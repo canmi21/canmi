@@ -6,7 +6,9 @@ effort. Decided by the author on 2026-10-24.
 **A reviewer only reads.** It starts in a fresh context, and its brief holds the diff, the rules and
 the RFCs alone, **never an implementer's reasoning or report.** It runs jj only to read: `diff`,
 `log`, `show` and `file show`, `reviewer-commands` in
-[model/rules/delegation.res](../../model/rules/delegation.res).
+[model/rules/delegation.res](../../model/rules/delegation.res). **It runs no check, no `audit` and
+no `--pending`**, decided by the author on 2026-10-24: a check writes what it builds, which a role
+that only reads must not, and what a check concludes is the integrator's.
 
 **In a public repository's wave it also reads the diff for leaks**, [pushing.md](pushing.md), "A
 push carries nothing private".
