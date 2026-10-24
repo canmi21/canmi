@@ -81,6 +81,13 @@ into `model/rules/` with its check and leaves this file.
   refused connections while it restarted, found by `replace` on 2026-10-23; the socket is restarted
   once by hand after such a switch, and `replace` run after it.
 
+## Code
+
+- **A Worker's RPC binding is never held in a ReScript option of an abstract type.** Every name
+  read on a Fetcher is present, so the option's unwrapping took a VPC binding for a nested option
+  and handed on an object with no `fetch`; on 2026-10-23 the control reached no host so, while the
+  local control, reaching its host by address, passed. The abstract type is marked `@notUndefined`.
+
 ## Remotes, and what cannot be taken back
 
 - **An outward step asked is done alone.** "Push it, and then it is archived" asked for a push; the
