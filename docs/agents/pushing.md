@@ -69,4 +69,13 @@ already on the remote cannot be held back by refusing, so the integrator reads e
 real leak on the spot. A hit in what it sends, a line or a commit message, that is no leak, as a
 field git names alike, passes by the escape named on the command, `SKIP=scan mise run push ...`, as
 `SKIP=verify` names a commit's, and each use is a record of friction naming the word and why it was
-none; the list itself carries no exceptions.
+none.
+
+**An entry of the list may carry its own exceptions**, decided by the author on 2026-10-24: on its
+line after it, each after a tab, a regular expression matched in any case and as a whole word, as
+the identifier is. A hit inside a match of one of its exceptions is passed over, and a bare use
+beside it is still refused; a list whose exception is no pattern is not read, so no push goes out
+scanned short. The exceptions stay in the private file beside their entry, so the scan's code and
+its tests name no entry of the real list and no pattern built around one, only made-up ones. The
+author chose this over dropping an entry that a common spelling holds, and over passing that
+spelling by `SKIP=scan` each time, since a habit of skipping the scan is the leak to fear.

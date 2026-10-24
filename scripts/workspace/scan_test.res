@@ -30,7 +30,37 @@ let lineHit = (file, number, identifier) => {
 
 describe("what a push sends", () => {
   test("the list is read one identifier per line, blank lines passed over", () => {
-    expect(identifiers)->toEqual(["machine.example", "192.0.2.1"])
+    expect(identifiers)->toEqual([
+      {Scan.identifier: "machine.example", exceptions: []},
+      {identifier: "192.0.2.1", exceptions: []},
+    ])
+  })
+
+  test("an entry carries its exceptions after it, each after a tab", () => {
+    expect(Scan.listed("kestrel\tkestrel[-_]?\\d+\t kestrel\\.example \n"))->toEqual([
+      {Scan.identifier: "kestrel", exceptions: ["kestrel[-_]?\\d+", "kestrel\\.example"]},
+    ])
+  })
+
+  test("a list whose exception is no pattern is not read, so the scan never runs short", () => {
+    expect(Scan.checked("kestrel\tkestrel(\n"))->toEqual(None)
+    expect(Scan.checked("kestrel\n")->Option.isSome)->toBe(true)
+  })
+
+  test("a hit inside an exception's match passes, and a bare use beside it is still a hit", () => {
+    let entries = Scan.listed("kestrel\tkestrel[-_]?\\d+")
+    let lines = (text: string) =>
+      Scan.tracked([("a.md", text)], entries)->Array.map(
+        ({place}) =>
+          switch place {
+          | Line(_, number) => number
+          | Message => 0
+          },
+      )
+    expect(
+      lines("KESTREL-256\nkestrel1 and Kestrel_512\nkestrel-7x\nkestrel KESTREL-256\n"),
+    )->toEqual([3, 4])
+    expect(lines("see kestrel\n"))->toEqual([1])
   })
 
   test("a hit in an added line is found and named by its commit, file and line", () => {

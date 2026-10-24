@@ -165,7 +165,8 @@ let scanned = (pending: array<(string, option<array<string>>)>, ~dry) => {
     | Some(identifiers) => identifiers
     | None =>
       Registry.fail(
-        `no readable list of private identifiers at ${Toolchain.privateIdentifiers}, which a ` ++
+        `no list of private identifiers that reads whole at ${Toolchain.privateIdentifiers}, ` ++
+        `each exception a pattern, which a ` ++
         `public repository's push is scanned against, so ${nothing}`,
       )
     }

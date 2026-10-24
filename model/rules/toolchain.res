@@ -30,7 +30,10 @@ let documentation = {
   "allowed": ["10.200.0.0/16"],
 }
 
-/** The private identifiers a push is scanned for, kept local and in no repository. */
+/**
+ * The private identifiers a push is scanned for, kept local and in no repository, one a line and
+ * its exceptions after it, each after a tab.
+ */
 let privateIdentifiers = "~/.config/workspace/private-identifiers"
 
 /** What a repository's [push] declares as its visibility, public where it declares none. */

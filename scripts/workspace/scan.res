@@ -22,19 +22,22 @@ let expanded = path =>
     ? Node.join([homedir(), path->String.slice(~start=1)])
     : path
 
-/** The identifiers a list holds, one per line, blank lines passed over. */
-let listed = text =>
-  text->String.split("\n")->Array.map(String.trim)->Array.filter(line => line != "")
+/** An identifier and its exceptions, the spellings that hold it and are not it. */
+type entry = {identifier: string, exceptions: array<string>}
 
-/** The list at `Toolchain.privateIdentifiers`, or None where it cannot be read. */
-let identifiers = () => {
-  let path = expanded(Toolchain.privateIdentifiers)
-  try {
-    Some(listed(Node.readFileSync(path)))
-  } catch {
-  | _ => None
-  }
-}
+/** The entries a list holds, one per line, each exception after a tab, blank lines passed over. */
+let listed = text =>
+  text
+  ->String.split("\n")
+  ->Array.map(String.trim)
+  ->Array.filter(line => line != "")
+  ->Array.map(line => {
+    let parts = line->String.split("\t")->Array.map(String.trim)->Array.filter(part => part != "")
+    {
+      identifier: parts->Array.getUnsafe(0),
+      exceptions: parts->Array.slice(~start=1, ~end=parts->Array.length),
+    }
+  })
 
 /** An identifier as a pattern in any case, no letter, digit or underscore on either side. */
 let pattern = identifier =>
@@ -46,20 +49,50 @@ let pattern = identifier =>
     ~flags="i",
   )
 
-/** Each identifier beside its pattern, an empty one passed over. */
-let patterns = identifiers =>
-  identifiers->Array.filterMap(identifier =>
-    identifier == "" ? None : Some((identifier, pattern(identifier)))
+/** An exception as a pattern in any case, a whole word as an identifier is, matched everywhere. */
+let exception_ = source =>
+  RegExp.fromString(`(?<![A-Za-z0-9_])(?:${source})(?![A-Za-z0-9_])`, ~flags="gi")
+
+/** Each identifier beside its pattern and its exceptions', an empty one passed over. */
+let patterns = (entries: array<entry>) =>
+  entries->Array.filterMap(({identifier, exceptions}) =>
+    identifier == ""
+      ? None
+      : Some((identifier, pattern(identifier), exceptions->Array.map(exception_)))
   )
+
+/** A list's entries, or None where an exception is no pattern, so the scan never runs short. */
+let checked = text =>
+  try {
+    let entries = listed(text)
+    patterns(entries)->ignore
+    Some(entries)
+  } catch {
+  | _ => None
+  }
+
+/** The list at `Toolchain.privateIdentifiers`, or None where it cannot be read. */
+let identifiers = () => {
+  let path = expanded(Toolchain.privateIdentifiers)
+  try {
+    checked(Node.readFileSync(path))
+  } catch {
+  | _ => None
+  }
+}
 
 /** Whether `line` holds `identifier` as a whole word in any case. */
 let holds = (line, identifier) => identifier != "" && pattern(identifier)->RegExp.test(line)
 
-/** The identifiers one line holds. */
+/** The identifiers one line holds outside every match of their own exceptions. */
 let found = (line, patterns) =>
-  patterns->Array.filterMap(((identifier, pattern)) =>
-    pattern->RegExp.test(line) ? Some(identifier) : None
-  )
+  patterns->Array.filterMap(((identifier, pattern, exceptions)) => {
+    let rest =
+      exceptions->Array.reduce(line, (rest, exception_) =>
+        rest->String.replaceRegExp(exception_, " ")
+      )
+    pattern->RegExp.test(rest) ? Some(identifier) : None
+  })
 
 /** Each line a git diff adds, with its file and its number in the new file. */
 let added = (diff): array<(string, int, string)> => {
@@ -105,8 +138,8 @@ let added = (diff): array<(string, int, string)> => {
 }
 
 /** The hits in what a push sends, each commit's added lines and its description. */
-let sent = (commits: array<commit>, identifiers): array<hit> => {
-  let patterns = patterns(identifiers)
+let sent = (commits: array<commit>, entries): array<hit> => {
+  let patterns = patterns(entries)
   commits->Array.flatMap(({id, diff, message}) => {
     let commit = Some(id)
     Array.concat(
@@ -129,8 +162,8 @@ let sent = (commits: array<commit>, identifiers): array<hit> => {
 }
 
 /** The hits in tracked files, each path with its text, a file holding a NUL passed over. */
-let tracked = (files: array<(string, string)>, identifiers): array<hit> => {
-  let patterns = patterns(identifiers)
+let tracked = (files: array<(string, string)>, entries): array<hit> => {
+  let patterns = patterns(entries)
   files->Array.flatMap(((file, text)) =>
     text->String.includes("\x00")
       ? []
@@ -247,7 +280,7 @@ let files = repo =>
   )
 
 /** The hits in what `repo` sends and in what it tracks, or why it could not be scanned. */
-let repository = (repo, identifiers) =>
+let repository = (repo, entries) =>
   outgoing(repo)->Result.flatMap(commits =>
-    files(repo)->Result.map(files => (sent(commits, identifiers), tracked(files, identifiers)))
+    files(repo)->Result.map(files => (sent(commits, entries), tracked(files, entries)))
   )
