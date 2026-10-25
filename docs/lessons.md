@@ -135,3 +135,7 @@ moves into `model/rules/` with its check and leaves this file.
 - **The author's shorthand is understood, never offered back as a name.** Cloudflare's two letters
   typed in chat are Cloudflare in every file and every proposal, as [naming.md](naming.md) asks, and
   the words part of the check refuses them. 2026-10-20.
+- **A record holding a secret is read by naming the fields wanted, never by masking the rest**, as
+  `jq '{organization, relayed, address, origin: (.origin != null)}'`. A mask by key name passes a
+  field it does not know: on 2026-10-25 one hiding `secret` and `token` printed a binding's
+  `tunnel` whole, a Cloudflare tunnel token, into a session's output.
