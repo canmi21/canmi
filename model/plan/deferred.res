@@ -101,12 +101,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "drawn-app-orphan",
-    what: "monoflake/platform's control gains a way to remove an app whose id it drew for a deploy that failed and was never tried again, by a delete or an expiry, since releases has no delete and such a row stays for good; raised by the bare id wave's review on 2026-10-25; the first such row is the production platform's app 23f191e8, drawn on 2026-10-25 for a deploy onto binding 3 that driver(cloudflare) refused, RFC emgxf",
-    repos: ["monoflake/platform"],
-    until: Author,
-  },
-  {
     id: "objects-draw-conditional",
     what: "monoflake/platform's control on its objects state draws an app's id serialized per isolate rather than by a conditional insert across requests, against RFC b8f35, odds about one in 2^32, and its forget deletes unconditionally, so a deploy in another request can declare between its read and its deletes and run an app the control has forgotten; both retire with the production platform at RFC 8yl4b, when the footing rebuilds it",
     repos: ["monoflake/platform"],
