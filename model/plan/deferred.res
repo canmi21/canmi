@@ -19,6 +19,12 @@ type item = {
 
 let items: array<item> = [
   {
+    id: "inline-data-path",
+    what: "driver(cloudflare)'s deploy gives a Worker bindings to what the same binding holds, as a service binding to the driver's own object Worker, as the control compiles each call's paths fewest jumps first, a machine's equivalent its loopback, so the data plane on a Cloudflare account is inlined inside Cloudflare and never crosses the control or the public network, RFCs vr5lw and 94y0d and monoflake/driver's nrs5v; built when the products land, or when the advisor judges the moment right",
+    repos: ["monoflake/platform", "monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "bench-footing",
     what: "monoflake/platform's test bench stands in for the footing, answering a bundle's read alone, RFC 9bq0y; retired once the footing and its samples land, RFC n8jq5, when the issuer's run reads the real footing and the stand-in is deleted",
     repos: ["monoflake/platform"],
