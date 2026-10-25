@@ -71,6 +71,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "machine-extlinux-board",
+    what: "monoflake/machine learns a board U-Boot boots from extlinux with two disks, so the overrides in monoflake/cloud's board.nix for its one such machine move into the module: a small ext4 /boot and a btrfs /cold on its UFS, a 5 GB ext4 / and a btrfs /data with simple quotas on its NVMe, small partitions ext4 and large ones btrfs as decided by the author on 2026-10-25, its serial console named by the board",
+    repos: ["monoflake/machine", "monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "machine-builder-reuse",
     what: "monoflake/machine's builder `up()` reuses a `machine-builder` already running and lets one caller at a time make it again, where today each call removes and makes it again; on 2026-10-25 two installs copying through it at once removed each other's builder mid-copy, provisional, chosen by the advisor, to wait for the author's review",
     repos: ["monoflake/machine"],
