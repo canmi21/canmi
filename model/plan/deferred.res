@@ -19,6 +19,12 @@ type item = {
 
 let items: array<item> = [
   {
+    id: "bench-footing",
+    what: "monoflake/platform's test bench stands in for the footing, answering a bundle's read alone, RFC 9bq0y; retired once the footing and its samples land, RFC n8jq5, when the issuer's run reads the real footing and the stand-in is deleted",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "d1-per-item",
     what: "driver(cloudflare) gives each database item a D1 of its own, made for it and removed with it, replacing the one database and its clearing lease, monoflake/driver's RFC nrs5v, once database is first offered on a Cloudflare binding",
     repos: ["monoflake/driver"],
