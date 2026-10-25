@@ -42,6 +42,8 @@ actionlint = "1"
 shellcheck = "0.11" # pre-1.0, where a minor is the breaking release
 # What formats a shell script, reading .editorconfig, docs/lint-format.md.
 shfmt = "3"
+# What mise reads a task's usage with; without it every task run warns of it missing.
+usage = "7"
 
 # One verb, for the workspace alone, a path from repos/registry.toml, or --all for every one.
 [tasks.pull]

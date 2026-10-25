@@ -257,6 +257,11 @@ mise owns every tool, not just language runtimes. Linters, formatters, and CLIs 
 globally, and do not add a developer tool as a `devDependencies` entry when mise can carry it.
 One manifest, one answer to "what version is this".
 
+**mise's own `usage` is pinned in `[tools]` too**, provisional, chosen by the advisor on 2026-10-24:
+mise reads a task's `usage` itself, and without the CLI every task run printed a warning that it
+was missing. mise owns every tool version, and a warning printed on every task run is noise that
+teaches people to ignore output.
+
 Three consequences worth knowing:
 
 - mise activation is directory-scoped, so these versions resolve only inside this repo.
