@@ -77,12 +77,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "machine-builder-reuse",
-    what: "monoflake/machine's builder `up()` reuses a `machine-builder` already running and lets one caller at a time make it again, where today each call removes and makes it again; on 2026-10-25 two installs copying through it at once removed each other's builder mid-copy, provisional, chosen by the advisor, to wait for the author's review",
-    repos: ["monoflake/machine"],
-    until: Author,
-  },
-  {
     id: "drawn-app-orphan",
     what: "monoflake/platform's control gains a way to remove an app whose id it drew for a deploy that failed and was never tried again, by a delete or an expiry, since releases has no delete and such a row stays for good; raised by the bare id wave's review on 2026-10-25; the first such row is the production platform's app 23f191e8, drawn on 2026-10-25 for a deploy onto binding 3 that driver(cloudflare) refused, RFC emgxf",
     repos: ["monoflake/platform"],
@@ -98,12 +92,6 @@ let items: array<item> = [
     id: "tool-ids-module",
     what: "monoflake/platform's deploy, conform, replace and lose each carry a near identical `Ids` module with no interface of the model's, to become one shared module or an interface each, as the author chooses",
     repos: ["monoflake/platform"],
-    until: Author,
-  },
-  {
-    id: "piped-task-build",
-    what: "monoflake/cloud's tasks meant to be piped, `open-binding` into `install-driver`, no longer build on their own, the build run once before them, since on 2026-10-25 the two building at once broke ReScript's lockfile and the token never reached install; provisional, chosen by the advisor",
-    repos: ["monoflake/cloud"],
     until: Author,
   },
   {
