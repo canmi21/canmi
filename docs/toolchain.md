@@ -33,10 +33,9 @@ banned" below -- but the guard is the net, not the method.
 
 **Key material a program generated is the one deletion that must not be recoverable**, and is
 removed with `rm` once it has been entered as a secret, provisional, chosen by the advisor on
-2026-10-25: `trash` keeps a copy
-in `~/.Trash`, and a private key that can be put back is a private key that is still there. It is
-made under the scratchpad, inside the temp directories the guard allows, so the `rm` is never one
-the guard refuses.
+2026-10-25: `trash` keeps a copy in `~/.Trash`, and a private key that can be put back is a private
+key that is still there. It is made under the scratchpad, inside the temp directories the guard
+allows, so the `rm` is never one the guard refuses.
 
 Where the point is only to get something out of the way, moving it to a temporary directory
 answers just as well and reads more honestly than a deletion.
@@ -144,9 +143,9 @@ not the kind of thing it is.
 **A value goes into `secrets.json` by `mise run secret <repo> <NAME>...` and no other way.** It asks
 for each name in turn, reads what is typed without echoing it, and hands it to `sops set
 --value-stdin`, so the value is in no argument, no process listing, no shell history and no plain
-file but the one `--from` below reads it from. A name already set is replaced only when answered `y`; nothing typed leaves it as it was. It
-reports each value by its length alone, and the file it changed stays encrypted and is committed as
-it is. It reads one line a value.
+file but the one `--from` below reads it from. A name already set is replaced only when answered
+`y`; nothing typed leaves it as it was. It reports each value by its length alone, and the file it
+changed stays encrypted and is committed as it is. It reads one line a value.
 
 **A machine's file and a value of several lines.** A repository path that goes on into
 `machines/<m>`, as `mise run secret monoflake/cloud/machines/<m> cache`, writes that machine's own

@@ -144,8 +144,8 @@ be put back. `trash old.log`, `trash dist/`, `trash a b c` -- no recursive flag 
 **A cache that can be written again is cleared by its own tool's clean**, as `cargo clean`; one with
 no clean, as `node_modules`, and a lane's directory being closed are removed with `rm` inside the
 workspace; **a key a program generated in the scratchpad is removed with `rm` once entered as a
-secret**, since `trash` would keep it. An `rm` typed anyway meets a guard that allows it only inside the workspace, temp and
-caches, and refuses the rest.
+secret**, since `trash` would keep it. An `rm` typed anyway meets a guard that allows it only inside
+the workspace, temp and caches, and refuses the rest.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git
