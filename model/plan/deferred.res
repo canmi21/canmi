@@ -84,7 +84,7 @@ let items: array<item> = [
   },
   {
     id: "drawn-app-orphan",
-    what: "monoflake/platform's control gains a way to remove an app whose id it drew for a deploy that failed and was never tried again, by a delete or an expiry, since releases has no delete and such a row stays for good; raised by the bare id wave's review on 2026-10-25",
+    what: "monoflake/platform's control gains a way to remove an app whose id it drew for a deploy that failed and was never tried again, by a delete or an expiry, since releases has no delete and such a row stays for good; raised by the bare id wave's review on 2026-10-25; the first such row is the production platform's app 23f191e8, drawn on 2026-10-25 for a deploy onto binding 3 that driver(cloudflare) refused, RFC emgxf",
     repos: ["monoflake/platform"],
     until: Author,
   },
