@@ -112,6 +112,12 @@ moves into `model/rules/` with its check and leaves this file.
 - **A write naming a Worker first finds the Worker by that name.** A non-interactive `wrangler
   secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
   named as the config said, while the real one was deployed under the dashboard's name.
+- **A push across repositories that depend on each other stops at its first failure.** Each is
+  pushed in its own call, its result read before the next, and those after a refused one wait;
+  `mise run push --all` holds every one's form layer before pushing any, a hand loop does not. On
+  2026-10-24 one shell loop pushed monoflake/platform, then had driver refused by its line limit
+  and went on to push cloud, so cloud landed before driver against the cleared order, and driver's
+  public main did not build against platform's new contracts until driver followed.
 - **After a push, the next task starts.** Watching a deploy or polling a registry's propagation
   stalls the session for nothing asked; the author says when a publish is out.
 
