@@ -23,13 +23,20 @@ ceiling. `perl -e 'alarm N; exec @ARGV' <command>` is the one that is always pre
 ### An agent deletes with `trash`, and a cache with its tool's clean
 
 `/usr/bin/trash` takes files and directories alike, so every deletion an agent types goes through
-it, but for two kinds, as `AGENTS.md` has it since 2026-10-24: **a cache that can be written again
+it, but for three kinds, as `AGENTS.md` has it since 2026-10-24: **a cache that can be written again
 is cleared by its own tool's clean**, as `cargo clean`, since `trash` frees no space; and **a cache
 with no clean, as `node_modules`, and a lane's directory being closed are removed with `rm` inside
 the workspace**. The reason is recovery: what `trash` removes can be put back, and what `rm` removes
 cannot, and every deletion accident worth recording here was an ordinary command meeting an
 unexpected value. `rm` is caught when an agent reaches for it anyway -- see "rm is guarded, not
 banned" below -- but the guard is the net, not the method.
+
+**Key material a program generated is the one deletion that must not be recoverable**, and is
+removed with `rm` once it has been entered as a secret, provisional, chosen by the advisor on
+2026-10-25: `trash` keeps a copy
+in `~/.Trash`, and a private key that can be put back is a private key that is still there. It is
+made under the scratchpad, inside the temp directories the guard allows, so the `rm` is never one
+the guard refuses.
 
 Where the point is only to get something out of the way, moving it to a temporary directory
 answers just as well and reads more honestly than a deletion.
@@ -137,9 +144,20 @@ not the kind of thing it is.
 **A value goes into `secrets.json` by `mise run secret <repo> <NAME>...` and no other way.** It asks
 for each name in turn, reads what is typed without echoing it, and hands it to `sops set
 --value-stdin`, so the value is in no argument, no process listing, no shell history and no plain
-file. A name already set is replaced only when answered `y`; nothing typed leaves it as it was. It
+file but the one `--from` below reads it from. A name already set is replaced only when answered `y`; nothing typed leaves it as it was. It
 reports each value by its length alone, and the file it changed stays encrypted and is committed as
-it is. It reads one line a value; a secret of several lines would need a file of its own.
+it is. It reads one line a value.
+
+**A machine's file and a value of several lines.** A repository path that goes on into
+`machines/<m>`, as `mise run secret monoflake/cloud/machines/<m> cache`, writes that machine's own
+`secrets.json`, its names in lowercase and hyphens as sops-nix reads them, where a repository's are
+in capitals. `--from <file>` is given once, takes one name and the whole file as its value, its
+lines and its final newline kept, handed to sops without passing through the shell; a relative path
+is read from where the command was typed, and a file that is not UTF-8 text is refused. It is for a
+value made by a program, as a key or an environment file, and is reported by its size alone; a value
+of one line is typed, so no editor's newline joins it. A key a program generates for it is made in a
+0700 directory under the scratchpad and removed with `rm` once entered, as "An agent deletes with
+`trash`" has it, and only its public half is kept.
 
 ```
 $ mise run secret platform BACKUP_S3_ENDPOINT BACKUP_S3_REGION
