@@ -51,7 +51,11 @@ moves into `model/rules/` with its check and leaves this file.
   next draw, and each lane's check sees only its own: on 2026-10-24 platform's b75yr and driver's
   5n9cy both took 2026-1024-08 in the monoflake space and broke check on both mains once pushed.
   Draw every number an RFC for a lane needs before its file moves, or keep the file in the default
-  checkout until it lands.
+  checkout until it lands. **At push, the rfcs check holds the commits being pushed against the other
+  repositories' mains on origin**, provisional, chosen by the advisor on 2026-10-24, the published
+  truth, and refuses a day's number already taken there, the one moment a collision becomes
+  everyone's problem; drawing over lanes is left out, since it would spend numbers on drafts a lane
+  may drop. Pending until built.
 
 ## Other sessions and formatters
 
