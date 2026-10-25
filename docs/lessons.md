@@ -46,6 +46,13 @@ moves into `model/rules/` with its check and leaves this file.
 - **A formatter runs before an exact-match edit, never between two.** A reflow moved the text a
   replacement was looking for, and the replacement silently did nothing.
 
+- **An RFC's place in the day is drawn before its file moves into a lane.** `new-rfc` draws the
+  day's number from what the default checkouts hold, so an RFC moved into a lane is invisible to the
+  next draw, and each lane's check sees only its own: on 2026-10-24 platform's b75yr and driver's
+  5n9cy both took 2026-1024-08 in the monoflake space and broke check on both mains once pushed.
+  Draw every number an RFC for a lane needs before its file moves, or keep the file in the default
+  checkout until it lands.
+
 ## Other sessions and formatters
 
 - **`fmt` names its repository, and a formatter run by hand names its files.** On 2026-09-26 a bare
