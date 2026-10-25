@@ -118,6 +118,10 @@ moves into `model/rules/` with its check and leaves this file.
   2026-10-24 one shell loop pushed monoflake/platform, then had driver refused by its line limit
   and went on to push cloud, so cloud landed before driver against the cleared order, and driver's
   public main did not build against platform's new contracts until driver followed.
+- **A NixOS switch starts a timer held by hand again.** A switch restarts every unit its
+  configuration enables, timers among them, so a timer stopped for a step is stopped again after
+  each switch. On 2026-10-25 both of monoflake's test machines had their daily upgrade timer
+  stopped for a switch, and each switch started it again, caught from its output.
 - **After a push, the next task starts.** Watching a deploy or polling a registry's propagation
   stalls the session for nothing asked; the author says when a publish is out.
 
