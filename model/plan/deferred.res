@@ -32,7 +32,7 @@ let items: array<item> = [
   },
   {
     id: "d1-per-item",
-    what: "driver(cloudflare) gives each database item a D1 of its own, made for it and removed with it, replacing the one database and its clearing lease, monoflake/driver's RFC nrs5v, once database is first offered on a Cloudflare binding",
+    what: "driver(cloudflare) gives each database item a D1 of its own, made for it and removed with it, replacing the one database and its clearing lease, monoflake/driver's RFC nrs5v, once database is first offered on a Cloudflare binding; it also ends install refusing over a forged `install` table in a user D1",
     repos: ["monoflake/driver"],
     until: Author,
   },
