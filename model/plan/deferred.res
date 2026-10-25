@@ -77,6 +77,24 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "builder-lock-rest",
+    what: "monoflake/machine's builder lock, after its review of 2026-10-25, leaves: callers that reuse the builder hold no lock, so `builder up` remakes a stale one under a copy; a changed entry.sh is not seen as stale; the piped tasks' freshness check covers cloud's scripts and not machine's Builder; taking over a dead holder's lock is not atomic; a holder killed before writing its pid, or a reused pid, leaves a lock nobody takes over; the keys read depend on SSH_AUTH_SOCK, so a shell without an agent sees the builder as stale; the lock lives in the user's TMPDIR; a waiter prints nothing",
+    repos: ["monoflake/machine", "monoflake/cloud"],
+    until: Author,
+  },
+  {
+    id: "cache-rest",
+    what: "monoflake/machine's cache, after its review of 2026-10-25, leaves: a small machine's daily garbage collection can delete a path between its builder's query and its fetch, so the fetch lacks it; two builders' sweeps can race on one bucket; R2's answer to a missing pointer, 404 or 403, is read on the first live run",
+    repos: ["monoflake/machine"],
+    until: Author,
+  },
+  {
+    id: "binding-hex-rest",
+    what: "after the binding hex wave of 2026-10-25: a binding made before it whose last container item goes names its next one in hex, its images left in its decimal namespace; the decimal token id is parsed four times, in conform, lose, replace and deploy, where the ids library could hold it once",
+    repos: ["monoflake/driver", "monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "drawn-app-orphan",
     what: "monoflake/platform's control gains a way to remove an app whose id it drew for a deploy that failed and was never tried again, by a delete or an expiry, since releases has no delete and such a row stays for good; raised by the bare id wave's review on 2026-10-25; the first such row is the production platform's app 23f191e8, drawn on 2026-10-25 for a deploy onto binding 3 that driver(cloudflare) refused, RFC emgxf",
     repos: ["monoflake/platform"],
@@ -84,7 +102,7 @@ let items: array<item> = [
   },
   {
     id: "objects-draw-conditional",
-    what: "monoflake/platform's control on its objects state draws an app's id serialized per isolate rather than by a conditional insert across requests, against RFC b8f35, odds about one in 2^32; it retires with the production platform at RFC 8yl4b, when the footing rebuilds it",
+    what: "monoflake/platform's control on its objects state draws an app's id serialized per isolate rather than by a conditional insert across requests, against RFC b8f35, odds about one in 2^32, and its forget deletes unconditionally, so a deploy in another request can declare between its read and its deletes and run an app the control has forgotten; both retire with the production platform at RFC 8yl4b, when the footing rebuilds it",
     repos: ["monoflake/platform"],
     until: Author,
   },
