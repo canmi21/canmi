@@ -95,6 +95,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "conform-range-collision",
+    what: "monoflake/platform's conform takes the bindings from 1000 to 1000 plus its count as its own and cleans whatever namespace bears one, so a live binding whose drawn id falls in that range, odds about count in 2^32, would lose its state to a run; to be fixed by the control's draw passing over the range or by conform cleaning only the bindings its own run recorded, raised by the advisor on 2026-10-25",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "drawn-app-orphan",
     what: "monoflake/platform's control gains a way to remove an app whose id it drew for a deploy that failed and was never tried again, by a delete or an expiry, since releases has no delete and such a row stays for good; raised by the bare id wave's review on 2026-10-25; the first such row is the production platform's app 23f191e8, drawn on 2026-10-25 for a deploy onto binding 3 that driver(cloudflare) refused, RFC emgxf",
     repos: ["monoflake/platform"],
