@@ -71,6 +71,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "machine-builder-reuse",
+    what: "monoflake/machine's builder `up()` reuses a `machine-builder` already running and lets one caller at a time make it again, where today each call removes and makes it again; on 2026-10-25 two installs copying through it at once removed each other's builder mid-copy, provisional, chosen by the advisor, to wait for the author's review",
+    repos: ["monoflake/machine"],
+    until: Author,
+  },
+  {
     id: "machine-system-review",
     what: "monoflake/machine's system reviewed whole and slimmed where it can be -- crun's Python, libkrun, what else a set carries, its criu kept while monoflake/platform's C39 is open -- once monoflake/platform's driver's abilities are built, capability first",
     repos: ["monoflake/machine"],

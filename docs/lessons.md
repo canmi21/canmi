@@ -81,6 +81,9 @@ moves into `model/rules/` with its check and leaves this file.
   misses it, silently unless it is `flake.nix` itself; `git add -N` would show it, and is git. A task
   that runs Nix copies the flake's own files to a temporary directory and reads it as `path:`, as
   `monoflake/platform`'s `nixfmt` and `nixed` do. Seen on 2026-10-20.
+- **A running script is never edited.** bash reads a script as it runs it, so a script rewritten
+  under a background run executed half a line; on 2026-10-25 a machine's install stopped with 127,
+  command not found. A copy is edited and started fresh.
 - **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
   binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
 
