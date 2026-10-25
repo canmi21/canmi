@@ -95,12 +95,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "conform-range-collision",
-    what: "monoflake/platform's conform takes the bindings from 1000 to 1000 plus its count as its own and cleans whatever namespace bears one, so a live binding whose drawn id falls in that range, odds about count in 2^32, would lose its state to a run; to be fixed by the control's draw passing over the range or by conform cleaning only the bindings its own run recorded, raised by the advisor on 2026-10-25",
-    repos: ["monoflake/platform"],
-    until: Author,
-  },
-  {
     id: "objects-draw-conditional",
     what: "monoflake/platform's control on its objects state draws an app's id serialized per isolate rather than by a conditional insert across requests, against RFC b8f35, odds about one in 2^32, and its forget deletes unconditionally, so a deploy in another request can declare between its read and its deletes and run an app the control has forgotten; both retire with the production platform at RFC 8yl4b, when the footing rebuilds it",
     repos: ["monoflake/platform"],
