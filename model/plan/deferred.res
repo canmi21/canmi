@@ -95,6 +95,18 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "retire-deploy-race",
+    what: "monoflake/platform's control removes a retired app's rows unconditionally once its driver answered the deployment gone, so a deploy of the same app racing the retire, its row written before the removal and its driver call arriving after the delete, leaves a container running with no row; both calls are the operator's alone, so the race needs the operator racing themselves; on the D1 state it closes by a per-app lease, a conditional insert with an expiry answered `held`, taken by deploy and retire alike, once any caller besides the operator may deploy or retire; on the objects state it is the cross-isolate gap of objects-draw-conditional and retires with the production platform at RFC 8yl4b, provisional, chosen by the advisor on 2026-10-25",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
+    id: "deploy-move-stops-old",
+    what: "monoflake/platform's control moves an app to another binding by rewriting its deployment row and never stops its container on the old binding, and retire stops only on the binding the row names, so the old container runs on with no row; until a deploy that moves an app stops it on the old binding first, moving an app across bindings is done by hand as a retire, which stops it where it runs, and a deploy under a new id, provisional, chosen by the advisor on 2026-10-25",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "objects-draw-conditional",
     what: "monoflake/platform's control on its objects state draws an app's id serialized per isolate rather than by a conditional insert across requests, against RFC b8f35, odds about one in 2^32, and its forget deletes unconditionally, so a deploy in another request can declare between its read and its deletes and run an app the control has forgotten; both retire with the production platform at RFC 8yl4b, when the footing rebuilds it",
     repos: ["monoflake/platform"],
