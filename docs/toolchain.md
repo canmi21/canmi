@@ -864,6 +864,13 @@ the day the tasks part first measured it. It replaced TypeScript run by node, th
 names the exceptions, `hooks/bin/rm` and its guard among them, which is a command an agent types
 rather than a script, and stays as it is.
 
+**A task is named by one word, and nested by spaces**, the author's rule of 2026-10-26: an action
+is the task's first argument, as `mise run lane open`, `mise run repos list` and `mise run check
+workspace words`, never a name joined by a hyphen, as `install-driver` was. A command so read is
+declarative, a tree of nouns and the actions on them, and one task holds every action of its noun.
+`task-nested` in `model/rules/toolchain.res`; canmi/web's and seam's tasks wait for their
+repositories, the deferred `task-names-nested-rest`.
+
 ### A Rust CLI parses with clap, and wears cargo's colors
 
 Arguments are declared as types with clap's derive API rather than read out of `std::env::args`

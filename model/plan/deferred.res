@@ -43,6 +43,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "task-names-nested-rest",
+    what: "canmi/web's and seam's mise tasks renamed by task-nested, one word with each action its first argument, the check warning there until then, as the author decided on 2026-10-26",
+    repos: ["canmi/web", "seam"],
+    until: Author,
+  },
+  {
     id: "paused",
     what: "only the workspace and monoflake are worked on, so every other repository is passed over by check --all and audit --all",
     repos: [

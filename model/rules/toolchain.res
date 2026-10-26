@@ -67,6 +67,12 @@ let rules: array<Rule.t> = [
     held: Check("tasks"),
   },
   {
+    name: "task-nested",
+    says: "A mise task is named by one word, an action of it its first argument, never a name joined by a hyphen",
+    doc,
+    held: Pending("each repository's tasks read for a name holding a hyphen"),
+  },
+  {
     name: "tabs",
     says: ".editorconfig sets tabs at width 2, YAML at two spaces, and rustfmt.toml says it again",
     doc: "docs/lint-format.md",
