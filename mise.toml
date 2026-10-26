@@ -14,6 +14,7 @@ config_roots = [
 	"repos/monoflake/driver",
 	"repos/monoflake/machine",
 	"repos/monoflake/runtime",
+	"repos/monoflake/egress",
 	"repos/apps/rdm",
 	"repos/apps/cue",
 	"repos/apps/still",

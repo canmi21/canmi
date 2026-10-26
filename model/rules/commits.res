@@ -22,6 +22,7 @@ let since = [
   ("monoflake/driver", "root()"),
   ("monoflake/machine", "root()"),
   ("monoflake/runtime", "root()"),
+  ("monoflake/egress", "root()"),
   ("apps/rdm", "ecaa6b03"),
   ("apps/cue", "5655f8a0"),
   ("apps/still", "18ed09a1"),
