@@ -81,7 +81,11 @@ builds of a dependency into the dependency's own directory, so through a link th
 checkout would meet on one lock. The integrator opens one with `mise run lane open <repository>
 <name>` and closes it with `mise run lane close <name>`, a task not written yet. **A lane is closed
 once its change is in the main line**: its jj workspaces are forgotten, `cargo clean` runs,
-`node_modules` is removed, and then the directory.
+`node_modules` is removed, and then the directory. **A lane's workspace is forgotten only after a
+jj command run in the lane**, as `jj -R <lane> st`, learned on 2026-10-26: jj snapshots a working
+copy only when a command runs in it, so the integrator's last edit in the lane, never snapshotted,
+went with the lane's directory, removed after `jj workspace forget`, and was made again in the main
+checkout.
 
 **Before a lane opens, the base workspace's working copy is frozen with `jj new`, and while a lane
 is open that working copy is not edited**, learned on 2026-10-24: an edit to the commit a lane
