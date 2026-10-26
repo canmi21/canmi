@@ -32,8 +32,8 @@ and the history check read one `Commits.subjectWidth`, the comment gate and the 
 **A soft rule is held by a part whose findings are warnings**, which fail only under `audit`: drift
 is the one, as [repos.md](repos.md) gives in "A repository's own rules extend the workspace's".
 **What the workspace holds over every repository runs on each of them**: `mise run check <path>`
-runs the repository's own verify, then `Check.over` -- the shape, tasks, names, commits and drift
-parts -- over it.
+runs the repository's own verify, then `Check.over` -- the shape, tasks, placed, names, commits
+and drift parts -- over it.
 
 **A decidable rule enters with its check, or as `Pending`, and never as a sentence alone.** Agreed
 with the author on 2026-10-20, so what is left is a count rather than a memory: every run of

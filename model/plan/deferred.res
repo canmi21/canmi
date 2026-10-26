@@ -162,6 +162,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "fleet-last-relay",
+    what: "the one machine of the author's wider network still kept by hand, outside monoflake/cloud's fleet, joins the fleet and turns its peer relay on as the fleet's other relays do; untouched until then, as the author said on 2026-10-26",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],

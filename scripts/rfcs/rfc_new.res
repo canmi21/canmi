@@ -29,10 +29,18 @@ let option = (args: array<string>, flag) =>
     value
   }
 
+/** `text` quoted as oxfmt quotes a YAML string, in single quotes unless it holds more of them. */
+let quoted = text => {
+  let count = mark => text->String.split(mark)->Array.length - 1
+  count("'") > count("\"")
+    ? JSON.stringifyAny(text)->Option.getOr("\"\"")
+    : `'${text->String.replaceAll("'", "''")}'`
+}
+
 /** What a new RFC holds before anything is written in it. */
 let skeleton = (~name, ~status) =>
   `---
-name: ${JSON.stringifyAny(name)->Option.getOr("")}
+name: ${quoted(name)}
 title:
 status: ${status}
 supersedes: []

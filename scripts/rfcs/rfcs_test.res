@@ -57,6 +57,26 @@ describe("an RFC's frontmatter", () => {
     expect(read->Option.map(front => front.status))->toEqual(Some("draft"))
   })
 
+  test("is started with its name quoted as oxfmt writes it, and read back whole", () => {
+    let line = name => Rfc_new.skeleton(~name, ~status="draft")->String.split("\n")->Array.get(1)
+    expect(line("Builders in Tiers"))->toEqual(Some("name: 'Builders in Tiers'"))
+    expect(line("A Small Machine's Daily Upgrade"))->toEqual(
+      Some(`name: "A Small Machine's Daily Upgrade"`),
+    )
+    expect(line(`Say "Hi" It's`))->toEqual(Some(`name: 'Say "Hi" It''s'`))
+    expect(
+      Rfc_new.skeleton(~name="Builders", ~status="draft")->String.split("\n")->Array.get(2),
+    )->toEqual(Some("title:"))
+    ["Builders in Tiers", "A Small Machine's Daily Upgrade", `Say "Hi" It's`]->Array.forEach(
+      name => {
+        let text =
+          Rfc_new.skeleton(~name, ~status="draft")->String.replace("title:", "title: A title")
+        let (read, _) = Rfc_record.readFront(text)
+        expect(read->Option.map(front => front.name))->toEqual(Some(name))
+      },
+    )
+  })
+
   test("names each key missing, unknown or out of form", () => {
     let text = "---\nname: \"\"\ntitle:\nstatus: done\nowner: me\ncommits: [web]\n---\n"
     let (_, problems) = Rfc_record.readFront(text)

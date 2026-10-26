@@ -116,6 +116,7 @@ let parts: array<(string, part)> = [
   ("deferred", Found(Waiting.problems)),
   ("rfcs", Found(() => Rfc_check.repository(Planning.workspaceSpace))),
   ("tasks", Script(() => reported(Tasks.found(~root)))),
+  ("placed", Found(() => Placed.found(~root))),
   ("plain", Soft(() => Comments.plain(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
 ]
@@ -177,6 +178,7 @@ let over = (repo): array<(string, part)> =>
     [
       ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
       ("tasks", Script(() => reported(Tasks.found(~root=repo)))),
+      ("placed", Found(() => Placed.found(~root=repo))),
       ("names", Found(() => Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)))),
       ("commits", Found(() => commits(repo))),
       ("comments", Formed(pushing => Comments.main(~root=repo, ~given=[], ~pushing))),

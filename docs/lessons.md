@@ -125,6 +125,10 @@ moves into `model/rules/` with its check and leaves this file.
   configuration enables, timers among them, so a timer stopped for a step is stopped again after
   each switch. On 2026-10-25 both of monoflake's test machines had their daily upgrade timer
   stopped for a switch, and each switch started it again, caught from its output.
+- **A machine outside monoflake/cloud's fleet is not logged into unless the author or the advisor
+  names it**, read-only or not. A question of who configures it is answered from the repositories.
+  On 2026-10-26 the integrator ran one read-only command as root on such a machine to answer which
+  repository kept it, which the repositories already answered.
 - **After a push, the next task starts.** Watching a deploy or polling a registry's propagation
   stalls the session for nothing asked; the author says when a publish is out.
 

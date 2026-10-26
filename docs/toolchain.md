@@ -879,7 +879,9 @@ the author cannot be asked, Western North America (R2's `wnam`, or its equal) or
 never left unset: Cloudflare then places the resource near the caller, and R2 never moves a bucket
 after, as one made with none from the East stayed there on 2026-10-26, monoflake/platform's
 docs/lessons/cloudflare.md, "Where R2 places a bucket". `cloudflare-placed` in
-`model/rules/toolchain.res`.
+`model/rules/toolchain.res` holds the D1 databases and R2 buckets a script or task makes;
+`cloudflare-placed-rest` waits for the rest, a create by the API, a jurisdiction, a Durable
+Object's hint and a Worker's placement.
 
 ### A Rust CLI parses with clap, and wears cargo's colors
 
