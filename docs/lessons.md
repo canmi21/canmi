@@ -46,7 +46,7 @@ moves into `model/rules/` with its check and leaves this file.
 - **A formatter runs before an exact-match edit, never between two.** A reflow moved the text a
   replacement was looking for, and the replacement silently did nothing.
 
-- **An RFC's place in the day is drawn before its file moves into a lane.** `new-rfc` draws the
+- **An RFC's place in the day is drawn before its file moves into a lane.** `rfc new` draws the
   day's number from what the default checkouts hold, so an RFC moved into a lane is invisible to the
   next draw, and each lane's check sees only its own: on 2026-10-24 platform's b75yr and driver's
   5n9cy both took 2026-1024-08 in the monoflake space and broke check on both mains once pushed.
@@ -142,3 +142,7 @@ moves into `model/rules/` with its check and leaves this file.
 - **A check's exit 0 is read with its red list**: a block in work fails nothing, its failures
   listed in red after the check, so a failing test passes the exit code. On 2026-10-26 a merge
   checked exit 0 with a test of the control failing; `task failed` and `✖` in the log showed it.
+- **A command handed to the author is first run in a form that changes nothing**, from the directory
+  they will type it in: no arguments, `--dry-run`, or a value refused before any prompt. On
+  2026-10-26 `mise run secret` was handed with a `cd` into a repository, where mise resolves that
+  repository's tasks and found none; `secret` is the workspace's, run from its root.

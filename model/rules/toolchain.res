@@ -70,7 +70,15 @@ let rules: array<Rule.t> = [
     name: "task-nested",
     says: "A mise task is named by one word, an action of it its first argument, never a name joined by a hyphen",
     doc,
-    held: Pending("each repository's tasks read for a name holding a hyphen"),
+    held: Check("tasks"),
+  },
+  {
+    name: "cloudflare-placed",
+    says: "A Cloudflare resource made with a place names it, Western North America or Asia-Pacific alone, never left unset",
+    doc,
+    held: Pending(
+      "each repository's scripts read for every d1 create and r2 bucket create, each passing --location wnam or apac, or a variable a refusal guards",
+    ),
   },
   {
     name: "tabs",

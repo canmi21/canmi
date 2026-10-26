@@ -67,7 +67,7 @@ describe("a mise task", () => {
       ),
     )
     expect(Tasks.joinedFile(".mise/tasks/lane/open", ~executable=true))->toEqual(None)
-    expect(Tasks.joinedFile("docs/new-rfc.md", ~executable=true))->toEqual(None)
+    expect(Tasks.joinedFile("docs/<f>-rfc.md", ~executable=true))->toEqual(None)
     expect(Tasks.joinedFile(".mise/tasks/lib-local.ts", ~executable=false))->toEqual(None)
   })
 

@@ -148,7 +148,7 @@ file but the one `--from` below reads it from. A name already set is replaced on
 changed stays encrypted and is committed as it is. It reads one line a value.
 
 **A machine's file and a value of several lines.** A repository path that goes on into
-`machines/<m>`, as `mise run secret monoflake/cloud/machines/<m> cache`, writes that machine's own
+`machines/<m>`, as `mise run secret monoflake/cloud/machines/<m> upgrade`, writes that machine's own
 `secrets.json`, its names in lowercase and hyphens as sops-nix reads them, where a repository's are
 in capitals. `--from <file>` is given once, takes one name and the whole file as its value, its
 lines and its final newline kept, handed to sops without passing through the shell; a relative path
@@ -870,6 +870,16 @@ workspace words`, never a name joined by a hyphen, as `install-driver` was. A co
 declarative, a tree of nouns and the actions on them, and one task holds every action of its noun.
 `task-nested` in `model/rules/toolchain.res`; canmi/web's and seam's tasks wait for their
 repositories, the deferred `task-names-nested-rest`.
+
+**A Cloudflare resource made with a place asks the author where**, the author's rule of
+2026-10-26: an R2 bucket's location hint or jurisdiction, a D1 database's location, a Durable
+Object's location hint, a Worker's placement, and whatever else Cloudflare places by region. Where
+the author cannot be asked, Western North America (R2's `wnam`, or its equal) or Asia-Pacific
+(`apac`) alone is chosen, by where the resource's readers and writers are at the time. A place is
+never left unset: Cloudflare then places the resource near the caller, and R2 never moves a bucket
+after, as one made with none from the East stayed there on 2026-10-26, monoflake/platform's
+docs/lessons/cloudflare.md, "Where R2 places a bucket". `cloudflare-placed` in
+`model/rules/toolchain.res`.
 
 ### A Rust CLI parses with clap, and wears cargo's colors
 

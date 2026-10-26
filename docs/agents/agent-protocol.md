@@ -160,6 +160,8 @@ Ask the user when:
 - The task needs a choice the rules do not already answer.
 - The choice is structural: architecture, dependency, data model, public API, naming scope.
 - The choice is expensive or awkward to reverse.
+- A Cloudflare resource is made with a place, which can never be undone; only where the author
+  cannot be asked is it chosen by [toolchain.md](../toolchain.md)'s placement rule.
 
 Do not ask when:
 
