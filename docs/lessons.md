@@ -69,6 +69,11 @@ moves into `model/rules/` with its check and leaves this file.
 
 ## Shell
 
+- **A wait on a oneshot reads its ActiveState, never `systemctl is-active`.** A oneshot running
+  is `activating`, which `is-active` reports as not active, so a loop waiting while it is active
+  ends at once. On 2026-10-26 such a wait ended a machine's upgrade watch after twenty seconds,
+  and its memory sampler was stopped while the upgrade still ran; `systemctl show -p ActiveState`
+  read until it is neither `activating` nor `active` is the wait.
 - **A computed list of paths is built in Python**, asserted non-empty and passed by
   `subprocess.run`. The Bash tool's zsh does not split `$list`, and macOS's bash 3.2 has no
   `mapfile`; on 2026-10-04 an empty list made `jj restore` restore the whole working copy.

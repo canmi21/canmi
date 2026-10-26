@@ -90,7 +90,7 @@ let items: array<item> = [
   },
   {
     id: "cache-rest",
-    what: "monoflake/machine's cache, after its review of 2026-10-25, leaves: a small machine's daily garbage collection can delete a path between its builder's query and its fetch, so the fetch lacks it; two builders' sweeps can race on one bucket; R2's answer to a missing pointer, 404 or 403, is read on the first live run",
+    what: "monoflake/machine's cache, after its review of 2026-10-25, leaves: a small machine's daily garbage collection can delete a path between its builder's query and its fetch, so the fetch lacks it; two builders' sweeps can race on one bucket; R2's answer to a missing pointer, read on the first live run of 2026-10-26, is 404 over S3 and empty output with exit 0 through rclone cat, which the sweep and the fetch now both handle",
     repos: ["monoflake/machine"],
     until: Author,
   },
@@ -162,8 +162,8 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "fleet-last-relay",
-    what: "the one machine of the author's wider network still kept by hand, outside monoflake/cloud's fleet, joins the fleet and turns its peer relay on as the fleet's other relays do; untouched until then, as the author said on 2026-10-26",
+    id: "fleet-planned",
+    what: "the machines monoflake/cloud keeps under planned/, written but not deployed, are reflashed and moved into machines/ once the author has moved their work off them, their host keys, secrets and cache roles entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
     repos: ["monoflake/cloud"],
     until: Author,
   },
