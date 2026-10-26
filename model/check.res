@@ -24,6 +24,18 @@ let report = found => {
   found->Array.length > 0 ? 1 : 0
 }
 
+/** Each warning logged, failing only under AUDIT. */
+let warn = warned => {
+  warned->Array.forEach(line => Console.log(`  warning: ${line}`))
+  if warned == [] {
+    Console.log("  no warning")
+  }
+  warned != [] && Node.envIs("AUDIT", "1") ? 1 : 0
+}
+
+/** What a part breaks reported, then what it warns of. */
+let reported = ((failed, warned)) => report(failed) + warn(warned) > 0 ? 1 : 0
+
 /** A repository's history after its `since`, or that it has none. */
 let commits = repo => {
   let name = Registry.label(repo)
@@ -103,7 +115,7 @@ let parts: array<(string, part)> = [
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
   ("rfcs", Found(() => Rfc_check.repository(Planning.workspaceSpace))),
-  ("tasks", Found(() => Tasks.main(~root))),
+  ("tasks", Script(() => reported(Tasks.found(~root)))),
   ("plain", Soft(() => Comments.plain(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
 ]
@@ -141,13 +153,7 @@ let outcome = (part, ~pushing=false) =>
   | Script(run) => run()
   | Formed(run) => run(pushing)
   | Found(found) => report(found())
-  | Soft(found) =>
-    let warned = found()
-    warned->Array.forEach(line => Console.log(`  warning: ${line}`))
-    if warned == [] {
-      Console.log("  no warning")
-    }
-    warned != [] && Node.envIs("AUDIT", "1") ? 1 : 0
+  | Soft(found) => warn(found())
   | Waivable(repo, found) =>
     let kept = found()->Array.filter(({rule, says}) =>
       switch Waiting.waiver(~repo, ~rule) {
@@ -170,7 +176,7 @@ let over = (repo): array<(string, part)> =>
   Array.concat(
     [
       ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
-      ("tasks", Found(() => Tasks.main(~root=repo))),
+      ("tasks", Script(() => reported(Tasks.found(~root=repo)))),
       ("names", Found(() => Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)))),
       ("commits", Found(() => commits(repo))),
       ("comments", Formed(pushing => Comments.main(~root=repo, ~given=[], ~pushing))),

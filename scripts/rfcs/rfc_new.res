@@ -1,10 +1,10 @@
 /**
- * `new-rfc <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`, an RFC started
+ * `rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`, an RFC started
  * from its name, its slug, id and place in the day drawn so nobody picks them. RFC 2ut6h.
  */
 let usage = () => {
   Console.error(
-    "usage: mise run new-rfc <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]",
+    "usage: mise run rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]",
   )
   Console.error(
     "  the name in title case, at most 32 characters; the area a directory of docs/rfcs;",
@@ -15,7 +15,7 @@ let usage = () => {
   Console.error(
     `  own unless given; the status one of ${Planning.statuses->Array.join(", ")}, draft`,
   )
-  Console.error(`  unless given; e.g. mise run new-rfc "Hue Pairs" design --in monoflake/platform`)
+  Console.error(`  unless given; e.g. mise run rfc new "Hue Pairs" design --in monoflake/platform`)
   Node.exit(2)
 }
 
@@ -45,7 +45,11 @@ references: []
 ${status == "draft" ? "" : "\n## Decision\n"}`
 
 let main = () => {
-  let args = Node.args()
+  let given = Node.args()
+  if given[0] != Some("new") {
+    usage()
+  }
+  let args = given->Array.slice(~start=1)
   let into = option(args, "--in")->Option.getOr(Planning.workspaceSpace)
   let status = option(args, "--status")->Option.getOr("draft")
   let day = option(args, "--day")->Option.getOr(Rfc_name.today())

@@ -107,8 +107,8 @@ depends = ["build"]
 run = "node scripts/workspace/each.res.mjs"
 
 # An RFC by its id space, the workspace's own or what a repository's `[rfcs] ids` names.
-[tasks.new-rfc]
-description = "Start an RFC: `new-rfc <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`"
+[tasks.rfc]
+description = "Start an RFC: `rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`"
 depends = ["build"]
 run = "node scripts/rfcs/rfc_new.res.mjs"
 

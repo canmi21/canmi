@@ -35,13 +35,70 @@ describe("a mise task", () => {
   test("runs the limit's lines at most, a list counted step by step", () => {
     let long = Array.fromInitializer(~length=Toolchain.taskLines + 1, _ => "echo")->Array.join("\n")
     expect(
-      Tasks.problems(`[tasks.a]\nrun = """\n${long}\n"""\n[tasks.b]\nrun = "x"`, ~file="mise.toml"),
-    )->toEqual([
-      `mise.toml: [tasks.a] runs ${Int.toString(
-          Toolchain.taskLines + 1,
-        )} lines, past ${Int.toString(Toolchain.taskLines)}; a script holds it`,
-    ])
+      Tasks.read(`[tasks.a]\nrun = """\n${long}\n"""\n[tasks.b]\nrun = "x"`, ~file="mise.toml"),
+    )->toEqual((
+      [
+        `mise.toml: [tasks.a] runs ${Int.toString(
+            Toolchain.taskLines + 1,
+          )} lines, past ${Int.toString(Toolchain.taskLines)}; a script holds it`,
+      ],
+      [],
+    ))
     expect(Tasks.lines(JSON.Array([JSON.String("a\nb"), JSON.String("c")])))->toBe(3)
+  })
+
+  test("is named by one word, in a mise.toml and as a file run under .mise/tasks", () => {
+    let text = `[tasks.new-rfc]\nrun = "x"\n[tasks.rfc]\nrun = "x"\n[tasks."lane:open"]\nrun = "x"`
+    expect(Tasks.read(text, ~file="mise.toml"))->toEqual((
+      [],
+      [
+        "mise.toml: [tasks.new-rfc] joins words by a hyphen; one word, an action its first argument",
+      ],
+    ))
+    expect(Tasks.read("[tasks", ~file="mise.toml"))->toEqual((["mise.toml: does not parse"], []))
+    expect(Tasks.joinedFile("app/.mise/tasks/dev-server", ~executable=true))->toEqual(
+      Some(
+        `app/.mise/tasks/dev-server: the task dev-server joins words by a hyphen; ${Tasks.nested}`,
+      ),
+    )
+    expect(Tasks.joinedFile(".mise/tasks/lane/open-all", ~executable=true))->toEqual(
+      Some(
+        `.mise/tasks/lane/open-all: the task lane:open-all joins words by a hyphen; ${Tasks.nested}`,
+      ),
+    )
+    expect(Tasks.joinedFile(".mise/tasks/lane/open", ~executable=true))->toEqual(None)
+    expect(Tasks.joinedFile("docs/new-rfc.md", ~executable=true))->toEqual(None)
+    expect(Tasks.joinedFile(".mise/tasks/lib-local.ts", ~executable=false))->toEqual(None)
+  })
+
+  test(
+    "joined by a hyphen warns only where the deferred renaming names the repository, guarding that the live item exists",
+    () => {
+      let item: Deferred.item = {
+        id: Tasks.renaming,
+        what: "renamed",
+        repos: ["seam"],
+        until: Author,
+      }
+      expect(Tasks.renamingIn([item], ~repo="seam"))->toEqual(Some(Tasks.renaming))
+      expect(Tasks.renamingIn([item], ~repo="workspace"))->toEqual(None)
+      expect(Tasks.renamingIn([{...item, id: "other"}], ~repo="seam"))->toEqual(None)
+      expect(Deferred.items->Array.some(({id}) => id == Tasks.renaming))->toBe(true)
+    },
+  )
+
+  test("warned of fails nothing outside AUDIT, and what it breaks fails", () => {
+    let line = `mise.toml: [tasks.dev-site] joins words by a hyphen; ${Tasks.nested}`
+    expect(Check.reported(([], [line])))->toBe(0)
+    expect(Check.reported(([line], [])))->toBe(1)
+    expect(Check.reported(([], [])))->toBe(0)
+    let audit = Node.env->Dict.get("AUDIT")
+    Node.env->Dict.set("AUDIT", "1")
+    expect(Check.reported(([], [line])))->toBe(1)
+    switch audit {
+    | Some(value) => Node.env->Dict.set("AUDIT", value)
+    | None => Node.env->Dict.delete("AUDIT")
+    }
   })
 })
 
