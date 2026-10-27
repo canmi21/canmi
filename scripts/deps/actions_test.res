@@ -131,3 +131,58 @@ describe("a followed branch", () => {
     ])
   })
 })
+
+describe("the actions mover", () => {
+  let root = temporaryRoot("actions-bump-")
+  let script = Node.join([Node.cwd(), "scripts/deps/actions.res.mjs"])
+  let pinned = "0ae9cea166b8849d61ccaccfc5c73d330d4e38b9"
+  let workflow = `jobs:\n  release:\n    steps:\n      - with:\n          ref: ${pinned} # monoflake/platform@main\n`
+  let run = (~driver, ~head, ~dry=false, ()) => {
+    tree(
+      root.contents,
+      [
+        (".github/workflows/release.yml", workflow),
+        ("bin/gh", `#!/bin/sh\nprintf '%s\\n' "gh $*" >> calls\nprintf '{"sha":"%s"}' ${head}\n`),
+        ("bin/mise", "#!/bin/sh\nprintf '%s\\n' \"mise $*\" >> calls\n"),
+      ],
+    )
+    if driver {
+      tree(root.contents, [(".github/release/bump.res", "")])
+    }
+    Node.run(
+      "chmod",
+      ["+x", Node.join([root.contents, "bin/gh"]), Node.join([root.contents, "bin/mise"])],
+    )->ignore
+    let path = Node.env->Dict.get("PATH")->Option.getOr("")
+    Node.env->Dict.set("PATH", Node.join([root.contents, "bin"]) ++ ":" ++ path)
+    let result = Node.spawnSync(
+      "node",
+      [script, ...dry ? ["--dry-run"] : []],
+      {cwd: root.contents, encoding: "utf8"},
+    )
+    Node.env->Dict.set("PATH", path)
+    expect(result.status)->toEqual(Nullable.make(0))
+    (
+      Node.readFileSync(Node.join([root.contents, "calls"])),
+      Node.readFileSync(Node.join([root.contents, ".github/workflows/release.yml"])),
+    )
+  }
+  let moved = "f"->String.repeat(40)
+  let asked = "gh api repos/monoflake/platform/commits/main\n"
+  test("bumps the driver after it moves the platform's pin", () => {
+    let (calls, text) = run(~driver=true, ~head=moved, ())
+    expect(calls)->toBe(`${asked}mise run bump\n`)
+    expect(text)->toBe(workflow->String.replace(pinned, moved))
+  })
+  test("moves a pin and runs nothing more in a repository without bump.res", () => {
+    let (calls, text) = run(~driver=false, ~head=moved, ())
+    expect(calls)->toBe(asked)
+    expect(text)->toBe(workflow->String.replace(pinned, moved))
+  })
+  test("does not bump where no pin moved", () => {
+    expect(run(~driver=true, ~head=pinned, ()))->toEqual((asked, workflow))
+  })
+  test("does not bump or write in a dry run", () => {
+    expect(run(~driver=true, ~head=moved, ~dry=true, ()))->toEqual((asked, workflow))
+  })
+})

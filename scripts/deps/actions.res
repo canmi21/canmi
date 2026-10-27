@@ -195,6 +195,7 @@ let main = () => {
       releases
     }
   let failed = ref(false)
+  let wrote = ref(false)
   files
   ->Array.toSorted(String.compare)
   ->Array.forEach(file => {
@@ -248,8 +249,16 @@ let main = () => {
     })
     if changed.contents && !dry {
       Node.writeFileSync(path, lines->Array.join("\n"))
+      wrote := true
     }
   })
+
+  // A pin moved raises the version of what is released from it, monoflake/driver's RFC 8c0rg.
+  if wrote.contents && Node.existsSync(Node.join([github, "release", "bump.res"])) {
+    if Node.run("mise", ["run", "bump"]) != 0 {
+      failed := true
+    }
+  }
   Node.exit(failed.contents ? 1 : 0)
 }
 

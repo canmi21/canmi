@@ -307,13 +307,35 @@ let clean = (~dry) => {
 
 let mover = name => Node.join([root, "scripts", "deps", `${name}.res.mjs`])
 
-/** Each mover run from `repo`, logged as typed, on past a failure. */
-let moved = (repo, movers: array<array<string>>) =>
-  movers->Array.reduce(0, (status, commandArgs) => {
+/**
+ * Each mover run from `repo`, logged as typed, on past a failure, 1 where one failed and
+ * `Releases.partly` where the one that did not pass was the releases mover writing what it read,
+ * each source it held back put in `held`.
+ */
+let moved = async (repo, movers: array<array<string>>, ~held=[]) => {
+  let status = ref(0)
+  for index in 0 to movers->Array.length - 1 {
+    let commandArgs = movers->Array.getUnsafe(index)
     let shown = commandArgs->Array.map(arg => arg->String.replace(`${root}/`, ""))
     Console.log(`\n$ node ${shown->Array.join(" ")}`)
-    Node.run(~cwd=repo, "node", commandArgs) != 0 ? 1 : status
-  })
+    let code = if commandArgs[0]->Option.map(Node.basename) == Some("releases.res.mjs") {
+      let (code, out) = await Node.stream(~cwd=repo, "node", commandArgs)
+      if code == Releases.partly {
+        Releases.heldIn(out)->Array.forEach(source => held->Array.push(source))
+      }
+      code
+    } else {
+      Node.run(~cwd=repo, "node", commandArgs)
+    }
+    status :=
+      switch (code, status.contents) {
+      | (0, status) => status
+      | (code, 0 | 2) if code == Releases.partly => Releases.partly
+      | _ => 1
+      }
+  }
+  status.contents
+}
 
 /** The workspace's movers a repository's `[update]` asks for, beside its own task. */
 let movers = (repo, ~dry, ~major): array<array<string>> => {
@@ -337,7 +359,7 @@ let movers = (repo, ~dry, ~major): array<array<string>> => {
 let refresh = async (~dry, ~major) => {
   let tools = await Tools.up(~name="workspace", ~dry)
   let flags = Array.concat(dry ? ["--dry-run"] : [], major ? ["--major"] : [])
-  let tools = tools != 0 ? tools : moved(root, [[mover("actions"), ...flags]])
+  let tools = tools != 0 ? tools : await moved(root, [[mover("actions"), ...flags]])
   Console.log("")
   if dry {
     Console.log("$ pnpm outdated")
@@ -454,6 +476,21 @@ let restore = (repo, before, paths) => {
 }
 
 /**
+ * Whether what a repository's update moved is kept, its movers having exited `code`, on 0 and on
+ * `Releases.partly`, a release source held back while the rest was written; on any other exit the
+ * paths are put back as they were in `before`.
+ */
+let settled = (repo, ~code, ~before, ~paths) =>
+  if code == 0 || code == Releases.partly {
+    true
+  } else {
+    if paths != [] {
+      restore(repo, before, paths)
+    }
+    false
+  }
+
+/**
  * Each repository's own update and the movers its `[update]` declares, kept only where its verify
  * still passes. See docs/toolchain.md.
  */
@@ -461,6 +498,7 @@ let update = async (name, ~dry, ~major, ~everything) => {
   let skipped = []
   let failed = []
   let reverted = []
+  let held = []
   let flags = Array.concat(dry ? ["--dry-run"] : [], major ? ["--major"] : [])
   let chosen = Registry.selected(name, ~everything)
   for index in 0 to chosen->Array.length - 1 {
@@ -481,10 +519,16 @@ let update = async (name, ~dry, ~major, ~everything) => {
           let ran = tasked
             ? Node.run(~cwd=root, "mise", ["run", task(repo, "update"), ...flags])
             : 0
-          moved(repo, shared) + ran > 0 ? 1 : 0
+          let sources = []
+          let status = await moved(repo, shared, ~held=sources)
+          if status == Releases.partly {
+            held->Array.push((place, sources))
+          }
+          ran != 0 ? 1 : status
         }
       if dry {
-        if (await move()) != 0 {
+        let code = await move()
+        if code != 0 && code != Releases.partly {
           failed->Array.push(place)
         }
       } else {
@@ -492,10 +536,7 @@ let update = async (name, ~dry, ~major, ~everything) => {
         let code = await move()
         let after = snapshot(repo)
         let paths = jj(~cwd=repo, ["diff", "--from", before, "--to", after, "--name-only"])->lines
-        if code != 0 {
-          if paths != [] {
-            restore(repo, before, paths)
-          }
+        if !settled(repo, ~code, ~before, ~paths) {
           failed->Array.push(place)
         } else if paths != [] {
           if !own && !declares(repo, "verify") {
@@ -516,6 +557,17 @@ let update = async (name, ~dry, ~major, ~everything) => {
     }
   }
   summary("update", skipped, failed)
+  held
+  ->Array.filter(((place, _)) =>
+    !(failed->Array.includes(place)) && !(reverted->Array.some(((back, _, _)) => back == place))
+  )
+  ->Array.forEach(((place, sources)) =>
+    Console.log(
+      `warning: ${place} holds back its pins from ${sources->Array.join(
+          ", ",
+        )}, whose releases were not read; the rest that moved is kept`,
+    )
+  )
   if reverted != [] {
     Console.log(
       "\nReverted, because verify failed with what moved; these files are back as they were:\n",

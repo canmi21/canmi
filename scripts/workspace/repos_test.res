@@ -41,3 +41,68 @@ describe("what a verb was asked", () => {
     ])
   })
 })
+
+describe("an update's movers", () => {
+  let root = temporaryRoot("repos-update-")
+  let mover = (name, code, said) => {
+    let path = Node.join([root.contents, name, "releases.res.mjs"])
+    tree(
+      root.contents,
+      [(`${name}/releases.res.mjs`, `console.log(${said}); process.exit(${Int.toString(code)})`)],
+    )
+    path
+  }
+  let held = Releases.heldLine("manifest.toml", ["monoflake/driver"])
+  let quoted = JSON.stringifyAny(held)->Option.getOr(`""`)
+
+  testAsync("keep exit 2 from the releases mover and the source it held back", async () => {
+    let sources = []
+    let code = await Repos.moved(root.contents, [[mover("partly", 2, quoted)]], ~held=sources)
+    expect(code)->toBe(Releases.partly)
+    expect(sources)->toEqual(["monoflake/driver"])
+  })
+
+  testAsync("fail where any mover failed outright", async () => {
+    let both = [[mover("partly", 2, quoted)], [mover("failed", 1, `"releases: no"`)]]
+    expect(await Repos.moved(root.contents, both))->toBe(1)
+    expect(await Repos.moved(root.contents, [[mover("failed", 1, `"releases: no"`)]]))->toBe(1)
+  })
+
+  test("keep a runtime-only change on exit 2 and put it back on exit 1, as before", () => {
+    let config = Node.mkdtempSync(Node.join([Node.tmpdir(), "jj-config-"]))
+    let environment =
+      ["JJ_CONFIG", "JJ_USER", "JJ_EMAIL"]->Array.map(name => (name, Node.env->Dict.get(name)))
+    Node.env->Dict.set("JJ_CONFIG", config)
+    Node.env->Dict.set("JJ_USER", "test")
+    Node.env->Dict.set("JJ_EMAIL", "test@example.com")
+    let repo = root.contents
+    let lock = Node.join([repo, "manifest.lock"])
+    Node.writeFileSync(lock, "[workerd]\nversion = \"1.20261020.1\"\n")
+    expect(Node.run(~cwd=repo, "jj", ["git", "init", "--quiet"]))->toBe(0)
+    let settle = code => {
+      let before = Stamp.snapshot(repo)
+      Node.writeFileSync(lock, "[workerd]\nversion = \"1.20261025.1\"\n")
+      let after = Stamp.snapshot(repo)
+      let paths =
+        Node.output(
+          ~cwd=repo,
+          "jj",
+          ["diff", "--from", before, "--to", after, "--name-only"],
+        )->Repos.lines
+      expect(paths)->toEqual(["manifest.lock"])
+      let kept = Repos.settled(repo, ~code, ~before, ~paths)
+      (kept, Node.readFileSync(lock))
+    }
+    expect(settle(2))->toEqual((true, "[workerd]\nversion = \"1.20261025.1\"\n"))
+    Node.writeFileSync(lock, "[workerd]\nversion = \"1.20261020.1\"\n")
+    expect(settle(1))->toEqual((false, "[workerd]\nversion = \"1.20261020.1\"\n"))
+    environment->Array.forEach(
+      ((name, value)) =>
+        switch value {
+        | Some(value) => Node.env->Dict.set(name, value)
+        | None => Node.env->Dict.delete(name)
+        },
+    )
+    Node.rmSync(config, {recursive: true, force: true})
+  })
+})

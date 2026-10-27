@@ -780,7 +780,9 @@ annotated tag to its commit. A release still inside its first day, or past the m
 and left. A repository of the author's own that a workflow checks out is pinned by the commit,
 the branch it follows beside it, `ref: 0ae9cea1... # monoflake/platform@main`, and moved to the
 branch's head with no wait, as the author's own is trusted; `monoflake/platform`'s RFC x6hf9. The move is local: it is reviewed and pushed by hand, as every `update` is, and no
-workflow moves its own actions. Decided with the author on 2026-10-21.
+workflow moves its own actions. Decided with the author on 2026-10-21. A repository with
+`.github/release/bump.res` has its `bump` run after a workflow is written, so a moved pin of what it
+builds from raises its version, monoflake/driver's RFC 8c0rg.
 
 ### A Dockerfile's base images are pinned by digest and moved by `update`
 
@@ -809,6 +811,11 @@ artifact's release is linked above its table. The repository names the manifest 
 archive is named by, and locks it only once that release's `manifest.json` lists it, each address
 the release's own download and each hash the manifest's. The source holds the delay already, a
 runtime released a day after upstream, so none is waited out again. Decided with the author on 2026-10-22.
+A table in the manifest naming its own `source` and one list takes that list from that repository,
+as `monoflake/machine`'s `[driver]` takes `driver-machine` from `monoflake/driver`, and each pin it
+locks records its `source`. A source whose releases cannot be read keeps its pins as they were while
+the others are written, and the run exits 2 naming it, which `update` keeps and warns of, provisional,
+chosen by the advisor on 2026-10-27; it exits 1 and writes nothing when no source was read.
 
 ### A release is the workspace's script, each repository building what it releases
 
@@ -819,8 +826,11 @@ archives, and names each artifact in `built.json` with its `name`, `version`, `c
 `target`, `kind` and `path`, an image's `digest`, the fields that are its alone, and its `row` in
 the table, where `{release}` stands for the day's tag. `scripts/release/release.res`, run as the
 repository's `release` task, does the rest: a UTC day's release, `2026.10.22`, drafted whole and
-published last when new, or added to when it stands, each file uploaded with `--clobber`, a row
-added, and one `manifest.json` merged and uploaded last. An artifact counts as released only once
+published last when new, or added to when it stands, each file uploaded with `--clobber`, then
+one `manifest.json` merged and uploaded, each entry carrying its row, and the notes' table rendered
+from it last, on every run that touches the day, one with nothing new among them, so notes a failed
+edit left short are made whole by the next run and none is doubled, provisional, chosen by the
+advisor on 2026-10-27. An artifact counts as released only once
 a published release's manifest lists its version, and `release listed` prints every one so a build
 can skip what is out. Every manifest has one shape, `{release, artifacts}`,
 `scripts/release/manifest.res`; runtime's first, `{release, runtimes}` with each entry's `runtime`

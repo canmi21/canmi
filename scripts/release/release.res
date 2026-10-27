@@ -1,6 +1,7 @@
 /**
- * `release.res.mjs [listed] [--dry-run]`, from a repository declaring `[release]`, puts what its
- * `built.json` names into the UTC day's release, or prints what is out. See docs/toolchain.md.
+ * `release.res.mjs [listed | notes] [--dry-run]`, from a repository declaring `[release]`, puts
+ * what its `built.json` names into the UTC day's release, prints what is out, or renders each
+ * day's notes again from its manifest. See docs/toolchain.md.
  */
 let refuse = why => {
   Console.error(`release: ${why}`)
@@ -162,8 +163,46 @@ let measured = artifact =>
     ((made, asset->Manifest.text("digest")), at)
   })
 
+/** A row's first two cells, the artifact and its version as the notes' table names them. */
+let leading = line =>
+  line
+  ->String.trim
+  ->String.split("|")
+  ->Array.slice(~start=1, ~end=3)
+  ->Array.map(String.trim)
+
+/** The notes a release's manifest gives, its table's head, then the rows of what it listed before
+ * its entries carried their rows, as the notes held them, then one row for each entry carrying its
+ * own, so the table is rendered again whole from the manifest by any run. */
+let notesOf = (manifest, ~body, ~columns) => {
+  let head = Manifest.header(columns)
+  let rows =
+    manifest
+    ->Manifest.artifacts
+    ->Array.filterMap(entry =>
+      switch entry->Manifest.list("row")->Array.filterMap(JSON.Decode.string) {
+      | [] => None
+      | cells => Some(Manifest.row(cells))
+      }
+    )
+  let earlier =
+    body
+    ->String.split("\n")
+    ->Array.map(String.trim)
+    ->Array.filter(line => line->String.startsWith("| ") && !(head->Array.includes(line)))
+    ->Array.filter(line => !(rows->Array.some(row => leading(row) == leading(line))))
+    ->Array.reduce([], (kept, line) =>
+      kept->Array.some(held => leading(held) == leading(line)) ? kept : [...kept, line]
+    )
+  [...head, ...earlier, ...rows]->Array.join("\n")
+}
+
+/** Text as GitHub may give it back, its line ends plain and its ends trimmed. */
+let plain = text => text->String.replaceAll("\r\n", "\n")->String.trim
+
 /** What was built released under the UTC day, a new release drafted whole and published last, or
- * the day's published one added to, its manifest merged and uploaded after files and rows. */
+ * the day's published one added to, its files, then its merged manifest, each entry of the same
+ * version replaced whole, then its notes rendered from that manifest. */
 let release = async (artifacts, ~releases, ~repository, ~columns, ~directory) => {
   let tag = Manifest.day(Date.now())
   let named = releases->Array.filter(release => release->Manifest.text("tag_name") == Some(tag))
@@ -176,23 +215,18 @@ let release = async (artifacts, ~releases, ~repository, ~columns, ~directory) =>
       assets->Array.filterMap(((_, at)) => Node.existsSync(at) ? None : Some(at))
     )
   let files = measured->Array.flatMap(((_, assets)) => assets->Array.map(((_, at)) => at))
-  let entries =
-    measured->Array.map(((artifact, assets)) =>
-      Manifest.entry(artifact, assets->Array.map(((asset, _)) => asset))
-    )
-  let rows = notes =>
-    artifacts->Array.reduce(notes, (notes, artifact) =>
-      Manifest.appended(
-        notes,
-        ~columns,
-        Manifest.row(
-          artifact
-          ->Manifest.list("row")
-          ->Array.filterMap(JSON.Decode.string)
-          ->Array.map(cell => Manifest.filled(cell, ~release=tag)),
-        ),
-      )
-    )
+  // Each entry keeps the row its notes take, the day filled in, so the notes are its manifest's.
+  let entries = measured->Array.map(((artifact, assets)) => {
+    let entry = Manifest.entry(artifact, assets->Array.map(((asset, _)) => asset))
+    let fields = entry->JSON.Decode.object->Option.getOr(Dict.make())->Dict.copy
+    let cells =
+      artifact
+      ->Manifest.list("row")
+      ->Array.filterMap(JSON.Decode.string)
+      ->Array.map(cell => JSON.Encode.string(Manifest.filled(cell, ~release=tag)))
+    fields->Dict.set("row", JSON.Encode.array(cells))
+    JSON.Encode.object(fields)
+  })
   let manifest = Node.join([directory, Manifest.file])
   let write = existing => {
     let text = Manifest.merged(existing, ~release=tag, entries)
@@ -203,6 +237,7 @@ let release = async (artifacts, ~releases, ~repository, ~columns, ~directory) =>
       Node.mkdirAll(directory)
       Node.writeFileSync(manifest, text)
     }
+    JSON.parseOrThrow(text)
   }
   measured->Array.forEach(((artifact, assets)) => {
     let name = artifact->Manifest.text("name")->Option.getOr("")
@@ -219,22 +254,17 @@ let release = async (artifacts, ~releases, ~repository, ~columns, ~directory) =>
     switch await manifestOf(standing) {
     | Error(why) => Error(why)
     | Ok(existing) =>
-      write(existing)
+      let merged = write(existing)
+      let body = standing->Manifest.text("body")->Option.getOr("")
       gh(["release", "upload", tag, ...files, "--clobber"])
-      ->Result.flatMap(() =>
-        gh([
-          "release",
-          "edit",
-          tag,
-          "--notes",
-          rows(standing->Manifest.text("body")->Option.getOr("")),
-        ])
-      )
       ->Result.flatMap(() => gh(["release", "upload", tag, manifest, "--clobber"]))
+      ->Result.flatMap(() =>
+        gh(["release", "edit", tag, "--notes", notesOf(merged, ~body, ~columns)])
+      )
     }
   | (_, None) =>
     Console.log(`release ${tag}, new`)
-    write(None)
+    let merged = write(None)
     // A draft a failed run left under the day's name is put aside, so one release takes the name.
     named
     ->Array.reduce(Ok(), (done, _) =>
@@ -250,13 +280,78 @@ let release = async (artifacts, ~releases, ~repository, ~columns, ~directory) =>
           "--title",
           tag,
           "--notes",
-          rows(""),
+          notesOf(merged, ~body="", ~columns),
           ...files,
           manifest,
         ],
       )
     )
     ->Result.flatMap(() => gh(["release", "edit", tag, "--draft=false"]))
+  }
+}
+
+/** Each published release whose manifest's entries carry their rows, but `except`, its notes
+ * edited where they are not what that manifest renders, as a failed edit leaves them. */
+let repaired = async (releases, ~repository, ~columns, ~except=[]) => {
+  let rec next = async (holding, done) =>
+    switch holding {
+    | [] => done
+    | _ =>
+      let release = holding->Array.getUnsafe(0)
+      let rest = holding->Array.slice(~start=1)
+      let tag = release->Manifest.text("tag_name")->Option.getOr("")
+      switch await manifestOf(release) {
+      | Error(why) => await next(rest, Error(why))
+      | Ok(None) => await next(rest, done)
+      | Ok(Some(manifest)) =>
+        let rowed =
+          manifest->Manifest.artifacts->Array.some(entry => entry->Manifest.list("row") != [])
+        let body = release->Manifest.text("body")->Option.getOr("")
+        let notes = notesOf(manifest, ~body, ~columns)
+        if !rowed || plain(notes) == plain(body) {
+          await next(rest, done)
+        } else {
+          Console.log(`release ${tag}, its notes rendered again from its ${Manifest.file}`)
+          let edited = run("gh", ["release", "edit", tag, "--notes", notes, "--repo", repository])
+          await next(rest, done->Result.flatMap(() => edited))
+        }
+      }
+    }
+  await next(
+    published(releases)->Array.filter(release =>
+      !(except->Array.includes(release->Manifest.text("tag_name")->Option.getOr("")))
+    ),
+    Ok(),
+  )
+}
+
+/** What a run releases of `artifacts`, what a published release lists passed over, and then each
+ * other day's notes rendered again where a failed edit left them short. */
+let releasing = async (artifacts, ~releases, ~repository, ~columns, ~directory) => {
+  let rec fresh = async (index, kept) =>
+    switch artifacts[index] {
+    | None => Ok(kept)
+    | Some(artifact) =>
+      let name = artifact->Manifest.text("name")->Option.getOr("")
+      let version = artifact->Manifest.text("version")->Option.getOr("")
+      switch await releasedHere(releases, ~name, ~version) {
+      | Error(why) => Error(why)
+      | Ok(true) =>
+        Console.log(`${name} ${version}, released already`)
+        await fresh(index + 1, kept)
+      | Ok(false) => await fresh(index + 1, [...kept, artifact])
+      }
+    }
+  switch await fresh(0, []) {
+  | Error(why) => Error(why)
+  | Ok([]) =>
+    Console.log("release: nothing new to release")
+    await repaired(releases, ~repository, ~columns)
+  | Ok(artifacts) =>
+    switch await release(artifacts, ~releases, ~repository, ~columns, ~directory) {
+    | Error(why) => Error(`not released: ${why}`)
+    | Ok() => await repaired(releases, ~repository, ~columns, ~except=[Manifest.day(Date.now())])
+    }
   }
 }
 
@@ -295,38 +390,28 @@ let main = async () => {
     switch await releases(repository) {
     | Error(why) => refuse(why)
     | Ok(releases) =>
-      let rec fresh = async (index, kept) =>
-        switch artifacts[index] {
-        | None => Ok(kept)
-        | Some(artifact) =>
-          let name = artifact->Manifest.text("name")->Option.getOr("")
-          let version = artifact->Manifest.text("version")->Option.getOr("")
-          switch await releasedHere(releases, ~name, ~version) {
-          | Error(why) => Error(why)
-          | Ok(true) =>
-            Console.log(`${name} ${version}, released already`)
-            await fresh(index + 1, kept)
-          | Ok(false) => await fresh(index + 1, [...kept, artifact])
-          }
-        }
-      switch await fresh(0, []) {
+      switch await releasing(
+        artifacts,
+        ~releases,
+        ~repository,
+        ~columns=declared.columns,
+        ~directory=Node.dirname(built),
+      ) {
       | Error(why) => refuse(why)
-      | Ok([]) => Console.log("release: nothing new to release")
-      | Ok(artifacts) =>
-        let done = await release(
-          artifacts,
-          ~releases,
-          ~repository,
-          ~columns=declared.columns,
-          ~directory=Node.dirname(built),
-        )
-        switch done {
-        | Error(why) => refuse(`not released: ${why}`)
-        | Ok() => ()
-        }
+      | Ok() => ()
       }
     }
-  | _ => refuse("release.res.mjs [listed] [--dry-run]")
+  | ["notes"] =>
+    let (_, declared) = Project.here("release", declared => declared.release)
+    switch await releases(repository) {
+    | Error(why) => refuse(why)
+    | Ok(releases) =>
+      switch await repaired(releases, ~repository, ~columns=declared.columns) {
+      | Error(why) => refuse(why)
+      | Ok() => Console.log("release: every day's notes are what its manifest renders")
+      }
+    }
+  | _ => refuse("release.res.mjs [listed | notes] [--dry-run]")
   }
 }
 

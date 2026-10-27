@@ -98,7 +98,7 @@ let filled = (cell, ~release) => cell->String.replaceAll("{release}", release)
 type measured = {target: string, kind: string, file: string, size: float, sha256: string}
 
 /** An artifact as the manifest lists it, its name, version, commit and assets first, then every
- * other field its repository gave it, the row the notes take and each asset's path left out. */
+ * other field but each asset's path and the row, which release.res adds with its day filled in. */
 let entry = (artifact: JSON.t, assets: array<(measured, option<string>)>) => {
   let fields = artifact->JSON.Decode.object->Option.getOr(Dict.make())
   let made = Dict.make()

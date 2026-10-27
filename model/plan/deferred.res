@@ -174,6 +174,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-verify-workflow",
+    what: "monoflake/driver runs its verify, the release's version guard among it, in a workflow on every push, so a commit pushed without the local check is still held; until then a lookup that fails warns and passes, provisional, chosen by the advisor on 2026-10-27, its RFC 8c0rg",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
