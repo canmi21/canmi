@@ -116,6 +116,11 @@ moves into `model/rules/` with its check and leaves this file.
 - **A unit `systemd-run` starts has no PATH beyond systemd's own.** It carries none of the login
   shell's, so a script started that way on 2026-10-26 found none of its tools; the script sets its
   own PATH or names each tool by its store path.
+- **A remote step carries a keepalive and a timeout.** An `ssh` starting a oneshot on a builder
+  hung after the run had finished, with no `ServerAliveInterval` to notice the connection gone and no
+  `timeout` around it, and a rollout waiting on it stood still for three hours on 2026-10-27; every
+  `ssh` a script runs sets `-o ServerAliveInterval=15 -o ServerAliveCountMax=4`, under a `timeout`
+  longer than the step's own.
 
 - **An address is redacted by a pattern BSD `sed` reads.** macOS's `sed -E` has no `\b`, so a
   pattern built on it matches nothing and prints every address it was meant to hide; on 2026-10-23
@@ -217,3 +222,8 @@ moves into `model/rules/` with its check and leaves this file.
   they will type it in: no arguments, `--dry-run`, or a value refused before any prompt. On
   2026-10-26 `mise run secret` was handed with a `cd` into a repository, where mise resolves that
   repository's tasks and found none; `secret` is the workspace's, run from its root.
+- **A readback asserts its expected value, never prints it.** A rollout's readback printed a
+  machine's version and its count of a new setting, and the count it printed empty went unread; on
+  2026-10-27 a machine reported fetched took an old pointer and stayed on the old system. Each
+  readback fails unless the system applied is the one the round built, written after the round began,
+  and the setting reads its expected value.
