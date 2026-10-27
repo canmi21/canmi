@@ -66,6 +66,15 @@ moves into `model/rules/` with its check and leaves this file.
   that are not this session's, and `pgrep -fl claude`. A repository in use is skipped and named.
   On 2026-09-25 `jj fix` in seam, beside another session's scratch file, left its working copy
   divergent.
+- **A commit rewritten is followed by `jj st` in every lane standing on it.** Rewording a pushed
+  commit rebases each lane's change onto the new one and leaves that lane's working copy stale,
+  as an edit to the base does, [lanes.md](agents/lanes.md); on 2026-10-27 a reworded commit of
+  monoflake/machine did so to the lane on it, and `jj workspace update-stale` left the lane's
+  edits in a divergent copy, recovered by `jj edit`. Each lane is read before the next step there.
+- **A lane's sibling runs its own `generate` before anything builds against it.** A new jj
+  workspace holds what is committed, never what a task generates and git ignores, so on 2026-10-27
+  a lane's driver failed to build against its platform sibling, which lacked
+  `code/libs/envelope/generated` until `mise run generate` ran there.
 
 ## Shell
 
@@ -91,6 +100,16 @@ moves into `model/rules/` with its check and leaves this file.
   command not found. A copy is edited and started fresh.
 - **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
   binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
+- **A long command is run with the tool's `run_in_background` and is not polled.** The harness says
+  when it exits; a loop polling for a condition waits on one the step may already have passed, and
+  waits for nothing, as the author found on 2026-10-26. Steps are taken one at a time, each read
+  before the next.
+- **A jump host goes in `~/.ssh/config` for its one machine, never as `-J` in `NIX_SSHOPTS`.** Nix
+  hands those options to every ssh it opens, the builder's own on localhost among them, so all of
+  them went through the jump on 2026-10-26.
+- **A unit `systemd-run` starts has no PATH beyond systemd's own.** It carries none of the login
+  shell's, so a script started that way on 2026-10-26 found none of its tools; the script sets its
+  own PATH or names each tool by its store path.
 
 - **An address is redacted by a pattern BSD `sed` reads.** macOS's `sed -E` has no `\b`, so a
   pattern built on it matches nothing and prints every address it was meant to hide; on 2026-10-23
@@ -121,15 +140,37 @@ moves into `model/rules/` with its check and leaves this file.
   secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
   named as the config said, while the real one was deployed under the dashboard's name.
 - **A push across repositories that depend on each other stops at its first failure.** Each is
-  pushed in its own call, its result read before the next, and those after a refused one wait;
-  `mise run push --all` holds every one's form layer before pushing any, a hand loop does not. On
+  pushed in its own call, its result read before the next, and those after a refused one wait,
+  never in a loop and never by `--all`, [commits.md](commits.md). On
   2026-10-24 one shell loop pushed monoflake/platform, then had driver refused by its line limit
   and went on to push cloud, so cloud landed before driver against the cleared order, and driver's
   public main did not build against platform's new contracts until driver followed.
 - **A NixOS switch starts a timer held by hand again.** A switch restarts every unit its
   configuration enables, timers among them, so a timer stopped for a step is stopped again after
   each switch. On 2026-10-25 both of monoflake's test machines had their daily upgrade timer
-  stopped for a switch, and each switch started it again, caught from its output.
+  stopped for a switch, and each switch started it again, caught from its output. **A timer
+  started again fires a slot it missed at once**: systemd counts a calendar timer's next slot from
+  its last trigger, or failing that its previous start, so a slot passed while it was stopped is due
+  the moment it starts, `Persistent` or not. On 2026-10-26 a builder's timer for another machine,
+  restored by a switch, ran at once. `systemctl list-timers` is read before a timer is restored.
+- **A machine's secrets file is part of its system.** sops-nix copies a `sopsFile` whole into the
+  store, so a key added to a machine's `secrets.json` for one program changes that machine's
+  system, and a file several machines read changes each of theirs. On 2026-10-27 a new reader of
+  the cache's keys changed eleven systems by their secrets alone. The drvPaths of every machine are
+  compared before a secret is pushed.
+- **A pinned installer is read for what it fetches itself.** On 2026-10-26 a reinstall script
+  pinned by its hash downloaded a second script, `trans.sh`, from its upstream's main branch
+  during the install, on two machines; pinning one pinned nothing it fetched.
+- **`tailscale up --reset` clears every preference set before it.** On 2026-10-26 it cleared a
+  relay port that a unit had set at boot, so the port stopped listening after a machine joined;
+  the unit setting it is run again after a join, until the join stops resetting.
+- **A binary cache answering 409 fails the fetch, and Nix does not retry it.** On 2026-10-26 R2
+  answered one narinfo request with 409 and a machine's daily fetch failed; the same request was
+  answered 200 an hour later. A failed fetch is retried before it is reported as a fault.
+- **An agent is forwarded to a machine only when the author or the advisor says so.** For as long
+  as `ssh -A` runs, root on the far machine can use the author's key against any host it reaches;
+  on 2026-10-26 one measurement was run so unasked. A measurement uses a key made for it, or runs
+  from the Mac across both hops.
 - **A machine outside monoflake/cloud's fleet is not logged into unless the author or the advisor
   names it**, read-only or not. A question of who configures it is answered from the repositories.
   On 2026-10-26 the integrator ran one read-only command as root on such a machine to answer which

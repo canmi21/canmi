@@ -176,8 +176,10 @@ situations, told apart by what the user is doing rather than by how much has cha
 **An agent pushes, at the right moment, without asking.** Not after every commit: when a piece of
 work is settled in one of the senses above, or when a push is what makes it take effect. The
 exception is the user's word -- one who says, in a session, not to push, or that pushing is
-theirs, has it so for that session. A push is `mise run push <repo>`, named, never the bare verb
-that pushes every repository, and is said in a line.
+theirs, has it so for that session. A push is `mise run push <repo>`, one repository named per
+call, its dry run read first, and is said in a line. **A push never takes `--all`**: some
+repositories hold local work that must not leave yet, as the deferred items `paused` and
+`held-back` list, and `--all` would push them with the rest.
 
 **Which agent pushes follows the roles**, decided by the author on 2026-10-24. Where roles are
 named, the integrator pushes on its own: when a wave ends, when a step of a thread is done, and
