@@ -95,6 +95,18 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "cache-lookup-cost",
+    what: "monoflake/machine's cache looks its paths up in R2 one narinfo at a time, an rclone cat each: a builder's run upgrading itself on 2026-10-27 took 49 minutes of wall clock for 7.6 of CPU, found at 26 minutes still reading narinfo after narinfo, and a builder's run for another machine that day reached its start timeout at 50 minutes; the lookup's cost is measured and cut",
+    repos: ["monoflake/machine"],
+    until: Author,
+  },
+  {
+    id: "cache-missed-slot",
+    what: "monoflake/machine's cache ends a run that misses its slot, started late, as a failed unit, though missing it is the intended result; a missed slot ends as a skip",
+    repos: ["monoflake/machine"],
+    until: Author,
+  },
+  {
     id: "binding-hex-rest",
     what: "after the binding hex wave of 2026-10-25: a binding made before it whose last container item goes names its next one in hex, its images left in its decimal namespace; the decimal token id is parsed four times, in conform, lose, replace and deploy, where the ids library could hold it once",
     repos: ["monoflake/driver", "monoflake/platform"],
@@ -180,8 +192,8 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "sha-orphan-binding",
-    what: "close the binding opened for sha on 2026-10-27, 1356310062 (50d7a62e) under monoflake on the foundation platform's control, which no host joined, holding no address and no tunnel, once the control can close bindings; until then it stays, read from its D1 and never deleted by hand",
+    id: "mainland-orphan-binding",
+    what: "close the binding opened for the mainland consumer on 2026-10-27, 1356310062 (50d7a62e) under monoflake on the foundation platform's control, which no host joined, holding no address and no tunnel, once the control can close bindings; until then it stays, read from its D1 and never deleted by hand",
     repos: ["monoflake/cloud", "monoflake/platform"],
     until: Author,
   },
@@ -199,13 +211,13 @@ let items: array<item> = [
   },
   {
     id: "builder-keys-rest",
-    what: "the two machines over 4 GB still waiting for their builder keys take them in monoflake/cloud's cache/fleet.nix, with their secrets and `.sops.yaml` rules as the second x86_64 builder's were, then `machine.cache.builder.data` by the same by-hand migration the other builders had",
+    what: "the two machines over 4 GB still waiting for their builder keys take them in monoflake/cloud's cache/fleet.nix, with their secrets and `.sops.yaml` rules as the second x86_64 builder's were, then `machine.cache.builder.data` by the same by-hand migration the other builders had; until then each evaluates nixpkgs on its own 5 GB root, and on 2026-10-27 one's daily upgrade failed at evaluation with no space left on it, 1.3 GB free, so the item now blocks that machine's daily upgrade",
     repos: ["monoflake/cloud"],
     until: Author,
   },
   {
-    id: "sha-bind",
-    what: "sha's driver is bound to the foundation platform once egress gives it a path to the control, decided by the author on 2026-10-27, monoflake/egress's RFC fcno9",
+    id: "mainland-bind",
+    what: "the mainland consumer's driver is bound once the control's custom domain admits its calls, which waits on the zone's WAF admitting paths beyond /v1/, decided by the author on 2026-10-27",
     repos: ["monoflake/cloud", "monoflake/egress"],
     until: Author,
   },
