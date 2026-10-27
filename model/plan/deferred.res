@@ -107,6 +107,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "control-binding-scans",
+    what: "monoflake/platform's control reads every binding row for three statements, storage, addressed_at and routed, and its address allocation reads 327,681 rows at full occupancy against the old statement's 262,146, measured through local D1 by lane 18 on 2026-10-27; a migration adds an index on binding's address and on its bound, and allocate_address finds the first gap through the address index, each budget in monoflake/platform's model/rules/control_sql.res lowered to what it then reads, provisional, chosen by the advisor on 2026-10-27",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "cache-missed-slot",
     what: "monoflake/machine's cache ends a run that misses its slot, started late, as a failed unit, though missing it is the intended result; a missed slot ends as a skip",
     repos: ["monoflake/machine"],
