@@ -1,14 +1,60 @@
-/** Every jj invocation inside the shell command a hook receives, split as POSIX shlex splits. */
+/** Every jj invocation inside the shell command a hook receives. */
 let separators = ["&&", ";", "||", "|"]
 let valued = ["-R", "--repository", "--at-operation", "--color", "--config", "--config-file"]
 
-/** The words of a command line, or none where a quote is left open. */
+/** The position after a balanced command substitution, with its own quotes and nested spans. */
+let rec substitutionEnd = (chars: array<string>, start): option<int> => {
+  let backtick = chars[start] == Some("`")
+  let at = ref(start + (backtick ? 1 : 2))
+  let depth = ref(1)
+  let quote = ref("")
+  let balanced = ref(true)
+  while at.contents < chars->Array.length && depth.contents > 0 && balanced.contents {
+    let char = chars->Array.getUnsafe(at.contents)
+    if char == "\\" && quote.contents != "'" {
+      at := at.contents + 2
+    } else if backtick {
+      if char == "`" {
+        depth := 0
+      }
+      at := at.contents + 1
+    } else if quote.contents == "'" {
+      if char == "'" {
+        quote := ""
+      }
+      at := at.contents + 1
+    } else if char == "`" || (char == "$" && chars[at.contents + 1] == Some("(")) {
+      switch substitutionEnd(chars, at.contents) {
+      | Some(stop) => at := stop
+      | None => balanced := false
+      }
+    } else if quote.contents == "\"" {
+      if char == "\"" {
+        quote := ""
+      }
+      at := at.contents + 1
+    } else {
+      if char == "'" || char == "\"" {
+        quote := char
+      } else if char == "(" {
+        depth := depth.contents + 1
+      } else if char == ")" {
+        depth := depth.contents - 1
+      }
+      at := at.contents + 1
+    }
+  }
+  balanced.contents && depth.contents == 0 ? Some(at.contents) : None
+}
+
+/** The words of a command line, or none where a quote or substitution is left open. */
 let words = (command: string): option<array<string>> => {
   let found = []
   let word = ref("")
   let open_ = ref(false)
   let quote = ref("")
   let escaped = ref(false)
+  let balanced = ref(true)
   let close = () =>
     if open_.contents {
       found->Array.push(word.contents)
@@ -16,16 +62,16 @@ let words = (command: string): option<array<string>> => {
       open_ := false
     }
   let chars = command->Node.codePoints
-  let skip = ref(false)
+  let skip = ref(0)
   let operator = (text, ~pair) => {
     close()
     found->Array.push(text)
-    skip := pair
+    skip := (pair ? 1 : 0)
   }
   chars->Array.forEachWithIndex((char, at) => {
     let next = chars[at + 1]
-    if skip.contents {
-      skip := false
+    if skip.contents > 0 {
+      skip := skip.contents - 1
     } else if escaped.contents {
       // Inside double quotes a backslash escapes only a quote or itself, as shlex has it.
       word :=
@@ -35,6 +81,14 @@ let words = (command: string): option<array<string>> => {
       escaped := false
     } else if quote.contents == "'" {
       char == "'" ? quote := "" : word := word.contents ++ char
+    } else if char == "`" || (char == "$" && next == Some("(")) {
+      switch substitutionEnd(chars, at) {
+      | Some(stop) =>
+        word := word.contents ++ chars->Array.slice(~start=at, ~end=stop)->Array.join("")
+        open_ := true
+        skip := stop - at - 1
+      | None => balanced := false
+      }
     } else if quote.contents == "\"" {
       if char == "\"" {
         quote := ""
@@ -62,7 +116,7 @@ let words = (command: string): option<array<string>> => {
       }
     }
   })
-  if quote.contents != "" || escaped.contents {
+  if quote.contents != "" || escaped.contents || !balanced.contents {
     None
   } else {
     close()
@@ -91,26 +145,14 @@ let substitutions = (command: string): array<string> => {
       at := at.contents + 1
     } else if char == "\\" {
       at := at.contents + 2
-    } else if char == "$" && chars[at.contents + 1] == Some("(") {
-      let depth = ref(1)
-      let stop = ref(at.contents + 2)
-      while depth.contents > 0 && stop.contents < length {
-        let inner = chars->Array.getUnsafe(stop.contents)
-        depth := depth.contents + (inner == "(" ? 1 : inner == ")" ? -1 : 0)
-        stop := stop.contents + 1
+    } else if char == "`" || (char == "$" && chars[at.contents + 1] == Some("(")) {
+      switch substitutionEnd(chars, at.contents) {
+      | Some(stop) =>
+        let start = at.contents + (char == "`" ? 1 : 2)
+        found->Array.push(chars->Array.slice(~start, ~end=stop - 1)->Array.join(""))
+        at := stop
+      | None => at := length
       }
-      let last = depth.contents == 0 ? stop.contents - 1 : stop.contents
-      found->Array.push(chars->Array.slice(~start=at.contents + 2, ~end=last)->Array.join(""))
-      at := stop.contents
-    } else if char == "`" {
-      let stop = ref(at.contents + 1)
-      while stop.contents < length && chars->Array.getUnsafe(stop.contents) != "`" {
-        stop := stop.contents + (chars->Array.getUnsafe(stop.contents) == "\\" ? 2 : 1)
-      }
-      found->Array.push(
-        chars->Array.slice(~start=at.contents + 1, ~end=stop.contents)->Array.join(""),
-      )
-      at := stop.contents + 1
     } else {
       at := at.contents + 1
     }

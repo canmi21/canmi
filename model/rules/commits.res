@@ -18,7 +18,7 @@ let since = [
   ("canmi/rfcs", "76bab398"),
   ("seam", "ae2feb96"),
   ("monoflake/platform", "607b60cb"),
-  ("monoflake/cloud", "root()"),
+  ("monoflake/cloud", "9a6aaace"),
   ("monoflake/driver", "root()"),
   ("monoflake/machine", "root()"),
   ("monoflake/runtime", "root()"),

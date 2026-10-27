@@ -8,6 +8,12 @@ moves into `model/rules/` with its check and leaves this file.
 
 ## Commits
 
+- **A commit names its paths literally, never by a command substitution.** The commit hook read a
+  `jj commit` given its paths by `$(jj diff --name-only | grep flake.lock)` as a commit ending at
+  the pipe inside the substitution, so the message after it went unread, and a 102-character
+  subject reached monoflake/cloud's main on 2026-10-27. `hooks/input/jj_command.res` now keeps a
+  substitution inside its word, and the check reads that repository after the commit, its `since`
+  in `model/rules/commits.res`.
 - **The co-author trailer names the model running now**: `Claude <Model>-<Version>`, read from
   the session's own system prompt, never copied from a handover, a memory or an earlier commit,
   and never passed through a shell variable, which the commit hook reads unexpanded. On
