@@ -113,6 +113,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "domain-proof",
+    what: "monoflake/platform's control proves an organization holds a domain an app declares as its ingress before the gateway carries it, by RFC vr5lw's TXT record, CNAME or HTTP challenge; until then a declared domain is taken by the first live app that declares it, and only names the author binds to the gateway Worker by hand reach the gateway at all, RFC oomwh, provisional, chosen by the advisor on 2026-10-27",
+    repos: ["monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "cache-missed-slot",
     what: "monoflake/machine's cache ends a run that misses its slot, started late, as a failed unit, though missing it is the intended result; a missed slot ends as a skip",
     repos: ["monoflake/machine"],
