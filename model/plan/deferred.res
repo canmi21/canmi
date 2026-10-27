@@ -218,7 +218,7 @@ let items: array<item> = [
   {
     id: "mainland-bind",
     what: "the mainland consumer's driver is bound once the control's custom domain admits its calls, which waits on the zone's WAF admitting paths beyond /v1/, decided by the author on 2026-10-27",
-    repos: ["monoflake/cloud", "monoflake/egress"],
+    repos: ["monoflake/cloud"],
     until: Author,
   },
   {
