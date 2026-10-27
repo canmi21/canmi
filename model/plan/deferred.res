@@ -180,6 +180,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "sha-orphan-binding",
+    what: "close the binding opened for sha on 2026-10-27, 1356310062 (50d7a62e) under monoflake on the foundation platform's control, which no host joined, holding no address and no tunnel, once the control can close bindings; until then it stays, read from its D1 and never deleted by hand",
+    repos: ["monoflake/cloud", "monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
