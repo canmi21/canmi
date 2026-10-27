@@ -43,6 +43,9 @@ moves into `model/rules/` with its check and leaves this file.
 - **An edit is seen before it is committed.** BSD `sed` matches nothing with GNU's `\|` and says
   nothing; on 2026-10-07 an empty commit went out after one. Edit with Python, asserting the count,
   or the Edit tool, and see the change in `jj st` or a grep first.
+- **A check's warnings are read before a commit meant for a push.** `check` only warns of a
+  comment past its width, and the push's form layer refuses it: on 2026-10-27 two pushes stopped so,
+  one in a moved test, one in a lane's script, and each took a commit more.
 - **A formatter runs before an exact-match edit, never between two.** A reflow moved the text a
   replacement was looking for, and the replacement silently did nothing.
 
@@ -100,6 +103,9 @@ moves into `model/rules/` with its check and leaves this file.
   command not found. A copy is edited and started fresh.
 - **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
   binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
+- **A task that may ask is read whole, never sent to `/dev/null`.** `mise run secret` asks before it
+  replaces a value already set, and stdin from `/dev/null` answers no; on 2026-10-27 a new token was
+  kept out so, its "kept" line discarded with the rest, and only an API call still refused showed it.
 - **A long command is run with the tool's `run_in_background` and is not polled.** The harness says
   when it exits; a loop polling for a condition waits on one the step may already have passed, and
   waits for nothing, as the author found on 2026-10-26. Steps are taken one at a time, each read
@@ -153,6 +159,15 @@ moves into `model/rules/` with its check and leaves this file.
   its last trigger, or failing that its previous start, so a slot passed while it was stopped is due
   the moment it starts, `Persistent` or not. On 2026-10-26 a builder's timer for another machine,
   restored by a switch, ran at once. `systemctl list-timers` is read before a timer is restored.
+- **A unit a socket-activated daemon requires is not run by the switch.** A switch starts what is
+  enabled, and nix-daemon waits for its socket, so on 2026-10-27 each builder's preparation of its
+  build subvolume, required by the daemon, ran only when started by hand after the switch.
+- **A workflow never run before is run once in a clean copy first.** On 2026-10-27 the driver's
+  first release failed at its install, its platform pin five days behind what the driver's own model
+  needs; a copy made by `git archive` of the three repositories, built with nothing generated,
+  proved the fix before the second push.
+- **A push past the private-identifier scan is said to the advisor first**, the hit and why it is
+  none, the advisor said on 2026-10-27, after one went out on a bare word the author then dropped.
 - **A machine's secrets file is part of its system.** sops-nix copies a `sopsFile` whole into the
   store, so a key added to a machine's `secrets.json` for one program changes that machine's
   system, and a file several machines read changes each of theirs. On 2026-10-27 a new reader of

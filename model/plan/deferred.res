@@ -186,6 +186,36 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-release-fixes",
+    what: "the four post-release findings of lane 13's third review, a held source still moving its resolved names while its texts say kept, bump inferring a minor from the local platform checkout's contracts rather than the pinned commit, first, a renamed column turning old heads into rows, and a failed read of another day's manifest reddening a released run, as one small lane, provisional, chosen by the advisor on 2026-10-27",
+    repos: ["workspace", "monoflake/driver"],
+    until: Author,
+  },
+  {
+    id: "operate-retire",
+    what: "monoflake/cloud's operate makes a `control:` target whole as though a directory, and monoflake/platform's deploy task declares no --retire and --forget though its tool takes them, so nobody retires or forgets through operate until both are fixed, in lane 9's small fixes, provisional, chosen by the advisor on 2026-10-27",
+    repos: ["monoflake/cloud", "monoflake/platform"],
+    until: Author,
+  },
+  {
+    id: "builder-keys-rest",
+    what: "the two machines over 4 GB still waiting for their builder keys take them in monoflake/cloud's cache/fleet.nix, with their secrets and `.sops.yaml` rules as the second x86_64 builder's were, then `machine.cache.builder.data` by the same by-hand migration the other builders had",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
+    id: "sha-bind",
+    what: "sha's driver is bound to the foundation platform once egress gives it a path to the control, decided by the author on 2026-10-27, monoflake/egress's RFC fcno9",
+    repos: ["monoflake/cloud", "monoflake/egress"],
+    until: Author,
+  },
+  {
+    id: "tailscale-token",
+    what: "the Tailscale API token in monoflake/cloud's secrets.json expires on 2026-10-30 at 06:48 UTC; the author issues the next one before then and the integrator enters it as this one was",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
