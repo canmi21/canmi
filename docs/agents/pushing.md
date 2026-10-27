@@ -61,6 +61,10 @@ Three layers.
 **The private identifiers are listed in a file local to the machine and in no repository**, at
 `Toolchain.privateIdentifiers`. The integrator keeps it as a new machine, domain or
 account comes in. **A leak the scan finds is also written as a record of friction.**
+**An integrator's own scan before a private repository's push counts two groups apart**, the
+machine names and every other identifier, printing counts alone, decided by the advisor on
+2026-10-27: machine names are allowed in monoflake/cloud, so a hit there among them passes, and any
+other hit stops the push for the advisor.
 
 **Push scans a public repository twice**, decided by the author on 2026-10-24. **The lines and the
 commit messages it sends are refused on a hit**, each outgoing commit's own lines and message read
