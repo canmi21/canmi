@@ -162,6 +162,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "cloud-lock-move",
+    what: "monoflake/cloud moves its machines' lock to monoflake/machine's newest commit by itself, with a canary first, the author's wish of 2026-10-27; until then the integrator moves it by hand when a change needs testing, each move cleared by the advisor",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "fleet-planned",
     what: "the machines monoflake/cloud keeps under planned/, written but not deployed, are reflashed and moved into machines/ once the author has moved their work off them, their host keys, secrets and cache roles entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
     repos: ["monoflake/cloud"],
