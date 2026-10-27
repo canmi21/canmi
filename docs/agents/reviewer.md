@@ -32,6 +32,12 @@ not against an adversary, and a reviewer is no adversary; the mechanism is not p
 **In a public repository's wave it also reads the diff for leaks**, [pushing.md](pushing.md), "A
 push carries nothing private".
 
+**For every SQL statement a diff adds or changes, it states how many rows the statement reads and
+what quantity that grows with**, decided by the author on 2026-10-27. Every review brief carries the
+item, a Codex reviewer's included. An address allocation reading the whole range, about 262,000
+rows a call, passed review and was found in the database's own insights,
+[lessons.md](../lessons.md).
+
 **It reports defects alone**, each with its file and line, the text quoted, and the rule it breaks;
 that report is its escape, [escapes.md](escapes.md). It proposes nothing of the design.
 

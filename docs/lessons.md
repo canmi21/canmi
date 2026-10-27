@@ -131,6 +131,12 @@ moves into `model/rules/` with its check and leaves this file.
   read on a Fetcher is present, so the option's unwrapping took a VPC binding for a nested option
   and handed on an object with no `fetch`; on 2026-10-23 the control reached no host so, while the
   local control, reaching its host by address, passed. The abstract type is marked `@notUndefined`.
+- **A query's cost is measured, never assumed from its tests passing.** The control's address
+  allocation generated its whole range and filtered it, about 262,000 rows read a call, ten binds
+  77% of its database time; every test and review passed it, and the author found it in D1's
+  insights on 2026-10-27. A rows-read budget in platform's model is to hold each statement, its lane
+  opened that day, and a reviewer states each statement's rows,
+  [agents/reviewer.md](agents/reviewer.md).
 
 ## Remotes, and what cannot be taken back
 

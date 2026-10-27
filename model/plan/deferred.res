@@ -101,6 +101,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "d1-rows-weekly",
+    what: "a weekly read of the controls' D1 rows read per query, through Cloudflare's GraphQL analytics, flagging any query above about 1000 rows an execution, the fourth measure after the address allocation's cost of 2026-10-27, the other three a budget in monoflake/platform's model, a rule in its docs/code.md and an item in every review",
+    repos: ["monoflake/platform", "monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "cache-missed-slot",
     what: "monoflake/machine's cache ends a run that misses its slot, started late, as a failed unit, though missing it is the intended result; a missed slot ends as a skip",
     repos: ["monoflake/machine"],
