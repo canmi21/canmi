@@ -109,6 +109,14 @@ section.
 Written into a file, the bare word is never left to be read the same way: it is "SvelteKit", or
 `@canmi/kit`. A reader of a file has no conversation to infer from.
 
+## "Java" in the author's messages is "driver"
+
+The author dictates by voice, and the input method turns "driver" into "Java". So in the author's
+messages, "Java" is read as "driver", the platform's drivers and `monoflake/driver` among them,
+unless the sentence is plainly about the Java language. The word comes from the input method, not
+from the author, so it is read through and never asked about or corrected. Recorded at the
+author's request on 2026-10-28.
+
 ## A figure in the rules is dated, or it is checked
 
 Numbers appear throughout these documents and two kinds of them are kept true by opposite means.
