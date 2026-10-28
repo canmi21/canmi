@@ -119,6 +119,12 @@ moves into `model/rules/` with its check and leaves this file.
 - **A jump host goes in `~/.ssh/config` for its one machine, never as `-J` in `NIX_SSHOPTS`.** Nix
   hands those options to every ssh it opens, the builder's own on localhost among them, so all of
   them went through the jump on 2026-10-26.
+- **A secret reaches a remote script only on the stdin of a script already copied there.** The
+  script goes by `scp` first and `ssh host 'sh /root/script'` reads the secret from the pipe; an
+  `ssh ... < <(cat; cat script)` meant to send both replaced the pipe, so on 2026-10-28 the shell
+  ran each secret line as a command and its errors printed a bucket's endpoint and reading token
+  into a transcript. Busybox's `pkill -x` matches the binary's name too, so a `nix-store` is `nix`
+  there and is stopped by its pid.
 - **A unit `systemd-run` starts has no PATH beyond systemd's own.** It carries none of the login
   shell's, so a script started that way on 2026-10-26 found none of its tools; the script sets its
   own PATH or names each tool by its store path.
