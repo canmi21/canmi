@@ -240,6 +240,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "monoflake-com-move",
+    what: "RFC 7dbmi's steps 3 to 5 wait on the zone monoflake.com, which step 5 stands app 2 under; it is live in the author's other Cloudflare account, its copy in the monoflake account pending since 2026-10-14, and the author moves it at a time of their choosing since it carries live business, decided on 2026-10-28; steps 1 and 2 go ahead meanwhile, and app 2 keeps reaching control.monoflake.net/v1/app-2, which the new rules admit",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "tailscale-token",
     what: "the Tailscale API token in monoflake/cloud's secrets.json expires on 2026-10-30 at 06:48 UTC; the author issues the next one before then and the integrator enters it as this one was",
     repos: ["monoflake/cloud"],
