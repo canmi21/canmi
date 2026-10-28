@@ -240,9 +240,9 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "monoflake-com-move",
-    what: "RFC 7dbmi's steps 3 to 5 wait on the zone monoflake.com, which step 5 stands app 2 under; it is live in the author's other Cloudflare account, its copy in the monoflake account pending since 2026-10-14, and the author moves it at a time of their choosing since it carries live business, decided on 2026-10-28; steps 1 and 2 go ahead meanwhile, and app 2 keeps reaching control.monoflake.net/v1/app-2, which the new rules admit",
-    repos: ["monoflake/cloud"],
+    id: "cdn-redirect",
+    what: "the Worker cdn-redirect in the monoflake Cloudflare account answers cdn.monoflake.com with a 307 to cdn.ffoni.com and Access-Control-Allow-Origin *, since canmi.net's pages still load images and fonts from cdn.monoflake.com, whose table of URLs lives in the npm build of @monoflake/sdk 2026.1015.x and in no repository's source today; the Worker is deleted once the site names cdn.ffoni.com itself, web being frozen until then; it was deployed by the advisor on 2026-10-28 and is in no repository by design, and its custom domain was bound by the author by hand, as cloud's Cloudflare API token cannot write the zone's routes",
+    repos: ["canmi/web"],
     until: Author,
   },
   {
