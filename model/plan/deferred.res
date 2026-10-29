@@ -228,18 +228,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "builder-keys-rest",
-    what: "the two machines over 4 GB still waiting for their builder keys take them in monoflake/cloud's cache/fleet.nix, with their secrets and `.sops.yaml` rules as the second x86_64 builder's were, then `machine.cache.builder.data` by the same by-hand migration the other builders had; until then each evaluates nixpkgs on its own 5 GB root, and on 2026-10-27 one's daily upgrade failed at evaluation with no space left on it, 1.3 GB free, so the item now blocks that machine's daily upgrade",
-    repos: ["monoflake/cloud"],
-    until: Author,
-  },
-  {
-    id: "mainland-bind",
-    what: "the mainland consumer's driver is bound once the control's custom domain admits its calls, which waits on the zone's WAF admitting paths beyond /v1/, decided by the author on 2026-10-27",
-    repos: ["monoflake/cloud"],
-    until: Author,
-  },
-  {
     id: "driver-binds-domains",
     what: "monoflake/driver's Cloudflare driver binds the domains its apps declare as their ingress by itself, as Custom Domains, where the author binds each by hand today, its token holding Workers Scripts Edit alone; RFC 7dbmi and monoflake/platform's RFC oomwh",
     repos: ["monoflake/driver"],
