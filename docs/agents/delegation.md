@@ -221,9 +221,24 @@ dispatched on Codex whenever Codex still has quota, and on Claude only while it 
 - **Around that time it reads the quota again**; once Codex has quota back, the next dispatch goes
   to Codex, and nothing in flight moves back.
 
-How the integrator starts an implementer on Codex is not written yet: the first Codex dispatch
-writes it here, and with it how Codex gives the implementer's role the hook
-[lint-format.md](../lint-format.md) names.
+**A Codex implementer is started from its lane's repository with its role in the environment**,
+proven by a probe on 2026-10-29:
+
+```sh
+MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> -s workspace-write \
+	--add-dir <lane> -o <scratchpad>/<lane>-report.txt - < <brief>
+```
+
+- **The role is what holds it.** Two entries in the author's `~/.codex/hooks.json` act only where
+  `MONOFLAKE_ROLE=implementer`: the implementer's commands on `Bash`, refusing `git status` in the
+  probe while a session without the role ran it, and the format of each file an `apply_patch`
+  writes, [lint-format.md](../lint-format.md).
+- **Its brief says first to read `/Users/canmi/workspace/AGENTS.md`**: in a lane Codex loads the
+  repository's own `AGENTS.md` alone, a lane being a git worktree whose root stops its search.
+- **`--add-dir <lane>`** lets ReScript write what it builds of a sibling into the sibling's own
+  directory, as a lane's builds do; the brief is stdin, and `-o` keeps the last message as its
+  report. The author's `config.toml` sets `danger-full-access`, which `-s workspace-write`
+  overrides for the implementer alone.
 
 **After a wave lands: what to click.** Named specifically -- which page, which interaction, what
 should be true -- because "have a look" hands the user the job of working out what changed.

@@ -11,7 +11,9 @@ and only that, choosing the most exact and most technically neutral word,
 
 **Its brief is what `mise run brief <name>` prints**, with its lane's path, the files it owns and
 the dependencies still waiting, [briefs.md](briefs.md), "What a brief holds". **Its model is the
-one the integrator picks in that brief**: Sonnet at low, medium or high effort, or Opus at medium.
+one the integrator picks in that brief**: Codex while it has quota, else Sonnet at low, medium or
+high effort, or Opus at medium, [delegation.md](delegation.md), "Codex comes first while it has
+quota".
 
 **It works by a completion protocol**, decided by the author on 2026-10-24, which the end of every
 brief `mise run brief` prints says again, written by monoflake/platform's model:
