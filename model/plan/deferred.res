@@ -258,6 +258,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "production-nix-key",
+    what: "the Nix key A's and B's CI signs with is named monoflake, made at step 5 of monoflake/cloud's RFC oej2a item 8 with A and B, as the author decided on 2026-10-29, its private half a GitHub secret and its public half in monoflake/cloud's config as the test platform's was; the four old builder keys, each named for its builder and ending in -cache-1, go with the old cache code after that reset",
+    repos: ["monoflake/cloud", "monoflake/machine"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
