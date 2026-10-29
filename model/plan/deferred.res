@@ -247,7 +247,7 @@ let items: array<item> = [
   },
   {
     id: "tailscale-token",
-    what: "the Tailscale API token in monoflake/cloud's secrets.json expires on 2026-10-30 at 06:48 UTC; the author issues the next one before then and the integrator enters it as this one was",
+    what: "the Tailscale API token in monoflake/cloud's secrets.json, entered on 2026-10-29, expires on 2026-11-28 at 02:22 UTC, the one before it the author's to revoke; the author issues the next one before then and the integrator enters it as this one was",
     repos: ["monoflake/cloud"],
     until: Author,
   },
