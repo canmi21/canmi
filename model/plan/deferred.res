@@ -240,6 +240,18 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-binds-domains",
+    what: "monoflake/driver's Cloudflare driver binds the domains its apps declare as their ingress by itself, as Custom Domains, where the author binds each by hand today, its token holding Workers Scripts Edit alone; RFC 7dbmi and monoflake/platform's RFC oomwh",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
+    id: "driver-workers-dev",
+    what: "monoflake/driver's Cloudflare driver's three Workers, its management, object and database Workers, are reached at their generated addresses today, so `workers_dev` goes false on each once it is reached at a name bound to it, the workspace's custom-domains rule; RFC 7dbmi",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "cdn-redirect",
     what: "the Worker cdn-redirect in the monoflake Cloudflare account answers cdn.monoflake.com with a 307 to cdn.ffoni.com and Access-Control-Allow-Origin *, and is deleted only once nothing names cdn.monoflake.com, neither web's own source, by the sdk patch below landing when web unfreezes, nor the published content records, whose favicon and icon addresses still name it; it was deployed by the advisor on 2026-10-28 and is in no repository by design, and its custom domain was bound by the author by hand, as cloud's Cloudflare API token cannot write the zone's routes. After the zone moved canmi.net answered 500, since the site Worker in the canmi account fetches the CDN server-side and that account's Workers still got error 1016 for cdn.monoflake.com from the moved zone, since deleted, while outside requests reached cdn-redirect; at the author's direction the advisor deployed the site as version c6f1d7fa from a scratchpad clone of web's remote main, 2f61940e, with a pnpm patch on @monoflake/sdk@2026.1007.1 setting URLS.apps.production.cdn to https://cdn.ffoni.com, after which canmi.net, /atom.xml and /feed answered 200 on every try, as of 2026-10-29 02:20 UTC. The author decided the patch is not pushed to web's remote, web staying frozen and the fix living in the deployed version alone, so a redeploy from web's main names cdn.monoflake.com again and still works through cdn-redirect, by one more hop. The probe Worker the advisor used to diagnose it is deleted",
     repos: ["canmi/web"],
