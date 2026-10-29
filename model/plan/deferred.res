@@ -216,6 +216,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "test-orphan-binding",
+    what: "close the binding the test control opened on 2026-10-29, 4141627861 (f6dc39d5) under the test platform's organization, whose route was refused by the old control's and whose tunnel was deleted by hand, no host joined, once the control can close bindings, monoflake/platform's RFC m2ks6; until then it stays, read from its D1 and never deleted by hand, and the database is not wiped",
+    repos: ["monoflake/cloud", "monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "driver-release-fixes",
     what: "the four post-release findings of lane 13's third review, a held source still moving its resolved names while its texts say kept, bump inferring a minor from the local platform checkout's contracts rather than the pinned commit, first, a renamed column turning old heads into rows, and a failed read of another day's manifest reddening a released run, as one small lane, provisional, chosen by the advisor on 2026-10-27",
     repos: ["workspace", "monoflake/driver"],
