@@ -26,6 +26,15 @@ let domains = ["com", "net", "org", "dev", "io", "app"]
 /** The vendors' names held to the edge, each unmistakably a vendor's and no plain English word. */
 let vendors = ["cloudflare", "cloudflared", "r2", "d1", "aws"]
 
+/** What the author named by hand in a vendor account, each its account, kind and name. */
+let handNamed = [
+  ("monoflake", "worker", "control"),
+  ("monoflake", "d1", "control"),
+  ("monoflake", "r2", "artifacts"),
+  ("monoflake", "worker", "gateway"),
+  ("monoflake", "r2", "caches"),
+]
+
 let doc = "docs/naming.md"
 let rules: array<Rule.t> = [
   {
@@ -71,6 +80,14 @@ let rules: array<Rule.t> = [
     says: "The author's account name, canmi21, appears in no identifier and no code that decides by it, only as data and in comments",
     doc,
     held: Pending("a scan of identifiers in every repository's code for the account name"),
+  },
+  {
+    name: "vendor-resources-drawn",
+    says: "Every resource a platform or an organization makes in a vendor account is named by an id drawn as monoflake/platform's RFC b8f35 draws one, 8 lowercase hex digits and bare, but for `handNamed`",
+    doc,
+    held: Pending(
+      "each control's and CI's resource names in monoflake/cloud's controls.toml and systems.toml read against b8f35's form, `handNamed` excepted",
+    ),
   },
   {
     name: "qualified-meanings",

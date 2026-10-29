@@ -243,6 +243,23 @@ a copy under either agent's vendor directory. Validating a commit message is not
 job; it would survive a move to another VCS untouched. The `jj-` prefix named the current
 supplier of the commits, which is exactly the information the filename did not need.
 
+## A resource in a vendor account is named by a drawn id
+
+**Every resource a platform or an organization makes in a vendor account is named by an id drawn
+as monoflake/platform's RFC b8f35 draws one**: 8 lowercase hex digits, bare, drawn at random at or
+above `01000000` and checked against the account's names, decided by the author on 2026-10-29,
+the platforms themselves no exception. It holds for a platform's control, its database and its buckets, for the bucket its CI
+uploads to, and for a binding's tunnel, named by the binding's own id; it is what monoflake/driver's
+RFC nrs5v already holds driver(cloudflare) to, so a name that is not in the id form marks a
+resource nobody made by rule. A name says nothing of what it holds: what each id is, is written
+in the repository that made it, as monoflake/cloud's `controls.toml` and `systems.toml`.
+
+**The one exception is a name the author chose by hand**, `handNamed` in
+[model/rules/naming.res](../model/rules/naming.res), today the five in the foundation platform's
+account. A name an agent or an advisor chose is never such a name, however reasonable it reads:
+`control-test` and `artifacts-test` broke the rule, and were drawn again. `vendor-resources-drawn`
+is `Pending` until monoflake/cloud's names are read from its configuration.
+
 ## Inside code
 
 Identifiers follow the language's own convention with no interference from this document:
