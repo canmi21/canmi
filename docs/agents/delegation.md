@@ -237,7 +237,12 @@ MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> -s worksp
   repository's own `AGENTS.md` alone, a lane being a git worktree whose root stops its search.
 - **`--add-dir <lane>`** lets ReScript write what it builds of a sibling into the sibling's own
   directory, as a lane's builds do; the brief is stdin, and `-o` keeps the last message as its
-  report. The author's `config.toml` sets `danger-full-access`, which `-s workspace-write`
+  report. A task that reads the lane's history, as `accept --from`, also needs
+  `--add-dir repos/<repository>/.jj`, the store a lane's workspace shares with the main checkout,
+  found on 2026-10-29 when an `accept` there answered nothing.
+- **A lane is prepared before it is handed over**: `pnpm install` in each repository and, in
+  monoflake/platform, `mise run prepare`, whose generated libraries a block's `built` reads, so the
+  implementer meets no setup it may not write. The author's `config.toml` sets `danger-full-access`, which `-s workspace-write`
   overrides for the implementer alone.
 
 **After a wave lands: what to click.** Named specifically -- which page, which interaction, what
