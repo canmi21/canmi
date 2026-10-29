@@ -146,6 +146,14 @@ it.
 
 Match response weight to question weight: a simple question gets a direct answer, not headers and sections.
 
+## The author is told what a thing is, never only its id
+
+**An agent talking to the author never names a thing by its id alone**: no RFC id, no commit hash,
+no item slug such as `cdn-redirect`, no version hash. It says in one plain sentence what the thing
+is, which is what the author needs to confirm it, and adds the id only where the author must act
+on it, as in a command to run. Ids are for the relays between agents. Decided by the author on
+2026-10-29, who said the codes meant nothing to them.
+
 ## When to ask vs. act
 
 - **Act** when the decision is reversible, the path is clear, or existing conventions cover it.
