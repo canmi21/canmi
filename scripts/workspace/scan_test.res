@@ -31,14 +31,45 @@ let lineHit = (file, number, identifier) => {
 describe("what a push sends", () => {
   test("the list is read one identifier per line, blank lines passed over", () => {
     expect(identifiers)->toEqual([
-      {Scan.identifier: "machine.example", exceptions: []},
-      {identifier: "192.0.2.1", exceptions: []},
+      {Scan.identifier: "machine.example", exceptions: [], allowed: None},
+      {identifier: "192.0.2.1", exceptions: [], allowed: None},
     ])
+  })
+
+  test("a comment is passed over, and a marker puts every entry after it in its group", () => {
+    expect(
+      Scan.listed(
+        "# the fleet\nkestrel\n# allowed in monoflake/cloud\nheron\twren\n# a note\nplover\n",
+      ),
+    )->toEqual([
+      {Scan.identifier: "kestrel", exceptions: [], allowed: None},
+      {identifier: "heron", exceptions: ["wren"], allowed: Some("monoflake/cloud")},
+      {identifier: "plover", exceptions: [], allowed: Some("monoflake/cloud")},
+    ])
+    expect(
+      Scan.listed("heron\n# allowed in canmi/web\nplover\n# allowed in monoflake/cloud\nwren\n"),
+    )->toEqual([
+      {Scan.identifier: "heron", exceptions: [], allowed: None},
+      {identifier: "plover", exceptions: [], allowed: Some("canmi/web")},
+      {identifier: "wren", exceptions: [], allowed: Some("monoflake/cloud")},
+    ])
+  })
+
+  test("the lines' identifiers are counted once each, the repository's group apart", () => {
+    let entries = Scan.listed("kestrel\n# allowed in monoflake/cloud\nheron\tgrey heron\nplover\n")
+    let lines = ["kestrel and heron", "heron again", "a grey heron passes", "nothing"]
+    expect(Scan.counted(lines, entries, ~repo="monoflake/cloud"))->toEqual((1, 1))
+    expect(Scan.counted(lines, entries, ~repo="canmi/web"))->toEqual((0, 2))
+    expect(Scan.counted(["a grey heron"], entries, ~repo="monoflake/cloud"))->toEqual((0, 0))
   })
 
   test("an entry carries its exceptions after it, each after a tab", () => {
     expect(Scan.listed("kestrel\tkestrel[-_]?\\d+\t kestrel\\.example \n"))->toEqual([
-      {Scan.identifier: "kestrel", exceptions: ["kestrel[-_]?\\d+", "kestrel\\.example"]},
+      {
+        Scan.identifier: "kestrel",
+        exceptions: ["kestrel[-_]?\\d+", "kestrel\\.example"],
+        allowed: None,
+      },
     ])
   })
 

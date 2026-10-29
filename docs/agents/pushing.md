@@ -61,10 +61,17 @@ Three layers.
 **The private identifiers are listed in a file local to the machine and in no repository**, at
 `Toolchain.privateIdentifiers`. The integrator keeps it as a new machine, domain or
 account comes in. **A leak the scan finds is also written as a record of friction.**
-**An integrator's own scan before a private repository's push counts two groups apart**, the
-machine names and every other identifier, printing counts alone, decided by the advisor on
-2026-10-27: machine names are allowed in monoflake/cloud, so a hit there among them passes, and any
-other hit stops the push for the advisor.
+**An integrator's own scan before a private repository's push counts two groups apart**, the group
+the list allows in that repository and every other identifier, printing counts alone, decided by
+the advisor on 2026-10-27: `jj diff --git <paths> | mise run scan --in <repository>`, where a hit
+of the repository's group passes and any other stops the push for the advisor. **The list marks a
+group by a comment line**, `# allowed in <repository>` as the registry names it, every entry after
+it in that group until the next such line; any other line starting with `#` is a comment. The group
+allowed in monoflake/cloud is the hostnames differing from their Network Name, the accounts'
+identifiers and the retired machine names, its entries kept in the list alone, decided by the
+author on 2026-10-29, the retired names provisional, chosen by the advisor on 2026-10-29. A Network Name, a provider's name and a region's are public
+and in no group; the author's public handle and the cities a selfhosted machine's account is
+named for are exempt and in no list.
 
 **Push scans a public repository twice**, decided by the author on 2026-10-24. **The lines and the
 commit messages it sends are refused on a hit**, each outgoing commit's own lines and message read

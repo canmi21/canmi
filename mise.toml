@@ -118,6 +118,12 @@ description = "What is left in every id space's RFCs, or in one: `plan [space]`"
 depends = ["build"]
 run = "node scripts/rfcs/rfc_plan.res.mjs"
 
+# The integrator's own scan before a private repository's push, docs/agents/pushing.md.
+[tasks.scan]
+description = "Count the private identifiers a git diff on stdin adds, the group allowed in a repository apart, and fail on any other: `jj diff --git ... | scan --in <repository>`"
+depends = ["build"]
+run = "node scripts/workspace/scan.res.mjs"
+
 # What the scripts compile to, never committed, which every task running one depends on.
 [tasks.build]
 description = "Compile the scripts, the model and the hooks, and remove what no source compiles to"

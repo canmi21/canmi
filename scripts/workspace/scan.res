@@ -22,22 +22,42 @@ let expanded = path =>
     ? Node.join([homedir(), path->String.slice(~start=1)])
     : path
 
-/** An identifier and its exceptions, the spellings that hold it and are not it. */
-type entry = {identifier: string, exceptions: array<string>}
+/**
+ * An identifier, its exceptions, the spellings that hold it and are not it, and the repository its
+ * group is allowed in, if any.
+ */
+type entry = {identifier: string, exceptions: array<string>, allowed: option<string>}
 
-/** The entries a list holds, one per line, each exception after a tab, blank lines passed over. */
-let listed = text =>
+/** The comment line that starts the group allowed in one repository, named as the registry does. */
+let marker = /^#\s*allowed in\s+(\S+)\s*$/
+
+/**
+ * The entries a list holds, one per line, each exception after a tab, blank lines and comments
+ * passed over, and each entry after a marker in that marker's group.
+ */
+let listed = text => {
+  let group = ref(None)
   text
   ->String.split("\n")
   ->Array.map(String.trim)
   ->Array.filter(line => line != "")
-  ->Array.map(line => {
-    let parts = line->String.split("\t")->Array.map(String.trim)->Array.filter(part => part != "")
-    {
-      identifier: parts->Array.getUnsafe(0),
-      exceptions: parts->Array.slice(~start=1, ~end=parts->Array.length),
+  ->Array.filterMap(line =>
+    if line->String.startsWith("#") {
+      switch marker->RegExp.exec(line) {
+      | Some(groups) => group := groups[1]->Option.flatMap(name => name)
+      | None => ()
+      }
+      None
+    } else {
+      let parts = line->String.split("\t")->Array.map(String.trim)->Array.filter(part => part != "")
+      Some({
+        identifier: parts->Array.getUnsafe(0),
+        exceptions: parts->Array.slice(~start=1, ~end=parts->Array.length),
+        allowed: group.contents,
+      })
     }
-  })
+  )
+}
 
 /** An identifier as a pattern in any case, no letter, digit or underscore on either side. */
 let pattern = identifier =>
@@ -55,7 +75,7 @@ let exception_ = source =>
 
 /** Each identifier beside its pattern and its exceptions', an empty one passed over. */
 let patterns = (entries: array<entry>) =>
-  entries->Array.filterMap(({identifier, exceptions}) =>
+  entries->Array.filterMap(({identifier, exceptions, _}) =>
     identifier == ""
       ? None
       : Some((identifier, pattern(identifier), exceptions->Array.map(exception_)))
@@ -93,6 +113,21 @@ let found = (line, patterns) =>
       )
     pattern->RegExp.test(rest) ? Some(identifier) : None
   })
+
+/**
+ * How many identifiers the lines hold, those of the group allowed in `repo` and every other apart,
+ * each identifier counted once however many lines hold it.
+ */
+let counted = (lines: array<string>, entries: array<entry>, ~repo) => {
+  let held = entries->Array.filter(entry =>
+    switch patterns([entry]) {
+    | [one] => lines->Array.some(line => found(line, [one])->Array.length > 0)
+    | _ => false
+    }
+  )
+  let allowed = held->Array.filter(entry => entry.allowed == Some(repo))->Array.length
+  (allowed, held->Array.length - allowed)
+}
 
 /** Each line a git diff adds, with its file and its number in the new file. */
 let added = (diff): array<(string, int, string)> => {
@@ -284,3 +319,31 @@ let repository = (repo, entries) =>
   outgoing(repo)->Result.flatMap(commits =>
     files(repo)->Result.map(files => (sent(commits, entries), tracked(files, entries)))
   )
+
+/**
+ * The integrator's scan before a private repository's push, the lines a git diff on stdin adds
+ * counted against the list, `--in <repository>` naming whose group passes, counts alone printed.
+ */
+let main = () =>
+  switch (Node.args(), identifiers()) {
+  | (_, None) =>
+    Console.error(`scan: no list that reads whole at ${Toolchain.privateIdentifiers}`)
+    Node.exit(1)
+  | (["--in", repo], Some(entries)) => {
+      let lines = added(Node.readStdin())->Array.map(((_, _, text)) => text)
+      let (allowed, other) = counted(lines, entries, ~repo)
+      Console.log(
+        `scan: ${Int.toString(allowed)} of the group allowed in ${repo}, ${Int.toString(
+            other,
+          )} other`,
+      )
+      Node.exit(other > 0 ? 1 : 0)
+    }
+  | _ =>
+    Console.error("scan: name the repository whose group passes, `scan --in monoflake/cloud`")
+    Node.exit(1)
+  }
+
+if Node.isMain {
+  main()
+}
