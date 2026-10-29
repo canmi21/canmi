@@ -37,8 +37,12 @@ by the author on 2026-10-24 as settled, not deferred. `edit-after-format` was pr
 implementer, an Edit after the hook changed its file.
 
 **The hook's logic lives in `hooks/`, which Claude Code and Codex share**; the frontmatter of
-`.claude/agents/implementer.md` is only Claude Code's entry to it. How Codex gives the implementer's
-role the same hook is added once Codex dispatches an implementer, and not before.
+`.claude/agents/implementer.md` is only Claude Code's entry to it. Codex's is two entries in the
+author's `~/.codex/hooks.json`, decided by the author on 2026-10-29, each acting only where
+`MONOFLAKE_ROLE=implementer`, which the integrator sets when it starts a Codex implementer: one holds
+its commands on `Bash`, the other formats each file an `apply_patch` adds, updates or moves to. They
+sit at the user level because a lane's path is a project Codex never trusted, so no repository's
+`.codex/` reaches it.
 
 **A suffix too rare to be worth a formatter is registered as formatted by nothing**, explicitly. A
 repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`.

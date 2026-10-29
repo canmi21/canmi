@@ -288,9 +288,35 @@ let nixfmt = (root, file) => {
   }
 }
 
-/** Formats the file an Edit or a Write left by its suffix in `Format.owners`, failing nothing. */
-let format = (payload: Payload.t): int => {
-  let file = payload->Payload.object("tool_input")->Option.flatMap(Payload.text(_, "file_path"))
+/** A patch's line naming a file it leaves written, Codex's `apply_patch`. */
+let patched = /^\*\*\* (?:Add File|Update File|Move to): (.+)$/
+
+/** The files a tool call left written: an Edit's or a Write's one, or every one a patch names. */
+let written = (payload: Payload.t): array<string> => {
+  let input = payload->Payload.object("tool_input")
+  switch input->Option.flatMap(Payload.text(_, "file_path")) {
+  | Some(file) => [file]
+  | None =>
+    let cwd = Payload.cwd(payload)
+    let patch =
+      input
+      ->Option.mapOr([], fields => fields->Dict.valuesToArray)
+      ->Array.filterMap(JSON.Decode.string)
+      ->Array.find(text => text->String.includes("*** Begin Patch"))
+    patch
+    ->Option.mapOr([], text => text->String.split("\n"))
+    ->Array.filterMap(line =>
+      patched
+      ->RegExp.exec(line->String.trim)
+      ->Option.flatMap(found => found->RegExp.Result.matches->Array.get(0)->Option.flatMap(x => x))
+    )
+    ->Array.map(file => file->String.startsWith("/") ? file : Node.join([cwd, file]))
+  }
+}
+
+/** Formats one file by its suffix in `Format.owners`, failing nothing. */
+let formatted = (file: string) => {
+  let file = Some(file)
   let owner =
     file->Option.flatMap(file =>
       Format.owners->Array.find(((suffix, _)) => suffix == Node.extname(file))
@@ -326,6 +352,11 @@ let format = (payload: Payload.t): int => {
     }
   | _ => ()
   }
+}
+
+/** Formats every file a tool call left written, failing nothing. */
+let format = (payload: Payload.t): int => {
+  written(payload)->Array.forEach(formatted)
   0
 }
 

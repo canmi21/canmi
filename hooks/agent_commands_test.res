@@ -186,6 +186,64 @@ describe("formatting what an agent wrote", () => {
     expect(Node.readFileSync(toml))->toEqual("a   =   1\n")
     expect(Node.readFileSync(broken))->toEqual("let = = (\n")
   })
+
+  test("reads the files a Codex patch adds, updates and moves, relative to its cwd", () => {
+    let cwd = Node.mkdtempSync(Node.join([Node.tmpdir(), "format-cwd-"]))
+    let patch =
+      [
+        "*** Begin Patch",
+        "*** Add File: a.res",
+        "+let x = 1",
+        "*** Update File: /abs/b.res",
+        "@@",
+        "*** Delete File: gone.res",
+        "*** Update File: c.res",
+        "*** Move to: d.res",
+        "*** End Patch",
+      ]->Array.join("\n")
+    let payload = Payload.parse(
+      JSON.stringify(
+        JSON.Object(
+          dict{
+            "cwd": JSON.String(cwd),
+            "tool_name": JSON.String("apply_patch"),
+            "tool_input": JSON.Object(dict{"command": JSON.String(patch)}),
+          },
+        ),
+      ),
+    )
+    expect(payload->Option.mapOr([], Agent_commands.written))->toEqual([
+      Node.join([cwd, "a.res"]),
+      "/abs/b.res",
+      Node.join([cwd, "c.res"]),
+      Node.join([cwd, "d.res"]),
+    ])
+  })
+
+  test("formats a file a Codex patch wrote, and an Edit's one alone where both are given", () => {
+    let directory = Node.mkdtempSync(Node.join([Node.tmpdir(), "format-patch-"]))
+    let path = Node.join([directory, "a.res"])
+    Node.writeFileSync(path, "let   x =   1\n")
+    let patch = `*** Begin Patch\n*** Update File: a.res\n*** End Patch`
+    let payloadOf = input =>
+      Payload.parse(
+        JSON.stringify(
+          JSON.Object(dict{"cwd": JSON.String(directory), "tool_input": JSON.Object(input)}),
+        ),
+      )
+    expect(
+      payloadOf(dict{"input": JSON.String(patch)})->Option.mapOr(1, Agent_commands.format),
+    )->toEqual(0)
+    expect(Node.readFileSync(path))->toEqual("let x = 1\n")
+    expect(
+      payloadOf(
+        dict{
+          "file_path": JSON.String("/elsewhere.res"),
+          "command": JSON.String(patch),
+        },
+      )->Option.mapOr([], Agent_commands.written),
+    )->toEqual(["/elsewhere.res"])
+  })
 })
 
 describe("formatting by a repository's own table", () => {
