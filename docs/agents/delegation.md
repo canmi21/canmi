@@ -200,9 +200,30 @@ and the brief the project prints is the brief.
 ## What the user is shown
 
 **Before a wave runs: one line per implementer** -- what it does, which files it owns, and which
-model. Not the brief itself, which is long enough to bury the thing worth checking. The cheapest
-place in the whole loop to catch a misparaphrased intent is before three implementers have acted
-on it, and a line is cheap enough to be read at a glance where a full brief is not.
+model: Codex, or Claude because Codex is limited until about a time it names. Not the brief itself,
+which is long enough to bury the thing worth checking. The cheapest place in the whole loop to
+catch a misparaphrased intent is before three implementers have acted on it, and a line is cheap
+enough to be read at a glance where a full brief is not.
+
+**Codex comes first while it has quota**, decided by the author on 2026-10-29: an implementer is
+dispatched on Codex whenever Codex still has quota, and on Claude only while it has none.
+
+- **Quota is read at dispatch, and only then.** Before new work is dispatched the integrator reads
+  Codex's remaining quota; work already running is never stopped or moved because of it.
+- **It is read by the claude-dashboard plugin's check-usage**,
+  `node ~/.claude/plugins/marketplaces/claude-dashboard/dist/check-usage.js --json`, whose `codex`
+  entry gives the five-hour and seven-day windows' percentage used and when each resets. Codex's
+  own CLI prints neither, and the last `token_count` event in its newest session under
+  `~/.codex/sessions/` is only as fresh as the last Codex turn. Codex is limited while either
+  window reads 100.
+- **While Codex is limited, new work goes to Claude** rather than waiting, and the integrator notes
+  about when the full window resets.
+- **Around that time it reads the quota again**; once Codex has quota back, the next dispatch goes
+  to Codex, and nothing in flight moves back.
+
+How the integrator starts an implementer on Codex is not written yet: the first Codex dispatch
+writes it here, and with it how Codex gives the implementer's role the hook
+[lint-format.md](../lint-format.md) names.
 
 **After a wave lands: what to click.** Named specifically -- which page, which interaction, what
 should be true -- because "have a look" hands the user the job of working out what changed.
