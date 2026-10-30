@@ -1,9 +1,12 @@
 /**
  * Each mise.toml a repository tracks and each executable file under its .mise/tasks/, against
- * `Toolchain.taskLines` and `task-nested`.
+ * `Toolchain.taskLines`, `task-nested` and `secrets-per-task`.
  */
 /** The deferred item that waits on renaming a repository's tasks, warned of there meanwhile. */
 let renaming = "task-names-nested-rest"
+
+/** The deferred item that waits on moving a repository's secrets into its tasks, warned of. */
+let loading = "web-secrets-tasks"
 
 /** What a name joined by a hyphen is told to become, as `task-nested` says. */
 let nested = "one word, an action its first argument"
@@ -63,6 +66,49 @@ let read = (text, ~file): (array<string>, array<string>) =>
   | exception _ => ([`${file}: does not parse`], [])
   }
 
+/** The path a `_.file` entry names, a bare path or a table's `path`. */
+let pathOf = (entry: JSON.t) =>
+  switch entry {
+  | JSON.String(path) => Some(path)
+  | JSON.Object(fields) =>
+    switch fields->Dict.get("path") {
+    | Some(JSON.String(path)) => Some(path)
+    | _ => None
+    }
+  | _ => None
+  }
+
+/** The files an `env` table loads by `_.file`, one entry or a list of them. */
+let filesOf = (env: option<JSON.t>): array<string> =>
+  switch env {
+  | Some(JSON.Object(env)) =>
+    switch env->Dict.get("_") {
+    | Some(JSON.Object(directives)) =>
+      switch directives->Dict.get("file") {
+      | Some(JSON.Array(entries)) => entries->Array.filterMap(pathOf)
+      | Some(entry) => pathOf(entry)->Option.mapOr([], path => [path])
+      | None => []
+      }
+    | _ => []
+    }
+  | _ => []
+  }
+
+/** One mise.toml's text, `file` naming it, whose global [env] loads a secrets file. */
+let global = (text, ~file): array<string> =>
+  switch Toml.parse(text) {
+  | JSON.Object(config) =>
+    config
+    ->Dict.get("env")
+    ->filesOf
+    ->Array.filter(path => Node.basename(path) == Delegation.secretsFile)
+    ->Array.map(path =>
+      `${file}: [env] loads ${path} into every mise command; only a task that uses a credential loads it, by its own env`
+    )
+  | _ => []
+  | exception _ => []
+  }
+
 @get external mode: Node.stats => int = "mode"
 
 /** Whether `file` may be run, as mise asks of a file before it is a task. */
@@ -78,25 +124,37 @@ let joinedFile = (path, ~executable): option<string> =>
   | _ => None
   }
 
-/** The deferred item among `items` that waits on renaming `repo`'s tasks, if one does. */
-let renamingIn = (items: array<Deferred.item>, ~repo) =>
+/** The deferred item `id` among `items`, if it names `repo`. */
+let deferredIn = (items: array<Deferred.item>, ~id, ~repo) =>
   items
-  ->Array.find(item => item.id == renaming && item.repos->Array.includes(repo))
+  ->Array.find(item => item.id == id && item.repos->Array.includes(repo))
   ->Option.map(item => item.id)
 
-/** What `root` breaks, then what it is warned of while a deferred item renames its tasks. */
+/** `lines` as failures, or as warnings while the deferred item `id` names `repo`. */
+let waived = (lines, ~id, ~repo) =>
+  switch deferredIn(Deferred.items, ~id, ~repo) {
+  | Some(id) => ([], lines->Array.map(line => `${line}, deferred ${id}`))
+  | None => (lines, [])
+  }
+
+/** What `root` breaks, then what it is warned of while a deferred item names it. */
 let found = (~root): (array<string>, array<string>) => {
   let tracked = Lines.tracked(root)
-  let (long, hyphens) =
+  let (long, hyphens, loads) =
     tracked
     ->Array.filter(path => Node.basename(path) == "mise.toml")
-    ->Array.reduce(([], []), ((long, hyphens), path) => {
+    ->Array.reduce(([], [], []), ((long, hyphens, loads), path) => {
       let file = Node.join([root, path])
       if Node.existsSync(file) {
-        let (more, joined) = read(Node.readFileSync(file), ~file=path)
-        (Array.concat(long, more), Array.concat(hyphens, joined))
+        let text = Node.readFileSync(file)
+        let (more, joined) = read(text, ~file=path)
+        (
+          Array.concat(long, more),
+          Array.concat(hyphens, joined),
+          Array.concat(loads, global(text, ~file=path)),
+        )
       } else {
-        (long, hyphens)
+        (long, hyphens, loads)
       }
     })
   let hyphens = Array.concat(
@@ -105,8 +163,8 @@ let found = (~root): (array<string>, array<string>) => {
       joinedFile(path, ~executable=executable(Node.join([root, path])))
     ),
   )
-  switch renamingIn(Deferred.items, ~repo=Registry.label(root)) {
-  | Some(id) => (long, hyphens->Array.map(line => `${line}, deferred ${id}`))
-  | None => (Array.concat(long, hyphens), [])
-  }
+  let repo = Registry.label(root)
+  let (hyphens, renamed) = waived(hyphens, ~id=renaming, ~repo)
+  let (loads, moving) = waived(loads, ~id=loading, ~repo)
+  (Array.concat(long, Array.concat(hyphens, loads)), Array.concat(renamed, moving))
 }

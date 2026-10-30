@@ -129,6 +129,12 @@ let rules: array<Rule.t> = [
     held: Gate("scripts/lints/secrets.res"),
   },
   {
+    name: "secrets-per-task",
+    says: "A repository's secrets.json is loaded only by the mise tasks that use a credential, each by its own env, never by its global [env]",
+    doc,
+    held: Check("tasks"),
+  },
+  {
     name: "release-age",
     says: "pnpm-workspace.yaml holds a package version back a day before it installs",
     doc,

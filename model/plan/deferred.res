@@ -49,6 +49,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "web-secrets-tasks",
+    what: "canmi/web's mise.toml loads secrets.json in its global [env], which `secrets-per-task` forbids since the exposure of 2026-10-29, so it moves into the tasks that use a credential when web's held-back work is next taken up, the tasks check warning there until then, provisional, chosen by the advisor on 2026-10-29",
+    repos: ["canmi/web"],
+    until: Author,
+  },
+  {
     id: "paused",
     what: "only the workspace and monoflake are worked on, so every other repository is passed over by check --all and audit --all",
     repos: [

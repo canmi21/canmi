@@ -112,10 +112,19 @@ terminal is already `SIGINT`, and closing the window is `SIGHUP`. Both are caugh
 ## Secrets
 
 Credentials live in `secrets.json`, encrypted with [sops](https://getsops.io) to an
-[age](https://age-encryption.org) key and **committed that way**. mise decrypts it on entering
-the directory, so every tool reads the values from the environment and nothing keeps a second
-copy. `.sops.yaml` names the recipient public key, which is safe to commit -- it encrypts and
-cannot decrypt.
+[age](https://age-encryption.org) key and **committed that way**. `.sops.yaml` names the recipient
+public key, which is safe to commit -- it encrypts and cannot decrypt.
+
+**Only a task that uses a credential decrypts it**: each such task loads the file by an
+`env = { _.file = "secrets.json" }` of its own, and a repository's global `[env]` never names it,
+`secrets-per-task` in `model/rules/toolchain.res`. The task's tools read the values from its
+environment, and nothing keeps a second copy. A global load puts every value into every mise
+environment, a test's and a format's among them, and one printed environment sends them all
+wherever its output goes: on 2026-10-29 one implementer's `mise env` sent all fifteen of
+monoflake/cloud's to its vendor. `secrets-unprinted` refuses such a command to a subagent alone, so
+the file not being loaded is what guards every other shell and tool. Provisional, chosen by the
+advisor on 2026-10-29; canmi/web still loads its file globally, the deferred item
+`web-secrets-tasks`.
 
 The private key lives at `~/.config/sops/age/keys.txt`, outside the repo, and belongs in a
 password manager as well. Losing it costs a round of credential rotation, not the repo.
@@ -189,8 +198,9 @@ and fails on the age block. JSON puts that metadata under a `sops` key it recogn
 **No empty placeholders.** sops leaves `""` untouched, and mise then rejects the whole file
 because a value lacks the `ENC[` prefix. Write `"unset"` instead of `""`.
 
-**The circular trap.** A broken `secrets.json` makes `mise exec` fail in this directory --
-including for the sops you would use to repair it. Call sops by absolute path when fixing it.
+**The circular trap.** A broken `secrets.json` makes every task that loads it fail, and `mise
+exec` too where a repository still loads it globally -- including for the sops you would use to
+repair it. Call sops by absolute path when fixing it.
 
 `mise run secrets` refuses any file `.sops.yaml` claims that is not actually encrypted, and
 runs first in `verify` because it is the only check there guarding something irreversible: a

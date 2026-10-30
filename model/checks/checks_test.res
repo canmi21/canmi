@@ -80,12 +80,32 @@ describe("a mise task", () => {
         repos: ["seam"],
         until: Author,
       }
-      expect(Tasks.renamingIn([item], ~repo="seam"))->toEqual(Some(Tasks.renaming))
-      expect(Tasks.renamingIn([item], ~repo="workspace"))->toEqual(None)
-      expect(Tasks.renamingIn([{...item, id: "other"}], ~repo="seam"))->toEqual(None)
+      let renamingIn = Tasks.deferredIn(~id=Tasks.renaming, ...)
+      expect(renamingIn([item], ~repo="seam"))->toEqual(Some(Tasks.renaming))
+      expect(renamingIn([item], ~repo="workspace"))->toEqual(None)
+      expect(renamingIn([{...item, id: "other"}], ~repo="seam"))->toEqual(None)
       expect(Deferred.items->Array.some(({id}) => id == Tasks.renaming))->toBe(true)
     },
   )
+
+  test("loads secrets.json in its own env alone, never the global one", () => {
+    let said = path =>
+      `mise.toml: [env] loads ${path} into every mise command; only a task that uses a credential loads it, by its own env`
+    expect(Tasks.global(`[env]\n_.file = "secrets.json"`, ~file="mise.toml"))->toEqual([
+      said("secrets.json"),
+    ])
+    expect(
+      Tasks.global(`[env]\n_.file = [".env.json", { path = "a/secrets.json" }]`, ~file="mise.toml"),
+    )->toEqual([said("a/secrets.json")])
+    expect(
+      Tasks.global(
+        `[env]\n_.path = ["bin"]\n[tasks.install]\nenv = { _.file = "secrets.json" }\nrun = "x"`,
+        ~file="mise.toml",
+      ),
+    )->toEqual([])
+    expect(Tasks.global(`[env]\n_.file = ".env.json"`, ~file="mise.toml"))->toEqual([])
+    expect(Deferred.items->Array.some(({id}) => id == Tasks.loading))->toBe(true)
+  })
 
   test("warned of fails nothing outside AUDIT, and what it breaks fails", () => {
     let line = `mise.toml: [tasks.dev-site] joins words by a hyphen; ${Tasks.nested}`
