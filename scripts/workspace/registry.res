@@ -42,7 +42,10 @@ let registry = (): array<(string, (string, string))> => {
 
 let paths = () => registry()->Array.map(((path, _)) => path)
 
-/** What mise.toml's [monorepo].config_roots names. */
+/** A root's path, as mise.toml writes it with a `*` that matches nothing until it is cloned. */
+let rootPath = one => one->String.endsWith("*") ? Some(one->String.slice(~start=0, ~end=-1)) : None
+
+/** What mise.toml's [monorepo].config_roots names, each as written. */
 let taskRoots = (): array<string> =>
   switch Toml.parse(Node.readFileSync(config)) {
   | Object(top) =>
@@ -204,7 +207,15 @@ let check = (): int => {
     problems := problems.contents + 1
   }
   let listed = paths()
-  let roots = taskRoots()
+  let written = taskRoots()
+  written->Array.forEach(one =>
+    if rootPath(one) == None {
+      say(
+        `mise.toml [monorepo].config_roots names ${one} bare; write it ${one}*, so mise is silent where it is not cloned`,
+      )
+    }
+  )
+  let roots = written->Array.map(one => rootPath(one)->Option.getOr(one))
   let expected = listed->Array.map(path => `repos/${path}`)
   expected->Array.forEach(one =>
     if !(roots->Array.includes(one)) {

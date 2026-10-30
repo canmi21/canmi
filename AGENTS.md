@@ -185,7 +185,8 @@ taken back. See [docs/repos.md](docs/repos.md).
 
 **A project's tasks are reached by path.** `mise tasks ls` shows only this repository's; the
 projects' are `//repos/<name>:<task>` and need `mise tasks ls --all` to be listed. A project
-that is not cloned is a warning, not an error, so a machine holding one project still works.
+that is not cloned is said only where it is asked about, never an error, so a machine holding one
+project still works.
 
 ## Index
 

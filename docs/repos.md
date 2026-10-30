@@ -252,9 +252,11 @@ mise needs the same set as task roots and cannot read that file, so `[monorepo].
 states it a second time. Two copies of one fact, and therefore a check: the repos part of `check
 workspace` fails when they disagree. This is the shape used wherever a fact has to cross a boundary a tool cannot see.
 
-A listed project that is not cloned is a warning from mise and nothing more, which is what makes
-the two-clone workflow work: a machine holding one project runs that project's tasks and is not
-told off about the others.
+A listed project that is not cloned is said only where somebody asks about it, by `mise run repos
+list` and by a verb given its name; mise is silent, each root written with a trailing `*` that
+matches nothing until it is cloned, decided by the author on 2026-10-29.
+That is what makes the two-clone workflow work: a machine holding one project runs that project's
+tasks and is not told off about the others.
 
 ## One verb, the workspace unless told otherwise
 

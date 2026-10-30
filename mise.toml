@@ -2,23 +2,23 @@
 monorepo_root = true
 
 # repos/registry.toml again, since mise cannot read it; `check workspace repos` holds the two to
-# one set.
+# one set. Each ends in `*`, a glob that matches nothing and says nothing where it is not cloned.
 [monorepo]
 config_roots = [
-	"repos/canmi/web",
-	"repos/canmi/lib",
-	"repos/canmi/rfcs",
-	"repos/seam",
-	"repos/monoflake/platform",
-	"repos/monoflake/cloud",
-	"repos/monoflake/driver",
-	"repos/monoflake/machine",
-	"repos/monoflake/runtime",
-	"repos/monoflake/egress",
-	"repos/apps/rdm",
-	"repos/apps/cue",
-	"repos/apps/still",
-	"repos/console",
+	"repos/canmi/web*",
+	"repos/canmi/lib*",
+	"repos/canmi/rfcs*",
+	"repos/seam*",
+	"repos/monoflake/platform*",
+	"repos/monoflake/cloud*",
+	"repos/monoflake/driver*",
+	"repos/monoflake/machine*",
+	"repos/monoflake/runtime*",
+	"repos/monoflake/egress*",
+	"repos/apps/rdm*",
+	"repos/apps/cue*",
+	"repos/apps/still*",
+	"repos/console*",
 ]
 
 [env]

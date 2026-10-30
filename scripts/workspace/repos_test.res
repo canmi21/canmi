@@ -106,3 +106,19 @@ describe("an update's movers", () => {
     Node.rmSync(config, {recursive: true, force: true})
   })
 })
+
+describe("the task roots mise reads", () => {
+  test("a root ending in a star is read back as its path, a bare one is not", () => {
+    expect(Registry.rootPath("repos/canmi/web*"))->toEqual(Some("repos/canmi/web"))
+    expect(Registry.rootPath("repos/canmi/web"))->toEqual(None)
+  })
+
+  test("every root mise.toml writes ends in a star and names a listed repository", () => {
+    let roots = Registry.taskRoots()
+    expect(roots->Array.every(one => one->String.endsWith("*")))->toBe(true)
+    let paths = roots->Array.filterMap(Registry.rootPath)->Array.toSorted(String.compare)
+    let listed =
+      Registry.paths()->Array.map(path => `repos/${path}`)->Array.toSorted(String.compare)
+    expect(paths)->toEqual(listed)
+  })
+})
