@@ -240,6 +240,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "reset-orphan-bindings",
+    what: "close the two bindings sora and oak opened on 2026-10-27 under monoflake on the foundation platform's control, sora's 1856388407 (6ea63d37) and oak's 1565746770 (5d536652), and delete their tunnels in its Cloudflare account, left by their reset onto the test platform, at step 5 of monoflake/cloud's RFC oej2a item 8 with A's reset, as the author decided on 2026-10-30, their ids read from each machine's own binding; until then they stay and are never deleted by hand",
+    repos: ["monoflake/cloud", "monoflake/platform"],
+    until: Author,
+  },
+  {
     id: "driver-release-fixes",
     what: "the four post-release findings of lane 13's third review, a held source still moving its resolved names while its texts say kept, bump inferring a minor from the local platform checkout's contracts rather than the pinned commit, first, a renamed column turning old heads into rows, and a failed read of another day's manifest reddening a released run, as one small lane, provisional, chosen by the advisor on 2026-10-27",
     repos: ["workspace", "monoflake/driver"],
