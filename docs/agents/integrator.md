@@ -36,6 +36,11 @@ has it, at the gate [pushing.md](pushing.md) gives, and keeps the list of
 private identifiers a push is scanned for. **It alone writes the records of friction**,
 [friction.md](friction.md). **It escapes to the user and the advisor**, [escapes.md](escapes.md).
 
+**A wait is worked through, and a push waits for the run it would land under**, decided by the
+author on 2026-10-29. While a CI run or another long wait goes on, the integrator works on the next
+item and commits locally; a push to the repository the run builds waits until the run ends, then
+goes out with its dry run first, and a push to any other repository goes as usual.
+
 **A global name is the model's, so the integrator writes it**, as the author decided it:
 [naming.md](../naming.md), "A global name is the model's".
 
