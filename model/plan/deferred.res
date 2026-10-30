@@ -49,6 +49,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-lock-reset",
+    what: "monoflake/machine's system/containers/manifest.lock keeps its driver-machine entry, and machine.driver its package path, for the frozen machines that still take the released driver that way, while a machine on the driver's channel takes it from its signed driver pointer, RFC oej2a item 6; both go once every machine is on the channel after step 5's reset, beside the old cache code, as the advisor decided on 2026-10-30",
+    repos: ["monoflake/machine", "monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "nudge-key",
     what: "the author's nudge key, made on 2026-10-30 and named in monoflake/cloud's okra configuration, carries expiry-time 20291030Z in the nudge account's authorized key, so sshd refuses it from 2029-10-30 UTC; the author makes a new one before then and the integrator enters its public half and the new expiry as this one was",
     repos: ["monoflake/cloud", "monoflake/machine"],
