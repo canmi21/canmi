@@ -154,6 +154,11 @@ moves into `model/rules/` with its check and leaves this file.
   insights on 2026-10-27. A rows-read budget in platform's model is to hold each statement, its lane
   opened that day, and a reviewer states each statement's rows,
   [agents/reviewer.md](agents/reviewer.md).
+- **A shell script's test on the host's PATH never proves its package's inputs.** monoflake/machine's
+  driver fetcher called `cmp`, which every developer's PATH holds and its `writeShellApplication`'s
+  `runtimeInputs` did not; its tests passed, its first run on okra on 2026-10-30 installed, and its
+  second refused, `cmp: command not found`. A command the script calls is checked against the
+  package's inputs in review, and the second run of anything stateful is part of a live test.
 
 ## Remotes, and what cannot be taken back
 
