@@ -220,6 +220,15 @@ moves into `model/rules/` with its check and leaves this file.
   repository kept it, which the repositories already answered.
 - **After a push, the next task starts.** Watching a deploy or polling a registry's propagation
   stalls the session for nothing asked; the author says when a publish is out.
+- **A place, a name or a credential is read against `model/rules` before it is proposed or
+  approved, and a provisional choice never overrides a written rule.** On 2026-10-29 the integrator
+  proposed enam for the test platform's CI bucket and the advisor approved it as provisional,
+  though `cloudflare-placed` allows wnam or apac alone unless the author names another place; the
+  check passed it because the create read its place at run time, and the bucket was rolled.
+- **A deleted resource's name is never used again**, `drawn-ids-once` in
+  [model/rules/naming.res](../model/rules/naming.res). On 2026-10-29 the plan to make that bucket
+  again in wnam under its old name was caught by the author: Cloudflare honors a bucket's name only
+  the first time, so its replacement drew a new id.
 
 ## Reading and reporting
 

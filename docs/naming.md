@@ -260,6 +260,12 @@ account. A name an agent or an advisor chose is never such a name, however reaso
 `control-test` and `artifacts-test` broke the rule, and were drawn again. `vendor-resources-drawn`
 is `Pending` until monoflake/cloud's names are read from its configuration.
 
+**A drawn id names one resource ever**, `drawn-ids-once`: once its resource is deleted the id is not
+used again, and a replacement draws a new one, decided by the author on 2026-10-29. Cloudflare
+honors a bucket's name only the first time it is used, and an id used once is what makes a name
+say nothing but which resource it is. It is `Pending` until something records the names deleted
+resources held.
+
 ## Inside code
 
 Identifiers follow the language's own convention with no interference from this document:

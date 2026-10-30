@@ -90,6 +90,14 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "drawn-ids-once",
+    says: "A drawn id names one resource ever, never again once that resource is deleted; a replacement draws a new one",
+    doc,
+    held: Pending(
+      "a record of the names each account's deleted resources held, which nothing keeps yet, read against every drawn name in monoflake/cloud's configuration",
+    ),
+  },
+  {
     name: "qualified-meanings",
     says: "A module or a contract using both meanings of one word writes each by its qualified name",
     doc,
