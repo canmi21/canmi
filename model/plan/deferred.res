@@ -55,12 +55,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "old-pointer-path",
-    what: "monoflake/cloud's systems.res writes each system pointer at both pointer/<machine> and pointer/system/<machine> for the move to RFC oej2a item 3's layout; once okra runs the monoflake/machine version that reads pointer/system/<machine> alone, the integrator stops writing the old path in one small commit, which the bucket's one-day rule then empties, as the advisor decided on 2026-10-30",
-    repos: ["monoflake/cloud"],
-    until: Author,
-  },
-  {
     id: "nudge-key",
     what: "the author's nudge key, made on 2026-10-30 and named in monoflake/cloud's okra configuration, carries expiry-time 20291030Z in the nudge account's authorized key, so sshd refuses it from 2029-10-30 UTC; the author makes a new one before then and the integrator enters its public half and the new expiry as this one was",
     repos: ["monoflake/cloud", "monoflake/machine"],
