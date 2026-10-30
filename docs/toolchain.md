@@ -311,7 +311,10 @@ installer, https://github.com/NixOS/nix-installer, the upstream Nix the machines
 mise cannot carry it. What Nix itself runs -- nixfmt, statix, deadnix -- comes from the nixpkgs a
 project's `flake.lock` pins, `nix run --inputs-from`, so that lock is their one manifest, as
 `mise.toml` is every other tool's. A task reaches Nix at `/nix/var/nix/profiles/default/bin`, which a
-project's `[env]` adds to its path. 2026-10-20.
+project's `[env]` adds to its path. 2026-10-20. **The Nix that acts for the fleet is the OS channel's,
+taken from the lock**, on CI and on this Mac, and the Mac's daemon changes only by `mise run
+//repos/monoflake/machine:channel mac`, never by `nix upgrade-nix` or Determinate Nix:
+monoflake/machine's docs/releases.md, decided by the author on 2026-10-29.
 
 ### A machine tool is not a mise tool, and the line is what the tool acts on
 
