@@ -20,6 +20,20 @@ let singleWriter = [
 /** The programs an implementer and a refactorer never run, `implementer-commands`. */
 let remote = ["ssh", "rsync", "wrangler"]
 
+/**
+ * What prints the environment or a decrypted secret, refused to every role by
+ * `secrets-unprinted`, a program that only prints, a builtin given no name, a subcommand, and a
+ * reader of a secrets file.
+ */
+let printing = ["printenv"]
+let listingBare = ["env", "export", "set", "declare", "typeset"]
+let printingSubcommands = [
+  ("mise", ["env", "set"]),
+  ("sops", ["-d", "--decrypt", "decrypt", "exec-env", "exec-file", "edit"]),
+]
+let secretsFile = "secrets.json"
+let secretsReaders = ["cat", "jq"]
+
 /** Version control no subagent types, jj aside, which `reading` holds for a reviewer. */
 let versioning = ["git"]
 
@@ -145,6 +159,12 @@ let rules: array<Rule.t> = [
   {
     name: "implementer-commands",
     says: "An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, one part of the workspace's check aside, and --pending always; a task that deploys; and ssh, rsync or wrangler. A task it runs may read its own lane's history",
+    doc: "docs/agents/implementer.md",
+    held: Hook("hooks/agent_commands"),
+  },
+  {
+    name: "secrets-unprinted",
+    says: "No subagent prints a secret: `printing`, a builtin of `listingBare` given no name or only -p, a subcommand of `printingSubcommands`, and `secretsReaders` given a `secretsFile` are refused to every role, wherever the command is nested",
     doc: "docs/agents/implementer.md",
     held: Hook("hooks/agent_commands"),
   },

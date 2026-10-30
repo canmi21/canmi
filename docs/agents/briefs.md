@@ -50,6 +50,12 @@ the advisor have reviewed them.
   finds none.
 - **It types no version control command**, neither jj nor git: it does not commit, move a bookmark
   or push. A task it runs, as `accept --from`, may read its own lane's history.
+- **It never prints the environment or a secret**: no `mise env` or `mise set`, no `env` or
+  `printenv` alone, no bare `export` or `set`, no `sops -d`, `sops decrypt` or `sops exec-env`,
+  and no `cat` or `jq` of a `secrets.json`. Where a repository's mise loads a sops file, as
+  monoflake/cloud's does, every decrypted value is in the environment, and printing it sends them
+  all to the vendor running the agent: on 2026-10-29 one Codex implementer's `mise env` sent all
+  fifteen of cloud's. `secrets-unprinted` refuses these, and the brief says it anyway.
 - **Which files are its own, as an explicit list, and that every other file belongs to somebody
   else.** See [lanes.md](lanes.md), "File ownership is the whole of the concurrency control"; this
   is the line the whole arrangement rests on.

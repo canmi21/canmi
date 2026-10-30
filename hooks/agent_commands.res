@@ -187,9 +187,45 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
   }
 }
 
+/** Why a segment would print the environment or a decrypted secret, refused to every role. */
+let secretReason = (segment: array<string>) => {
+  // env names a program it runs, so bare it is read here, before the wrapper is passed over.
+  let bare =
+    segment[0]->Option.mapOr(false, first => Node.basename(first) == "env") &&
+      segment
+      ->Array.slice(~start=1)
+      ->Array.every(word => word->String.startsWith("-") || word->String.includes("="))
+  switch Jj_command.programOf(segment) {
+  | _ if bare => Some("env would print a secret, secrets-unprinted holds it")
+  | None => None
+  | Some(program, words) =>
+    let operands = words->Array.filter(word => !(word->String.startsWith("-")))
+    let printed =
+      Delegation.printing->Array.includes(program) ||
+      switch program {
+      | "env" => operands->Array.every(word => word->String.includes("="))
+      | "set" => words == []
+      | _ => Delegation.listingBare->Array.includes(program) && operands == []
+      } ||
+      Delegation.printingSubcommands->Array.some(((owner, subcommands)) =>
+        owner == program && (
+            owner == "mise"
+              ? givenOf(words).operands[0]->Option.mapOr(false, first =>
+                  subcommands->Array.includes(first)
+                )
+              : words->Array.some(word => subcommands->Array.includes(word))
+          )
+      ) ||
+      (Delegation.secretsReaders->Array.includes(program) &&
+        words->Array.some(word => Node.basename(word) == Delegation.secretsFile))
+    printed ? Some(`${program} would print a secret, secrets-unprinted holds it`) : None
+  }
+}
+
 /** Why one segment is refused to a role, or none. */
 let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<string>) =>
   switch (role, Jj_command.programOf(segment)) {
+  | _ if secretReason(segment) != None => secretReason(segment)
   | (_, None) => None
   | (Reviewer, _) => Read_only.segmentReason(segment)
   | (_, Some(program, _)) if Delegation.versioning->Array.includes(program) =>
@@ -233,7 +269,9 @@ and shellReason = (~cwd, role, segment) =>
   }
 and reason = (~cwd=Registry.root, role, command) =>
   role == Reviewer
-    ? Read_only.reason(command)
+    ? Jj_command.segments(command)
+      ->Array.findMap(secretReason)
+      ->Option.orElse(Read_only.reason(command))
     : Jj_command.segments(command)->Array.findMap(segment => segmentReason(~cwd, role, segment))
 
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */

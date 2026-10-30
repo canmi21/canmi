@@ -290,3 +290,61 @@ describe("formatting by a repository's own table", () => {
     expect(Node.readFileSync(path))->toEqual("{   a=1; }\n")
   })
 })
+
+describe("printing a secret", () => {
+  test("is refused to every role, wherever the command is nested", () => {
+    [
+      "printenv",
+      "printenv CLOUDFLARE_API_TOKEN",
+      "env",
+      "env -0",
+      "export",
+      "export -p",
+      "set",
+      "declare -p",
+      "typeset -x",
+      "mise env",
+      "mise env --json",
+      "mise -C repos/monoflake/cloud env",
+      "mise set",
+      "sops -d secrets.json",
+      "sops --decrypt machines/okra/secrets.json",
+      "sops decrypt --extract '[\"X\"]' secrets.json",
+      "sops exec-env secrets.json 'true'",
+      "sops edit secrets.json",
+      "cat secrets.json",
+      "cat ../cloud/machines/okra/secrets.json",
+      "jq . secrets.json",
+      "ls && mise env | head",
+      "bash -c 'printenv'",
+      "mise exec -- env",
+    ]->Array.forEach(
+      command =>
+        [Agent_commands.Implementer, Refactorer, Reviewer]->Array.forEach(
+          role => expect((command, refused(role, command)))->toEqual((command, true)),
+        ),
+    )
+  })
+
+  test("leaves a command that only sets or reads what is not secret", () => {
+    [
+      "env FOO=1 node script.mjs",
+      "env -i PATH=/bin ls",
+      "export FOO=1",
+      "set -euo pipefail",
+      "mise run test",
+      "sops filestatus secrets.json",
+      "jq 'del(.sops)|keys' package.json",
+      "cat secrets.md",
+    ]->Array.forEach(
+      command =>
+        expect((command, refused(Agent_commands.Implementer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("names its rule", () => {
+    expect(Agent_commands.reason(Agent_commands.Implementer, "mise env"))->toEqual(
+      Some("mise would print a secret, secrets-unprinted holds it"),
+    )
+  })
+})
