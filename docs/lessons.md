@@ -262,3 +262,11 @@ moves into `model/rules/` with its check and leaves this file.
   2026-10-27 a machine reported fetched took an old pointer and stayed on the old system. Each
   readback fails unless the system applied is the one the round built, written after the round began,
   and the setting reads its expected value.
+
+## Planning
+
+- **A loop is closed before any of its stages is refined.** By 2026-10-30 the fleet's update work
+  kept gaining refinements to stages of a loop not yet closed end to end, while the loop itself ran
+  slowly, and nothing said which stage cost most. The author asked for the loop closed first, then
+  timed from real runs, then only its slowest stage worked, [planning.md](planning.md), "The loop
+  closes first".

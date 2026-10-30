@@ -34,7 +34,9 @@ be named by one word, docs/toolchain.md, so an RFC landed before then names it s
 once built and pushed, naming its commits, or `declined`. A draft or an accepted RFC is edited as
 the work moves; a landed or declined one is frozen. **`blocked-by` names the RFCs that must land
 first, by id**, the graph held acyclic by the `rfcs` part of check; `mise run plan [space]` lists what
-nothing open blocks, then each of the rest behind the chain it waits on. `rfc new` starts a draft
+nothing open blocks, then each of the rest behind the chain it waits on. **`underway`, optional on
+a draft or an accepted RFC, names the step being worked now**, and `plan` prints those first, so a
+reader starting cold knows what is in hand and what comes next. `rfc new` starts a draft
 unless given `--status`, and takes `--day` for a question older than its RFC.
 
 **Its license is CC BY-NC-SA 4.0**, the one repository that is not MIT -- [readme.md](readme.md),

@@ -1,6 +1,7 @@
 /**
  * `plan [space]`, what is left in one id space or in every one, read off the RFCs, the open ones
- * nothing open blocks and then each of the rest behind the longest chain it waits on. RFC p992n.
+ * nothing open blocks and then each of the rest behind the longest chain it waits on, those with a
+ * step underway first. RFC p992n.
  */
 type shown = {front: Rfc_record.front, at: string}
 
@@ -32,6 +33,12 @@ let lines = (space): array<string> => {
     | None => id
     }
   let now = Rfc_graph.ready(graph)
+  let underway =
+    shown
+    ->Map.entries
+    ->Iterator.toArray
+    ->Array.filterMap(((id, {front})) => front.underway->Option.map(step => (id, step)))
+    ->Array.toSorted(((a, _), (b, _)) => String.compare(a, b))
   let waiting =
     graph
     ->Map.entries
@@ -43,6 +50,9 @@ let lines = (space): array<string> => {
     )
     ->Array.toSorted((a, b) => Int.toFloat(b->Array.length - a->Array.length))
   Array.flat([
+    underway == [] ? [] : [`${space}, underway (${Int.toString(underway->Array.length)}):`],
+    underway->Array.flatMap(((id, step)) => [`  ${line(id)}`, `      now: ${step}`]),
+    underway == [] ? [] : [""],
     [`${space}, ready, nothing open blocks them (${Int.toString(now->Array.length)}):`],
     now->Array.map(id => `  ${line(id)}`),
     [

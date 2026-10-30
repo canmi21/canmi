@@ -200,7 +200,7 @@ project still works.
 | The model: what a program decides, what holds each rule, what is pending                                | [docs/model.md](docs/model.md)                                 |
 | Spawning implementers: briefs, lanes, who tests, who checks, who commits                                | [docs/agents/delegation.md](docs/agents/delegation.md)         |
 | Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                                 |
-| Planning: a short roadmap here, every open question and piece of decided work an RFC                    | [docs/planning.md](docs/planning.md)                           |
+| Planning: the loop first, a short roadmap here, every open question and decided work an RFC             | [docs/planning.md](docs/planning.md)                           |
 | READMEs, repository descriptions and license years                                                      | [docs/readme.md](docs/readme.md)                               |
 | Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [docs/rfcs.md](docs/rfcs.md)                                   |
 | Commit conventions, when to commit and push, and their enforcement                                      | [docs/commits.md](docs/commits.md)                             |

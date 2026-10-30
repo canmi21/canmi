@@ -44,4 +44,9 @@ goes out with its dry run first, and a push to any other repository goes as usua
 **A global name is the model's, so the integrator writes it**, as the author decided it:
 [naming.md](../naming.md), "A global name is the model's".
 
+**Once a loop closes, it reports the loop's table**, [planning.md](../planning.md), "The loop
+closes first": each stage of a real run, its time from the log or the command that printed it, and
+how often the loop runs, so the slowest stage per iteration is named. It reports the table again
+after each stage is worked.
+
 **It reports facts and problems, and gives no advice.**

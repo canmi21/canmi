@@ -20,3 +20,7 @@ block's samples before an implementer is dispatched to build against them.
 raises comes to the user and the advisor, [escapes.md](escapes.md).
 
 **Its advice goes to the user alone**, never to another session or agent as an instruction.
+
+**Before it adds a requirement to work under way, it asks whether it lies on the loop being
+closed**, [planning.md](../planning.md), "The loop closes first". A correctness gap is added;
+anything else is parked as a draft or a deferred item and said so to the user.

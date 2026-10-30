@@ -77,6 +77,25 @@ describe("an RFC's frontmatter", () => {
     )
   })
 
+  test("reads the step underway of an open RFC alone", () => {
+    let (read, problems) = Rfc_record.readFront(
+      front(~status="accepted", ~extra="\nunderway: item 2 step 1"),
+    )
+    expect((read->Option.flatMap(front => front.underway), problems))->toEqual((
+      Some("item 2 step 1"),
+      [],
+    ))
+    expect(
+      Rfc_record.readFront(front())->Pair.first->Option.flatMap(front => front.underway),
+    )->toEqual(None)
+    expect(
+      Rfc_record.readFront(front(~status="landed", ~extra="\nunderway: item 2"))->Pair.second,
+    )->toEqual(["a landed RFC has nothing `underway`"])
+    expect(Rfc_record.readFront(front(~extra="\nunderway: \"\""))->Pair.second)->toEqual([
+      "`underway` is empty",
+    ])
+  })
+
   test("names each key missing, unknown or out of form", () => {
     let text = "---\nname: \"\"\ntitle:\nstatus: done\nowner: me\ncommits: [web]\n---\n"
     let (_, problems) = Rfc_record.readFront(text)

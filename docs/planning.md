@@ -52,6 +52,17 @@ is struck through and kept.
 RFC, leaving the rule it concerns citing it. Comments cite one the same way -- [code.md](code.md),
 "The rules hold what is settled; an RFC holds what is not".
 
+**The loop closes first, then it is timed, and only its slowest stage is worked**, decided by the
+author on 2026-10-30. Work that builds a way of trying changes, a pipeline, a test machine or a fast
+loop, is carried end to end once in its roughest form before any stage of it is improved. Once it
+closes, each stage is timed from the logs of a real run, never estimated, and the next work is the
+stage that costs most per iteration, its time weighed by how often the loop runs. An improvement to
+any other stage, or a refinement thought of on the way, is parked as a draft or a deferred item. A
+stage that will be deleted gets no polish. A tool is improved before the work it serves only when it
+lies on the loop and what it saves over the runs left outweighs what it costs. The loops differ in
+their targets: an inner loop run many times a day aims at a minute or two, an outer one run a few
+times a day at minutes.
+
 **A design is worked out top down, one layer at a time, every area together.** It starts from what
 its users need, numbered layer 0 at the face, and goes down a layer only once every area of the layer
 above has come down to it: no area is followed to the bottom while another is still open higher up.

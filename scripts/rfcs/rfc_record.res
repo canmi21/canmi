@@ -12,9 +12,20 @@ type front = {
   blockedBy: array<string>,
   commits: array<string>,
   references: array<reference>,
+  /** The step of an open RFC being worked now, which `plan` prints first. */
+  underway?: string,
 }
 
-let keys = ["name", "title", "status", "supersedes", "blocked-by", "commits", "references"]
+let keys = [
+  "name",
+  "title",
+  "status",
+  "supersedes",
+  "blocked-by",
+  "commits",
+  "references",
+  "underway",
+]
 
 /** `repo@hash`, the repository `workspace` or a path repos/registry.toml lists. */
 let commit = /^([a-z0-9-]+(?:\/[a-z0-9-]+)*)@([0-9a-f]{7,40})$/
@@ -146,8 +157,15 @@ let readFront = (text): (option<front>, array<string>) =>
         []
       | value => listOf(value, ~at="references", ~found, ~item=referenceOf(~found))
       }
+      let underway = switch fields->Dict.get("underway") {
+      | None => None
+      | Some(_) if !Rfc_graph.isOpen(status) =>
+        found->Array.push(`a ${status} RFC has nothing \`underway\``)
+        None
+      | value => Some(textOf(value, ~at="underway", ~found))
+      }
       found == []
-        ? (Some({name, title, status, supersedes, blockedBy, commits, references}), [])
+        ? (Some({name, title, status, supersedes, blockedBy, commits, references, ?underway}), [])
         : (None, found)
     | _ => (None, ["frontmatter is not a table of keys"])
     }
