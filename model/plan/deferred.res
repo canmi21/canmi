@@ -50,7 +50,7 @@ let items: array<item> = [
   },
   {
     id: "driver-lock-reset",
-    what: "monoflake/machine's system/containers/manifest.lock keeps its driver-machine entry, and machine.driver its package path, for the frozen machines that still take the released driver that way, while a machine on the driver's channel takes it from its signed driver pointer, RFC oej2a item 6; both go once every machine is on the channel after step 5's reset, beside the old cache code, as the advisor decided on 2026-10-30",
+    what: "monoflake/machine's system/containers/manifest.lock keeps its driver-machine entry, and machine.driver its package path, for the frozen machines that still take the released driver that way, while a machine on the driver's channel takes it from its signed driver pointer, RFC oej2a item 6; both go once every machine is on the channel after step 5's reset, beside the old cache code, as the advisor decided on 2026-10-30, platforms A and B then following GitHub Releases through their own rings while the test platform's ring also takes builds of unreleased code, as the author decided that day",
     repos: ["monoflake/machine", "monoflake/cloud"],
     until: Author,
   },
