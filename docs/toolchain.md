@@ -792,6 +792,13 @@ workflow moves its own actions. Decided with the author on 2026-10-21. A reposit
 `.github/release/bump.res` has its `bump` run after a workflow is written, so a moved pin of what it
 builds from raises its version, monoflake/driver's RFC 8c0rg.
 
+### A task in CI says what it is doing
+
+A task that runs in CI for more than a minute prints each stage as it starts and as it ends, with
+its counts and its elapsed time, in plain lines, never a spinner and never a silent stretch,
+decided by the author on 2026-10-29: a log that sits still for ten minutes cannot be told from one
+that hangs. `ci-progress` is `Pending`, since only a run's log shows how long a step said nothing.
+
 ### A Dockerfile's base images are pinned by digest and moved by `update`
 
 A Dockerfile names each base image by its tag and the digest the tag named when it was pinned,

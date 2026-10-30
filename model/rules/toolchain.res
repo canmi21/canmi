@@ -147,6 +147,14 @@ let rules: array<Rule.t> = [
     held: Check("workflows"),
   },
   {
+    name: "ci-progress",
+    says: "A task that runs in CI for more than a minute prints its stage and progress, never a silent stretch",
+    doc,
+    held: Pending(
+      "a workflow run's log read for a gap of more than a minute between two lines, which only a run gives",
+    ),
+  },
+  {
     name: "actions-age",
     says: "update moves an action's pin to a release a day old, within its major unless --major",
     doc,
