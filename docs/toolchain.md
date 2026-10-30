@@ -168,7 +168,8 @@ changed stays encrypted and is committed as it is. It reads one line a value.
 `machines/<m>`, as `mise run secret monoflake/cloud/machines/<m> upgrade`, writes that machine's own
 `secrets.json`, its names in lowercase and hyphens as sops-nix reads them, where a repository's are
 in capitals. One that goes on into `platforms/<p>` writes the file a platform's machines share,
-as the test platform's bucket read token, named as a machine's are. `--from <file>` is given once, takes one name and the whole file as its value, its
+as the test platform's bucket read token, and one into `runner` writes the self-hosted runner's,
+both named as a machine's are. `--from <file>` is given once, takes one name and the whole file as its value, its
 lines and its final newline kept, handed to sops without passing through the shell; a relative path
 is read from where the command was typed, and a file that is not UTF-8 text is refused. It is for a
 value made by a program, as a key or an environment file, and is reported by its size alone; a value
