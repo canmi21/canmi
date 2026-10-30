@@ -18,6 +18,20 @@ let taskLines = 5
 /** Where a Cloudflare resource made with a place may be put, as `cloudflare-placed` says. */
 let places = ["wnam", "apac"]
 
+/**
+ * A place outside `places` the author named for one resource, each its repository, file and value,
+ * none today.
+ */
+let placedExceptions: array<(string, string, string)> = []
+
+/**
+ * A file whose creates take their place at run time through a guard against `places`, each its
+ * repository and file, written by the author alone.
+ */
+let placedAtRunTime: array<(string, string)> = [
+  ("monoflake/driver", "scripts/install/install_parts.res"),
+]
+
 /** What a test and its fixtures may write out, docs/agents/pushing.md, RFCs 5737, 3849 and 2606. */
 let documentation = {
   "addresses": ["192.0.2.0/24", "198.51.100.0/24", "203.0.113.0/24", "2001:db8::/32"],
@@ -77,7 +91,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "cloudflare-placed",
-    says: "A D1 database or R2 bucket a script or task makes names its place, Western North America or Asia-Pacific alone, never left unset",
+    says: "A D1 database or R2 bucket a script or task makes names its place, Western North America or Asia-Pacific alone, never left unset, and a place written in a configuration file is judged too",
     doc,
     held: Check("placed"),
   },
@@ -86,7 +100,7 @@ let rules: array<Rule.t> = [
     says: "Any other Cloudflare resource made with a place names it the same way, never left unset",
     doc,
     held: Pending(
-      "every create by the API, an R2 jurisdiction, a Durable Object's location hint and a Worker's placement read, each naming wnam or apac or their equal",
+      "every create by the API, an R2 jurisdiction, a Durable Object's location hint in code and a Worker's placement read, each naming wnam or apac or their equal; a place in a configuration file is held by `placed`",
     ),
   },
   {

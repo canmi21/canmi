@@ -3,7 +3,11 @@
 let told = Toolchain.places->Array.join(" or ")
 
 /** Whether `value` is a place a create may name. */
-let passes = value => Toolchain.places->Array.includes(value)
+let passes = (~repo="", ~file="", ~exceptions=Toolchain.placedExceptions, value) =>
+  Toolchain.places->Array.includes(value) ||
+    exceptions->Array.some(((repository, path, place)) =>
+      repository == repo && path == file && place == value
+    )
 
 /** A create in a shell line, its words apart by space, or quoted apart as an argv is. */
 let creating = /\b(d1[\s\x22\x27,]+create|r2[\s\x22\x27,]+bucket[\s\x22\x27,]+create)\b/
@@ -24,10 +28,27 @@ let named = (~value=?, ~bound=?, what) =>
   }
 
 /** The finding on a create placed at `place`, none where it may be. */
-let judged = (place, ~what) =>
+let judged = (
+  place,
+  ~what,
+  ~repo="",
+  ~file="",
+  ~exceptions=Toolchain.placedExceptions,
+  ~runtime=None,
+) =>
   switch place {
-  | Literal(value) => passes(value) ? None : Some(named(what, ~value))
-  | Bound(name, {file, value: Some(value)}) =>
-    passes(value) ? None : Some(named(what, ~value, ~bound=(name, file)))
-  | Bound(_, _) | Open => None
+  | Literal(value) => passes(value, ~repo, ~file, ~exceptions) ? None : Some(named(what, ~value))
+  | Bound(name, {file: origin, value: Some(value)}) =>
+    passes(value, ~repo, ~file, ~exceptions)
+      ? None
+      : Some(named(what, ~value, ~bound=(name, origin)))
+  | Open if runtime->Option.isSome =>
+    switch runtime {
+    | Some(Error(why)) => Some(why)
+    | Some(Ok()) | None => None
+    }
+  | Bound(_, _) | Open =>
+    Some(
+      `${what} names a place decided at run time; use a literal or a bound name the check can read`,
+    )
   }

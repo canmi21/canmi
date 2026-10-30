@@ -50,7 +50,13 @@ let shellPlace = (word, ~earlier: array<binding>) => {
 let flagged = /--location[\x22\x27]?(=|\s*,\s*|\s+)([\x22\x27]?)([^\s\x22\x27,]+)/
 
 /** Each create a shell `text` makes, `file` naming it, by its line and what it leaves unplaced. */
-let shellJudged = (text, ~file): array<(int, option<string>)> => {
+let shellJudged = (
+  text,
+  ~file,
+  ~repo="",
+  ~exceptions=Toolchain.placedExceptions,
+  ~runtime=None,
+): array<(int, option<string>)> => {
   let segments =
     logical(text)
     ->Array.filter(((_, held)) => !(held->String.trim->String.startsWith("#")))
@@ -85,7 +91,10 @@ let shellJudged = (text, ~file): array<(int, option<string>)> => {
         }
       | None => /--location[\x22\x27=\s,]*$/->RegExp.test(segment) ? Some(Open) : None
       }
-      let said = place->Option.mapOr(Some(named(what)), place => judged(place, ~what))
+      let said =
+        place->Option.mapOr(Some(named(what)), place =>
+          judged(place, ~what, ~repo, ~file, ~exceptions, ~runtime)
+        )
       (earlier, [...found, (line, said)])
     | (None, None) => (earlier, found)
     }
@@ -100,7 +109,8 @@ let shown = (~from=1, judged: array<(int, option<string>)>, ~file): array<string
   )
 
 /** Each create in a shell script, `file` naming it, that names no place it may name. */
-let script = (text, ~file): array<string> => shellJudged(text, ~file)->shown(~file)
+let script = (text, ~file, ~repo="", ~exceptions=Toolchain.placedExceptions): array<string> =>
+  shellJudged(text, ~file, ~repo, ~exceptions)->shown(~file)
 
 /** What each task of one mise.toml's text runs, a step of a list a script of its own. */
 let runs = (text): array<string> => {
@@ -134,11 +144,11 @@ let runs = (text): array<string> => {
 }
 
 /** Each create a task in one mise.toml runs, `file` naming it, that names no place it may name. */
-let tasks = (text, ~file): array<string> => {
+let tasks = (text, ~file, ~repo="", ~exceptions=Toolchain.placedExceptions): array<string> => {
   let raw = text->String.split("\n")
   runs(text)->Array.flatMap(run => {
     let held = run->String.split("\n")
-    shellJudged(run, ~file)->Array.filterMap(((line, said)) =>
+    shellJudged(run, ~file, ~repo, ~exceptions)->Array.filterMap(((line, said)) =>
       said->Option.map(
         said => {
           let first = held->Array.get(line - 1)->Option.getOr("")->String.trim

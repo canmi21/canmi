@@ -110,9 +110,9 @@ let spreadPlace = (text, name, ~quotes, ~resolve) => {
 }
 
 /** What one array or list of a create leaves unplaced, a spread placing it as its function does. */
-let unplaced = (held, ~what, ~text, ~quotes, ~resolve) =>
+let unplaced = (held, ~what, ~text, ~quotes, ~resolve, ~repo, ~file, ~exceptions, ~runtime) =>
   switch placeIn(held, ~resolve) {
-  | Some(place) => judged(place, ~what)
+  | Some(place) => judged(place, ~what, ~repo, ~file, ~exceptions, ~runtime)
   | None =>
     let spread = held->Array.filterMap(element =>
       switch /^\.\.\.\s*([A-Za-z_$][\w$.]*)\s*\(/->RegExp.exec(element) {
@@ -126,11 +126,20 @@ let unplaced = (held, ~what, ~text, ~quotes, ~resolve) =>
       | None => None
       }
     )
-    spread == [] ? Some(named(what)) : spread->Array.findMap(place => judged(place, ~what))
+    spread == []
+      ? Some(named(what))
+      : spread->Array.findMap(place => judged(place, ~what, ~repo, ~file, ~exceptions, ~runtime))
   }
 
 /** Each create in one blanked source, `file` naming it, by its line and what it leaves unplaced. */
-let codeJudged = (text, ~file, ~bound): array<(int, option<string>)> => {
+let codeJudged = (
+  text,
+  ~file,
+  ~bound,
+  ~repo="",
+  ~exceptions=Toolchain.placedExceptions,
+  ~runtime=None,
+): array<(int, option<string>)> => {
   let quotes = quotesOf(file)
   let modules = opens(text)
   let own = bindings(text, ~file)
@@ -141,13 +150,13 @@ let codeJudged = (text, ~file, ~bound): array<(int, option<string>)> => {
     let what = result->RegExp.Result.fullMatch->String.replaceRegExp(/\W+/g, " ")->String.trim
     containerAt(text, at, ~quotes)->Option.map(held => (
       lineOf(text, at),
-      unplaced(held, ~what, ~text, ~quotes, ~resolve),
+      unplaced(held, ~what, ~text, ~quotes, ~resolve, ~repo, ~file, ~exceptions, ~runtime),
     ))
   })
   let lines =
     literals(text, ~quotes)->Array.flatMap(((at, inner)) =>
       creating->RegExp.test(inner)
-        ? shellJudged(inner, ~file)->Array.map(((line, said)) => (
+        ? shellJudged(inner, ~file, ~repo, ~exceptions, ~runtime)->Array.map(((line, said)) => (
             lineOf(text, at) + line - 1,
             said,
           ))
@@ -157,5 +166,5 @@ let codeJudged = (text, ~file, ~bound): array<(int, option<string>)> => {
 }
 
 /** Each create in one source, `file` naming it, that names no place it may name. */
-let source = (text, ~file, ~bound) =>
-  codeJudged(blanked(text, ~quotes=quotesOf(file)), ~file, ~bound)->shown(~file)
+let source = (text, ~file, ~bound, ~repo="", ~exceptions=Toolchain.placedExceptions) =>
+  codeJudged(blanked(text, ~quotes=quotesOf(file)), ~file, ~bound, ~repo, ~exceptions)->shown(~file)
