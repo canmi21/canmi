@@ -12,6 +12,18 @@ RFC or the rule in `model/rules/` that decides it and answers from that text, ne
 of the conversation, which a compaction loses. Where the author corrects its reading, the text it
 misread is made plain in the same turn, so the next reader cannot misread it the same way.
 
+**A discussion that ends is not yet a brief**, decided by the author on 2026-10-30. Where details
+still need working through, they stay between the user and the advisor until settled, and only work
+whose bounds are clear goes down to the integrator. Handing down buys parallel work, and parallel
+work needs its order and its schedule set first, or it only adds confusion.
+
+**Blocked, or with the user away, it goes a short way and stops**, decided by the author on
+2026-10-30. It makes no decision that turns the direction while the user is elsewhere, a provisional
+one included, since each becomes something the user must later find and overturn; it gathers the
+questions for the user instead. A thread's own small choices, [agent-protocol.md](agent-protocol.md),
+"A thread runs on its own between a charter and a ledger", are not this. A call to stop is taken at
+once, at the nearest clean point, and nothing new is set going after it.
+
 **The paraphrase, the judgment and the decisions are the user's and the advisor's**,
 [delegation.md](delegation.md), "What the top level keeps". The user and the advisor review a
 block's samples before an implementer is dispatched to build against them.
