@@ -168,6 +168,10 @@ moves into `model/rules/` with its check and leaves this file.
 - **A write naming a Worker first finds the Worker by that name.** A non-interactive `wrangler
   secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
   named as the config said, while the real one was deployed under the dashboard's name.
+- **A push and what depends on it are two calls.** The next step reads the push's own exit code,
+  never through a pipe, which reports its last command's, unless the shell runs with `pipefail`. On
+  2026-10-29 `push | tail && gh workflow run` had its push refused by the form layer and triggered
+  monoflake/cloud's systems run on the old main anyway; it was canceled before it uploaded.
 - **A push across repositories that depend on each other stops at its first failure.** Each is
   pushed in its own call, its result read before the next, and those after a refused one wait,
   never in a loop and never by `--all`, [commits.md](commits.md). On
