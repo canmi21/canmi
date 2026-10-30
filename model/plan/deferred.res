@@ -253,13 +253,13 @@ let items: array<item> = [
   },
   {
     id: "tailscale-token",
-    what: "the Tailscale API token in monoflake/cloud's secrets.json, entered on 2026-10-29, expires on 2026-11-28 at 02:22 UTC, the one before it the author's to revoke; the author issues the next one before then and the integrator enters it as this one was",
+    what: "the Tailscale API token in monoflake/cloud's secrets.json, rolled after the exposure of 2026-10-29 and made on 2026-10-30 at 01:07 UTC, expires on 2026-11-29 at 01:07 UTC, the one before it already refused; the author issues the next one before then and the integrator enters it as this one was",
     repos: ["monoflake/cloud"],
     until: Author,
   },
   {
     id: "reset-rotations",
-    what: "monoflake/cloud's secrets.json was exposed on 2026-10-29, and what of A's and B's controls a reset alone leaves valid is replaced at their resets, A's at step 5 of RFC oej2a item 8 and B's at step 6, as the author decided that day: each control's sealing key, never replaced unless exposed as that step says, each one's operator secret, CONTROL_OPERATOR and CONTROL_PRODUCTION_OPERATOR, and A's tunnel token, CONTROL_CLOUDFLARE_TOKEN. Each is typed in by the author through `mise run secret` and put into its control by the integrator; until then each control keeps its own. CLOUDFLARE_API_TOKEN and TAILSCALE_API_TOKEN are to be rolled by the author on 2026-10-29, not yet entered; the test platform's values and its account's tokens are kept on purpose, the test being the test",
+    what: "monoflake/cloud's secrets.json was exposed on 2026-10-29, and what of A's and B's controls a reset alone leaves valid is replaced at their resets, A's at step 5 of RFC oej2a item 8 and B's at step 6, as the author decided that day: each control's sealing key, never replaced unless exposed as that step says, each one's operator secret, CONTROL_OPERATOR and CONTROL_PRODUCTION_OPERATOR, and A's tunnel token, CONTROL_CLOUDFLARE_TOKEN. Each is typed in by the author through `mise run secret` and put into its control by the integrator; until then each control keeps its own. CLOUDFLARE_API_TOKEN and TAILSCALE_API_TOKEN were rolled by the author on 2026-10-29, each new one verified and each old one refused; the test platform's values and its account's tokens are kept on purpose, the test being the test",
     repos: ["monoflake/cloud"],
     until: Author,
   },
