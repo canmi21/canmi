@@ -276,6 +276,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "runner-token",
+    what: "ci's runner token in monoflake/cloud's runner/secrets.json, the fine-grained token ci-runner whose resource owner is the monoflake organization and whose one permission is the organization's Self-hosted runners, read and write, made on 2026-10-30, expires on 2027-10-30; before then the author makes the next one, enters it with `mise run secret monoflake/cloud/runner runner-token`, and runs `mise run runner update`, RFC obvjb",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "reset-rotations",
     what: "monoflake/cloud's secrets.json was exposed on 2026-10-29, and what of A's and B's controls a reset alone leaves valid is replaced at their resets, A's at step 5 of RFC oej2a item 8 and B's at step 6, as the author decided that day: each control's sealing key, never replaced unless exposed as that step says, each one's operator secret, CONTROL_OPERATOR and CONTROL_PRODUCTION_OPERATOR, and A's tunnel token, CONTROL_CLOUDFLARE_TOKEN. Each is typed in by the author through `mise run secret` and put into its control by the integrator; until then each control keeps its own. CLOUDFLARE_API_TOKEN and TAILSCALE_API_TOKEN were rolled by the author on 2026-10-29, each new one verified and each old one refused; the test platform's values and its account's tokens are kept on purpose, the test being the test",
     repos: ["monoflake/cloud"],
