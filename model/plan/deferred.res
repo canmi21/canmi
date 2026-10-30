@@ -258,6 +258,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "reset-rotations",
+    what: "monoflake/cloud's secrets.json was exposed on 2026-10-29, and what of A's and B's controls a reset alone leaves valid is replaced at their resets, A's at step 5 of RFC oej2a item 8 and B's at step 6, as the author decided that day: each control's sealing key, never replaced unless exposed as that step says, each one's operator secret, CONTROL_OPERATOR and CONTROL_PRODUCTION_OPERATOR, and A's tunnel token, CONTROL_CLOUDFLARE_TOKEN. Each is typed in by the author through `mise run secret` and put into its control by the integrator; until then each control keeps its own. CLOUDFLARE_API_TOKEN and TAILSCALE_API_TOKEN were rolled by the author on 2026-10-29; the test platform's values and its account's tokens are kept on purpose, the test being the test",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "production-nix-key",
     what: "the Nix key A's and B's CI signs with is named `ci<nix@monoflake.com>-1`, its last number counting rotations with both keys trusted while one replaces the other, made at step 5 of monoflake/cloud's RFC oej2a item 8 with A and B, as the author decided on 2026-10-29, its private half a GitHub secret and its public half in monoflake/cloud's config as the test platform's was; the four old builder keys, each named for its builder and ending in -cache-1, go with the old cache code after that reset",
     repos: ["monoflake/cloud", "monoflake/machine"],
