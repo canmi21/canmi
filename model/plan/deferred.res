@@ -49,6 +49,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "nudge-key",
+    what: "the author's nudge key, made on 2026-10-30 and named in monoflake/cloud's okra configuration, carries expiry-time 20291030Z in the nudge account's authorized key, so sshd refuses it from 2029-10-30 UTC; the author makes a new one before then and the integrator enters its public half and the new expiry as this one was",
+    repos: ["monoflake/cloud", "monoflake/machine"],
+    until: Author,
+  },
+  {
     id: "web-secrets-tasks",
     what: "canmi/web's mise.toml loads secrets.json in its global [env], which `secrets-per-task` forbids since the exposure of 2026-10-29, so it moves into the tasks that use a credential when web's held-back work is next taken up, the tasks check warning there until then, provisional, chosen by the advisor on 2026-10-29",
     repos: ["canmi/web"],
