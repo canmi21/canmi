@@ -27,6 +27,7 @@ class VerdictTest(unittest.TestCase):
 			"/tmp/claude-501/scratch/out.json",
 			"/Users/me/Library/Caches/mise",
 			"/Users/me/.cargo/registry/cache",
+			"/Users/me/.local/share/monoflake/reset/mint/tailnet-key",
 		):
 			with self.subTest(operand=operand):
 				self.assertIsNone(judge(operand))
@@ -43,6 +44,7 @@ class VerdictTest(unittest.TestCase):
 			"repos",
 			"repos/web",
 			"/Users/me/Library/Caches",
+			"/Users/me/.local/share/monoflake/reset",
 			"/tmp",
 			".jj",
 			"repos/web/.jj/repo",
@@ -57,6 +59,7 @@ class VerdictTest(unittest.TestCase):
 
 	def test_everything_else_is_outside(self) -> None:
 		self.assertIn("outside", judge("/Users/me/.config/fish/config.fish") or "")
+		self.assertIn("outside", judge("/Users/me/.local/share/monoflake/oracle/known-hosts/x") or "")
 		self.assertIn("outside", judge("/opt/homebrew/bin/x") or "")
 		self.assertIn("another user", judge("/Users/other/x") or "")
 

@@ -21,6 +21,9 @@ CACHES = (
 	".cargo/registry",
 	".cargo/git",
 )
+# Key copies monoflake/cloud's reset makes for a machine, removed with rm once the machine holds
+# them, docs/toolchain.md.
+KEYS = (".local/share/monoflake/reset",)
 USER_FILES = (
 	"Desktop",
 	"Documents",
@@ -50,7 +53,7 @@ def places(env: dict[str, str], workspace: str = WORKSPACE) -> Places:
 	return Places(
 		home=home,
 		workspace=workspace,
-		allowed=(workspace, *sorted(temp), *(os.path.join(home, c) for c in CACHES)),
+		allowed=(workspace, *sorted(temp), *(os.path.join(home, c) for c in (*CACHES, *KEYS))),
 		user_files=tuple(os.path.join(home, d) for d in USER_FILES),
 	)
 
