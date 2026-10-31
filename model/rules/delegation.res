@@ -173,6 +173,12 @@ let rules: array<Rule.t> = [
     held: Hook("hooks/agent_commands"),
   },
   {
+    name: "long-command-background",
+    says: "A shell command that waits in a loop that sleeps, or asks for a timeout past the harness's default of 120 seconds, runs in the background, never in the foreground",
+    doc: "docs/agents/agent-protocol.md",
+    held: Hook("hooks/gates/background"),
+  },
+  {
     name: "implementer-lane",
     says: "An implementer writes inside its own lane alone, a temporary directory aside, by an Edit, a Write or a Codex patch; a write elsewhere is refused and reported, never worked around",
     doc: "docs/agents/implementer.md",

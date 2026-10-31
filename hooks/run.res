@@ -33,10 +33,14 @@ let handle = (payload: Payload.t): int =>
     | 0 =>
       switch Push.refuse(payload) {
       | 0 =>
-        switch Verified.handle(payload) {
+        switch Background.refuse(payload) {
         | 0 =>
-          Commit.fix(payload)
-          0
+          switch Verified.handle(payload) {
+          | 0 =>
+            Commit.fix(payload)
+            0
+          | refused => refused
+          }
         | refused => refused
         }
       | refused => refused

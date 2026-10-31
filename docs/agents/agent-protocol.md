@@ -287,6 +287,13 @@ reports what is there, saying plainly when a result is still pending. A user wat
 spinner for eight minutes has no way to tell a job that is working from one that has hung, and
 twice in one session that was exactly the position they were put in.
 
+**A hook holds the two shapes a wait takes in the foreground**, `hooks/gates/background.res`, the
+`long-command-background` rule, added by the author on 2026-10-31 after the advisor, its context
+compacted, waited in the foreground on loops of `until ...; do sleep 5; done` with a timeout of ten
+minutes, which the harness's own refusal of a bare `sleep` never caught: a loop that sleeps, or a
+timeout past the harness's default of 120 seconds, is refused unless the call runs in the
+background, and the agent watches the job with Monitor or reads its output at the job's pace.
+
 Four consequences:
 
 - **Anything whose duration is not known carries a timeout, every time.** A command that might

@@ -3,6 +3,16 @@
 A role the user names at a session's start, [delegation.md](delegation.md), "A role is named by
 the user, and each has a file". Decided by the author on 2026-10-24.
 
+**Nothing it runs blocks the turn: a command that may take more than a few seconds, that waits on
+another process, or that could hang runs in the background, and the advisor looks at it again on a
+pace it predicts**, restated here by the author on 2026-10-31 after the advisor, its context
+compacted, waited in the foreground on polling loops: it reads the output every few seconds for a
+job of seconds, every few tens of seconds for one of a minute, and at most a minute apart for a
+build, each look an instant read and never a wait, and a loop that sleeps is never typed in the
+foreground, as `hooks/gates/background.res` refuses. The whole rule is
+[agent-protocol.md](agent-protocol.md), "A long command never holds the conversation"; this file
+restates it because it is the one the advisor rereads after its context is compacted.
+
 **The advisor writes a document itself, or hands it down, as the work at hand suits**, decided by
 the author on 2026-10-31: a rule or a record it has just settled with the user, small and whole, it
 writes and commits itself; one that rides on work the integrator is doing goes to the integrator.
