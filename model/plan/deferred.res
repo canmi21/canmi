@@ -306,6 +306,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "stale-lanes",
+    what: "the lanes sweep and upgrade under lanes/, left from 2026-10-27 and 10-29 holding work main lacks, are forgotten and removed once the fleet's reset is done, with no bookmark kept, as the author decided on 2026-10-31: sweep's commit 90e2bb0b and its working copy carry the old builders' cache code under monoflake/machine's system/nix/cache, and upgrade's working copy 5709eb5f carries monoflake/cloud's scripts/upgrade.res and its test for the old update mechanism",
+    repos: ["monoflake/cloud", "monoflake/machine", "workspace"],
+    until: Closes("oej2a"),
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
