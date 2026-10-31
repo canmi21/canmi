@@ -93,10 +93,16 @@ question only the party that sees the whole wave can ask. The older rule, that a
 no tests and no type checker, came from one working copy shared by every agent, where several would
 run one suite against one tree at once; it does not hold once each has a lane of its own. **Where
 what it writes is one part of the workspace's check, it may run that part alone**, `mise run check
-workspace <part>`, and never the whole, decided by the author on 2026-10-24. **The workspace's check
-alone runs by part**, every other repository's running whole, as monoflake's platform, driver and
-cloud do, so an implementer there runs its block's `built` and `accept` alone. **No agent the
+workspace <part>`, and never the whole, decided by the author on 2026-10-24. **No agent the
 integrator spawns runs `--pending`**, which is the integrator's reading of the model.
+
+**Between edits the integrator runs only the parts a change touches, and the full check once before
+each commit**, decided by the author on 2026-10-31 after one session ran the whole check 56 times in
+44 minutes, a three-minute check after each one-line fix. `mise run check <path> <part> ...` names
+parts for the workspace and for a repository below it alike: below the workspace a part of the
+workspace's check runs over that repository, and `own` runs the repository's own `verify` whole.
+With no part named the check runs whole, and only that run writes the stamp a commit waits on, so
+the rule that a commit waits on the full check is unchanged.
 
 **A block a project's model holds alone is the case it is made for**: where each block builds, lints
 and tests apart from every other, as `monoflake/platform`'s `docs/code.md` makes them, its

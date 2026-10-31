@@ -27,7 +27,7 @@ describe("what a verb was asked", () => {
 
   test("what the verb would not act on is refused rather than dropped", () => {
     expect(refused(["fmt", "a", "b"]))->toEqual(Some("one name at most; b would have been ignored"))
-    expect(refused(["verify", "apps/rdm", "words"])->Option.isSome)->toBe(true)
+    expect(Repos.parse(["verify", "apps/rdm", "own", "names"]).parts)->toEqual(["own", "names"])
     expect(refused(["pull", "--major"])->Option.isSome)->toBe(true)
     expect(refused(["list", "--all"])->Option.isSome)->toBe(true)
     expect(refused(["fmt", "--dry"]))->toEqual(Some("unknown option --dry"))
@@ -39,6 +39,72 @@ describe("what a verb was asked", () => {
       "--live",
       "--dry-run",
     ])
+  })
+})
+
+describe("a repository's check parts", () => {
+  let repo = Node.join([Registry.repos, "monoflake", "machine"])
+  let names = parts => Repos.checkParts(repo, parts)->Array.map(((name, _)) => name)
+  let every = Check.over(repo)->Array.map(((name, _)) => name)
+  let refusedParts = parts =>
+    try {
+      Repos.checkParts(repo, parts)->ignore
+      None
+    } catch {
+    | Registry.Refused(why) => Some(why)
+    }
+
+  test("a workspace part runs that part alone over the repository, not its verify", () => {
+    expect(names(["names"]))->toEqual(["names"])
+    expect(Repos.runsOwn(["names"]))->toBe(false)
+    expect(Repos.rulesLine(["names"], Repos.checkParts(repo, ["names"])))->toBe(
+      "would run the workspace's rules over it names",
+    )
+  })
+
+  test("own runs the repository's verify whole and no workspace part", () => {
+    expect(names(["own"]))->toEqual([])
+    expect(Repos.runsOwn(["own"]))->toBe(true)
+  })
+
+  test("several parts run what is named alone, in the check's order", () => {
+    expect(names(["own", "names", "tasks"]))->toEqual(["tasks", "names"])
+    expect(Repos.runsOwn(["own", "names", "tasks"]))->toBe(true)
+    expect(Repos.runsOwn(["names", "tasks"]))->toBe(false)
+  })
+
+  test("no part runs the verify and every workspace rule, as before", () => {
+    expect(names([]))->toEqual(every)
+    expect(Repos.runsOwn([]))->toBe(true)
+    expect(Repos.rulesLine([], Repos.checkParts(repo, [])))->toBe(
+      "would run the workspace's rules over it",
+    )
+  })
+
+  test("only the full check writes the stamp a commit waits on", () => {
+    expect(Repos.stamps("verify", ~dry=false, ~parts=[]))->toBe(true)
+    expect(Repos.stamps("verify", ~dry=false, ~parts=["own"]))->toBe(false)
+    expect(Repos.stamps("verify", ~dry=false, ~parts=["names"]))->toBe(false)
+    expect(Repos.stamps("verify", ~dry=true, ~parts=[]))->toBe(false)
+    expect(Repos.stamps("fmt", ~dry=false, ~parts=[]))->toBe(false)
+  })
+
+  test("a name that is no part is refused, listing the valid ones", () => {
+    let valid = ["own", ...every]->Array.join(", ")
+    expect(refusedParts(["own", "invalid"]))->toEqual(
+      Some(`monoflake/machine's check has no part invalid; the parts are ${valid}`),
+    )
+    expect(refusedParts(["own", "names"]))->toEqual(None)
+  })
+
+  test("--all with parts is refused before any repository is read", () => {
+    let why = try {
+      Repos.dispatch("verify", None, ~dry=true, ~everything=true, ~parts=["names"])->ignore
+      None
+    } catch {
+    | Registry.Refused(why) => Some(why)
+    }
+    expect(why)->toEqual(Some("--all and check parts cannot be combined"))
   })
 })
 

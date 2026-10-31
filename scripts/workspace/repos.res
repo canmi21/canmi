@@ -399,10 +399,40 @@ let summary = (verb, skipped, failed, ~paused=[]) =>
     }
   }
 
+let checkParts = (repo, parts) => {
+  let available = Check.over(repo)
+  let known = ["own", ...available->Array.map(((name, _)) => name)]
+  parts->Array.forEach(name =>
+    if !(known->Array.includes(name)) {
+      Registry.fail(
+        `${Registry.label(repo)}'s check has no part ${name}; the parts are ${known->Array.join(
+            ", ",
+          )}`,
+      )
+    }
+  )
+  available->Array.filter(((name, _)) => parts == [] || parts->Array.includes(name))
+}
+
+/** Whether a check of these parts runs a repository's own verify. */
+let runsOwn = parts => parts == [] || parts->Array.includes("own")
+
+/** Whether a run may write the stamp a commit waits on, the full check alone. See docs/commits.md. */
+let stamps = (verb, ~dry, ~parts) => verb == "verify" && !dry && parts == []
+
+/** The dry-run line for the workspace's rules over a repository, naming the parts selected. */
+let rulesLine = (parts, shared: array<(string, Check.part)>) =>
+  "would run the workspace's rules over it" ++ (
+    parts == [] ? "" : " " ++ shared->Array.map(((name, _)) => name)->Array.join(" ")
+  )
+
 /**
  * fmt, clean or verify, the workspace's half here and each repository's own task, past a failure.
  */
 let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
+  if everything && parts != [] {
+    Registry.fail("--all and check parts cannot be combined")
+  }
   let skipped = []
   let failed = []
   let paused = []
@@ -417,17 +447,20 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   )
   ->Array.forEach(repo => {
     let place = Registry.label(repo)
-    let before = verb == "verify" && !dry ? Stamp.snapshot(repo) : ""
+    let shared = repo != root && verb == "verify" ? checkParts(repo, parts) : []
+    let before = stamps(verb, ~dry, ~parts) ? Stamp.snapshot(repo) : ""
     let own = if repo == root {
       Console.log(`\n=== workspace ${verb}${dry ? " --dry-run" : ""} ===`)
       switch verb {
       | "fmt" => fmt(~dry)
       | "clean" => clean(~dry)
       | _ if dry =>
-        Console.log("would run check workspace")
+        Console.log(`would run check workspace${parts == [] ? "" : " " ++ parts->Array.join(" ")}`)
         0
       | _ => Check.run(parts)
       }
+    } else if verb == "verify" && !runsOwn(parts) {
+      0
     } else if !declares(repo, verb) {
       skipped->Array.push(place)
       0
@@ -442,15 +475,22 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
     // Below the workspace, verify is the repository's own and then the workspace's rules over it.
     let held = if repo == root || verb != "verify" {
       0
-    } else if dry {
-      Console.log("would run the workspace's rules over it")
+    } else if parts != [] && shared == [] {
       0
-    } else {
+    } else if dry {
+      Console.log(rulesLine(parts, shared))
+      0
+    } else if parts == [] {
       Check.repository(repo)
+    } else {
+      shared->Array.reduce(0, (failed, (name, part)) => {
+        Console.log(`\n=== ${place} ${name}, the workspace's ===`)
+        Check.outcome(part) + failed
+      })
     }
     if own != 0 || held != 0 {
       failed->Array.push(place)
-    } else if before != "" && (repo != root || parts == []) {
+    } else if before != "" {
       Stamp.write(repo, before)
     }
   })
@@ -659,7 +699,7 @@ let parse = (argv: array<string>): request => {
       Registry.fail("--pending belongs to the workspace's own check: check workspace --pending")
     }
     let extra = rest->Array.slice(~start=2)
-    if extra != [] && !owned {
+    if extra != [] && verb != "verify" {
       Registry.fail(`one name at most; ${extra->Array.join(" ")} would have been ignored`)
     }
     if name->Option.isSome && verb == "list" {
