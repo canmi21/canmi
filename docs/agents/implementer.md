@@ -7,7 +7,11 @@ A subagent the integrator spawns, defined in
 **An implementer writes only its own block's directory**, in a lane of its own,
 [lanes.md](lanes.md), "A lane is a directory beside `repos/`". It names what is local to its block,
 and only that, choosing the most exact and most technically neutral word,
-[naming.md](../naming.md), "A global name is the model's".
+[naming.md](../naming.md), "A global name is the model's". **A write outside its lane is refused
+before it lands**, `implementer-lane`, by `hooks/agent_commands.res` on a Claude implementer's
+Edit, Write or NotebookEdit and a Codex implementer's `apply_patch`, a temporary directory aside,
+decided by the author on 2026-10-31; the implementer then stops and reports to the integrator,
+[escapes.md](escapes.md), "A refusal is never worked around".
 
 **Its brief is what `mise run brief <name>` prints**, with its lane's path, the files it owns and
 the dependencies still waiting, [briefs.md](briefs.md), "What a brief holds". **Its model is the

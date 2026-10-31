@@ -5,6 +5,12 @@ What an agent does when a rule stands in the way of the work, decided by the aut
 
 ## An escape asks for the model to change
 
+**A refusal is never worked around**, decided by the author on 2026-10-31: a hook, a sandbox or a
+tool that refuses an agent's command or write stops that piece of work, and the agent reports it
+to its superior rather than reaching the same end another way, as a Codex implementer did that day
+by moving cargo's build directory to `/private/tmp` once its own was refused. The refusal is the
+friction the escape below records.
+
 **An escape is a request that the model be changed, never a way past a rule.** While it waits,
 every rule still holds: the part of the work it stopped waits for the decision, and the rest goes
 on. **The decision has one of three outcomes**:

@@ -453,3 +453,40 @@ describe("printing a secret", () => {
     )
   })
 })
+
+describe("an implementer's writes", () => {
+  let lane = Node.join([Agent_commands.lanesRoot, "flows"])
+  let other = Node.join([Agent_commands.lanesRoot, "wiring"])
+
+  test("pass inside the lane its working directory lies in, and in a temporary directory", () => {
+    let cwd = Node.join([lane, "monoflake", "machine"])
+    expect(
+      Agent_commands.outside(
+        ~cwd,
+        [
+          "src/flow.rs",
+          Node.join([lane, "monoflake", "machine", "tests", "a.rs"]),
+          Node.join([Node.tmpdir(), "scratch.txt"]),
+          "/private/tmp/claude-501/report.txt",
+        ],
+      ),
+    )->toEqual([])
+  })
+
+  test("are refused outside that lane, in another lane, in the main checkout, or by ..", () => {
+    let cwd = Node.join([lane, "monoflake", "machine"])
+    let main = Node.join([Registry.root, "repos", "monoflake", "machine", "src", "lib.rs"])
+    let sibling = Node.join([other, "monoflake", "machine", "a.rs"])
+    let home = "/Users/someone/.cargo/config.toml"
+    expect(
+      Agent_commands.outside(~cwd, [main, sibling, home, "../../../../repos/x.res"]),
+    )->toEqual([main, sibling, home, Node.resolve([cwd, "../../../../repos/x.res"])])
+  })
+
+  test("from outside every lane pass in any lane and nowhere else", () => {
+    let cwd = Registry.root
+    let inLane = Node.join([other, "workspace", "hooks", "a.res"])
+    let main = Node.join([Registry.root, "hooks", "a.res"])
+    expect(Agent_commands.outside(~cwd, [inLane, main]))->toEqual([main])
+  })
+})

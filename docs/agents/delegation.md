@@ -226,8 +226,8 @@ dispatched on Codex whenever Codex still has quota, and on Claude only while it 
 proven by a probe on 2026-10-29:
 
 ```sh
-MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> -s workspace-write \
-	--add-dir <lane> -o <scratchpad>/<lane>-report.txt - < <brief>
+MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> \
+	-o <scratchpad>/<lane>-report.txt - < <brief>
 ```
 
 - **The role is what holds it.** Two entries in the author's `~/.codex/hooks.json` act only where
@@ -236,15 +236,19 @@ MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> -s worksp
   writes, [lint-format.md](../lint-format.md).
 - **Its brief says first to read `/Users/canmi/workspace/AGENTS.md`**: in a lane Codex loads the
   repository's own `AGENTS.md` alone, a lane being a git worktree whose root stops its search.
-- **`--add-dir <lane>`** lets ReScript write what it builds of a sibling into the sibling's own
-  directory, as a lane's builds do; the brief is stdin, and `-o` keeps the last message as its
-  report. A task that reads the lane's history, as `accept --from`, also needs
-  `--add-dir repos/<repository>/.jj`, the store a lane's workspace shares with the main checkout,
-  found on 2026-10-29 when an `accept` there answered nothing.
+- **It runs without Codex's sandbox, as a Claude implementer does**, decided by the author on
+  2026-10-31: the sandbox refused what a build writes outside the lane, mise's task state under
+  `~/.local/state/mise` and cargo's build directory under `~/.cargo/build`, so Codex could not
+  build the workspace or a crate, and one worked around it. The hooks hold both vendors alike
+  instead: `implementer-commands` on its shell, and `implementer-lane` on every Edit, Write and
+  `apply_patch`, refusing a write outside its lane, [implementer.md](implementer.md). A new or
+  changed entry in `~/.codex/hooks.json` runs only once the author has trusted it in Codex, which
+  skips an untrusted hook without a word, so a hook is proven by a probe after each change, as the
+  lane hook was that day. The brief is stdin, and `-o` keeps the last message as its report.
 - **A lane is prepared before it is handed over**: `pnpm install` in each repository and, in
   monoflake/platform, `mise run prepare`, whose generated libraries a block's `built` reads, so the
-  implementer meets no setup it may not write. The author's `config.toml` sets `danger-full-access`, which `-s workspace-write`
-  overrides for the implementer alone.
+  implementer meets no setup it may not write. The author's `config.toml` sets `danger-full-access`,
+  which the implementer now runs under too.
 
 **After a wave lands: what to click.** Named specifically -- which page, which interaction, what
 should be true -- because "have a look" hands the user the job of working out what changed.

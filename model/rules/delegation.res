@@ -173,6 +173,12 @@ let rules: array<Rule.t> = [
     held: Hook("hooks/agent_commands"),
   },
   {
+    name: "implementer-lane",
+    says: "An implementer writes inside its own lane alone, a temporary directory aside, by an Edit, a Write or a Codex patch; a write elsewhere is refused and reported, never worked around",
+    doc: "docs/agents/implementer.md",
+    held: Hook("hooks/agent_commands"),
+  },
+  {
     name: "secrets-unprinted",
     says: "No subagent prints a secret: `printing`, a builtin of `listingBare` given no name or only -p, a subcommand of `printingSubcommands`, and `secretsReaders` given a `secretsFile` are refused to every role, wherever the command is nested",
     doc: "docs/agents/implementer.md",

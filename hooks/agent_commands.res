@@ -365,7 +365,9 @@ let patched = /^\*\*\* (?:Add File|Update File|Move to): (.+)$/
 /** The files a tool call left written: an Edit's or a Write's one, or every one a patch names. */
 let written = (payload: Payload.t): array<string> => {
   let input = payload->Payload.object("tool_input")
-  switch input->Option.flatMap(Payload.text(_, "file_path")) {
+  switch input->Option.flatMap(fields =>
+    fields->Payload.text("file_path")->Option.orElse(fields->Payload.text("notebook_path"))
+  ) {
   | Some(file) => [file]
   | None =>
     let cwd = Payload.cwd(payload)
@@ -384,6 +386,53 @@ let written = (payload: Payload.t): array<string> => {
     ->Array.map(file => file->String.startsWith("/") ? file : Node.join([cwd, file]))
   }
 }
+
+/** The directory every lane sits in, `Delegation.lanes` under the workspace. */
+let lanesRoot = Node.join([Registry.root, Delegation.lanes])
+
+/** The lane a path lies in, the directory under `lanesRoot` it starts with, if any. */
+let laneOf = path =>
+  path->String.startsWith(`${lanesRoot}/`)
+    ? path
+      ->String.slice(~start=lanesRoot->String.length + 1)
+      ->String.split("/")
+      ->Array.get(0)
+      ->Option.map(name => Node.join([lanesRoot, name]))
+    : None
+
+/** The temporary directories a write may go to besides the lane, as given and as resolved. */
+let scratch = () => [Node.tmpdir(), `/private${Node.tmpdir()}`, "/private/tmp", "/tmp"]
+
+/**
+ * The files of `files`, resolved, an implementer may not write: outside the lane its working
+ * directory lies in, or outside every lane where it works from elsewhere, temporary ones aside.
+ */
+let outside = (~cwd, files) => {
+  let lane = laneOf(Node.resolve([cwd]))
+  files->Array.filterMap(file => {
+    let file = Node.resolve([cwd, file])
+    let inScratch = scratch()->Array.some(directory => file->String.startsWith(`${directory}/`))
+    let inLane = switch lane {
+    | Some(lane) => file->String.startsWith(`${lane}/`)
+    | None => laneOf(file)->Option.isSome
+    }
+    inScratch || inLane ? None : Some(file)
+  })
+}
+
+/** The exit status the harness reads, 2 refusing a write outside the implementer's lane. */
+let placed = (payload: Payload.t): int =>
+  switch outside(~cwd=Payload.cwd(payload), written(payload)) {
+  | [] => 0
+  | files =>
+    Console.error(
+      `Write refused by hooks/agent_commands.res: an implementer writes inside its lane alone, ` ++
+      `and ${files->Array.join(
+          ", ",
+        )} lies outside it. Stop and report to the integrator; a ` ++ `refusal is never worked around, docs/agents/escapes.md.`,
+    )
+    2
+  }
 
 /** Formats one file by its suffix in `Format.owners`, failing nothing. */
 let formatted = (file: string) => {
@@ -439,11 +488,12 @@ if Node.isMain {
   let payload = Payload.parse(read)
   switch (given, given->Option.flatMap(roleOf), payload) {
   | (Some("format"), _, payload) => Node.exit(payload->Option.mapOr(0, format))
+  | (Some("lane"), _, payload) => Node.exit(payload->Option.mapOr(0, placed))
   | (_, Some(role), Some(payload)) => Node.exit(handle(role, payload))
   | (_, Some(_), None) => Node.exit(0)
   | _ =>
     Console.error(
-      "hooks/agent_commands.res: name the role, implementer, refactorer or reviewer, or format.",
+      "hooks/agent_commands.res: name the role, implementer, refactorer or reviewer, or format or lane.",
     )
     Node.exit(2)
   }
