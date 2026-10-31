@@ -112,9 +112,10 @@ moves into `model/rules/` with its check and leaves this file.
 - **A task that may ask is read whole, never sent to `/dev/null`.** `mise run secret` asks before it
   replaces a value already set, and stdin from `/dev/null` answers no; on 2026-10-27 a new token was
   kept out so, its "kept" line discarded with the rest, and only an API call still refused showed it.
-- **A long command is run with the tool's `run_in_background` and is not polled.** The harness says
-  when it exits; a loop polling for a condition waits on one the step may already have passed, and
-  waits for nothing, as the author found on 2026-10-26. Steps are taken one at a time, each read
+- **A long command is run with the tool's `run_in_background`, its output read, never a condition
+  polled.** The harness says when it exits, and the output is read in between at the pace
+  [agent-protocol.md](agents/agent-protocol.md) gives; a loop polling for a condition waits on one
+  the step may already have passed, and waits for nothing, as the author found on 2026-10-26. Steps are taken one at a time, each read
   before the next.
 - **A jump host goes in `~/.ssh/config` for its one machine, never as `-J` in `NIX_SSHOPTS`.** Nix
   hands those options to every ssh it opens, the builder's own on localhost among them, so all of

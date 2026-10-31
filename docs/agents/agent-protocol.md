@@ -275,9 +275,15 @@ shape of that.
 
 ## A long command never holds the conversation
 
-**Anything that can run longer than about a minute runs in the background**, and the conversation
-goes on. The agent reads its output when there is output to read -- an instant read, not a wait --
-and reports what is there, saying plainly when a result is still pending. A user watching a
+**Anything that can run longer than about a minute, could hang, or waits for a condition to end
+runs in the background**, and the conversation goes on. That holds for every session and for every
+implementer it spawns, wherever the harness can run a job so, as the author restated on
+2026-10-31. **The agent looks at the job again within a minute at most, and sooner the shorter the
+job**: a few seconds for a step that should take seconds, tens of seconds for one that should take
+a minute, a minute for a long build. Each look is an instant read of the output, not a wait, and
+it asks whether the job moved since the last one. A job that stopped writing, or a wait on a
+condition nothing will meet, is reported at that look, never found later by the user. The agent
+reports what is there, saying plainly when a result is still pending. A user watching a
 spinner for eight minutes has no way to tell a job that is working from one that has hung, and
 twice in one session that was exactly the position they were put in.
 
