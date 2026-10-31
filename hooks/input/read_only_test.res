@@ -89,7 +89,6 @@ describe("a reviewer's commands", () => {
       "mkdir a",
       "cp a b",
       "mv a b",
-      "echo hi",
       "tee a",
       "node a.js",
       "python3 a.py",

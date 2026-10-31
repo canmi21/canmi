@@ -222,12 +222,24 @@ let secretReason = (segment: array<string>) => {
   }
 }
 
+/** Why a reviewer's echo or printf is refused, a word holding a `$` or a backquote. */
+let labelReason = (segment: array<string>) =>
+  switch Jj_command.programOf(segment) {
+  | Some(program, words) if Delegation.labeling->Array.includes(program) =>
+    words
+    ->Array.find(word => word->String.includes("$") || word->String.includes("`"))
+    ->Option.map(found =>
+      `${program} is given literal words alone, never ${found}, ${Read_only.rule} holds it`
+    )
+  | _ => None
+  }
+
 /** Why one segment is refused to a role, or none. */
 let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<string>) =>
   switch (role, Jj_command.programOf(segment)) {
   | _ if secretReason(segment) != None => secretReason(segment)
   | (_, None) => None
-  | (Reviewer, _) => Read_only.segmentReason(segment)
+  | (Reviewer, _) => labelReason(segment)->Option.orElse(Read_only.segmentReason(segment))
   | (_, Some(program, _)) if Delegation.versioning->Array.includes(program) =>
     Some("git is not typed here")
   | (_, Some("mise", words)) if execOf(givenOf(words), words) != None =>
@@ -270,7 +282,7 @@ and shellReason = (~cwd, role, segment) =>
 and reason = (~cwd=Registry.root, role, command) =>
   role == Reviewer
     ? Jj_command.segments(command)
-      ->Array.findMap(secretReason)
+      ->Array.findMap(segment => secretReason(segment)->Option.orElse(labelReason(segment)))
       ->Option.orElse(Read_only.reason(command))
     : Jj_command.segments(command)->Array.findMap(segment => segmentReason(~cwd, role, segment))
 

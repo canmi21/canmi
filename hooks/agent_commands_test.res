@@ -167,6 +167,105 @@ describe("a refusal", () => {
   })
 })
 
+describe("a reviewer's cat", () => {
+  test("reads files with its read-only flags, alone or piped into another reader", () => {
+    [
+      "cat hooks/run.res",
+      "cat a.res b.res",
+      "cat -n hooks/run.res",
+      "cat -b a.res",
+      "cat -s a.res",
+      "cat -v a.res",
+      "cat -e a.res",
+      "cat -t a.res",
+      "cat -A a.res",
+      "cat -- a.res",
+      "cat /Users/canmi/workspace/hooks/run.res",
+      "cat ./hooks/.hidden/a.res",
+      "cat 'src/routes/+page.svelte'",
+      "cat a.res | head -20",
+      "cat a.res | grep x | wc -l",
+      "cat -n a.res | sed -n 10,20p",
+      "cat -n a.res | sed -n '10,20p'",
+      "cat -n a.res | tail -n +40 | head -60",
+      "cat a.res 2>/dev/null | head",
+      "cat a.res > /dev/null",
+      "cat a.res | head -20; cat b.res | head -20",
+      "cat a.res && cat b.res",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("is refused whatever writes, beside it or after it", () => {
+    [
+      "cat a.res > b.res",
+      "cat a.res >> b.res",
+      "cat a.res | tee b.res",
+      "cat a.res | tee -a b.res",
+      "cat > b.res <<EOF\nx\nEOF",
+      "cat <<EOF > b.res\nx\nEOF",
+      "cat <<EOF >> b.res\nx\nEOF",
+      "cat a.res; rm b.res",
+      "cat a.res; touch b.res",
+      "cat a.res && cp a.res b.res",
+      "cat a.res || mv a.res b.res",
+      "cat a.res | xargs rm",
+      "cat a.res | sh",
+      "cat -n secrets.json",
+      "cat a.res secrets.json | head",
+      "jq . machines/okra/secrets.json",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("follows a cd, and echo or printf of literals, the widening of 2026-10-31", () => {
+    [
+      "cd /Users/canmi/workspace/lanes/readcat/workspace && cat -n hooks/run.res",
+      "cd ../other; ls",
+      "echo ===",
+      "cat a.res; echo ===; cat b.res",
+      "printf '%s\\n' a b",
+      "printf '== %s ==\\n' a.res; cat a.res | head -20",
+      "echo === > /dev/null",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, false)),
+    )
+  })
+
+  test("refuses echo or printf that writes or runs another program, and what a cd leads to", () => {
+    [
+      "echo x > f",
+      "echo x >> f",
+      "echo x | tee f",
+      "printf '%s' x > f",
+      "echo $(rm f)",
+      "echo $(cat a.res)",
+      "echo `rm f`",
+      "echo \"`id`\"",
+      "printf \"$(id)\"",
+      "echo $CLOUDFLARE_API_TOKEN",
+      "echo x | sh",
+      "cd /tmp && rm f",
+      "cd /tmp; touch f",
+      "X=/tmp; cat $X/a",
+      "cat a.res | sort",
+      "cat a.res | cut -c1-80",
+      "awk '{print}' a.res",
+      "for f in a b; do cat $f; done",
+    ]->Array.forEach(
+      command => expect((command, refused(Reviewer, command)))->toEqual((command, true)),
+    )
+  })
+
+  test("on a secrets file names secrets-unprinted", () => {
+    expect(Agent_commands.reason(Reviewer, "cat -n secrets.json | head"))->toEqual(
+      Some("cat would print a secret, secrets-unprinted holds it"),
+    )
+  })
+})
+
 describe("formatting what an agent wrote", () => {
   test("formats a file by its suffix and leaves an unowned or unparsable one", () => {
     let directory = Node.mkdtempSync(Node.join([Node.tmpdir(), "format-"]))
