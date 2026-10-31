@@ -54,6 +54,9 @@ type-checked, tested, and runs the same on the Mac as on a runner.
 
 ## Scheduled updates
 
+Decided by the author on 2026-10-31, the workspace action owns `nix` for installing Nix and
+`beside` for cloning space separated `owner/repo` repositories at main and installing their packages.
+
 The workspace and monoflake's platform, driver, machine and runtime call
 `canmi21/canmi/.github/workflows/update-repository.yml@main` from their own
 `.github/workflows/update.yml`, daily at 22:00 UTC and by hand through `workflow_dispatch`;

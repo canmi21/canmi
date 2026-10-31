@@ -31,15 +31,18 @@ let ran = (~cwd, command, args) => {
 }
 
 /** Another repository a check reads, cloned at its main beside this one, as at home. */
-let beside = repositories =>
+let beside = (~exists=Node.existsSync, ~run=ran, repositories) =>
   repositories->Array.forEach(repository => {
     let into = place(repository)
-    if !Node.existsSync(into) {
-      ran(
+    if !exists(into) {
+      run(
         ~cwd=root,
         "git",
         ["clone", "--depth", "1", "--branch", "main", `https://github.com/${repository}`, into],
       )
+    }
+    if exists(Node.join([into, "package.json"])) {
+      run(~cwd=into, "pnpm", ["install", "--frozen-lockfile"])
     }
   })
 

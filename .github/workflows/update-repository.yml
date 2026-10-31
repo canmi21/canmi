@@ -55,18 +55,8 @@ jobs:
           path: ${{ inputs.path }}
           credentials: true
           scripts: true
-
-      - name: install nix
-        if: inputs.nix
-        uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
-        with:
-          installer-version: 2.35.3 # The installer only bootstraps.
-
-      - name: clone what the check reads beside it
-        if: inputs.beside != ''
-        env:
-          BESIDE: ${{ inputs.beside }}
-        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" beside "$BESIDE"
+          nix: ${{ inputs.nix }}
+          beside: ${{ inputs.beside }}
 
       - name: put jj beside git
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" colocate "$REPOSITORY"

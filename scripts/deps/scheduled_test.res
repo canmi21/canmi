@@ -1,5 +1,63 @@
 open Testing
 
+describe("repositories beside the caller", () => {
+  test("clones each main before installing its packages in its own directory", () => {
+    let calls = []
+    Scheduled.beside(
+      ~exists=path => path->String.endsWith("package.json"),
+      ~run=(~cwd, command, args) => calls->Array.push((cwd, command, args)),
+      ["monoflake/driver", "monoflake/machine"],
+    )
+    expect(calls)->toEqual(
+      ["monoflake/driver", "monoflake/machine"]->Array.flatMap(
+        repository => {
+          let into = Scheduled.place(repository)
+          [
+            (
+              Scheduled.root,
+              "git",
+              [
+                "clone",
+                "--depth",
+                "1",
+                "--branch",
+                "main",
+                `https://github.com/${repository}`,
+                into,
+              ],
+            ),
+            (into, "pnpm", ["install", "--frozen-lockfile"]),
+          ]
+        },
+      ),
+    )
+  })
+
+  test("installs packages in an existing checkout without cloning it again", () => {
+    let calls = []
+    Scheduled.beside(
+      ~exists=_ => true,
+      ~run=(~cwd, command, args) => calls->Array.push((cwd, command, args)),
+      ["monoflake/driver"],
+    )
+    expect(calls)->toEqual([
+      (Scheduled.place("monoflake/driver"), "pnpm", ["install", "--frozen-lockfile"]),
+    ])
+  })
+
+  test("leaves repositories without a package manifest alone and accepts an empty list", () => {
+    let calls = []
+    let run = (~cwd, command, args) => calls->Array.push((cwd, command, args))
+    Scheduled.beside(
+      ~exists=path => !(path->String.endsWith("package.json")),
+      ~run,
+      ["monoflake/runtime"],
+    )
+    Scheduled.beside(~exists=_ => false, ~run, [])
+    expect(calls)->toEqual([])
+  })
+})
+
 describe("a scheduled update's held sources", () => {
   test("reads release sources rather than repository names and removes duplicates", () => {
     expect(

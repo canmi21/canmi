@@ -13,6 +13,12 @@ inputs:
   scripts:
     description: Install the workspace's packages and compile its scripts, for a job that runs one
     default: "false"
+  nix:
+    description: Install Nix for a repository whose stages need it
+    default: "false"
+  beside:
+    description: Other repositories as space separated owner/repo, cloned at main with packages installed
+    default: ""
 
 runs:
   using: composite
@@ -42,10 +48,21 @@ runs:
         working_directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
         cache: ${{ runner.environment == 'github-hosted' }}
     - name: install the workspace's packages
-      if: inputs.scripts == 'true'
+      if: inputs.scripts == 'true' || inputs.beside != ''
       shell: bash
       run: pnpm install --frozen-lockfile
     - name: compile the workspace's scripts
-      if: inputs.scripts == 'true'
+      if: inputs.scripts == 'true' || inputs.beside != ''
       shell: bash
       run: mise run build
+    - name: install nix
+      if: inputs.nix == 'true'
+      uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+      with:
+        installer-version: 2.35.3 # The installer only bootstraps.
+    - name: clone what the stages read beside it
+      if: inputs.beside != ''
+      shell: bash
+      env:
+        BESIDE: ${{ inputs.beside }}
+      run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" beside "$BESIDE"
