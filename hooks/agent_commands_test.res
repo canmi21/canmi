@@ -2,8 +2,16 @@ open Testing
 
 let refused = (role, command) => Agent_commands.reason(role, command) != None
 
+let project = () => {
+  let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "commands-"]))
+  Node.writeFileSync(Node.join([root, "mise.toml"]), "[tasks.check]\nrun = \"echo check\"\n")
+  Node.mkdirAll(Node.join([root, "model"]))
+  root
+}
+
 describe("an implementer's commands", () => {
   test("refuse jj, check, deploying tasks, remote tools and git in any chain", () => {
+    let cwd = project()
     [
       "jj st",
       "ls && jj log",
@@ -68,7 +76,11 @@ describe("an implementer's commands", () => {
       "echo \"$(ls; jj st)\"",
       "timeout 60 ssh host",
     ]->Array.forEach(
-      command => expect((command, refused(Implementer, command)))->toEqual((command, true)),
+      command =>
+        expect((command, Agent_commands.reason(~cwd, Implementer, command) != None))->toEqual((
+          command,
+          true,
+        )),
     )
   })
 
@@ -112,7 +124,7 @@ describe("one part of the check", () => {
 })
 
 describe("a part from a repository's directory", () => {
-  let platform = Node.join([Registry.root, "repos", "monoflake", "platform"])
+  let platform = project()
   let inside = Node.join([platform, "model"])
 
   test("is refused where the nearest check task is not the workspace's", () => {
@@ -136,7 +148,7 @@ describe("a part from a repository's directory", () => {
       Agent_commands.reason(
         ~cwd=platform,
         Implementer,
-        "mise -C ../../.. run check workspace words",
+        `mise -C ${Registry.root} run check workspace words`,
       ),
     )->toEqual(None)
   })
@@ -484,18 +496,19 @@ describe("an implementer's writes", () => {
 
   test("are refused outside that lane, in another lane, in the main checkout, or by ..", () => {
     let cwd = Node.join([lane, "monoflake", "machine"])
-    let main = Node.join([Registry.root, "repos", "monoflake", "machine", "src", "lib.rs"])
-    let sibling = Node.join([other, "monoflake", "machine", "a.rs"])
+    let main = "/Users/someone/workspace/repos/monoflake/machine/src/lib.rs"
+    let sibling = "/Users/someone/workspace/lanes/other/monoflake/machine/a.rs"
     let home = "/Users/someone/.cargo/config.toml"
-    expect(
-      Agent_commands.outside(~cwd, [main, sibling, home, "../../../../repos/x.res"]),
-    )->toEqual([main, sibling, home, Node.resolve([cwd, "../../../../repos/x.res"])])
+    expect(Agent_commands.outside(~cwd, [main, sibling, home]))->toEqual([main, sibling, home])
+    expect(Agent_commands.outside(~cwd="/Users/someone/workspace/deep", ["../../x.res"]))->toEqual([
+      "/Users/someone/x.res",
+    ])
   })
 
   test("from outside every lane pass in any lane and nowhere else", () => {
-    let cwd = Registry.root
+    let cwd = "/Users/someone/workspace"
     let inLane = Node.join([other, "workspace", "hooks", "a.res"])
-    let main = Node.join([Registry.root, "hooks", "a.res"])
+    let main = Node.join([cwd, "hooks", "a.res"])
     expect(Agent_commands.outside(~cwd, [inLane, main]))->toEqual([main])
   })
 })

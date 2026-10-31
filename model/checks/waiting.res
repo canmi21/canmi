@@ -6,9 +6,46 @@ let waivable = ["shape"]
 
 let finished = ["landed", "declined"]
 
+/** The item that pauses `repo`, if one does. */
+let pauserIn = (items: array<item>, ~repo) =>
+  items
+  ->Array.find(item => item.repos->Array.includes(repo) && item.pauses->Option.getOr(false))
+  ->Option.map(item => item.id)
+
+let pauser = (~repo) => pauserIn(items, ~repo)
+
+/** Why a scan passes over a repository. */
+let skipped = repo =>
+  switch pauser(~repo) {
+  | Some(id) => Some(`paused by deferred ${id}`)
+  | None if !Registry.isRepository(Node.join([Registry.repos, repo])) => Some("not cloned")
+  | None => None
+  }
+
+/** The cloned repositories that no deferred item pauses. */
+let active = () => Registry.paths()->Array.filter(path => skipped(path)->Option.isNone)
+
+let readable = (item: item) =>
+  item.repos->Array.every(repo => repo == "workspace" || skipped(repo)->Option.isNone)
+
+let declared = () =>
+  Array.concat(
+    [(Planning.workspaceSpace, Planning.workspaceSpace)],
+    active()->Array.filterMap(repo =>
+      switch Project.read(Node.join([Registry.repos, repo])) {
+      | Ok({rfcs: Some({ids})}) => Some((repo, ids))
+      | _ => None
+      }
+    ),
+  )
+
 /** The id space an item's RFC is in, the first its repositories declare, else the workspace's. */
 let spaceOf = (item: item) =>
-  item.repos->Array.findMap(Rfc_spaces.spaceOf)->Option.getOr(Planning.workspaceSpace)
+  item.repos
+  ->Array.findMap(repo =>
+    declared()->Array.findMap(((name, space)) => name == repo ? Some(space) : None)
+  )
+  ->Option.getOr(Planning.workspaceSpace)
 
 /** Each item's statuses by id, those of its RFC's space, each space read once. */
 let statuses = (): (item => Dict.t<string>) => {
@@ -19,7 +56,10 @@ let statuses = (): (item => Dict.t<string>) => {
     | Some(found) => found
     | None =>
       let found = Dict.make()
-      Rfc_spaces.read(space).files->Array.forEach(file =>
+      declared()
+      ->Array.filter(((_, named)) => named == space)
+      ->Array.flatMap(((repo, _)) => Rfc_spaces.inRepository(~space, ~repo).files)
+      ->Array.forEach(file =>
         switch Node.readFileSync(file.path)->String.match(/\nstatus:\s*(\w+)/) {
         | Some([_, Some(status)]) => found->Dict.set(file.id, status)
         | _ => ()
@@ -37,6 +77,7 @@ let problemsIn = (
   ~repos: array<string>,
   ~rules: array<Rule.t>,
   ~statuses: item => Dict.t<string>,
+  ~readable: item => bool=_ => true,
 ): array<string> => {
   let found = []
   let seen = []
@@ -70,16 +111,13 @@ let problemsIn = (
       }
     )
     switch item.until {
-    | Closes(id) if statuses(item)->Dict.get(id)->Option.isNone =>
+    | Closes(id) if readable(item) && statuses(item)->Dict.get(id)->Option.isNone =>
       found->Array.push(`${at}: waits on ${id}, which is no RFC`)
     | _ => ()
     }
   })
   found
 }
-
-let problems = () =>
-  problemsIn(items, ~repos=Registry.paths(), ~rules=Rules.all, ~statuses=statuses())
 
 /** The item that waives `rule` over `repo`, if one does. */
 let waiverIn = (items: array<item>, ~repo, ~rule) =>
@@ -91,16 +129,8 @@ let waiverIn = (items: array<item>, ~repo, ~rule) =>
 
 let waiver = (~repo, ~rule) => waiverIn(items, ~repo, ~rule)
 
-/** The item that pauses `repo`, if one does. */
-let pauserIn = (items: array<item>, ~repo) =>
-  items
-  ->Array.find(item => item.repos->Array.includes(repo) && item.pauses->Option.getOr(false))
-  ->Option.map(item => item.id)
-
-let pauser = (~repo) => pauserIn(items, ~repo)
-
-/** The registry's repositories that no item pauses, the ones a scan across them reads. */
-let active = () => Registry.paths()->Array.filter(path => pauser(~repo=path)->Option.isNone)
+let problems = () =>
+  problemsIn(items, ~repos=Registry.paths(), ~rules=Rules.all, ~statuses=statuses(), ~readable)
 
 let red = text => Node.envOn("NO_COLOR") ? text : `\u001b[31m${text}\u001b[0m`
 
@@ -109,7 +139,9 @@ let shown = (~repo: option<string>) => {
   let known = statuses()
   let due = item =>
     switch item.until {
-    | Closes(id) => known(item)->Dict.get(id)->Option.mapOr(false, s => finished->Array.includes(s))
+    | Closes(id) =>
+      readable(item) &&
+      known(item)->Dict.get(id)->Option.mapOr(false, s => finished->Array.includes(s))
     | Author => false
     }
   items

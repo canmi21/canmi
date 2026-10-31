@@ -218,6 +218,18 @@ describe("a deferred item", () => {
       ("rules-in-docs", "spec/: the rules are docs/ now"),
     ])
   })
+
+  test("passes over an RFC dependency when its repository cannot be read", () => {
+    expect(
+      Waiting.problemsIn(
+        [{...item, until: Closes("zzzzz")}],
+        ~repos=["seam"],
+        ~rules,
+        ~readable=_ => false,
+        ~statuses=_ => panic("an unavailable repository must not be read"),
+      ),
+    )->toEqual([])
+  })
 })
 
 describe("a workflow's actions", () => {

@@ -67,15 +67,34 @@ let taskRoots = (): array<string> =>
   }
 
 /** The workspace's own address, its origin as jj knows it, which a repository's `base` names. */
-let origin = () =>
-  Node.output(~cwd=root, "jj", ["git", "remote", "list"])
-  ->String.split("\n")
-  ->Array.findMap(line =>
-    switch line->String.split(" ") {
-    | ["origin", address] => Some(address)
-    | _ => None
-    }
-  )
+let origin = () => {
+  let address =
+    Node.output(~cwd=root, "jj", ["git", "remote", "list"])
+    ->String.split("\n")
+    ->Array.findMap(line =>
+      switch line->String.split(" ") {
+      | ["origin", address] => Some(address)
+      | _ => None
+      }
+    )
+  switch address {
+  | Some(_) => address
+  | None =>
+    let address =
+      Node.output(~cwd=root, "git", ["config", "--get", "remote.origin.url"])->String.trim
+    address == "" ? None : Some(address)
+  }
+}
+
+/** A remote compared without transport, credentials or its optional git suffix. */
+let normalized = address =>
+  address
+  ->String.trim
+  ->String.replaceRegExp(/^[a-z]+:\/\//, "")
+  ->String.replaceRegExp(/^[^/@]+@/, "")
+  ->String.replaceRegExp(/^([^/]+):/, "$1/")
+  ->String.replaceRegExp(/\/$/, "")
+  ->String.replaceRegExp(/\.git$/, "")
 
 let isRepository = path =>
   Node.existsSync(Node.join([path, ".git"])) || Node.existsSync(Node.join([path, ".jj"]))
@@ -167,14 +186,17 @@ let extendsWorkspace = (path, provided) =>
     }
 
 /** Files a project keeps under version control that this workspace already provides by position. */
-let shadowing = (project: string): array<string> =>
-  Node.output(~cwd=project, "jj", ["file", "list"])
-  ->String.split("\n")
+let shadowingIn = (project: string, files: array<string>, ~workspace=root): array<string> =>
+  files
   ->Array.filter(line => line != "")
+  ->Array.filter(relative => {
+    let within = Node.relative(project, Node.resolve([project, relative]))
+    within != ".." && !(within->String.startsWith(`..${Node.sep}`))
+  })
   ->Array.filterMap(relative => {
     let path = Node.join([project, relative])
     let name = Node.basename(path)
-    let provided = Node.join([root, name])
+    let provided = Node.join([workspace, name])
     let linked = try Node.lstatSync(path)->Node.statsIsSymbolicLink catch {
     | _ => false
     }
@@ -199,8 +221,11 @@ let shadowing = (project: string): array<string> =>
     }
   })
 
+let shadowing = project =>
+  shadowingIn(project, Node.output(~cwd=project, "git", ["ls-files", "-z"])->String.split("\x00"))
+
 /** The registry, the task roots and the disk agree, and no project shadows what it inherits. */
-let check = (): int => {
+let check = (~skip=_ => None, ()): int => {
   let problems = ref(0)
   let say = line => {
     Console.log(line)
@@ -231,6 +256,8 @@ let check = (): int => {
     let path = Node.join([repos, directory])
     if !(listed->Array.includes(directory)) {
       say(`repos/${directory} is on disk but not listed in repos/registry.toml`)
+    } else if skip(directory)->Option.isSome {
+      ()
     } else if !isRepository(path) {
       say(`repos/${directory} is not a repository -- repos/ is ignored, so nothing tracks it`)
     } else {

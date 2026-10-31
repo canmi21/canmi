@@ -28,18 +28,20 @@ let files = () => References.tracked(root, ~skipFiles)
 let docs = () =>
   files()->Array.filter(path => Node.extname(path) == ".md")->Array.toSorted(String.compare)
 
-/** Where a citation points, beside the citing file or from the root. */
-let resolve = (path, cited) =>
-  [Node.join([Node.dirname(path), cited]), Node.join([root, cited])]->Array.find(Node.existsSync)
-
-/** Whether a citation lands in a repository the registry lists that this machine has not cloned. */
+/** Whether a citation lands in a paused repository or one not cloned here. */
 let uncloned = target => {
   let rest = Node.relative(Registry.repos, target)
   !(rest->String.startsWith("..")) &&
   Registry.paths()->Array.some(path =>
-    rest->String.startsWith(`${path}/`) && !Node.existsSync(Node.join([Registry.repos, path]))
+    rest->String.startsWith(`${path}/`) && Waiting.skipped(path)->Option.isSome
   )
 }
+
+/** Where a citation points, beside the citing file or from the root. */
+let resolve = (path, cited) =>
+  [Node.join([Node.dirname(path), cited]), Node.join([root, cited])]->Array.find(path =>
+    Node.existsSync(path) && !uncloned(path)
+  )
 
 let main = (~json=false) => {
   let citing = References.citingFiles(files(), codeSuffixes)
@@ -79,7 +81,7 @@ let main = (~json=false) => {
       let linked = graph->Dict.valuesToArray->Array.reduce(0, (sum, by) => sum + by->Array.length)
       let note =
         absent->Array.length > 0
-          ? `, ${Int.toString(absent->Array.length)} into projects not cloned here`
+          ? `, ${Int.toString(absent->Array.length)} into projects paused or not cloned here`
           : ""
       Console.log(
         `references OK: ${Int.toString(written->Array.length)} docs, ${Int.toString(

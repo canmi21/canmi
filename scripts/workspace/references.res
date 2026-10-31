@@ -164,7 +164,7 @@ let deadLinks = (root, docs, ~elsewhere: option<string => bool>=?) => {
 
 /** A repository the registry lists by its path or by the last part of it. */
 let repositoryNamed = name =>
-  Registry.paths()->Array.find(path =>
+  Waiting.active()->Array.find(path =>
     path == name || path->String.split("/")->Array.at(-1) == Some(name)
   )
 

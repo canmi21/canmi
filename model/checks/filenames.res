@@ -29,8 +29,8 @@ let main = (~root): array<string> => {
       ->Array.filter(Node.existsSync),
     )
     ->Array.flatMap(repository =>
-      Node.output(~cwd=repository, "jj", ["file", "list"])
-      ->String.split("\n")
+      References.tracked(repository)
+      ->Array.map(path => Node.relative(repository, path))
       ->Array.filter(line => Naming.refused->Array.includes(Node.basename(line)))
       ->Array.map(line => `${Node.relative(root, Node.join([repository, line]))} is refused`)
     )

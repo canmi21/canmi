@@ -47,25 +47,59 @@ let commits = repo => {
 
 /** Every repository the registry lists with its `since`. */
 let recorded = () =>
-  Registry.paths()->Array.filterMap(path =>
+  Waiting.active()->Array.filterMap(path =>
     History.since(path)->Option.isSome
       ? None
       : Some(`${path} has no since in model/rules/commits.res`)
   )
 
+/** RFCs are judged within the cloned and active portion of their id space. */
+let rfcs = repo =>
+  switch Waiting.declared()->Array.findMap(((name, space)) => name == repo ? Some(space) : None) {
+  | None => []
+  | Some(space) =>
+    let parts =
+      Waiting.declared()
+      ->Array.filter(((_, named)) => named == space)
+      ->Array.map(((repo, _)) => Rfc_spaces.inRepository(~space, ~repo))
+    let directory = Node.join([Rfc_spaces.checkout(repo), Planning.rfcDirectory])
+    Rfc_check.held(
+      parts
+      ->Array.flatMap(part => part.files)
+      ->Array.map(file => {
+        Rfc_check.file,
+        text: Node.readFileSync(file.path),
+      }),
+      ~strays=parts->Array.flatMap(part => part.strays),
+      ~areas=parts->Array.flatMap(part => part.areas),
+      ~repos=Array.concat([Planning.workspaceSpace], Registry.paths()),
+      ~exists=(repo, hash) =>
+        repo != Planning.workspaceSpace && Waiting.skipped(repo)->Option.isSome
+          ? None
+          : Rfc_check.exists(repo, hash),
+    )
+    ->Array.filter(problem =>
+      problem.concerns == [] ||
+        problem.concerns->Array.some(path => path->String.startsWith(directory ++ Node.sep))
+    )
+    ->Array.map(problem => problem.says)
+  }
+
 let parts: array<(string, part)> = [
   ("tools", Script(() => Tools.check(~everything=true))),
-  ("repos", Script(Registry.check)),
+  ("repos", Script(() => Registry.check(~skip=Waiting.skipped, ()))),
   (
     "declared",
     Found(
       () =>
-        Registry.paths()
+        Waiting.active()
         ->Array.map(path => Node.join([Registry.repos, path]))
         ->Array.filter(path => Node.existsSync(Node.join([path, "workspace.toml"])))
         ->Array.filterMap(path =>
           switch Project.read(path) {
-          | Ok({base: Some(address)}) if Some(address) != Registry.origin() =>
+          | Ok({base: Some(address)})
+            if Some(Registry.normalized(address)) !=
+              Registry.origin()->Option.map(Registry.normalized) =>
             Some(`${path}/workspace.toml: base ${address} is not this workspace's origin`)
           | Ok(_) => None
           | Error(why) => Some(why)
@@ -114,7 +148,7 @@ let parts: array<(string, part)> = [
   ("suffixes", Found(() => Suffix_owned.main(~root, ~label="workspace"))),
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
-  ("rfcs", Found(() => Rfc_check.repository(Planning.workspaceSpace))),
+  ("rfcs", Found(() => rfcs(Planning.workspaceSpace))),
   ("tasks", Script(() => reported(Tasks.found(~root)))),
   ("placed", Found(() => Placed.found(~root))),
   ("plain", Soft(() => Comments.plain(~root))),
@@ -187,8 +221,8 @@ let over = (repo): array<(string, part)> =>
       ("plain", Soft(() => Comments.plain(~root=repo))),
       ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
     ],
-    switch Rfc_spaces.spaceOf(Registry.label(repo)) {
-    | Some(_) => [("rfcs", Found(() => Rfc_check.repository(Registry.label(repo))))]
+    switch Waiting.declared()->Array.find(((name, _)) => name == Registry.label(repo)) {
+    | Some(_) => [("rfcs", Found(() => rfcs(Registry.label(repo))))]
     | None => []
     },
   )
@@ -283,6 +317,9 @@ let validate = (named: array<string>) =>
 
 let run = (named: array<string>): int => {
   validate(named)
+  Registry.paths()->Array.forEach(path =>
+    Waiting.skipped(path)->Option.forEach(why => Console.log(`repos/${path}: ${why}, passed over`))
+  )
   let chosen = name => named->Array.length == 0 || named->Array.includes(name)
   let failed = Array.concat(
     chosen("rules")

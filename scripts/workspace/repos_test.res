@@ -1,5 +1,43 @@
 open Testing
 
+@module("node:fs") external symlinkSync: (string, string) => unit = "symlinkSync"
+
+describe("a checkout's inherited configuration", () => {
+  test("compares remote addresses without transport, credentials or a git suffix", () => {
+    [
+      "https://github.com/canmi21/canmi",
+      "https://token@github.com/canmi21/canmi.git",
+      "https://user:password@github.com/canmi21/canmi.git/",
+      "git@github.com:canmi21/canmi.git",
+      "ssh://git@github.com/canmi21/canmi.git",
+    ]->Array.forEach(
+      address => expect(Registry.normalized(address))->toEqual("github.com/canmi21/canmi"),
+    )
+    expect(Registry.normalized("https://github.com/another/canmi.git"))->toEqual(
+      "github.com/another/canmi",
+    )
+  })
+
+  test("accepts a workspace link and diagnoses a copy or shadow within the checkout alone", () => {
+    let workspace = Node.mkdtempSync(Node.join([Node.tmpdir(), "inherited-"]))
+    let project = Node.join([workspace, "repos", "project"])
+    tree(workspace, [(".editorconfig", "root = true\n"), ("repos/project/placeholder", "")])
+    symlinkSync(Node.join([workspace, ".editorconfig"]), Node.join([project, ".editorconfig"]))
+    expect(
+      Registry.shadowingIn(project, [".editorconfig", "../../.editorconfig"], ~workspace),
+    )->toEqual([])
+    let copy = Node.join([workspace, "repos", "copy"])
+    tree(copy, [(".editorconfig", "root = true\n")])
+    expect(Registry.shadowingIn(copy, [".editorconfig"], ~workspace))->toEqual([
+      ".editorconfig is a byte-identical copy of the workspace's; link ../../.editorconfig instead",
+    ])
+    Node.writeFileSync(Node.join([copy, ".editorconfig"]), "root = false\n")
+    expect(Registry.shadowingIn(copy, [".editorconfig"], ~workspace))->toEqual([
+      ".editorconfig shadows the workspace's, which is inherited by position",
+    ])
+  })
+})
+
 /** Why `parse` refused what was typed, or None where it took it. */
 let refused = argv =>
   try {

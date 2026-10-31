@@ -305,7 +305,11 @@ let check = (~name=?, ~everything=false) => {
   let rewritten = ref(0)
   let shadowed = ref(0)
   let provided = installed(Registry.root)->Dict.fromArray
-  configured(name, everything)->Array.forEach(where => {
+  configured(name, everything)
+  ->Array.filter(where =>
+    where == Registry.root || Waiting.skipped(Registry.label(where))->Option.isNone
+  )
+  ->Array.forEach(where => {
     derived(where)->Array.forEach(((path, written, resolved)) => {
       writeDerived(path, resolved)
       Console.log(
