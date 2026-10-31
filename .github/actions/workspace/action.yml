@@ -26,6 +26,14 @@ runs:
       with:
         path: repos/${{ inputs.path }}
         persist-credentials: ${{ inputs.credentials }}
+    # mise's monorepo refuses a root none of whose config roots exist, so the workspace alone
+    # takes its smallest repository beside it, read by nothing.
+    - if: inputs.path == ''
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: monoflake/runtime
+        path: repos/monoflake/runtime
+        persist-credentials: false
     # A self-hosted runner keeps its tools on its own disk, so only a hosted one caches, docs/ci.md.
     - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
       with:
