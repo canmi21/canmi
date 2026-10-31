@@ -197,6 +197,14 @@ let rules: array<Rule.t> = [
     held: Pending("each repository's tests read for a listen on a literal port"),
   },
   {
+    name: "rust-nextest",
+    says: "Rust's tests run by `cargo nextest run` under a slow timeout that kills a hung test, its doctests by `cargo test --doc`",
+    doc: "docs/code.md",
+    held: Pending(
+      "each Rust repository's tasks and workflows read for a `cargo test` without `--doc`, and its .config/nextest.toml for terminate-after; until every one has switched it would fail those not yet touched",
+    ),
+  },
+  {
     name: "test-documentation-values",
     says: "A test and its fixtures write out only the addresses, domains and placeholders `documentation` holds",
     doc: pushing,

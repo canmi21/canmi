@@ -45,6 +45,8 @@ shellcheck = "0.11" # pre-1.0, where a minor is the breaking release
 shfmt = "3"
 # What mise reads a task's usage with; without it every task run warns of it missing.
 usage = "7"
+# What runs the Rust tests, each in a process of its own, killing one that hangs, docs/code.md.
+"github:nextest-rs/nextest" = { version = "0.9.148", version_prefix = "cargo-nextest-" } # a release 14 days old
 
 # One verb, for the workspace alone, a path from repos/registry.toml, or --all for every one.
 [tasks.pull]

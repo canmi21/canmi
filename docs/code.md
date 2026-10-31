@@ -238,6 +238,15 @@ on 2026-10-24, `test-port-zero` in [model/rules/toolchain.res](../model/rules/to
 values reserved for documentation are [agents/pushing.md](agents/pushing.md), "A push carries
 nothing private".
 
+**Rust's tests run under cargo-nextest, and its doctests by `cargo test --doc`**, which nextest
+does not run, decided by the author on 2026-10-31, `rust-nextest` in
+[model/rules/toolchain.res](../model/rules/toolchain.res). Each test runs in a process of its own,
+all binaries' tests at once, and a repository's `.config/nextest.toml` gives a slow timeout that
+kills a test that hangs, where `cargo test` would wait for it forever. Where a repository's Nix runs
+its tests, it runs them through crane's `cargoNextest`. nextest itself is the workspace's pin in
+`mise.toml`. monoflake/machine and monoflake/driver switched first; every other Rust repository
+switches when it is next touched.
+
 ## Nothing is committed unverified
 
 `mise run verify` -- types, lint, tests -- passes before a commit is made. The commit hook
