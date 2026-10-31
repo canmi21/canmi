@@ -174,6 +174,9 @@ moves into `model/rules/` with its check and leaves this file.
 - **A write naming a Worker first finds the Worker by that name.** A non-interactive `wrangler
   secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
   named as the config said, while the real one was deployed under the dashboard's name.
+- **A delete through Cloudflare's `cf` passes `--force` and is read back afterwards.** Run without a
+  terminal, its delete commands stop at their confirmation prompt and still exit 0. On 2026-10-31
+  the scratch bucket `advisor-copy-probe` survived a delete that reported success.
 - **A push and what depends on it are two calls.** The next step reads the push's own exit code,
   never through a pipe, which reports its last command's, unless the shell runs with `pipefail`. On
   2026-10-29 `push | tail && gh workflow run` had its push refused by the form layer and triggered
