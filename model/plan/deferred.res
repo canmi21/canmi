@@ -312,6 +312,12 @@ let items: array<item> = [
     until: Closes("oej2a"),
   },
   {
+    id: "cloud-split",
+    what: "monoflake/cloud, which holds the fleet's machines, runners and systems beside the platforms' deployments and one secrets file for all of them, is split into repositories by layer once development is mostly done, when the author judges it, as the author decided on 2026-10-31; until then it stays one repository so a change can cross the layers in one commit",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
