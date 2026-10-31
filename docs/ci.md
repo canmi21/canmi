@@ -68,3 +68,9 @@ github-actions[bot] commits it and pushes straight to main. The named check is w
 because a token's push starts no workflow. A failure before the commit pushes nothing; a release
 source whose releases could not be read is held back and fails the run after the other updates
 are committed, naming the held source.
+
+**The scheduled update moves no action pin**, decided by the author on 2026-10-31: in CI the
+actions mover reads and reports alone, and writes nothing under `.github/`, because GitHub refuses a
+push from the job's own `GITHUB_TOKEN` that changes a workflow file, and that token cannot be given
+the `workflows` permission. A pin in a workflow or a composite action moves by a local `mise run
+update`, committed and pushed by an agent or the author through the verb.

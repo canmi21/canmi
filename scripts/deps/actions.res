@@ -162,7 +162,12 @@ let commitOf = (repository, tag) => {
 
 let main = () => {
   let args = Node.args()
-  let dry = args->Array.includes("--dry-run") || args->Array.includes("-n")
+  // In CI it reports alone, as GitHub refuses a workflow change pushed by its token, docs/ci.md.
+  let ci = Node.envIs("CI", "true")
+  if ci {
+    Console.log("actions: in CI the pins are read and reported alone; a local update moves them")
+  }
+  let dry = ci || args->Array.includes("--dry-run") || args->Array.includes("-n")
   let across = args->Array.includes("--major")
   let github = Node.join([Node.cwd(), ".github"])
   let yaml = file => file->String.endsWith(".yml") || file->String.endsWith(".yaml")
