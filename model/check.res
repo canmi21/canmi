@@ -269,7 +269,8 @@ let gate = (repo, ~bookmarks): int => {
 }
 
 /** Each part named, or every one, its own log under its name, and on past a failure. */
-let run = (named: array<string>): int => {
+/** Refuses a name that is no part of the workspace's check, before anything runs. */
+let validate = (named: array<string>) =>
   named->Array.forEach(name =>
     if name != "rules" && !(known->Array.includes(name)) {
       Registry.fail(
@@ -279,6 +280,9 @@ let run = (named: array<string>): int => {
       )
     }
   )
+
+let run = (named: array<string>): int => {
+  validate(named)
   let chosen = name => named->Array.length == 0 || named->Array.includes(name)
   let failed = Array.concat(
     chosen("rules")

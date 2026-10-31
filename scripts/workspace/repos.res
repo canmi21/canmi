@@ -455,6 +455,7 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       | "fmt" => fmt(~dry)
       | "clean" => clean(~dry)
       | _ if dry =>
+        Check.validate(parts)
         Console.log(`would run check workspace${parts == [] ? "" : " " ++ parts->Array.join(" ")}`)
         0
       | _ => Check.run(parts)
@@ -472,7 +473,7 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       Console.log(`\n=== ${[task(repo, verb), ...flags]->Array.join(" ")} ===`)
       Node.run(~cwd=root, "mise", ["run", task(repo, verb), ...flags])
     }
-    // Below the workspace, verify is the repository's own and then the workspace's rules over it.
+    // Below the workspace, verify is the repository's own and then the workspace's rules, or the parts named.
     let held = if repo == root || verb != "verify" {
       0
     } else if parts != [] && shared == [] {
@@ -658,7 +659,7 @@ type request = {
   passed: array<string>,
 }
 
-let usage = "usage: repos list | clone | pull | push | fmt | update | clean | verify | publish  [name | --all] [--dry-run]"
+let usage = "usage: repos list | clone | pull | push | fmt | update | clean | verify | publish  [name | --all] [part ...] [--dry-run]"
 let across = ["update", "fmt", "clean", "verify", "pull", "push"]
 
 /** What was typed, or why it is refused. A name means that repository, and nothing is dropped. */

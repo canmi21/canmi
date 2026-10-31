@@ -34,8 +34,8 @@ first, as every jj read does to see the latest edits; that touches its own lane'
 commit alone, and records one operation in the shared store, where jj merges the operations several
 workspaces make at once by itself. It does not deploy, does not run the whole of `mise run check`
 and spawns no agent; **where what it writes is one part of the workspace's check, it may run that
-part alone**, `mise run check workspace <part>`, and in any other repository, whose check runs
-whole, it runs its block's `built` and `accept`, [checking.md](checking.md); it does not use Agent,
+part alone**, `mise run check workspace <part>`, and in any other repository it runs its block's
+`built` and `accept`, [checking.md](checking.md); it does not use Agent,
 SendMessage, Workflow or Artifact. A hook in its definition holds its commands, four kinds alone,
 `implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res) and
 [delegation.md](delegation.md); it was proven to run in a subagent on 2026-10-24. Beside it,

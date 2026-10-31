@@ -62,9 +62,9 @@ description = "Format the workspace, every repository with --all, or one: `fmt [
 depends = ["build"]
 run = "node scripts/workspace/repos.res.mjs fmt"
 
-# `check workspace <part> ...` runs those parts of its own; `--pending` lists rules owed a check.
+# `check <name> <part> ...` runs those parts alone, `own` a repository's verify; `--pending` lists rules owed a check.
 [tasks.check]
-description = "Verify the workspace, every repository with --all, or one: `check [name | --all] [--dry-run]`"
+description = "Verify the workspace, every repository with --all, or one: `check [name | --all] [part ...] [--dry-run]`"
 depends = ["build"]
 run = "node scripts/workspace/repos.res.mjs verify"
 
