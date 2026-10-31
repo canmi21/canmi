@@ -154,13 +154,17 @@ describe("the actions mover", () => {
       ["+x", Node.join([root.contents, "bin/gh"]), Node.join([root.contents, "bin/mise"])],
     )->ignore
     let path = Node.env->Dict.get("PATH")->Option.getOr("")
+    // The mover only reports under CI, so its writes are tested as off CI.
+    let ci = Node.env->Dict.get("CI")
     Node.env->Dict.set("PATH", Node.join([root.contents, "bin"]) ++ ":" ++ path)
+    Node.env->Dict.delete("CI")
     let result = Node.spawnSync(
       "node",
       [script, ...dry ? ["--dry-run"] : []],
       {cwd: root.contents, encoding: "utf8"},
     )
     Node.env->Dict.set("PATH", path)
+    ci->Option.forEach(value => Node.env->Dict.set("CI", value))
     expect(result.status)->toEqual(Nullable.make(0))
     (
       Node.readFileSync(Node.join([root.contents, "calls"])),

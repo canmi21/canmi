@@ -21,6 +21,8 @@ runs:
       with:
         repository: canmi21/canmi
         persist-credentials: ${{ inputs.path == '' && inputs.credentials || 'false' }}
+        # The workspace alone is checked whole, its RFCs naming commits of its own history.
+        fetch-depth: ${{ inputs.path == '' && '0' || '1' }}
     - if: inputs.path != ''
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
