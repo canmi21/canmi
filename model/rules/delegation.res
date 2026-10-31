@@ -45,8 +45,8 @@ let readingFile = ["show", "list"]
 let readers = ["cat", "head", "tail", "sed", "grep", "rg", "ls", "find", "wc", "diff"]
 
 /**
- * The author's widening of 2026-10-31, `cd` alone and `labeling` given literal words only, never
- * one holding a `$` or a backquote.
+ * The author's widening of 2026-10-31, both given literal words only, never one holding a `$` or a
+ * backquote, printf never `-v`, and `labeling` never inside a substitution.
  */
 let moving = ["cd"]
 let labeling = ["echo", "printf"]
@@ -180,7 +180,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "reviewer-commands",
-    says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`, `readers` with `moving` and `labeling` beside them, `labeling` given no word holding a `$` or a backquote: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; each segment's first word is its program, no wrapper and no assignment before it; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own",
+    says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`, `readers` with `moving` and `labeling` beside them, `moving` and `labeling` given no word holding a `$` or a backquote, printf no `-v`, and `labeling` never inside a substitution: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; each segment's first word is its program, no wrapper and no assignment before it; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own",
     doc: "docs/agents/reviewer.md",
     held: Hook("hooks/agent_commands"),
   },

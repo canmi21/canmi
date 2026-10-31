@@ -13,8 +13,9 @@ decided by the author on 2026-10-24, `reviewer-commands` in
 - `cat`, `head`, `tail`, `sed`, `grep`, `rg`, `ls`, `find`, `wc` and `diff`; sed only quiet, `-n`,
   never `-i`, and with no command in `sedWriting`; find never given a flag in `findWriting`; rg
   never given one in `rgRunning`;
-- `cd` to a directory, and `echo` and `printf` of literals alone, no word holding `$` or a
-  backquote, the author's widening of 2026-10-31;
+- `cd` to a directory, and `echo` and `printf` of literals alone, no word of the three holding `$`
+  or a backquote, printf never `-v`, and echo and printf never inside a substitution, the author's
+  widening of 2026-10-31;
 - output redirected only to `redirectedTo`, and a command run by `&`, a substitution or a pipe
   judged as one of its own;
 - each segment's first word is its program: no wrapper before it and no assignment to the

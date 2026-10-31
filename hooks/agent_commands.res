@@ -222,17 +222,34 @@ let secretReason = (segment: array<string>) => {
   }
 }
 
-/** Why a reviewer's echo or printf is refused, a word holding a `$` or a backquote. */
+/** Why a reviewer's cd, echo or printf is refused, a word holding a `$` or a backquote, or -v. */
 let labelReason = (segment: array<string>) =>
   switch Jj_command.programOf(segment) {
-  | Some(program, words) if Delegation.labeling->Array.includes(program) =>
+  | Some(program, words)
+    if Delegation.labeling->Array.includes(program) || Delegation.moving->Array.includes(program) =>
     words
-    ->Array.find(word => word->String.includes("$") || word->String.includes("`"))
+    ->Array.find(word =>
+      word->String.includes("$") ||
+      word->String.includes("`") ||
+      (program == "printf" && word->String.startsWith("-v"))
+    )
     ->Option.map(found =>
       `${program} is given literal words alone, never ${found}, ${Read_only.rule} holds it`
     )
   | _ => None
   }
+
+/** Why a reviewer's command is refused for an echo or printf inside a substitution. */
+let substitutedLabel = (command: string) =>
+  (command->String.includes("$(") || command->String.includes("`")) &&
+    Jj_command.segments(command)->Array.some(segment =>
+      switch Jj_command.programOf(segment) {
+      | Some(program, _) => Delegation.labeling->Array.includes(program)
+      | None => false
+      }
+    )
+    ? Some(`echo and printf never run inside a substitution, ${Read_only.rule} holds it`)
+    : None
 
 /** Why one segment is refused to a role, or none. */
 let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<string>) =>
@@ -281,8 +298,12 @@ and shellReason = (~cwd, role, segment) =>
   }
 and reason = (~cwd=Registry.root, role, command) =>
   role == Reviewer
-    ? Jj_command.segments(command)
-      ->Array.findMap(segment => secretReason(segment)->Option.orElse(labelReason(segment)))
+    ? substitutedLabel(command)
+      ->Option.orElse(
+        Jj_command.segments(command)->Array.findMap(segment =>
+          secretReason(segment)->Option.orElse(labelReason(segment))
+        ),
+      )
       ->Option.orElse(Read_only.reason(command))
     : Jj_command.segments(command)->Array.findMap(segment => segmentReason(~cwd, role, segment))
 
