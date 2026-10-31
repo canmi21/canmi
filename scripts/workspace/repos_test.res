@@ -89,8 +89,46 @@ describe("a repository's check parts", () => {
     expect(Repos.stamps("fmt", ~dry=false, ~parts=[]))->toBe(false)
   })
 
+  test("a verify part runs the repository's own task alone, in its mise.toml's order", () => {
+    let declared = Node.mkdtempSync(Node.join([Node.tmpdir(), "repos-parts-"]))
+    tree(
+      declared,
+      [
+        (
+          "mise.toml",
+          ["format", "nix", "rust", "tests"]
+          ->Array.map(part => `[tasks."verify:${part}"]\nrun = "true"\n`)
+          ->Array.join("\n"),
+        ),
+      ],
+    )
+    let parts = Repos.verifyParts(declared)
+    let named = Repos.namedVerifyParts(declared, ["tests", "names", "rust"])
+    Node.rmSync(declared, {recursive: true, force: true})
+    expect(parts)->toEqual(["format", "nix", "rust", "tests"])
+    expect(named)->toEqual(["rust", "tests"])
+    expect(names(["names"]))->toEqual(["names"])
+    expect(Repos.runsOwn(["rust"]))->toBe(false)
+    expect(Repos.stamps("verify", ~dry=false, ~parts=["rust"]))->toBe(false)
+  })
+
+  test("a name the repository's verify and the workspace share is refused as ambiguous", () => {
+    let shared = Node.mkdtempSync(Node.join([Node.tmpdir(), "repos-parts-"]))
+    tree(shared, [("mise.toml", `[tasks."verify:names"]\nrun = "true"\n`)])
+    let why = try {
+      Repos.checkParts(shared, ["names"])->ignore
+      None
+    } catch {
+    | Registry.Refused(why) => Some(why)
+    }
+    Node.rmSync(shared, {recursive: true, force: true})
+    expect(why->Option.map(why => why->String.startsWith("names is ambiguous")))->toEqual(
+      Some(true),
+    )
+  })
+
   test("a name that is no part is refused, listing the valid ones", () => {
-    let valid = ["own", ...every]->Array.join(", ")
+    let valid = ["own", ...Repos.verifyParts(repo), ...every]->Array.join(", ")
     expect(refusedParts(["own", "invalid"]))->toEqual(
       Some(`monoflake/machine's check has no part invalid; the parts are ${valid}`),
     )

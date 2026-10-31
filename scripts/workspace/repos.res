@@ -399,11 +399,36 @@ let summary = (verb, skipped, failed, ~paused=[]) =>
     }
   }
 
+/** Each `verify:<part>` task a repository's mise.toml declares inline, in the order declared. */
+let verifyParts = repo => {
+  let config = Node.join([repo, "mise.toml"])
+  let text = Node.existsSync(config) ? Node.readFileSync(config) : ""
+  let opening = `[tasks."verify:`
+  text
+  ->String.split("\n")
+  ->Array.map(String.trim)
+  ->Array.filter(line => line->String.startsWith(opening) && line->String.endsWith(`"]`))
+  ->Array.map(line => line->String.slice(~start=opening->String.length, ~end=-2))
+}
+
+/** The repository's own verify parts named, in the order its mise.toml declares them. */
+let namedVerifyParts = (repo, parts) =>
+  verifyParts(repo)->Array.filter(part => parts->Array.includes(part))
+
 let checkParts = (repo, parts) => {
   let available = Check.over(repo)
-  let known = ["own", ...available->Array.map(((name, _)) => name)]
+  let shared = available->Array.map(((name, _)) => name)
+  let owned = verifyParts(repo)
+  let known = ["own", ...owned, ...shared]
   parts->Array.forEach(name =>
-    if !(known->Array.includes(name)) {
+    if owned->Array.includes(name) && shared->Array.includes(name) {
+      Registry.fail(
+        `${name} is ambiguous, both ${task(
+            repo,
+            `verify:${name}`,
+          )} and the workspace's part ${name}`,
+      )
+    } else if !(known->Array.includes(name)) {
       Registry.fail(
         `${Registry.label(repo)}'s check has no part ${name}; the parts are ${known->Array.join(
             ", ",
@@ -461,7 +486,11 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       | _ => Check.run(parts)
       }
     } else if verb == "verify" && !runsOwn(parts) {
-      0
+      namedVerifyParts(repo, parts)->Array.reduce(0, (failed, part) => {
+        let path = task(repo, `verify:${part}`)
+        Console.log(dry ? `would run ${path}` : `\n=== ${path} ===`)
+        failed + (dry ? 0 : Node.run(~cwd=root, "mise", ["run", path]))
+      })
     } else if !declares(repo, verb) {
       skipped->Array.push(place)
       0

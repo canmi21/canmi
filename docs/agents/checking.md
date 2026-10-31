@@ -101,8 +101,10 @@ each commit**, decided by the author on 2026-10-31 after one session ran the who
 44 minutes, a three-minute check after each one-line fix. `mise run check <path> <part> ...` names
 parts for the workspace and for a repository below it alike: below the workspace a part of the
 workspace's check runs over that repository, and `own` runs the repository's own `verify` whole.
-With no part named the check runs whole, and only that run writes the stamp a commit waits on, so
-the rule that a commit waits on the full check is unchanged.
+Beside `own`, a name for which the repository declares a `verify:<part>` task runs that task alone,
+in the order its `mise.toml` declares them, and a name it shares with a part of the workspace's
+check is refused as ambiguous. With no part named the check runs whole, and only that run writes
+the stamp a commit waits on, so the rule that a commit waits on the full check is unchanged.
 
 **A block a project's model holds alone is the case it is made for**: where each block builds, lints
 and tests apart from every other, as `monoflake/platform`'s `docs/code.md` makes them, its
