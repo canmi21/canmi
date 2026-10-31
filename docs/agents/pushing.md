@@ -75,7 +75,8 @@ group by a comment line**, `# allowed in <repository>` as the registry names it,
 it in that group until the next such line; any other line starting with `#` is a comment. The group
 allowed in monoflake/cloud is the hostnames differing from their Network Name, the accounts'
 identifiers and the retired machine names, its entries kept in the list alone, decided by the
-author on 2026-10-29, the retired names provisional, chosen by the advisor on 2026-10-29. A Network Name, a provider's name and a region's are public
+author on 2026-10-29, the retired names provisional, chosen by the advisor on 2026-10-29, but for `buf`, out of the list
+since 2026-10-31 at the author's word, as every Rust buffer is named so. A Network Name, a provider's name and a region's are public
 and in no group; the author's public handle and the cities a selfhosted machine's account is
 named for are exempt and in no list.
 
