@@ -178,6 +178,11 @@ moves into `model/rules/` with its check and leaves this file.
 - **A write naming a Worker first finds the Worker by that name.** A non-interactive `wrangler
   secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
   named as the config said, while the real one was deployed under the dashboard's name.
+- **Before a push, the workflows that run on it are read, not the doc that describes them.** On
+  2026-10-31 monoflake/driver's version was raised to pass its verify guard and pushed, believed
+  to release by hand alone as pushing.md then said; its release.yml runs on every push and
+  published driver-machine 0.1.2 unasked, and the scheduled update moved machine to it within the
+  hour. A raised version is a release wherever a workflow publishes an unreleased one.
 - **A delete through Cloudflare's `cf` passes `--force` and is read back afterwards.** Run without a
   terminal, its delete commands stop at their confirmation prompt and still exit 0. On 2026-10-31
   the scratch bucket `advisor-copy-probe` survived a delete that reported success.

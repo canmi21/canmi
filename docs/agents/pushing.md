@@ -37,8 +37,10 @@ also passes the scan for leaks** below; a private one is not scanned.
 such push comes, the deferred item `release-push`; until then it is asked of the user first, in
 either mode,
 [commits.md](../commits.md), "When a change is done, and when it is pushed". As things stand,
-monoflake/platform's and monoflake/cloud's pushes start no CI; monoflake/driver's release starts by
-hand alone; every repository's update runs on a daily schedule and by hand, never on a push, and
+monoflake/platform's and monoflake/cloud's pushes start no CI; monoflake/driver's release runs on
+every push to main and daily, publishing whenever driver-machine's version is unreleased, so a push
+raising that version releases it and is asked first, as one did unasked on 2026-10-31; every
+repository's update runs on a daily schedule and by hand, never on a push, and
 monoflake/runtime's publish on a push and on a weekly one, and both handle their own edge cases;
 and what runtime publishes is an upstream image repackaged, which [lessons.md](../lessons.md) lets
 be pushed as it is.
