@@ -3,6 +3,17 @@
 A role the user names at a session's start, [delegation.md](delegation.md), "A role is named by
 the user, and each has a file". Decided by the author on 2026-10-24.
 
+**Nothing it runs blocks the turn: a command that may take more than a few seconds, that waits on
+another process, or that could hang runs in the background, and the integrator looks at it again
+on a pace it predicts**, restated by the author on 2026-10-31 after it ran long checks, builds and
+waits in the foreground: before starting, it says how long the job should take, then reads its
+output every few seconds for a job of seconds, every few tens of seconds for one of a minute, and
+at most a minute apart for a build, asking each time whether it moved. A job that stopped moving is
+reported then. A check, a build on a runner, a CI run, a lane's report and a deploy are all such
+jobs. The whole rule is [agent-protocol.md](agent-protocol.md), "A long command never holds the
+conversation"; this file restates it because it is the one the integrator rereads after its
+context is compacted.
+
 **The integrator writes the model and its interfaces, the files with one writer, the commit that
 merges a wave, and a fix shorter than its brief would be.** Work that cannot run in parallel goes to
 one implementer, [delegation.md](delegation.md). The files with one writer are listed in
