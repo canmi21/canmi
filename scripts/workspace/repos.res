@@ -417,7 +417,7 @@ let checkParts = (repo, parts) => {
 /** Whether a check of these parts runs a repository's own verify. */
 let runsOwn = parts => parts == [] || parts->Array.includes("own")
 
-/** Whether a run may write the stamp a commit waits on, the full check alone. See docs/commits.md. */
+/** Whether a run may write the stamp a commit waits on, the full check alone, docs/commits.md. */
 let stamps = (verb, ~dry, ~parts) => verb == "verify" && !dry && parts == []
 
 /** The dry-run line for the workspace's rules over a repository, naming the parts selected. */
@@ -473,7 +473,8 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       Console.log(`\n=== ${[task(repo, verb), ...flags]->Array.join(" ")} ===`)
       Node.run(~cwd=root, "mise", ["run", task(repo, verb), ...flags])
     }
-    // Below the workspace, verify is the repository's own and then the workspace's rules, or the parts named.
+    // Below the workspace, verify is the repository's own then the workspace's rules,
+    // or the parts named.
     let held = if repo == root || verb != "verify" {
       0
     } else if parts != [] && shared == [] {
