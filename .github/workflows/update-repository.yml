@@ -75,8 +75,12 @@ jobs:
         if: inputs.prepare != ''
         run: ${{ inputs.prepare }}
 
+      # The movers read releases through gh and the API, which answer a token more than no one.
       - name: update
         id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" update "$REPOSITORY"
 
       - name: see what moved
