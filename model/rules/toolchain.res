@@ -278,6 +278,28 @@ let rules: array<Rule.t> = [
     held: Pending("each workflow's self-hosted jobs read for a cache action left on"),
   },
   {
+    name: "ci-native-steps",
+    says: "A workflow runs one stage a step, so each is timed and shown apart, and takes a published action where one fits",
+    doc: "docs/ci.md",
+    held: Pending("each workflow's steps read for a run that chains several stages' entries"),
+  },
+  {
+    name: "ci-entries",
+    says: "A workflow step calls a mise task or a script the repository holds, so the same entry runs locally",
+    doc: "docs/ci.md",
+    held: Pending(
+      "each workflow's run blocks read for a command that is not an entry or its plumbing",
+    ),
+  },
+  {
+    name: "ci-shell-minimal",
+    says: "A workflow step's shell holds the call and its plumbing alone; a loop, a parse or a retry lives in the entry, in ReScript",
+    doc: "docs/ci.md",
+    held: Pending(
+      "each workflow's run blocks read for a loop, a pipeline parse or a branch beyond passing outputs",
+    ),
+  },
+  {
     name: "custom-domains",
     says: "workers_dev and preview_urls are off in every wrangler configuration",
     doc,

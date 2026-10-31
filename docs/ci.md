@@ -32,3 +32,22 @@ author's private repositories reach those runners.
 when the disk runs short, at the free space each runner's configuration names. A compiler cache or
 a target directory put on a runner gets a size cap of its own, such as `SCCACHE_CACHE_SIZE`, or an
 age after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
+
+## CI orchestrates, the scripts do the work
+
+Decided by the author on 2026-10-31 for every workflow of this workspace and the `monoflake`
+repositories. The rules are `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and
+`ci-shell-minimal`.
+
+**A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
+apart, and a published action is taken where one fits rather than written again in a step. One step
+that runs a whole pipeline hides which stage was slow or failed: monoflake/cloud's systems job ran
+its plan, build and upload as one step until 2026-10-31, and a cold build looked like a hang.
+
+**A step calls an entry the repository already has**, a mise task or a script, so the same entry
+runs on the Mac. The workflow decides the order, the runners, the secrets and the conditions; what
+a stage does lives in the entry, where it is tested and run locally before CI ever runs it.
+
+**A step's shell is the call and its plumbing alone**: the entry's name, its arguments, and passing
+outputs between steps. Logic, a loop, a parse, a retry, goes in the entry, in ReScript, which is
+type-checked, tested, and runs the same on the Mac as on a runner.
