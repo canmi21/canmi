@@ -225,6 +225,12 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "push-through-verb",
+    says: "An agent pushes only by `mise run push`, never by `jj git push` or `git push` typed directly",
+    doc: pushing,
+    held: Hook("hooks/push"),
+  },
+  {
     name: "push-form-clear",
     says: "Every push waits on the form layer holding nothing in the commit each pushed bookmark points to, read from the repository; a commit may carry form warnings, only the state pushed must be clean",
     doc: pushing,

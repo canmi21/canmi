@@ -205,7 +205,8 @@ moves into `model/rules/` with its check and leaves this file.
   form layer and the private-identifier scan, [commits.md](commits.md); jj has no push hook. From
   2026-10-28 the integrator pushed monoflake/cloud by `jj git push --bookmark main`, so three
   comments over 100 columns went out unstopped, and the verb's first push on 2026-10-29 met all
-  three at once.
+  three at once. It happened again to the workspace on 2026-10-31, so `push-through-verb` now
+  holds it by a hook, [agents/pushing.md](agents/pushing.md).
 - **A machine's secrets file is part of its system.** sops-nix copies a `sopsFile` whole into the
   store, so a key added to a machine's `secrets.json` for one program changes that machine's
   system, and a file several machines read changes each of theirs. On 2026-10-27 a new reader of
