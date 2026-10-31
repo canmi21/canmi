@@ -228,7 +228,7 @@ let rules: array<Rule.t> = [
     name: "push-through-verb",
     says: "An agent pushes only by `mise run push`, never by `jj git push` or `git push` typed directly",
     doc: pushing,
-    held: Hook("hooks/push"),
+    held: Hook("hooks/gates/push"),
   },
   {
     name: "push-form-clear",

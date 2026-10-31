@@ -269,7 +269,7 @@ the shared entrypoint normalizes their common meaning rather than growing two im
 that only appear equivalent.
 
 **A commit waits on a passing verify.** Agreed with the author on 2026-10-20, following
-monoflake's "a commit is made only after verify passes": `hooks/verified.res` refuses a
+monoflake's "a commit is made only after verify passes": `hooks/gates/verified.res` refuses a
 `Commits.committing` command until the repository's `mise run check <path>` -- or `mise run check`
 for the workspace -- passed at the working copy being committed. A pass writes the working copy's
 commit to `.jj/verified`, and the hook compares contents with `jj diff`, so describing the change

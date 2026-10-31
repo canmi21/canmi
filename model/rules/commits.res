@@ -98,7 +98,7 @@ let rules: array<Rule.t> = [
     name: "verified-before-commit",
     says: "A `committing` command waits until verify passed at the working copy, `skip` aside",
     doc,
-    held: Hook("hooks/verified"),
+    held: Hook("hooks/gates/verified"),
   },
   {
     name: "main-covers-work",

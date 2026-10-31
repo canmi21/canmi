@@ -21,7 +21,7 @@ let handle = (payload: Payload.t): int => {
     | None => 0
     | Some(repo) =>
       Console.error(
-        `Commit refused by hooks/verified.res: ${repo} has not passed verify at this working ` ++
+        `Commit refused by hooks/gates/verified.res: ${repo} has not passed verify at this working ` ++
         `copy.\n\nRun \`${label(
             repo,
           )}\` from the workspace, then commit again. To commit ` ++ `without it, name the gate: \`SKIP=verify jj commit ...\`. See docs/commits.md.`,

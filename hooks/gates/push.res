@@ -73,7 +73,7 @@ let bypasses = command => Jj_command.segments(withoutQuotedBodies(command))->Arr
 let refuse = (payload: Payload.t): int =>
   if bypasses(Payload.command(payload)) {
     Console.error(
-      "Push refused by hooks/push.res: a push goes through `mise run push <repo>`, never `jj git push` or `git push` typed directly.\n" ++
+      "Push refused by hooks/gates/push.res: a push goes through `mise run push <repo>`, never `jj git push` or `git push` typed directly.\n" ++
       "Only the verb runs the form layer and the scan for private identifiers.\n" ++ "The rule: push-through-verb in model/rules/toolchain.res, and docs/agents/pushing.md",
     )
     2

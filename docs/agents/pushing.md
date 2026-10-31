@@ -15,7 +15,7 @@ disk and never checked out: each such commit is measured once, a directory's wid
 check that refuses reads only what the repository holds, so its result can be had again, and the
 working copy is local state.
 
-**An agent pushes only by `mise run push`**, `push-through-verb`, held by `hooks/push.res` since
+**An agent pushes only by `mise run push`**, `push-through-verb`, held by `hooks/gates/push.res` since
 2026-10-31 at the author's word: a `jj git push` or `git push` an agent types is refused before it
 runs, the body of a quoted here-document aside, since jj has no push hook and the gate above and
 the scan below run inside the verb alone. It was a lesson first, [lessons.md](../lessons.md), and
