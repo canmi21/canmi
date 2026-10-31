@@ -220,6 +220,7 @@ project still works.
 | Type checking, tests, comments, a UI that only draws | [docs/code.md](docs/code.md)               |
 | Linting and formatting                               | [docs/lint-format.md](docs/lint-format.md) |
 | Shell, addresses, secrets, versions, jj, hooks       | [docs/toolchain.md](docs/toolchain.md)     |
+| CI caches: crane, rust-cache, a runner's own disk    | [docs/ci.md](docs/ci.md)                   |
 
 **The projects**
 

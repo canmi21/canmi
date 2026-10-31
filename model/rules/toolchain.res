@@ -246,6 +246,24 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "ci-crane",
+    says: "Rust that Nix builds is built with crane, its dependencies a derivation of their own",
+    doc: "docs/ci.md",
+    held: Pending("each repository's Nix packages read for a Rust build that is not crane's"),
+  },
+  {
+    name: "ci-rust-cache",
+    says: "A workflow that runs cargo on a GitHub-hosted runner uses Swatinem/rust-cache",
+    doc: "docs/ci.md",
+    held: Pending("each repository's workflows read for a hosted job running cargo without it"),
+  },
+  {
+    name: "ci-runner-local",
+    says: "A job on a self-hosted runner keeps its caches on the runner, never in the GitHub cache",
+    doc: "docs/ci.md",
+    held: Pending("each workflow's self-hosted jobs read for a cache action left on"),
+  },
+  {
     name: "custom-domains",
     says: "workers_dev and preview_urls are off in every wrangler configuration",
     doc,
