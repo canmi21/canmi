@@ -54,9 +54,11 @@ type-checked, tested, and runs the same on the Mac as on a runner.
 
 ## Scheduled updates
 
-Every repository being worked on calls
-`canmi21/canmi/.github/workflows/update-repository.yml@main` from its own
-`.github/workflows/update.yml`, daily at 22:00 UTC and by hand through `workflow_dispatch`.
+The workspace and monoflake's platform, driver, machine and runtime call
+`canmi21/canmi/.github/workflows/update-repository.yml@main` from their own
+`.github/workflows/update.yml`, daily at 22:00 UTC and by hand through `workflow_dispatch`;
+monoflake/cloud's entry follows once the fleet's watched switches of 2026-10-31 are done, as its
+update moves every machine's lock. A paused repository has none.
 The reusable workflow takes `path` for the registry path, empty for the workspace, `runner` for
 the runner labels as JSON, `nix` to install Nix, and `beside` for the repositories the check reads.
 `prepare` runs an entry before the update, `message` replaces the shared commit message builder,
