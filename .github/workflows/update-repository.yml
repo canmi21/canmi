@@ -1,0 +1,111 @@
+# The scheduled update stages follow docs/ci.md.
+name: update-repository
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: Where the repository sits under repos/, as repos/registry.toml names it, empty for the workspace
+        type: string
+        default: ""
+      runner:
+        description: The runner's labels, as JSON
+        type: string
+        default: '["ubuntu-latest"]'
+      nix:
+        description: Install Nix first, for a hosted runner and a repository whose check needs it
+        type: boolean
+        default: false
+      beside:
+        description: Other repositories the check reads, each cloned at its main beside this one
+        type: string
+        default: ""
+      prepare:
+        description: An entry the repository runs before the update, in its own directory
+        type: string
+        default: ""
+      message:
+        description: An entry writing the commit message to $RUNNER_TEMP/message, in place of the shared one
+        type: string
+        default: ""
+      wake:
+        description: A workflow woken by name once the run ends, as a token's push starts none
+        type: string
+        default: ""
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  update:
+    runs-on: ${{ fromJSON(inputs.runner) }}
+    timeout-minutes: 60
+    env:
+      REPOSITORY: ${{ inputs.path }}
+      JJ_USER: github-actions[bot]
+      JJ_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+    defaults:
+      run:
+        working-directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
+    steps:
+      - name: check out the workspace and the repository
+        uses: canmi21/canmi/.github/actions/workspace@main
+        with:
+          path: ${{ inputs.path }}
+          credentials: true
+          scripts: true
+
+      - name: install nix
+        if: inputs.nix
+        uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+        with:
+          installer-version: 2.35.3 # The installer only bootstraps.
+
+      - name: clone what the check reads beside it
+        if: inputs.beside != ''
+        env:
+          BESIDE: ${{ inputs.beside }}
+        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" beside "$BESIDE"
+
+      - name: put jj beside git
+        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" colocate "$REPOSITORY"
+
+      - name: prepare
+        if: inputs.prepare != ''
+        run: ${{ inputs.prepare }}
+
+      - name: update
+        id: update
+        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" update "$REPOSITORY"
+
+      - name: see what moved
+        id: moved
+        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" moved "$REPOSITORY"
+
+      - name: check
+        if: steps.moved.outputs.moved == 'true'
+        working-directory: .
+        run: mise run check ${REPOSITORY:+"$REPOSITORY"}
+
+      - name: write the message
+        if: steps.moved.outputs.moved == 'true'
+        run: ${{ inputs.message || 'node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" message "$REPOSITORY" "$RUNNER_TEMP/message"' }}
+
+      - name: commit and push
+        if: steps.moved.outputs.moved == 'true'
+        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" commit "$REPOSITORY" "$RUNNER_TEMP/message"
+
+      - name: wake ${{ inputs.wake }}
+        if: inputs.wake != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WAKE: ${{ inputs.wake }}
+        run: gh workflow run "$WAKE" --repo "$GITHUB_REPOSITORY" --ref main
+
+      # A release source held back fails the run once the rest is committed, naming it.
+      - name: held
+        if: ${{ (success() || failure()) && steps.update.outputs.held != '' }}
+        env:
+          HELD: ${{ steps.update.outputs.held }}
+        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" held "$HELD"

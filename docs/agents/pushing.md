@@ -21,6 +21,12 @@ runs, the body of a quoted here-document aside, since jj has no push hook and th
 the scan below run inside the verb alone. It was a lesson first, [lessons.md](../lessons.md), and
 was broken twice.
 
+**A push that finds the remote's main moved is expected, and nothing to escalate**, decided by the
+author on 2026-10-31, `push-behind-main`. CI commits to main itself, most often the scheduled update
+moving tools and dependencies every day, [ci.md](../ci.md). The pusher runs `mise run pull <name>`,
+which fetches and lists what came in, reads those commits, rebases its own onto `main@origin` and
+moves `main` to its last, runs the check again, and pushes.
+
 **A wave worked in roles also waits on the full check passing, a reviewer having read the wave, and
 the wave accepted**, `push-gated`, [checking.md](checking.md), "Acceptance comes before the push". A
 session with no role pushes once the check passes and the form layer holds nothing,
@@ -32,7 +38,7 @@ such push comes, the deferred item `release-push`; until then it is asked of the
 either mode,
 [commits.md](../commits.md), "When a change is done, and when it is pushed". As things stand,
 monoflake/platform's and monoflake/cloud's pushes start no CI; monoflake/driver's release starts by
-hand alone; monoflake/machine's update runs on a push and on a daily schedule, and
+hand alone; every repository's update runs on a daily schedule and by hand, never on a push, and
 monoflake/runtime's publish on a push and on a weekly one, and both handle their own edge cases;
 and what runtime publishes is an upstream image repackaged, which [lessons.md](../lessons.md) lets
 be pushed as it is.

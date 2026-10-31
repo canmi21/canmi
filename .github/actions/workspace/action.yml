@@ -5,7 +5,7 @@ description: Check out the workspace around the calling repository and install t
 
 inputs:
   path:
-    description: Where the calling repository sits under repos/, as repos/registry.toml names it
+    description: Where the calling repository sits under repos/, empty for the workspace
     required: true
   credentials:
     description: Keep the token in the repository's checkout, for a job that pushes to it
@@ -20,18 +20,22 @@ runs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: canmi21/canmi
-        persist-credentials: false
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        persist-credentials: ${{ inputs.path == '' && inputs.credentials || 'false' }}
+    - if: inputs.path != ''
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         path: repos/${{ inputs.path }}
         persist-credentials: ${{ inputs.credentials }}
     # A self-hosted runner keeps its tools on its own disk, so only a hosted one caches, docs/ci.md.
     - uses: jdx/mise-action@fc42bcc7ddbf51124c30f95a877a0c5168a3bfde # v5.2.1
       with:
-        working_directory: repos/${{ inputs.path }}
+        working_directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
         cache: ${{ runner.environment == 'github-hosted' }}
-    - if: inputs.scripts == 'true'
+    - name: install the workspace's packages
+      if: inputs.scripts == 'true'
       shell: bash
-      run: |
-        pnpm install --frozen-lockfile
-        pnpm exec rescript build
+      run: pnpm install --frozen-lockfile
+    - name: compile the workspace's scripts
+      if: inputs.scripts == 'true'
+      shell: bash
+      run: mise run build

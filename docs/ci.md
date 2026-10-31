@@ -51,3 +51,20 @@ a stage does lives in the entry, where it is tested and run locally before CI ev
 **A step's shell is the call and its plumbing alone**: the entry's name, its arguments, and passing
 outputs between steps. Logic, a loop, a parse, a retry, goes in the entry, in ReScript, which is
 type-checked, tested, and runs the same on the Mac as on a runner.
+
+## Scheduled updates
+
+Every repository being worked on calls
+`canmi21/canmi/.github/workflows/update-repository.yml@main` from its own
+`.github/workflows/update.yml`, daily at 22:00 UTC and by hand through `workflow_dispatch`.
+The reusable workflow takes `path` for the registry path, empty for the workspace, `runner` for
+the runner labels as JSON, `nix` to install Nix, and `beside` for the repositories the check reads.
+`prepare` runs an entry before the update, `message` replaces the shared commit message builder,
+and `wake` names the workflow to dispatch on main when the preceding stages succeed. Public
+repositories use hosted runners; monoflake/cloud uses its self-hosted ARM64 runners.
+
+The update verb keeps its one-day release wait. What moves passes the repository's check before
+github-actions[bot] commits it and pushes straight to main. The named check is woken explicitly
+because a token's push starts no workflow. A failure before the commit pushes nothing; a release
+source whose releases could not be read is held back and fails the run after the other updates
+are committed, naming the held source.

@@ -225,6 +225,12 @@ let rules: array<Rule.t> = [
     held: Pending("each repository's workflows read against its [push]"),
   },
   {
+    name: "push-behind-main",
+    says: "A push that finds main moved pulls, reads what came in, rebases onto it, checks again and pushes, escalating nothing",
+    doc: pushing,
+    held: Pending("push reading main@origin before it pushes and naming the commits that came in"),
+  },
+  {
     name: "push-scanned",
     says: "A public repository's push carries no private identifier, credential, high-entropy string, or address or domain outside `documentation`",
     doc: pushing,
