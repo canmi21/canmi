@@ -68,7 +68,7 @@ let items: array<item> = [
   },
   {
     id: "paused",
-    what: "only the workspace and monoflake are worked on, so every other repository is passed over by check --all and audit --all",
+    what: "only the workspace and monoflake are worked on, so every other repository is passed over by every verb run with --all but pull and push",
     repos: [
       "canmi/web",
       "canmi/lib",

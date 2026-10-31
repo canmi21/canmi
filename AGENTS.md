@@ -160,8 +160,8 @@ width 2 in every language, YAML excepted; `.editorconfig` is the source of truth
 
 **One verb, the workspace unless told otherwise.** `mise run pull|push|fmt|check|update|clean|audit`
 alone runs on this workspace; add a path from `repos/registry.toml` -- `mise run check apps/rdm` --
-to run on that repository, or `--all` to run on every one, a paused one passed over by `check`
-and `audit`, and `--dry-run` to any of them to be told what it would do. A name means that repository alone, in every verb, and never with `--all`.
+to run on that repository, or `--all` to run on every one, a paused one passed over by every verb
+but `pull` and `push`, and `--dry-run` to any of them to be told what it would do. A name means that repository alone, in every verb, and never with `--all`.
 `pull` and `push` are jj's and live here; the rest run each repository's own task -- `verify` for
 `check` and `audit`, and `update`, `clean` and `fmt` -- and pass over a repository without one,
 naming it. `check` then runs the workspace's rules over the repository, and its pass is what a

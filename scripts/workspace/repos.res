@@ -454,6 +454,17 @@ let rulesLine = (parts, shared: array<(string, Check.part)>) =>
 /**
  * fmt, clean or verify, the workspace's half here and each repository's own task, past a failure.
  */
+/** The repositories `--all` reaches, each one a deferred item pauses passed over and named. */
+let active = (name, ~everything, paused) =>
+  Registry.selected(name, ~everything)->Array.filter(repo =>
+    switch everything ? Waiting.pauser(~repo=Registry.label(repo)) : None {
+    | Some(id) =>
+      paused->Array.push(`${Registry.label(repo)} (deferred ${id})`)
+      false
+    | None => true
+    }
+  )
+
 let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   if everything && parts != [] {
     Registry.fail("--all and check parts cannot be combined")
@@ -461,16 +472,7 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   let skipped = []
   let failed = []
   let paused = []
-  Registry.selected(name, ~everything)
-  ->Array.filter(repo =>
-    switch everything && verb == "verify" ? Waiting.pauser(~repo=Registry.label(repo)) : None {
-    | Some(id) =>
-      paused->Array.push(`${Registry.label(repo)} (deferred ${id})`)
-      false
-    | None => true
-    }
-  )
-  ->Array.forEach(repo => {
+  active(name, ~everything, paused)->Array.forEach(repo => {
     let place = Registry.label(repo)
     let shared = repo != root && verb == "verify" ? checkParts(repo, parts) : []
     let before = stamps(verb, ~dry, ~parts) ? Stamp.snapshot(repo) : ""
@@ -570,8 +572,9 @@ let update = async (name, ~dry, ~major, ~everything) => {
   let failed = []
   let reverted = []
   let held = []
+  let paused = []
   let flags = Array.concat(dry ? ["--dry-run"] : [], major ? ["--major"] : [])
-  let chosen = Registry.selected(name, ~everything)
+  let chosen = active(name, ~everything, paused)
   for index in 0 to chosen->Array.length - 1 {
     let repo = chosen->Array.getUnsafe(index)
     let place = Registry.label(repo)
@@ -627,7 +630,7 @@ let update = async (name, ~dry, ~major, ~everything) => {
       }
     }
   }
-  summary("update", skipped, failed)
+  summary("update", skipped, failed, ~paused)
   held
   ->Array.filter(((place, _)) =>
     !(failed->Array.includes(place)) && !(reverted->Array.some(((back, _, _)) => back == place))
