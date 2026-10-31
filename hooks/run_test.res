@@ -33,6 +33,29 @@ let post = cwd =>
   })->Option.getOr("{}")
 
 describe("the shared entrypoint", () => {
+  test("SessionStart provides the reminder as context and is silent without it", () => {
+    expect(Run.session(""))->toEqual(None)
+    expect(Run.session("1 action; mise run update --dry-run for detail"))->toEqual(
+      Some(
+        JSON.Object(
+          Dict.fromArray([
+            (
+              "hookSpecificOutput",
+              JSON.Object(
+                Dict.fromArray([
+                  ("hookEventName", JSON.String("SessionStart")),
+                  (
+                    "additionalContext",
+                    JSON.String("1 action; mise run update --dry-run for detail"),
+                  ),
+                ]),
+              ),
+            ),
+          ]),
+        ),
+      ),
+    )
+  })
   test("both vendor adapters are identical and run the one command", () => {
     let claude = parseAdapter(Node.readFileSync(Node.join([root, ".claude", "settings.json"])))
     let codex = parseAdapter(Node.readFileSync(Node.join([root, ".codex", "hooks.json"])))

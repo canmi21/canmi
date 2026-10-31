@@ -48,6 +48,13 @@ let refused = argv =>
   }
 
 describe("what a verb was asked", () => {
+  test("JSON belongs to the update dry run", () => {
+    expect(Repos.parse(["update", "--all", "--dry-run", "--json"]).json)->toBe(true)
+    expect(refused(["update", "--json"]))->toEqual(Some("--json belongs to update --dry-run"))
+    expect(refused(["pull", "--dry-run", "--json"]))->toEqual(
+      Some("--json belongs to update --dry-run"),
+    )
+  })
   test("a bare verb is the workspace alone, a name that repository", () => {
     let bare = Repos.parse(["pull"])
     expect((bare.name, bare.everything))->toEqual((None, false))
@@ -185,6 +192,45 @@ describe("a repository's check parts", () => {
 })
 
 describe("an update's movers", () => {
+  test("keeps actual flake revisions from a repository's dry report", () => {
+    expect(
+      Repos.ownItems(
+        ~repository="monoflake/platform",
+        "• Updated input 'nixpkgs':\n    'github:NixOS/nixpkgs/old' (2026-10-01)\n  → 'github:NixOS/nixpkgs/new' (2026-10-31)",
+      ),
+    )->toEqual([
+      Reminder.item(
+        ~repository="monoflake/platform",
+        "flake",
+        "nixpkgs",
+        "github:NixOS/nixpkgs/old",
+        "github:NixOS/nixpkgs/new",
+      ),
+    ])
+    expect(
+      Repos.ownItems(~repository="monoflake/platform", "would run nix flake update"),
+    )->toEqual([])
+  })
+
+  test("keeps both in pin and across pin tool candidates", () => {
+    let row: Tools.row = {
+      where: Registry.root,
+      tool: "pnpm",
+      version: "11.24.0",
+      pin: "11.24",
+      line: Some("11.26.0"),
+      newest: Some("12.0.0"),
+    }
+    expect(Tools.machineRows([row]))->toEqual([
+      Reminder.item(~repository="workspace", "major", "pnpm", "11.24.0", "11.26.0"),
+      Reminder.item(~repository="workspace", "major", "pnpm", "11.24.0", "12.0.0"),
+    ])
+    expect(Tools.machineRows([{...row, pin: "11"}])->Array.map(item => item.kind))->toEqual([
+      "tool",
+      "major",
+    ])
+    expect(Tools.machineRows([{...row, version: "12.0.0", line: Some("11.26.0")}]))->toEqual([])
+  })
   let root = temporaryRoot("repos-update-")
   let mover = (name, code, said) => {
     let path = Node.join([root.contents, name, "releases.res.mjs"])

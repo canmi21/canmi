@@ -414,6 +414,22 @@ typed is a version the repository actually records.
 npm's `latest` tag pointed at 11.24.0, so `latest` had already put this workspace on a
 prerelease line without saying so. Another reason the number is written down.
 
+### What CI cannot update reaches the author as one line
+
+**What the scheduled update cannot take is reported locally, and nothing else**, decided by the
+author on 2026-10-31, `update-reminder` in [model/rules/toolchain.res](../model/rules/toolchain.res).
+`mise run pull` and `mise run check` start, at most once a day and detached, `mise run update --all
+--dry-run --json`, keeping its summary under `$XDG_CACHE_HOME/monoflake/update/` with the day each
+item was first seen. Reported are an action pin, which the bot no longer moves ([ci.md](ci.md),
+"Scheduled updates"), a move only `--major` takes, a tool the Mac has not installed at its pinned
+version, and any move within the bounds still waiting two days after it first appeared, which
+means the scheduled update keeps failing. A move within the bounds younger than that is not
+reported, since tonight's run takes it. The line comes at the end of `pull` and `check`, counts per
+kind and `mise run update --dry-run` for the detail, and the agent's session start adds the same
+line to its context so the agent tells the author; there is nothing at all when nothing is
+reported. Not a mise `[hooks] enter`, which would be noisy in fish and reach the network on every
+directory change.
+
 ### Stable means the publisher's channel, not the highest version that exists
 
 mise resolves a pin against every release a tool has published, and a published release is not

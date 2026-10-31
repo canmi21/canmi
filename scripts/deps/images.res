@@ -1,3 +1,14 @@
+let machine = Node.args()->Array.includes("--json")
+let items: array<Reminder.item> = []
+let log = text =>
+  if !machine {
+    Console.log(text)
+  }
+let emit = () =>
+  if machine {
+    Console.log(Reminder.encode(items))
+  }
+
 /**
  * The base images a repository's Dockerfiles pin by digest, each moved to the digest its tag names
  * now, the tag kept. See docs/toolchain.md.
@@ -160,11 +171,12 @@ let digestOf = async (image, tag) => {
 }
 
 let main = async () => {
-  let dry = Node.args()->Array.includes("--dry-run") || Node.args()->Array.includes("-n")
+  let dry = machine || Node.args()->Array.includes("--dry-run") || Node.args()->Array.includes("-n")
   let root = Node.cwd()
   let files = dockerfiles(root)
   if files == [] {
-    Console.log("images: no Dockerfile here")
+    log("images: no Dockerfile here")
+    emit()
     Node.exit(0)
   }
   let texts = files->Array.map(file => (file, Node.readFileSync(file)))
@@ -182,7 +194,7 @@ let main = async () => {
     switch await digestOf(key->String.slice(~start=0, ~end=at), key->String.slice(~start=at + 1)) {
     | Ok(digest) => digests->Dict.set(key, digest)
     | Error(why) =>
-      Console.log(`images: ${key}, its digest could not be read, ${why}`)
+      log(`images: ${key}, its digest could not be read, ${why}`)
       failed := true
     }
   }
@@ -197,8 +209,9 @@ let main = async () => {
     ->Array.forEach(({image, tag, digest}) =>
       switch digests->Dict.get(`${image}:${tag}`) {
       | Some(now) if now != digest =>
-        Console.log(`images: ${shown} ${image}:${tag} ${digest} -> ${now}`)
-      | Some(_) => Console.log(`images: ${shown} ${image}:${tag}, its tag's digest still`)
+        items->Array.push(Reminder.item("image", `${shown} ${image}:${tag}`, digest, now))
+        log(`images: ${shown} ${image}:${tag} ${digest} -> ${now}`)
+      | Some(_) => log(`images: ${shown} ${image}:${tag}, its tag's digest still`)
       | None => ()
       }
     )
@@ -207,6 +220,7 @@ let main = async () => {
       Node.writeFileSync(file, moved)
     }
   })
+  emit()
   Node.exit(failed.contents ? 1 : 0)
 }
 

@@ -1,3 +1,14 @@
+let machine = Node.args()->Array.includes("--json")
+let items: array<Reminder.item> = []
+let log = text =>
+  if !machine {
+    Console.log(text)
+  }
+let emit = () =>
+  if machine {
+    Console.log(Reminder.encode(items))
+  }
+
 /**
  * `releases.res.mjs <manifest.toml> [--dry-run]`, each artifact a manifest names locked beside
  * it in manifest.lock at the newest version its source's releases list. See docs/toolchain.md.
@@ -241,7 +252,7 @@ let moves = async (sources: array<source>, ~locked, ~file, ~lock, ~fetch=github)
       }
     switch await fetch(`https://api.github.com/repos/${repository}/releases?per_page=100`) {
     | Error(why) =>
-      Console.log(`releases: ${file}, ${repository}'s releases could not be read, ${why}`)
+      log(`releases: ${file}, ${repository}'s releases could not be read, ${why}`)
       hold()
       names->Array.forEach(kept)
     | Ok(releases) =>
@@ -252,19 +263,25 @@ let moves = async (sources: array<source>, ~locked, ~file, ~lock, ~fetch=github)
           locked->field(name)->Option.flatMap(was => was->text("version"))->Option.getOr("none")
         switch await resolve(~source=?own ? None : Some(repository), ~fetch, releases, ~name) {
         | Error(why) =>
-          Console.log(`releases: ${lock} ${name}, not moved, ${why}`)
+          log(`releases: ${lock} ${name}, not moved, ${why}`)
           hold()
           kept(name)
         | Ok(None) =>
-          Console.log(`releases: ${lock} ${name} ${version}, nothing released to move to`)
+          log(`releases: ${lock} ${name} ${version}, nothing released to move to`)
           kept(name)
         | Ok(Some(pin)) if pin->text("version") == Some(version) =>
-          Console.log(`releases: ${lock} ${name} ${version}, the newest released`)
+          log(`releases: ${lock} ${name} ${version}, the newest released`)
           pins->Array.push((name, pin))
         | Ok(Some(pin)) =>
-          Console.log(
-            `releases: ${file} ${name} ${version} -> ${pin->text("version")->Option.getOr("")}`,
+          items->Array.push(
+            Reminder.item(
+              "release",
+              `${file} ${name}`,
+              version,
+              pin->text("version")->Option.getOr(""),
+            ),
           )
+          log(`releases: ${file} ${name} ${version} -> ${pin->text("version")->Option.getOr("")}`)
           pins->Array.push((name, pin))
         }
       }
@@ -305,7 +322,7 @@ let update = async (file, ~dry, ~fetch=github) => {
     : JSON.Encode.object(dict{})
   switch sources(manifest) {
   | Error(why) =>
-    Console.log(`releases: ${file} ${why}`)
+    log(`releases: ${file} ${why}`)
     1
   | Ok(sources) =>
     let {pins, held} = await moves(sources, ~locked, ~file, ~lock, ~fetch)
@@ -322,7 +339,7 @@ let update = async (file, ~dry, ~fetch=github) => {
       Node.writeFileSync(lock, written)
     }
     if code == partly {
-      Console.log(heldLine(file, held))
+      log(heldLine(file, held))
       Node.env
       ->Dict.get("GITHUB_OUTPUT")
       ->Option.forEach(output => appendFileSync(output, `held=${held->Array.join(" ")}\n`))
@@ -333,9 +350,12 @@ let update = async (file, ~dry, ~fetch=github) => {
 
 let main = async () => {
   let args = Node.args()
-  let dry = args->Array.includes("--dry-run") || args->Array.includes("-n")
+  let dry = machine || args->Array.includes("--dry-run") || args->Array.includes("-n")
   switch args->Array.filter(arg => !(arg->String.startsWith("-"))) {
-  | [file] => Node.exit(await update(file, ~dry))
+  | [file] =>
+    let code = await update(file, ~dry)
+    emit()
+    Node.exit(code)
   | _ =>
     Console.error("usage: releases.res.mjs <manifest.toml> [--dry-run]")
     Node.exit(1)

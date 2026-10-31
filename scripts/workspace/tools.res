@@ -137,7 +137,10 @@ let ask = async (tool, line: option<string>): option<string> =>
         ->Array.filterMap(release =>
           textField(release, "version")->Option.map(v => v->String.replaceRegExp(leadingV, ""))
         )
-        ->Array.find(version => line->Option.mapOr(true, line => series(version) == Some(line)))
+        ->Array.find(version =>
+          !(version->String.includes("-")) &&
+          line->Option.mapOr(true, line => series(version) == Some(line))
+        )
       | _ => None
       }
     | Some(("rust", _)) =>
@@ -456,6 +459,80 @@ let pairs = (pattern: RegExp.t, text) => {
     }
   next()
   found
+}
+
+let machineRows = (rows: array<row>) =>
+  rows->Array.flatMap(row => {
+    let from = row.tool == "rust" ? rustChannel(row.where)->Option.getOr(row.version) : row.version
+    let targets =
+      [row.line, row.newest]
+      ->Array.filterMap(value => value)
+      ->Array.reduce([], (seen, version) =>
+        seen->Array.includes(version) ? seen : [...seen, version]
+      )
+    targets->Array.filterMap(version =>
+      compareVersions(version, from) > 0
+        ? Some(
+            Reminder.item(
+              ~repository=Registry.label(row.where),
+              allows(row.pin, version) || row.pin == "stable" ? "tool" : "major",
+              row.tool,
+              from,
+              version,
+            ),
+          )
+        : None
+    )
+  })
+
+let machine = async where => {
+  let repository = Registry.label(where)
+  let before = installed(where)->Dict.fromArray
+  let names = before->Dict.keysToArray
+  let upgraded =
+    names == [] ? "" : Node.output(~cwd=where, "mise", ["upgrade", ...names, "--dry-run"])
+  let items = pairs(installLine, upgraded)->Array.filterMap(((name, version)) =>
+    before
+    ->Dict.get(name)
+    ->Option.flatMap(from =>
+      from != version ? Some(Reminder.item(~repository, "tool", name, from, version)) : None
+    )
+  )
+  let missing = Node.output(~cwd=where, "mise", ["ls", "--missing", "--json"])
+  try {
+    switch JSON.parseOrThrow(missing) {
+    | Object(tools) =>
+      tools
+      ->Dict.toArray
+      ->Array.forEach(((name, entries)) =>
+        switch entries {
+        | Array(entries) =>
+          entries->Array.forEach(entry => {
+            let source = field(entry, "source")->Option.flatMap(source => textField(source, "path"))
+            if source == Some(Node.join([where, "mise.toml"])) {
+              items->Array.push(
+                Reminder.item(
+                  ~repository,
+                  "missing",
+                  name,
+                  "not installed",
+                  textField(entry, "version")->Option.getOr(""),
+                ),
+              )
+            }
+          })
+        | _ => ()
+        }
+      )
+    | _ => ()
+    }
+  } catch {
+  | _ => ()
+  }
+  let rows = await survey(Some(repository), false)
+  Array.concat(items, machineRows(rows))->Array.reduce([], (seen, item) =>
+    seen->Array.some(existing => Reminder.same(existing, item)) ? seen : [...seen, item]
+  )
 }
 
 /**

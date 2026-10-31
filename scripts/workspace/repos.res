@@ -687,6 +687,7 @@ type request = {
   name: option<string>,
   dry: bool,
   major: bool,
+  json: bool,
   everything: bool,
   parts: array<string>,
   passed: array<string>,
@@ -698,7 +699,7 @@ let across = ["update", "fmt", "clean", "verify", "pull", "push"]
 /** What was typed, or why it is refused. A name means that repository, and nothing is dropped. */
 let parse = (argv: array<string>): request => {
   let flag = names => argv->Array.some(arg => names->Array.includes(arg))
-  let known = ["-n", "--dry-run", "--major", "-a", "--all", "--pending"]
+  let known = ["-n", "--dry-run", "--major", "-a", "--all", "--pending", "--json"]
   let rest = argv->Array.filter(arg => !(arg->String.startsWith("-")))
   let verb = rest[0]->Option.getOr("")
   let name = rest[1]
@@ -707,6 +708,7 @@ let parse = (argv: array<string>): request => {
     name,
     dry: flag(["-n", "--dry-run"]),
     major: flag(["--major"]),
+    json: flag(["--json"]),
     everything: flag(["-a", "--all"]),
     parts: [],
     passed: [],
@@ -725,6 +727,9 @@ let parse = (argv: array<string>): request => {
     {...request, passed: passed->Array.map(arg => arg == "-n" ? "--dry-run" : arg)}
   } else {
     let owned = verb == "verify" && name == Some("workspace")
+    if request.json && (verb != "update" || !request.dry) {
+      Registry.fail("--json belongs to update --dry-run")
+    }
     switch argv->Array.find(arg => arg->String.startsWith("-") && !(known->Array.includes(arg))) {
     | Some(unknown) => Registry.fail(`unknown option ${unknown}`)
     | None => ()
@@ -749,7 +754,74 @@ let parse = (argv: array<string>): request => {
   }
 }
 
-let main = async argv => {
+let ownItems = (~repository, output) => {
+  try {Reminder.decode(output)->Array.map(item => {...item, repository})} catch {
+  | _ =>
+    let lines = output->String.split("\n")
+    lines
+    ->Array.mapWithIndex((line, index) =>
+      switch Actions.groups(/Updated input '([^']+)'/, line) {
+      | Some([name]) =>
+        let version = offset =>
+          lines[index + offset]
+          ->Option.flatMap(line => Actions.groups(/'([^']+)'/, line))
+          ->Option.flatMap(groups => groups[0])
+        switch (version(1), version(2)) {
+        | (Some(from), Some(to)) => Some(Reminder.item(~repository, "flake", name, from, to))
+        | _ => None
+        }
+      | _ => None
+      }
+    )
+    ->Array.filterMap(item => item)
+  }
+}
+
+let jsonUpdate = async (name, ~everything, ~major) => {
+  let items = []
+  let failed = ref(false)
+  let take = (repo, command, args) => {
+    let result = capture(~cwd=repo, command, args)
+    try {
+      Reminder.decode(result.out)->Array.forEach(item =>
+        items->Array.push({...item, repository: Registry.label(repo)})
+      )
+    } catch {
+    | _ => failed := true
+    }
+    if result.status != 0 {
+      failed := true
+    }
+  }
+  active(name, ~everything, [])->Array.forEach(repo => {
+    if repo != root && declares(repo, "update") {
+      let result = capture(
+        ~cwd=root,
+        "mise",
+        ["run", task(repo, "update"), "--dry-run", ...major ? ["--major"] : []],
+      )
+      if result.status != 0 {
+        failed := true
+      }
+      ownItems(
+        ~repository=Registry.label(repo),
+        result.out ++ "\n" ++ result.err,
+      )->Array.forEach(item => items->Array.push(item))
+    }
+    let commands =
+      repo == root
+        ? [
+            [mover("update"), "--dry-run"],
+            [mover("actions"), "--dry-run", ...major ? ["--major"] : []],
+          ]
+        : movers(repo, ~dry=true, ~major)
+    commands->Array.forEach(args => take(repo, "node", [...args, "--json"]))
+  })
+  Console.log(Reminder.encode(items))
+  failed.contents ? 1 : 0
+}
+
+let execute = async argv => {
   let request = parse(argv)
   let {name, dry, everything} = request
   switch request.verb {
@@ -762,9 +834,39 @@ let main = async argv => {
     Check.pending()->Array.forEach(line => Console.log(line))
     0
   | "verify" => dispatch("verify", name, ~dry, ~everything, ~parts=request.parts)
-  | "update" => await update(name, ~dry, ~major=request.major, ~everything)
+  | "update" =>
+    request.json
+      ? await jsonUpdate(name, ~everything, ~major=request.major)
+      : await update(name, ~dry, ~major=request.major, ~everything)
   | "publish" => publish(name, request.passed)
   | _ => Registry.fail(usage)
+  }
+}
+
+let main = async argv => {
+  let request = parse(argv)
+  let remind = request.verb == "pull" || request.verb == "verify"
+  if remind {
+    Reminder.start()
+  }
+  try {
+    let code = await execute(argv)
+    if remind {
+      let line = Reminder.line()
+      if line != "" {
+        Console.log(line)
+      }
+    }
+    code
+  } catch {
+  | error =>
+    if remind {
+      let line = Reminder.line()
+      if line != "" {
+        Console.log(line)
+      }
+    }
+    throw(error)
   }
 }
 

@@ -1,3 +1,14 @@
+let machine = Node.args()->Array.includes("--json")
+let items: array<Reminder.item> = []
+let log = text =>
+  if !machine {
+    Console.log(text)
+  }
+let emit = () =>
+  if machine {
+    Console.log(Reminder.encode(items))
+  }
+
 /**
  * The releases a repository's workflows pin, each moved to the newest one a day old within its
  * major unless `--major`, and the branches pinned by a commit, each moved to its head. See
@@ -165,9 +176,9 @@ let main = () => {
   // In CI it reports alone, as GitHub refuses a workflow change pushed by its token, docs/ci.md.
   let ci = Node.envIs("CI", "true")
   if ci {
-    Console.log("actions: in CI the pins are read and reported alone; a local update moves them")
+    log("actions: in CI the pins are read and reported alone; a local update moves them")
   }
-  let dry = ci || args->Array.includes("--dry-run") || args->Array.includes("-n")
+  let dry = machine || ci || args->Array.includes("--dry-run") || args->Array.includes("-n")
   let across = args->Array.includes("--major")
   let github = Node.join([Node.cwd(), ".github"])
   let yaml = file => file->String.endsWith(".yml") || file->String.endsWith(".yaml")
@@ -186,7 +197,8 @@ let main = () => {
     ),
   )
   if files == [] {
-    Console.log("actions: no workflow here")
+    log("actions: no workflow here")
+    emit()
     Node.exit(0)
   }
   let now = Date.now()
@@ -211,10 +223,14 @@ let main = () => {
       let name = `${file} ${pin.repository}`
       switch releasesOf(pin.repository) {
       | None =>
-        Console.log(`actions: ${name} ${pin.current}, its releases could not be read`)
+        log(`actions: ${name} ${pin.current}, its releases could not be read`)
         failed := true
       | Some(releases) =>
         let {move, waiting, beyond} = plan(releases, pin.current, ~across, ~now)
+        beyond->Option.forEach(
+          tag =>
+            items->Array.push(Reminder.item("major", name, pin.current, spelled(tag, pin.current))),
+        )
         let notes =
           [
             waiting->Option.map(tag => `${tag} waits out its first day`),
@@ -222,15 +238,25 @@ let main = () => {
           ]->Array.filterMap(note => note)
         let after = notes->Array.length == 0 ? "" : `; ${notes->Array.join("; ")}`
         switch move {
-        | None => Console.log(`actions: ${name} ${pin.current}, the newest a day old${after}`)
+        | None => log(`actions: ${name} ${pin.current}, the newest a day old${after}`)
         | Some(tag) =>
           let version = spelled(tag, pin.current)
+          items->Array.push(
+            Reminder.item(
+              Outdated.major(bare(version)) == Outdated.major(bare(pin.current))
+                ? "action"
+                : "major",
+              name,
+              pin.current,
+              version,
+            ),
+          )
           switch pin.commit ? commitOf(pin.repository, tag) : Some("") {
           | None =>
-            Console.log(`actions: ${name} ${tag}, its commit could not be read`)
+            log(`actions: ${name} ${tag}, its commit could not be read`)
             failed := true
           | Some(commit) =>
-            Console.log(`actions: ${name} ${pin.current} -> ${version}${after}`)
+            log(`actions: ${name} ${pin.current} -> ${version}${after}`)
             lines->Array.setUnsafe(pin.index, pin.write(version, commit))
             changed := true
           }
@@ -242,12 +268,13 @@ let main = () => {
       let short = commit => commit->String.slice(~start=0, ~end=12)
       switch api(`repos/${head.repository}/commits/${head.branch}`) {
       | None =>
-        Console.log(`actions: ${name} ${short(head.current)}, its head could not be read`)
+        log(`actions: ${name} ${short(head.current)}, its head could not be read`)
         failed := true
       | Some(tip: tip) if tip.sha == head.current =>
-        Console.log(`actions: ${name} ${short(head.current)}, its head`)
+        log(`actions: ${name} ${short(head.current)}, its head`)
       | Some(tip: tip) =>
-        Console.log(`actions: ${name} ${short(head.current)} -> ${short(tip.sha)}`)
+        items->Array.push(Reminder.item("action", name, head.current, tip.sha))
+        log(`actions: ${name} ${short(head.current)} -> ${short(tip.sha)}`)
         lines->Array.setUnsafe(head.index, head.write(tip.sha))
         changed := true
       }
@@ -264,6 +291,7 @@ let main = () => {
       failed := true
     }
   }
+  emit()
   Node.exit(failed.contents ? 1 : 0)
 }
 

@@ -225,6 +225,12 @@ let rules: array<Rule.t> = [
     held: Pending("each repository's workflows read against its [push]"),
   },
   {
+    name: "update-reminder",
+    says: "pull and check report, once a day and silent otherwise, only what the scheduled update cannot take: action pins, majors, missing tools and moves pending past two days",
+    doc: "docs/toolchain.md",
+    held: Pending("scripts/workspace/reminder.res's tests, once the reminder lands"),
+  },
+  {
     name: "push-behind-main",
     says: "A push that finds main moved pulls, reads what came in, rebases onto it, checks again and pushes, escalating nothing",
     doc: pushing,

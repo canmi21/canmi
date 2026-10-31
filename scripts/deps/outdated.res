@@ -135,6 +135,37 @@ let held = root => {
 
 type outdated = {current: string, latest: string, dependents: array<string>}
 
+let machine = root => {
+  let answer = run(root, "pnpm", ["outdated", "-r", "--format", "json"])
+  let present = held(root)
+  switch JSON.parseOrThrow(answer == "" ? "{}" : answer) {
+  | Object(entries) =>
+    entries
+    ->Dict.toArray
+    ->Array.flatMap(((name, entry)) =>
+      switch entry {
+      | Object(fields) =>
+        let text = key =>
+          fields->Dict.get(key)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+        let current =
+          present->Map.get(name)->Option.mapOr(text("current"), copies => copies->keys->newest)
+        [("package", text("wanted")), ("major", text("latest"))]->Array.filterMap(((
+          kind,
+          target,
+        )) =>
+          target != "" &&
+          compare(target, current) > 0 &&
+          (kind != "major" || target != text("wanted"))
+            ? Some(Reminder.item(~repository=Registry.label(root), kind, name, current, target))
+            : None
+        )
+      | _ => []
+      }
+    )
+  | _ => []
+  }
+}
+
 /** `pnpm outdated`'s answer, by package. */
 let outdatedOf = root => {
   let answer = run(root, "pnpm", ["outdated", "-r", "--format", "json"])

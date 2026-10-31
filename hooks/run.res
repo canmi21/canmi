@@ -25,8 +25,32 @@ let combined = (messages: array<option<string>>) =>
 
 let say = json => Console.log(JSON.stringify(json))
 
+let session = message =>
+  message == ""
+    ? None
+    : Some(
+        JSON.Object(
+          Dict.fromArray([
+            (
+              "hookSpecificOutput",
+              JSON.Object(
+                Dict.fromArray([
+                  ("hookEventName", JSON.String("SessionStart")),
+                  ("additionalContext", JSON.String(message)),
+                ]),
+              ),
+            ),
+          ]),
+        ),
+      )
+
 let handle = (payload: Payload.t): int =>
   switch payload->Payload.text("hook_event_name") {
+  | Some("SessionStart") =>
+    try {session(Reminder.line())->Option.forEach(say)} catch {
+    | _ => ()
+    }
+    0
   | Some("PreToolUse") =>
     // The message first, as it is cheap and the commonest refusal; jj fix only once all pass.
     switch Commit.refuse(payload) {
