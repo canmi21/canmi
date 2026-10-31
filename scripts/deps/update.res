@@ -99,7 +99,7 @@ let human = () => {
     Node.run("cargo", Array.concat(["update"], n))->ignore
     let after = Node.existsSync("Cargo.lock") ? Some(Node.readFileSync("Cargo.lock")) : None
 
-    // A lock moved raises the version of what is released from it, monoflake/driver's RFC 8c0rg.
+    // A lock moved runs the bump, raising a version only where released code changed, RFC 8c0rg.
     if !dry && before != after && Node.existsSync(".github/release/bump.res") {
       if Node.run("mise", ["run", "bump"]) != 0 {
         Node.exit(1)
