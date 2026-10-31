@@ -19,7 +19,7 @@ user was monoflake/cloud with 3.4 GB, almost all of it mise's tool cache. A publ
 GitHub-hosted runners only, since the self-hosted runners admit no public repository,
 [repos/monoflake/cloud/docs/runner.md](../repos/monoflake/cloud/docs/runner.md). It has them free,
 so a public Rust repository runs the four Rust steps there: `cargo fmt`, `clippy`, the tests and
-`cargo deny`.
+`cargo deny`. monoflake/machine's check runs those four steps beside monoflake/driver's build.
 
 **A job on a self-hosted runner keeps its caches on the runner, never in the GitHub cache.** The
 runner's disk persists between jobs, so uploading a cache only to download it again on the same
