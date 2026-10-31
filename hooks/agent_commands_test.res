@@ -454,6 +454,15 @@ describe("printing a secret", () => {
   })
 })
 
+describe("the lanes directory", () => {
+  test("is the workspace's own, found from a workspace lane's checkout too", () => {
+    expect(Agent_commands.lanesUnder("/Users/me/workspace"))->toEqual("/Users/me/workspace/lanes")
+    expect(Agent_commands.lanesUnder("/Users/me/workspace/lanes/update-a/workspace"))->toEqual(
+      "/Users/me/workspace/lanes",
+    )
+  })
+})
+
 describe("an implementer's writes", () => {
   let lane = Node.join([Agent_commands.lanesRoot, "flows"])
   let other = Node.join([Agent_commands.lanesRoot, "wiring"])

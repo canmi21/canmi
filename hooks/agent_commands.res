@@ -387,8 +387,15 @@ let written = (payload: Payload.t): array<string> => {
   }
 }
 
-/** The directory every lane sits in, `Delegation.lanes` under the workspace. */
-let lanesRoot = Node.join([Registry.root, Delegation.lanes])
+/**
+ * The directory every lane sits in, `Delegation.lanes` under the workspace, found from a workspace
+ * lane's own checkout as well, whose root lies two levels below it.
+ */
+let lanesUnder = root => {
+  let parent = Node.dirname(Node.dirname(root))
+  Node.basename(parent) == Delegation.lanes ? parent : Node.join([root, Delegation.lanes])
+}
+let lanesRoot = lanesUnder(Registry.root)
 
 /** The lane a path lies in, the directory under `lanesRoot` it starts with, if any. */
 let laneOf = path =>
