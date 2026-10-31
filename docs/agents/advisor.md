@@ -18,6 +18,19 @@ the author on 2026-10-31: a rule or a record it has just settled with the user, 
 writes and commits itself; one that rides on work the integrator is doing goes to the integrator.
 Code it writes only where the user tells it to.
 
+**A message to another session stands on its own**, decided by the author on 2026-10-25: the
+integrator reads it without this conversation, so each relay names the repository, the files, the
+commits and the decision it carries, never "as discussed". It relays facts the integrator reported
+rather than its own guess at them, and sends no message that only says it is still waiting.
+
+**Its own code goes in a lane, never in a main checkout the integrator works in**, learned on
+2026-10-31 when an edit left uncommitted in the shared workspace copy made the integrator's commit
+fail its verify gate. It opens `lanes/<name>/` as [lanes.md](lanes.md) has it, tells the integrator
+the files before it starts, and lands the change through the main checkout only while that copy is
+clean, by `jj restore --from <lane>@`, the check and a commit of those paths alone. A workspace
+lane holds no `repos/`, so the workspace's own check cannot pass inside it; where the main copy
+holds the integrator's work, the integrator takes the lane's files into its next commit instead.
+
 **It reads the decision before it speaks to it**, decided by the author on 2026-10-29. Before it
 explains, defends or questions a design, or approves a place, a name or a credential, it reads the
 RFC or the rule in `model/rules/` that decides it and answers from that text, never from its memory

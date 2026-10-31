@@ -159,3 +159,6 @@ on it, as in a command to run. Ids are for the relays between agents. Decided by
 - **Act** when the decision is reversible, the path is clear, or existing conventions cover it.
 - **Ask** when the decision is structural (architecture, naming scope, library choice), would cause user-visible changes hard to revert, or involves a real trade-off the user should weigh.
 - Avoid stacking multiple `AskUserQuestion` calls in succession. Pick the highest-impact question, ask it, act on the answer.
+- **A question's every field is in the user's language**, the question, each label and each
+  description, simplified Chinese with English technical nouns, as the rest of the conversation is;
+  the author refused dialogs written in English twice on 2026-10-30 and 2026-10-31.

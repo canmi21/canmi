@@ -75,6 +75,10 @@ moves into `model/rules/` with its check and leaves this file.
   that are not this session's, and `pgrep -fl claude`. A repository in use is skipped and named.
   On 2026-09-25 `jj fix` in seam, beside another session's scratch file, left its working copy
   divergent.
+- **Two processes never build one ReScript tree at once.** Every cloud task starts with `rescript
+  build`, which compiles the platform sibling too; on 2026-10-31 a check run beside another
+  session's `mise run nudge` in the same checkout failed on "Corrupted compiled interface", and
+  passed run again. A failure of that shape is rerun alone before it is read as a defect.
 - **A commit rewritten is followed by `jj st` in every lane standing on it.** Rewording a pushed
   commit rebases each lane's change onto the new one and leaves that lane's working copy stale,
   as an edit to the base does, [lanes.md](agents/lanes.md); on 2026-10-27 a reworded commit of

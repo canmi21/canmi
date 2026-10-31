@@ -243,7 +243,8 @@ MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> \
   instead: `implementer-commands` on its shell, and `implementer-lane` on every Edit, Write and
   `apply_patch`, refusing a write outside its lane, [implementer.md](implementer.md). A new or
   changed entry in `~/.codex/hooks.json` runs only once the author has trusted it in Codex, which
-  skips an untrusted hook without a word, so a hook is proven by a probe after each change, as the
+  skips an untrusted hook without a word, and an agent never writes Codex's trust record itself,
+  since a hash it forged would grant what only the author grants, so a hook is proven by a probe after each change, as the
   lane hook was that day. The brief is stdin, and `-o` keeps the last message as its report.
 - **A lane is prepared before it is handed over**: `pnpm install` in each repository and, in
   monoflake/platform, `mise run prepare`, whose generated libraries a block's `built` reads, so the
