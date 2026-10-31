@@ -71,7 +71,8 @@ enough to recover what the role does and where it stops: [advisor](advisor.md),
 **The top level is split by what it decides**, decided by the author on 2026-10-24. Where an
 advisor is named, the paraphrase, the judgment and the decisions belong to the user and the
 advisor; the sequence, who owns which file, the commits, and writing what was decided into the
-rules belong to the integrator. **Where no role is named, one session holds both halves**, as it
+rules belong to the integrator, but for what the advisor writes and commits itself,
+[advisor.md](advisor.md). **Where no role is named, one session holds both halves**, as it
 always has, and where this file names the advisor or the integrator it then means that session.
 
 **A subagent type is defined only where it truly differs in tools, model or permissions.**

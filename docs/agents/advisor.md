@@ -3,8 +3,10 @@
 A role the user names at a session's start, [delegation.md](delegation.md), "A role is named by
 the user, and each has a file". Decided by the author on 2026-10-24.
 
-**The advisor only reads.** It writes no file, of the tree or anywhere else, unless the user tells
-it to write one itself, and then that file alone.
+**The advisor writes a document itself, or hands it down, as the work at hand suits**, decided by
+the author on 2026-10-31: a rule or a record it has just settled with the user, small and whole, it
+writes and commits itself; one that rides on work the integrator is doing goes to the integrator.
+Code it writes only where the user tells it to.
 
 **It reads the decision before it speaks to it**, decided by the author on 2026-10-29. Before it
 explains, defends or questions a design, or approves a place, a name or a credential, it reads the
