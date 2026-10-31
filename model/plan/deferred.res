@@ -301,7 +301,7 @@ let items: array<item> = [
   },
   {
     id: "production-nix-key",
-    what: "the Nix key A's and B's CI signs with is named `ci<nix@monoflake.com>-1`, its last number counting rotations with both keys trusted while one replaces the other, made at step 5 of monoflake/cloud's RFC oej2a item 8 with A and B, as the author decided on 2026-10-29, its private half a GitHub secret and its public half in monoflake/cloud's config as the test platform's was; the four old builder keys, each named for its builder and ending in -cache-1, go with the old cache code after that reset",
+    what: "A's and B's CI signs with one Nix key, `ci<nix@monoflake.com>-1`, its last number counting rotations with both keys trusted while one replaces the other, as the author decided on 2026-10-29, and with one ssh ed25519 pointer key, `ci-pointers`, shared by A and B, as the author decided on 2026-10-31; both were made by the advisor on 2026-10-31 and set as monoflake/cloud's GitHub secrets NIX_SIGNING_KEY and POINTER_SIGNING_KEY, the author's one copy of each in `~/.ssh/monoflake_nix` and `~/.ssh/monoflake_pointer_ed25519` on the Mac, no other kept, a lost key rotated. What is left waits on step 5 of monoflake/cloud's RFC oej2a item 8: the public halves written into monoflake/cloud's config and A's and B's machines as the test platform's were, and the four old builder keys, each named for its builder and ending in -cache-1, removed with the old cache code after that reset",
     repos: ["monoflake/cloud", "monoflake/machine"],
     until: Author,
   },
