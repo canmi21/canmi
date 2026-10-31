@@ -196,6 +196,10 @@ moves into `model/rules/` with its check and leaves this file.
   2026-10-24 one shell loop pushed monoflake/platform, then had driver refused by its line limit
   and went on to push cloud, so cloud landed before driver against the cleared order, and driver's
   public main did not build against platform's new contracts until driver followed.
+- **A repository is pushed only once what it compiles against from a sibling is pushed too.** At
+  home a repository builds against the siblings' working copies, so code another repository has
+  not committed compiles there and fails in CI. On 2026-10-31 monoflake/cloud imported driver's
+  `Worker_install`, held uncommitted in driver, and cloud's scheduled systems run failed to compile.
 - **A NixOS switch starts a timer held by hand again.** A switch restarts every unit its
   configuration enables, timers among them, so a timer stopped for a step is stopped again after
   each switch. On 2026-10-25 both of monoflake's test machines had their daily upgrade timer

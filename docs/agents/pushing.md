@@ -38,8 +38,9 @@ such push comes, the deferred item `release-push`; until then it is asked of the
 either mode,
 [commits.md](../commits.md), "When a change is done, and when it is pushed". As things stand,
 monoflake/platform's and monoflake/cloud's pushes start no CI; monoflake/driver's release runs on
-every push to main and daily, publishing whenever driver-machine's version is unreleased, so a push
-raising that version releases it and is asked first, as one did unasked on 2026-10-31; every
+every push to main and daily at 06:31 UTC, releasing whenever the source version is unreleased, so
+a push carrying a version bump of our own code is asked of the author first, as one released unasked
+on 2026-10-31, while a dependency move alone raises no version and rides the next release; every
 repository's update runs on a daily schedule and by hand, never on a push, and
 monoflake/runtime's publish on a push and on a weekly one, and both handle their own edge cases;
 and what runtime publishes is an upstream image repackaged, which [lessons.md](../lessons.md) lets
