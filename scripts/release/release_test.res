@@ -479,3 +479,78 @@ describe("a day's release", () => {
     )
   })
 })
+
+describe("the shared GitHub reader", () => {
+  testAsync("reads all pages and rejects a malformed page or a later failure", async () => {
+    let calls = []
+    let fetch = async url => {
+      calls->Array.push(url)
+      url->String.endsWith("page=1")
+        ? Ok(JSON.parseOrThrow("[{\"tag_name\":\"first\"}]"))
+        : url->String.endsWith("page=2")
+        ? Ok(JSON.parseOrThrow("[{\"tag_name\":\"second\"}]"))
+        : Ok(JSON.Encode.array([]))
+    }
+    expect((await Github.releases(~fetch, "owner/repo"))->Result.map(Array.length))->toEqual(Ok(2))
+    expect(calls->Array.length)->toBe(3)
+    let fetch = async _ => Ok(JSON.Encode.null)
+    expect(await Github.releases(~fetch, "owner/repo"))->toEqual(
+      Error("owner/repo's releases are not a list"),
+    )
+    let fetch = async url =>
+      url->String.endsWith("page=1") ? Ok(JSON.parseOrThrow("[{}]")) : Error("not reached")
+    expect(await Github.releases(~fetch, "owner/repo"))->toEqual(Error("not reached"))
+  })
+
+  test("prefers GH_TOKEN and falls back to GITHUB_TOKEN", () => {
+    let saved = Node.env->Dict.copy
+    Node.env->Dict.set("GH_TOKEN", "first")
+    Node.env->Dict.set("GITHUB_TOKEN", "second")
+    expect(Github.token())->toEqual(Some("first"))
+    Node.env->Dict.delete("GH_TOKEN")
+    expect(Github.token())->toEqual(Some("second"))
+    ["GH_TOKEN", "GITHUB_TOKEN"]->Array.forEach(
+      name =>
+        switch saved->Dict.get(name) {
+        | Some(value) => Node.env->Dict.set(name, value)
+        | None => Node.env->Dict.delete(name)
+        },
+    )
+  })
+
+  test("holds answers once by status and checks the manifest after finding files", () => {
+    let saved = Node.env->Dict.get("GITHUB_REPOSITORY")
+    Node.env->Dict.set("GITHUB_REPOSITORY", "owner/repo")
+    let script = Node.join([Node.cwd(), "scripts/release/release.res.mjs"])
+    let run = (draft, version, failed) => {
+      let preload = `globalThis.fetch = async url => {
+        if (${failed ? "true" : "false"}) return new Response('', {status: 503});
+        const releases = [{draft: ${draft ? "true" : "false"}, assets: [
+          {name: 'workerd-1.0.0-linux-x86_64.tar'},
+          {name: 'manifest.json', browser_download_url: 'https://example.com/manifest.json'}]}];
+        const body = url.endsWith('&page=1') ? releases : url.endsWith('&page=2') ? [] :
+          {runtimes: [{runtime: 'workerd', version: '${version}'}]};
+        return new Response(JSON.stringify(body));
+      }`
+      Node.spawnSync(
+        "node",
+        ["--import", `data:text/javascript,${preload}`, script, "holds", "workerd", "1.0.0"],
+        {encoding: "utf8", maxBuffer: Github.maxBuffer},
+      )
+    }
+    let yes = run(false, "1.0.0", false)
+    expectAs(yes.status->Nullable.getOr(1), yes.stderr->Nullable.getOr(""))->toBe(0)
+    expect(yes.stdout->Nullable.getOr(""))->toBe("true\n")
+    [run(true, "1.0.0", false), run(false, "2.0.0", false)]->Array.forEach(
+      no => {
+        expect(no.status->Nullable.getOr(1))->toBe(2)
+        expect(no.stdout->Nullable.getOr(""))->toBe("false\n")
+      },
+    )
+    expect(run(false, "1.0.0", true).status->Nullable.getOr(0))->toBe(1)
+    switch saved {
+    | Some(value) => Node.env->Dict.set("GITHUB_REPOSITORY", value)
+    | None => Node.env->Dict.delete("GITHUB_REPOSITORY")
+    }
+  })
+})

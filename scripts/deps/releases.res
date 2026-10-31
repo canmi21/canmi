@@ -15,9 +15,9 @@ let emit = () =>
  */
 @module("node:fs") external appendFileSync: (string, string) => unit = "appendFileSync"
 
-let field = (json, key) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(key))
-let text = (json, key) => json->field(key)->Option.flatMap(JSON.Decode.string)
-let list = (json, key) => json->field(key)->Option.flatMap(JSON.Decode.array)->Option.getOr([])
+let field = Manifest.field
+let text = Manifest.text
+let list = Manifest.list
 
 /** The Nix system a manifest's target is, `linux-x86_64` taken as `x86_64-linux`. */
 let system = target =>
@@ -141,23 +141,7 @@ let written = (~source, ~others=[], ~manifest, pins: array<(string, JSON.t)>) =>
   [...head, ...tables]->Array.join("\n") ++ "\n"
 }
 
-/** A JSON document from GitHub, with the token where the environment holds one. */
-let github = async (url): result<JSON.t, string> => {
-  let headers = dict{"accept": "application/vnd.github+json", "user-agent": "workspace-releases"}
-  switch Node.env->Dict.get("GITHUB_TOKEN") {
-  | Some(token) => headers->Dict.set("authorization", `Bearer ${token}`)
-  | None => ()
-  }
-  switch await Net.fetch(url, {headers: headers}) {
-  | response if response->Net.ok =>
-    let body = await response->Net.responseText
-    try Ok(JSON.parseOrThrow(body)) catch {
-    | JsExn(_) => Error(`${url} is not JSON`)
-    }
-  | response => Error(`${url} answered ${response->Net.status->Int.toString}`)
-  | exception JsExn(e) => Error(`${url}: ${e->JsExn.message->Option.getOr("not reached")}`)
-  }
-}
+let github = Github.json
 
 /** The pin `name` takes now, from the newest version a published release's manifest lists. */
 let resolve = async (~source=?, ~fetch=github, releases: array<JSON.t>, ~name) => {
@@ -250,13 +234,12 @@ let moves = async (sources: array<source>, ~locked, ~file, ~lock, ~fetch=github)
       if !(held->Array.includes(repository)) {
         held->Array.push(repository)
       }
-    switch await fetch(`https://api.github.com/repos/${repository}/releases?per_page=100`) {
+    switch await Github.releases(~fetch, repository) {
     | Error(why) =>
       log(`releases: ${file}, ${repository}'s releases could not be read, ${why}`)
       hold()
       names->Array.forEach(kept)
     | Ok(releases) =>
-      let releases = releases->JSON.Decode.array->Option.getOr([])
       for index in 0 to names->Array.length - 1 {
         let name = names->Array.getUnsafe(index)
         let version =

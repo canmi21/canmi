@@ -105,16 +105,16 @@ let ask = async (tool, line: option<string>): option<string> =>
     | Some(("github", where)) =>
       switch line {
       | None =>
-        switch await get(`https://api.github.com/repos/${where}/releases/latest`) {
-        | Some(release) if field(release, "prerelease") != Some(Boolean(true)) =>
+        switch await Github.json(`https://api.github.com/repos/${where}/releases/latest`) {
+        | Ok(release) if field(release, "prerelease") != Some(Boolean(true)) =>
           textField(release, "tag_name")->Option.map(tag => tag->String.replaceRegExp(leadingV, ""))
         | _ => None
         }
       // No endpoint answers a line's latest, so the list is walked, newest first, past drafts and
       // prereleases.
       | Some(line) =>
-        switch await get(`https://api.github.com/repos/${where}/releases?per_page=100`) {
-        | Some(Array(releases)) =>
+        switch await Github.releases(where) {
+        | Ok(releases) =>
           releases->Array.reduce(None, (found, release) =>
             switch found {
             | Some(_) => found

@@ -1,7 +1,7 @@
 /**
- * `release.res.mjs [listed | notes] [--dry-run]`, from a repository declaring `[release]`, puts
- * what its `built.json` names into the UTC day's release, prints what is out, or renders each
- * day's notes again from its manifest. See docs/toolchain.md.
+ * `release.res.mjs [listed | holds <name> <version> | notes] [--dry-run]`, from a repository
+ * declaring `[release]`, puts what its `built.json` names into the UTC day's release, prints what
+ * is out or whether a version is, or renders each day's notes again. See docs/toolchain.md.
  */
 let refuse = why => {
   Console.error(`release: ${why}`)
@@ -21,47 +21,15 @@ let repository = () =>
     ->Option.flatMap(found => found->RegExp.Result.matches->Array.get(0)->Option.flatMap(x => x))
   }
 
-let token = switch Node.env->Dict.get("GH_TOKEN") {
-| Some(token) => Some(token)
-| None => Node.env->Dict.get("GITHUB_TOKEN")
-}
+let json = Github.json
 
-/** A JSON document from GitHub, with the token where the environment holds one. */
-let json = async url => {
-  let headers = dict{"accept": "application/vnd.github+json", "user-agent": "workspace-release"}
-  if url->String.startsWith("https://api.github.com/") {
-    token->Option.forEach(token => headers->Dict.set("authorization", `Bearer ${token}`))
+let releases = async repository =>
+  switch await Github.releases(repository) {
+  | Error(why) if dry && why->String.includes("&page=1 answered 404") =>
+    Console.error(`release: ${repository} is not on GitHub, so a dry run reads it as no releases`)
+    Ok([])
+  | result => result
   }
-  switch await Net.fetch(url, {headers: headers}) {
-  | response if response->Net.ok =>
-    let body = await response->Net.responseText
-    try Ok(JSON.parseOrThrow(body)) catch {
-    | JsExn(_) => Error(`${url} is not JSON`)
-    }
-  | response => Error(`${url} answered ${response->Net.status->Int.toString}`)
-  | exception JsExn(e) => Error(`${url}: ${e->JsExn.message->Option.getOr("not reached")}`)
-  }
-}
-
-/** Every release of the repository, a page of a hundred at a time, drafts among them. */
-let releases = async repository => {
-  let rec page = async (n, found) =>
-    switch await json(
-      `https://api.github.com/repos/${repository}/releases?per_page=100&page=${n->Int.toString}`,
-    ) {
-    | Error(why) if dry && n == 1 && why->String.endsWith("answered 404") =>
-      Console.error(`release: ${repository} is not on GitHub, so a dry run reads it as no releases`)
-      Ok([])
-    | Error(why) => Error(why)
-    | Ok(listed) =>
-      switch listed->JSON.Decode.array {
-      | Some([]) => Ok(found)
-      | Some(list) => await page(n + 1, [...found, ...list])
-      | None => Error(`${repository}'s releases are not a list`)
-      }
-    }
-  await page(1, [])
-}
 
 /** A release's manifest as it was uploaded, or none where the release carries none. */
 let manifestOf = async release =>
@@ -361,6 +329,17 @@ let main = async () => {
   | None => refuse("no GITHUB_REPOSITORY, and no GitHub remote named origin")
   }
   switch Node.args()->Array.filter(arg => !(arg->String.startsWith("-"))) {
+  | ["holds", name, version] =>
+    switch await releases(repository) {
+    | Error(why) => refuse(why)
+    | Ok(releases) =>
+      switch await releasedHere(releases, ~name, ~version) {
+      | Error(why) => refuse(why)
+      | Ok(holds) =>
+        Console.log(holds ? "true" : "false")
+        Node.exit(holds ? 0 : 2)
+      }
+    }
   | ["listed"] =>
     switch await releases(repository) {
     | Error(why) => refuse(why)
@@ -411,7 +390,7 @@ let main = async () => {
       | Ok() => Console.log("release: every day's notes are what its manifest renders")
       }
     }
-  | _ => refuse("release.res.mjs [listed | notes] [--dry-run]")
+  | _ => refuse("release.res.mjs [listed | holds <name> <version> | notes] [--dry-run]")
   }
 }
 

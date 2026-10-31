@@ -306,7 +306,8 @@ let manifestOf = (tag, entries) =>
     },
   )
 
-let listing = repository => `https://api.github.com/repos/${repository}/releases?per_page=100`
+let listing = repository =>
+  `https://api.github.com/repos/${repository}/releases?per_page=100&page=1`
 let downloaded = (repository, tag) =>
   `https://github.com/${repository}/releases/download/${tag}/manifest.json`
 
@@ -350,7 +351,10 @@ let runtimeAnswers = () => {
 }
 
 let fake = (answers: dict<result<JSON.t, string>>) =>
-  async url => answers->Dict.get(url)->Option.getOr(Error(`${url} answered 404`))
+  async url =>
+    url->String.includes("&page=") && !(url->String.endsWith("&page=1"))
+      ? Ok(JSON.Encode.array([]))
+      : answers->Dict.get(url)->Option.getOr(Error(`${url} answered 404`))
 
 let driverPin = `# https://github.com/monoflake/driver/releases/tag/2026.10.27
 [driver-machine]
