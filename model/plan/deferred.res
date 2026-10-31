@@ -289,7 +289,7 @@ let items: array<item> = [
   },
   {
     id: "runner-token",
-    what: "ci's runner token in monoflake/cloud's runner/secrets.json, the fine-grained token ci-runner whose resource owner is the monoflake organization and whose one permission is the organization's Self-hosted runners, read and write, made on 2026-10-30, expires on 2027-10-30; before then the author makes the next one, enters it with `mise run secret monoflake/cloud/runner runner-token`, and runs `mise run runner update`, RFC obvjb",
+    what: "the self-hosted runners' token in monoflake/cloud's runner/secrets.json, shared by ci-raleigh, ci-tokyo and ci-sanjose, the fine-grained token ci-runner whose resource owner is the monoflake organization and whose one permission is the organization's Self-hosted runners, read and write, made on 2026-10-30, expires on 2027-10-30; before then the author makes the next one, enters it with `mise run secret monoflake/cloud/runner runner-token`, and runs `mise run runner update`, RFC obvjb",
     repos: ["monoflake/cloud"],
     until: Author,
   },
