@@ -132,7 +132,7 @@ describe("an RFC's frontmatter", () => {
       Rfc_record.checkSections("## Decision\n## Question\n## Decided\n", ~status=Some("draft")),
     )->toEqual([
       "unknown section `Decided`",
-      "sections stand out of order; the order is Question, Options, Evidence, Decision",
+      "sections stand out of order; the order is Question, Options, Evidence, Decision, State",
       "a draft has no `## Decision`; it is `accepted` once decided",
     ])
     expect(

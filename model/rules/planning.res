@@ -14,7 +14,7 @@ let rfcDirectory = "docs/rfcs"
 let statuses = ["draft", "accepted", "landed", "declined"]
 
 /** An RFC's sections, in the only order they may stand. RFC 2ut6h. */
-let sections = ["Question", "Options", "Evidence", "Decision"]
+let sections = ["Question", "Options", "Evidence", "Decision", "State"]
 
 let rules: array<Rule.t> = [
   {
