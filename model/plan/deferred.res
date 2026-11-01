@@ -306,6 +306,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-roots-race",
+    what: "monoflake/driver's test a_nix_store_that_never_exits_is_killed in machine/container/tests/roots.rs reads the pid file its fake nix-store writes after starting, while the driver kills that process at 500 ms, so under a loaded Mac the process is killed before it writes and the read panics NotFound, all three of nextest's retries failing on 2026-11-01 and the test passing alone; the test tolerates a process killed before it wrote its pid, or the fake writes it first",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
