@@ -282,12 +282,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "stale-lanes",
-    what: "the lanes sweep and upgrade under lanes/, left from 2026-10-27 and 10-29 holding work main lacks, are forgotten and removed once the fleet's reset is done, with no bookmark kept, as the author decided on 2026-10-31: sweep's commit 90e2bb0b and its working copy carry the old builders' cache code under monoflake/machine's system/nix/cache, and upgrade's working copy 5709eb5f carries monoflake/cloud's scripts/upgrade.res and its test for the old update mechanism",
-    repos: ["monoflake/cloud", "monoflake/machine", "workspace"],
-    until: Closes("oej2a"),
-  },
-  {
     id: "cloud-split",
     what: "monoflake/cloud, which holds the fleet's machines, runners and systems beside the platforms' deployments and one secrets file for all of them, is split into repositories by layer once development is mostly done, when the author judges it, as the author decided on 2026-10-31; until then it stays one repository so a change can cross the layers in one commit",
     repos: ["monoflake/cloud"],
