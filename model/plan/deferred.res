@@ -265,7 +265,7 @@ let items: array<item> = [
   },
   {
     id: "driver-import-notfound",
-    what: "a deployment's import failed once with `import the archive: NotFound: not found`, in one conform on snow of three at driver 0.1.4, containerd logging no error, cause not known; once found it is fixed or made a retry",
+    what: "a deployment's import failed once with `import the archive: NotFound: not found`, in one conform on snow of three at driver 0.1.4, containerd logging no error, cause not known, perhaps its GC collecting a first import, as `imported()` holds no lease; candidate two takes a lease around the import, released after `read_image`, and refutes this by `images rm --sync` during a first import if cheap",
     repos: ["monoflake/driver"],
     until: Author,
   },
