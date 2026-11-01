@@ -79,7 +79,9 @@ let held = (
     let (front, found) = Rfc_record.readFront(text)
     let body = Rfc_record.body(text)
     let status = front->Option.map(front => front.status)
-    let newForm = Rfc_name.place(file.day, file.order) >= Planning.newFormFrom
+    let newForm =
+      Rfc_name.place(file.day, file.order) >= Planning.newFormFrom &&
+        !(Planning.oldForm->Array.includes(file.id))
     let own = Array.concat(found, Rfc_record.checkSections(body, ~status, ~newForm))
     if newForm {
       own->Array.pushMany(Rfc_record.checkNewForm(text, ~status))

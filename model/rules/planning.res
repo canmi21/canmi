@@ -16,6 +16,9 @@ let statuses = ["draft", "decided", "accepted", "landed", "declined"]
 /** The place, `yyyy-mmdd-nn`, from which an RFC is of the new form. RFC 8q1af. */
 let newFormFrom = "2026-1101-02"
 
+/** RFCs placed on that day in other repositories before the form was set, history as they stand. */
+let oldForm = ["stc9g", "jq7tx", "42a5w", "fds59", "okz12"]
+
 /** The only statuses an RFC of the new form may have. */
 let newStatuses = ["draft", "decided", "declined"]
 
