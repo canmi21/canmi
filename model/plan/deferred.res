@@ -264,6 +264,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-import-notfound",
+    what: "a deployment's import failed once with `import the archive: NotFound: not found`, in one conform on snow of three at driver 0.1.4, containerd logging no error, cause not known; once found it is fixed or made a retry",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
