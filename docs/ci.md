@@ -52,6 +52,16 @@ a stage does lives in the entry, where it is tested and run locally before CI ev
 outputs between steps. Logic, a loop, a parse, a retry, goes in the entry, in ReScript, which is
 type-checked, tested, and runs the same on the Mac as on a runner.
 
+## A schedule's time is nominal
+
+Decided by the author on 2026-11-01, the rule `schedule-nominal` in `model/rules/toolchain.res`.
+**GitHub runs a scheduled workflow hours late, or drops it**: from 2026-10-22 to 10-31 every cron
+of ours fired late, the 06:17, 06:31 and 07:23 ones by five to seven hours, the 19:00 one by three
+to almost four, and the 22:00 updates of 10-31 by about two and a half; moving a cron off the hour
+did not help. So monoflake/cloud's systems run every 12 hours, and a dropped run is made up within
+about a day. Anything that depends on a schedule tolerates a late or a missing run, as the systems
+bucket's two-day lifecycle does, and urgent work is dispatched by hand.
+
 ## Scheduled updates
 
 Decided by the author on 2026-10-31, the workspace action owns `nix` for installing Nix and

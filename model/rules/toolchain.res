@@ -312,6 +312,14 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "schedule-nominal",
+    says: "A scheduled workflow's time is nominal; what depends on it tolerates a late or missing run, and urgent work is dispatched by hand",
+    doc: "docs/ci.md",
+    held: Pending(
+      "monoflake/cloud's systems bucket lifecycle read against systems.yml's crons, outlasting two missed runs",
+    ),
+  },
+  {
     name: "custom-domains",
     says: "workers_dev and preview_urls are off in every wrangler configuration",
     doc,
