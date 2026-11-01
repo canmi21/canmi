@@ -5,12 +5,8 @@
 `tsconfig.json` runs `strict` plus `noUncheckedIndexedAccess`. Both are deliberate, and the
 second one is the expensive one, so it needs its reason on the record.
 
-`noUncheckedIndexedAccess` makes every array index and every destructured element
-`T | undefined`. That is annoying exactly where code is doing something unproven, which is the
-point. When it was first switched on here it immediately found three places where a length
-check and a destructure sat next to each other with nothing connecting them, plus a narrowing
-bug where `Array.isArray` left a `readonly` array unnarrowed in the false branch -- all in code
-that passed its whole test suite.
+`noUncheckedIndexedAccess` makes every array index and every destructured element `T | undefined`.
+That is annoying exactly where code is doing something unproven, which is the point.
 
 The rule it implies: **guard against the values the code uses, not against a count.**
 `if (parts.length >= 5)` proves nothing to a reader or a compiler about `parts[3]`. Destructure
@@ -27,33 +23,27 @@ Workers and `libs/sdk/store`; infra needs two, having no Worker.
 
 The split is forced rather than chosen. `@cloudflare/workers-types` declares its own
 `ReadableStream`, `Response` and `Cache`, and the DOM library declares those names too. Nothing
-tells TypeScript they describe the same things, so with both in scope every worker value crossing
-a shared boundary is a type error. Two workarounds had grown from that one cause, both in what is now
-the platform, and neither looked related to the other: `as unknown as ReadableStream` across the
-store's public surface, and a hand-written structural declaration of `caches.default` in the CDN
-because importing the real one would have made every Hono handler disagree about `Response`. Both are gone; nothing
-casts across that boundary now.
+tells TypeScript they describe the same things, so with both in scope every worker value crossing a
+shared boundary is a type error. Nothing casts across that boundary.
 
 **A file belongs to the program whose globals it actually runs against**, which is not always the
-directory it sits in. An app's `scripts/` is node, and is checked as node -- by the third
-program, which exists because saying so was not the same as arranging it. web's `tsconfig.json`
-excludes `apps/site` wholesale, since SvelteKit generates the `$lib` aliases that only svelte-check sees;
-svelte-check in turn reads SvelteKit's own generated file list, which stops at `src`. Every
-`scripts/` directory fell through the gap between those two and was checked by nothing at all --
-found by putting `const x: number = 'not a number'` in one and watching `verify` pass, which is
-also the check worth repeating on any program claimed to cover something. It carries the browser's
-lib beside node's, and that is not the collision this section warns about: what forced the split is
-DOM against `@cloudflare/workers-types`, and no script imports those.
+directory it sits in. An app's `scripts/` is node, and is checked as node, by the third program.
+web's `tsconfig.json` excludes `apps/site` wholesale, since SvelteKit generates the `$lib` aliases
+that only svelte-check sees; svelte-check in turn reads SvelteKit's own generated file list, which
+stops at `src`. Without the third program every `scripts/` directory falls through the gap between
+those two and is checked by nothing at all. Putting `const x: number = 'not a number'` in a file and
+watching `verify` fail is the check worth repeating on any program claimed to cover something. The
+third program carries the browser's lib beside node's, and that is not the collision this section
+warns about: what forces the split is DOM against `@cloudflare/workers-types`, and no script imports
+those.
 
-A worker's tests are checked _with the worker_, because they exercise worker code and mock worker bindings
--- putting them elsewhere pulls the whole worker into a program that has the browser's globals,
-which is the thing being avoided.
+A worker's tests are checked _with the worker_, because they exercise worker code and mock worker
+bindings -- putting them elsewhere pulls the whole worker into a program that has the browser's
+globals, which is the thing being avoided.
 
-What the separation exposed is the argument for it. The platform's `apps/delivery/cdn` polyfills `ImageData` because
-workerd has none, and the polyfill needed a `@ts-expect-error` to install itself -- it was being
-checked against a browser's `ImageData`, which it is not. The type now lives in
-`apps/delivery/cdn/worker-runtime.d.ts` and describes what the polyfill supplies, so the declaration and
-the implementation are one claim instead of two that happened to agree.
+The platform's `apps/delivery/cdn` polyfills `ImageData` because workerd has none. The type lives in
+`apps/delivery/cdn/worker-runtime.d.ts` and describes what the polyfill supplies, so the declaration
+and the implementation are one claim instead of two that happen to agree.
 
 ## Dependency budgets differ by destination
 
@@ -68,12 +58,11 @@ A local binary is never downloaded by anyone. Its compile time is paid once per 
 one machine that builds it, and its size is paid never. Picking a weaker library there to save
 megabytes trades a real correctness risk for a saving nobody experiences.
 
-Deployed code is the opposite, and the same problem can deserve opposite answers in the two
-places. The favicon resolver is the worked example: the Worker version parsed HTML with
-regexes because a Worker has a bundle budget, and the local port uses a real HTML5 tokenizer
-because it does not. Measured on adversarial input, the regex approach silently picked up a
-commented-out `<link>`, a `<link>` inside a `<script>` string, and left `&amp;` undecoded --
-three wrong icons, none of which announce themselves.
+Deployed code is the opposite, and the same problem can deserve opposite answers in the two places.
+The favicon resolver is the worked example: a Worker has a bundle budget that argues for regexes
+over HTML, and the local port has none, so it uses a real HTML5 tokenizer. On adversarial input a
+regex approach silently picks up a commented-out `<link>` and a `<link>` inside a `<script>` string,
+and leaves `&amp;` undecoded -- three wrong icons, none of which announce themselves.
 
 So when a dependency looks heavy, the question is not "is this too big" but **"who pays for
 this size, and what does refusing it cost instead?"**
@@ -85,14 +74,13 @@ a de-facto standard and a known library implements it, local code uses the libra
 reach one small corner of what it does. Not a regex over the shape that usually appears, not a
 `split_once` that covers the cases seen so far.
 
-The cost of refusing is not a bug so much as a _disagreement_, and disagreements in a parser are
-the quiet kind. web's `local og` read article frontmatter with a hand-rolled split while the segment
-layout read the same frontmatter with `serde_yaml_ng`, and the card looks its translation up by
-the title string the first one produced. A folded scalar -- `title: >-` across two lines -- gives
-the hand-rolled reader `>-`, so the card is titled with the fold marker and, worse, finds no
-translation under it and falls back to the source language in every view, reporting nothing.
-Quoted scalars with an escaped quote inside fail the same way. Nothing is wrong; something is
-merely different, everywhere, silently.
+The cost of refusing is not a bug so much as a _disagreement_, and disagreements in a parser are the
+quiet kind. Where a hand-rolled split reads article frontmatter and `serde_yaml_ng` reads the same
+frontmatter elsewhere, a folded scalar -- `title: >-` across two lines -- gives the hand-rolled
+reader `>-`, so a card that looks its translation up by that title is titled with the fold marker
+and, worse, finds no translation under it and falls back to the source language in every view,
+reporting nothing. Quoted scalars with an escaped quote inside fail the same way. Nothing is wrong;
+something is merely different, everywhere, silently.
 
 **Two readings of one format is the shape to watch for.** Wherever a second reader appears for
 something already parsed elsewhere, it is the same library or it is a defect waiting for the
@@ -129,11 +117,9 @@ of the same set is a tax on every reader. web measures both sides of that in
 receives a string can only print it, and a caller that receives a panic cannot do either.
 
 The distinction that decides between an error and a panic is **whose mistake it is**. A person
-hand-writing frontmatter will mistype it, so unreadable frontmatter is an ordinary event and
-returns `Malformed` -- web's `apps/local/src/i18n/segment.rs`. A panic is for the state that cannot
-arise unless this code is already wrong. `local i18n` used to abort on a stray colon in an article,
-with a message naming the fault and not the file, which left a binary search through the corpus
-as the way to find out which article it was.
+hand-writing frontmatter will mistype it, so unreadable frontmatter is an ordinary event and returns
+`Malformed` -- web's `apps/local/src/i18n/segment.rs`. A panic is for the state that cannot arise
+unless this code is already wrong.
 
 **Context is added by whoever has it.** The parser is handed text and does not know the path;
 the caller read the file and does. So the type stays about the failure and the caller attaches
@@ -177,11 +163,8 @@ A library written for a single caller is a guess about what the second caller wi
 the guess is made at the moment least is known. Waiting means the shared shape is derived from
 two real uses instead of one real use and one imagined one.
 
-The counterpart matters as much: once the second consumer exists, extract rather than copy.
-The API -- then `apps/api` -- read its metadata straight out of R2 while `apps/delivery/cdn` read the same bucket through
-a store that also knew how to read the local tree, so the API had no local development at all
--- every lookup was a 404 until `--remote` reached a bucket that only production writes. The
-copy was not a duplicated function, it was a capability one side silently lacked.
+The counterpart matters as much: once the second consumer exists, extract rather than copy. A copy
+is not only a duplicated function; it can be a capability one side silently lacks.
 
 Extraction is also the moment to write the tests that only make sense for shared code. A
 private helper is covered by its one caller; a library is not, because the behavior each
@@ -213,22 +196,22 @@ its cost paid by nobody?** Where the answer to either is no, it is dead and goes
 
 ## Time is stored and run in UTC
 
-**A server runs in UTC, and every time a program stores, sends or logs is UTC**, decided by the
-author on 2026-11-01. What decides is a machine's role, not where it stands: every machine of the
-fleet runs in UTC, the ones at home among them, as okra, pine, ivy and dusk do. Only a machine
-outside the fleet that the author uses by hand keeps its local time zone: the author's own computer,
-and a host such as the home Proxmox host, which the fleet does not manage. A front end receives UTC and formats it for the
-person reading, in their own time zone and in a form meant for people; no API sends a local time.
-What an agent tells the author is [voice.md](voice.md), "A time told to the author is US Eastern".
+**A server runs in UTC, and every time a program stores, sends or logs is UTC**. What decides is a
+machine's role, not where it stands: every machine of the fleet runs in UTC, the ones at home among
+them, as okra, pine, ivy and dusk do. Only a machine outside the fleet that the author uses by hand
+keeps its local time zone: the author's own computer, and a host such as the home Proxmox host,
+which the fleet does not manage. A front end receives UTC and formats it for the person reading, in
+their own time zone and in a form meant for people; no API sends a local time. What an agent tells
+the author is [voice.md](voice.md), "A time told to the author is US Eastern".
 
 ## A UI draws what an API gives
 
-**A UI computes nothing; it draws what its API returns, and may only format it.** Agreed with the
-author on 2026-10-18. Whether a warning stands, which choices are offered, whether something was
-dismissed -- each is a field the API returns, and a dismissal is state the API keeps. A UI may
-reshape a value for display -- a date in the viewer's zone, a byte count as `1.2 GB` -- and derives
-no fact of its own. So every client of one API, a dashboard, a desktop app or a command line, shows
-the same thing, and a rule lives once, where the API answers, rather than once in every client.
+**A UI computes nothing; it draws what its API returns, and may only format it.** Whether a warning
+stands, which choices are offered, whether something was dismissed -- each is a field the API
+returns, and a dismissal is state the API keeps. A UI may reshape a value for display -- a date in
+the viewer's zone, a byte count as `1.2 GB` -- and derives no fact of its own. So every client of
+one API, a dashboard, a desktop app or a command line, shows the same thing, and a rule lives once,
+where the API answers, rather than once in every client.
 
 ## Tests
 
@@ -243,19 +226,17 @@ When a bug is found, the fix and a test that would have caught it land together,
 cause noted at the assertion. A regression test whose reason is not written down gets deleted
 by whoever next finds it confusing.
 
-**A test binds no fixed port.** It asks for port 0 and is handed a free one, decided by the author
-on 2026-10-24, `test-port-zero` in [model/rules/toolchain.res](../model/rules/toolchain.res). Its
-values reserved for documentation are [agents/pushing.md](agents/pushing.md), "A push carries
-nothing private".
+**A test binds no fixed port.** It asks for port 0 and is handed a free one, `test-port-zero` in
+[model/rules/toolchain.res](../model/rules/toolchain.res). Its values reserved for documentation are
+[agents/pushing.md](agents/pushing.md), "A push carries nothing private".
 
-**Rust's tests run under cargo-nextest, and its doctests by `cargo test --doc`**, which nextest
-does not run, decided by the author on 2026-10-31, `rust-nextest` in
-[model/rules/toolchain.res](../model/rules/toolchain.res). Each test runs in a process of its own,
-all binaries' tests at once, and a repository's `.config/nextest.toml` gives a slow timeout that
-kills a test that hangs, where `cargo test` would wait for it forever. Where a repository's Nix runs
-its tests, it runs them through crane's `cargoNextest`. nextest itself is the workspace's pin in
-`mise.toml`. monoflake/machine and monoflake/driver switched first; every other Rust repository
-switches when it is next touched.
+**Rust's tests run under cargo-nextest, and its doctests by `cargo test --doc`**, which nextest does
+not run, `rust-nextest` in [model/rules/toolchain.res](../model/rules/toolchain.res). Each test runs
+in a process of its own, all binaries' tests at once, and a repository's `.config/nextest.toml`
+gives a slow timeout that kills a test that hangs, where `cargo test` would wait for it forever.
+Where a repository's Nix runs its tests, it runs them through crane's `cargoNextest`. nextest itself
+is the workspace's pin in `mise.toml`. A Rust repository not yet on it switches when it is next
+touched.
 
 ## Nothing is committed unverified
 
@@ -273,30 +254,20 @@ something that nothing was watching.
 Correctness first, and over any distance that stops being a matter of care. Four things have to
 hold of a rule, and one missing is enough for it to decay without anybody noticing.
 
-**Violating it makes something fail.** A rule nothing enforces is a sentence. The rule that a
-configuration file's comment stays short lived in a conversation only, was then cited to an
-implementer as though it were on the page, and two comments were cut on that authority -- with
-nothing in the tree able to say whether the citation was real.
+**Violating it makes something fail.** A rule nothing enforces is a sentence.
 
-**The failure has been demonstrated.** A gate never seen to fail is a name rather than a gate.
-`mise run audit` counts every warning -- [lint-format.md](lint-format.md), "Strict mode" -- and was
-driven red on all three tools before it was believed.
+**The failure has been demonstrated.** A gate never seen to fail is a name rather than a gate. `mise
+run audit` counts every warning, [lint-format.md](lint-format.md), "Strict mode", and is driven red
+on all three tools before it is believed.
 
 **The check can see everywhere the rule applies, including its own home.** A checker told which
-directories to look in is blind to the next one. The reference check read only files with a known
-suffix, so nine citations of a `spec/architecture.md` that does not exist survived in `.gitignore`,
-`.gitattributes` and the task scripts. The comment check was handed `apps/` and `libs/`, so
-`.mise/tasks/`, which held the longest blocks in the repository, was never measured.
+directories to look in is blind to the next one.
 
-**It does not ask a person to hold a global fact.** A threshold resting on a count nobody
-recomputes is a memory. `check-css-budget` skipped any node file it could not parse, so renaming
-one export dropped a third of the article route's CSS out of the measurement and the gate stayed
-green. `shape` compared the fingerprint before the version and returned 0 on a match, so a constant
-raised by hand was reported against the record written for the old one.
+**It does not ask a person to hold a global fact.** A threshold resting on a count nobody recomputes
+is a memory.
 
-Of every failure that session found, all but one was silent; the exception failed the build and
-named the article. **Silence is the default failure mode**, and these four are what turns a silent
-failure into a loud one.
+**Silence is the default failure mode**, and these four are what turns a silent failure into a loud
+one.
 
 ## A file is read whole, so it stays short
 
@@ -305,18 +276,15 @@ failure into a loud one.
 warning tier -- advice until `mise run audit` -- and the hard one fails `verify`.
 `scripts/workspace/lines.res` measures it, over a repository or over every one, and this
 repository's `verify` runs it over every one: a project over the limit reddens the workspace's gate
-until it is under, which was decided over the alternative of each project adopting the gate once
-clean -- a gate nobody has to adopt is the one that gets adopted. A project may run the same check
-from its own `verify` as well, as seam does with `lines` in its `mise.toml`, so its own gate says
-so too. Measured the day the rule landed: seam under, and seventeen files over in web, rdm and
-governor, which is where the workspace's `verify` is red until they are split.
+until it is under, since a gate nobody has to adopt is the one that gets adopted. A project may run
+the same check from its own `verify` as well, as seam does with `lines` in its `mise.toml`, so its
+own gate says so too.
 
 **Why a file and not a function.** A reader, and an agent, reads a file whole: to change one
-function safely they read what surrounds it, and a nine-thousand-line file is read by nobody. seam's
-`walk.ts` reached 9071 lines and three other files passed a thousand before anything said so, each
-one a place where a search stops at the first result that looks right because the second is four
-thousand lines down. A limit on a file is the one a tool can hold objectively; where a function is
-the size of a file, it is the same problem one level in, and the file limit is where it shows.
+function safely they read what surrounds it, and a nine-thousand-line file is read by nobody. A long
+file is also a place where a search stops at the first result that looks right because the second is
+four thousand lines down. A limit on a file is the one a tool can hold objectively; where a function
+is the size of a file, it is the same problem one level in, and the file limit is where it shows.
 
 **What is measured is every file of ours, prose and data included.** The argument for the limit
 is that a file is read whole, and that holds for a spec an agent reads before it works as much as
@@ -385,23 +353,21 @@ itself.
 ### How long, and where the rest of it goes
 
 A comment block is at most **`Code.blockLines` body lines**, six. The block that opens a file and
-introduces the whole of it gets **`Code.openingLines`**, ten. A body line is one carrying text: `/**`, `*/` and a blank `*` separator
-are punctuation, and a JSDoc block spends about two lines on them.
+introduces the whole of it gets **`Code.openingLines`**, ten. A body line is one carrying text:
+`/**`, `*/` and a blank `*` separator are punctuation, and a JSDoc block spends about two lines on
+them.
 
 Aim at one or two, **`Code.aimLines`**, and let six be where a check fires, not where the writing
-should land. Measured across web, blocks over five body lines were 18.7% of the blocks and carried
-49.8% of all comment prose -- half the weight in a fifth of the places, which is how a tree ends
-up annotated everywhere and legible nowhere. A block past the aim is a warning, and one past six a
-failure.
+should land. Most of a tree's comment prose sitting in a few long blocks is how it ends up annotated
+everywhere and legible nowhere. A block past the aim is a warning, and one past six a failure.
 
-**Length follows load, not file type.** web's `apps/site/site.config.yaml` cut its IndexNow block
-from seven body lines to three, because every sentence it lost was already in web's `indexing.md`
-word for word. A line that carries a measured fact nothing else records, dev serving `max-age=0`
-where production serves a year, earns its place; a sentence the rules already hold does not.
+**Length follows load, not file type.** A sentence the rules already hold does not earn its place,
+in a configuration file as anywhere; a line that carries a measured fact nothing else records, dev
+serving `max-age=0` where production serves a year, does.
 
-Every comment line stays inside **`Code.columns`**, 100, with tabs at two, the width oxfmt's `printWidth`
-and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so this one is
-held by hand.
+Every comment line stays inside **`Code.columns`**, 100, with tabs at two, the width oxfmt's
+`printWidth` and rustfmt's `max_width` already give code. Neither formatter rewraps a comment, so
+this one is held by hand.
 
 All of it is counted rather than eyeballed. `scripts/lints/comments.res` measures every block in
 every language that carries one, and is the comments and plain parts of the workspace's own check
@@ -414,10 +380,10 @@ without spending a line of its budget, and a long one does not make the block to
 read and therefore rationed; an address is followed once and never reread, and a rule that charged
 for it would push a comment into paraphrasing the page rather than pointing at it.
 
-**What decides where a fact lives is who needs it, not how long it is.** If a second file would
-have to know it, it is a rule and belongs in the rules. If only this file does, it stays here
-in as few words as carry it -- moving it sends the reader out for something nothing else uses. Length is
-the symptom that makes the question worth asking, never the answer to it.
+**What decides where a fact lives is who needs it, not how long it is.** If a second file would have
+to know it, it is a rule and belongs in the rules. If only this file does, it stays here in as few
+words as carry it -- moving it sends the reader out for something nothing else uses. Length is the
+symptom that makes the question worth asking, never the answer to it.
 
 **A pointer names the question, not the answer.** "See spec/search.md for why it is one and not
 nine" survives that file being rewritten; "the index is one because ..." does not, and nothing
@@ -460,20 +426,15 @@ true, which is the worst of the two pairs available. **Re-read every positional 
 position, and name the thing rather than where it used to sit.**
 
 Nothing catches these. The reference check validates citations into the rules and the section names
-quoted beside them, and "the rule above" is neither -- it is a pointer, not a citation. A rule
-lifted out of web's `apps/site/src/styles/utilities.css` into a component's `<style>` block
-carried a comment ending "The rule above would then only answer to hover over the text", and the
-rule it meant stayed behind. It was caught by eye, in a diff, because somebody happened to read
-that paragraph.
+quoted beside them, and "the rule above" is neither -- it is a pointer, not a citation.
 
 The audit is a grep over five words; the failure is not cheap at all. A reader who follows a
 dangling "above" into an empty `<style>` block concludes the comment is stale and stops trusting
 the rest of it.
 
-**A phrase describing the rendered page is not a coordinate.** In that same comment "the box's
-bottom", "2.5px below the anchor's", "in the same sentence" and "measured on the error page" all
-traveled intact, and one of them reads better after the move than before. The rule is about
-positions in a file, never about the word "below".
+**A phrase describing the rendered page is not a coordinate.** "The box's bottom", "2.5px below the
+anchor's", "in the same sentence" and "measured on the error page" all travel intact. The rule is
+about positions in a file, never about the word "below".
 
 ### An applied migration is never edited, its comments included
 
@@ -482,10 +443,9 @@ records each one's checksum and refuses a file that no longer matches, and the c
 whole file -- a comment is bytes like any other. A stale citation in one stays stale: the fix is a
 new migration, or nothing.
 
-It happened. A spec audit retargeted the citations in two of the probe's migrations, which changed
-nothing they did, and the next build of the probe refused to open the status database: sqlx said
-the first migration "was previously applied but has been modified", and the status page went stale
-until both files were put back.
+Retargeting the citations in a migration changes nothing it does, and the next build still refuses
+to open the database: sqlx says the migration "was previously applied but has been modified", until
+the file is put back.
 
 ### `FIXME` is a problem; `TODO` is a plan
 

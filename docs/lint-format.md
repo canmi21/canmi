@@ -15,34 +15,31 @@ re-triggers the formatter. Deleting the overlap is the only stable arrangement.
 `Format.owners` in [model/rules/format.res](../model/rules/format.res) names the formatter of each
 suffix the repositories share, or registers it as formatted by nothing, and `Format.linters` each
 language's linter. **A suffix only one repository uses is registered in that repository's
-`workspace.toml`, under `[format]`**, which the suffixes part reads, decided by the author on
-2026-10-24: a repository's own model would not do, since monoflake/machine and monoflake/runtime
-have no model directory. The same table declares a directory of test data, which the suffixes part
-and the hook pass over. Each formatter is versioned by mise or by the package manager whose
-resolution it takes part in, nixfmt by the `flake.lock` of the repository it formats, as
-[toolchain.md](toolchain.md), "Nix is installed on the machine, and pins its own tools", has it.
+`workspace.toml`, under `[format]`**, which the suffixes part reads: a repository's own model would
+not do, since monoflake/machine and monoflake/runtime have no model directory. The same table
+declares a directory of test data, which the suffixes part and the hook pass over. Each formatter is
+versioned by mise or by the package manager whose resolution it takes part in, nixfmt by the
+`flake.lock` of the repository it formats, as [toolchain.md](toolchain.md), "Nix is installed on the
+machine, and pins its own tools", has it.
 
 ## A file is formatted as it is written
 
-Decided by the author on 2026-10-24. **A `PostToolUse` hook formats each file after an Edit or a
-Write, that file alone**, looking its suffix up in the table: where one is found its formatter runs;
-where none is, or the suffix is registered as formatted by nothing, nothing runs; and a formatter
-that fails, as on a file that does not parse yet, blocks nobody. A formatter finds its
-configuration by walking up from the file's directory. `formatted-on-write`, held by that hook
-since 2026-10-24.
+**A `PostToolUse` hook formats each file after an Edit or a Write, that file alone**, looking its
+suffix up in the table: where one is found its formatter runs; where none is, or the suffix is
+registered as formatted by nothing, nothing runs; and a formatter that fails, as on a file that does
+not parse yet, blocks nobody. A formatter finds its configuration by walking up from the file's
+directory. `formatted-on-write`, held by that hook.
 
 **The hook hangs on the implementer alone, in the base workspace**, and acts only while an
-implementer runs; it spreads neither to `.claude/settings.json` nor to any other session, decided
-by the author on 2026-10-24 as settled, not deferred. `edit-after-format` was proven on an
-implementer, an Edit after the hook changed its file.
+implementer runs; it spreads neither to `.claude/settings.json` nor to any other session, and that
+is settled, not deferred.
 
 **The hook's logic lives in `hooks/`, which Claude Code and Codex share**; the frontmatter of
 `.claude/agents/implementer.md` is only Claude Code's entry to it. Codex's is two entries in the
-author's `~/.codex/hooks.json`, decided by the author on 2026-10-29, each acting only where
-`MONOFLAKE_ROLE=implementer`, which the integrator sets when it starts a Codex implementer: one holds
-its commands on `Bash`, the other formats each file an `apply_patch` adds, updates or moves to. They
-sit at the user level because a lane's path is a project Codex never trusted, so no repository's
-`.codex/` reaches it.
+author's `~/.codex/hooks.json`, each acting only where `MONOFLAKE_ROLE=implementer`, which the
+integrator sets when it starts a Codex implementer: one holds its commands on `Bash`, the other
+formats each file an `apply_patch` adds, updates or moves to. They sit at the user level because a
+lane's path is a project Codex never trusted, so no repository's `.codex/` reaches it.
 
 **A suffix too rare to be worth a formatter is registered as formatted by nothing**, explicitly. A
 repository tracking a suffix the table neither formats nor registers is refused, `suffix-owned`.
@@ -53,11 +50,9 @@ is passed over**, told by its content as git tells it, so an image needs no entr
 Formatting is therefore no part of the form layer, [agents/checking.md](agents/checking.md).
 
 **An Edit after the hook rewrote its file meets no stale-file error, but text the hook reformatted
-is no longer found**, so the file is Read before such an Edit, `edit-after-format`. Proven by a
-probe implementer on 2026-10-24: a Write of `let   x =   1` was formatted to `let x = 1`, the
-harness saying the next Edit would not fail as stale, and an Edit of `=   1` without a Read failed
-with "String to replace not found in file". The hook ran in that subagent, which holds
-`formatted-on-write`.
+is no longer found**, so the file is Read before such an Edit, `edit-after-format`. The harness does
+not fail that Edit as stale; an Edit of reformatted text without a Read fails with "String to
+replace not found in file".
 
 ## Formatting is applied, never negotiated
 
@@ -75,16 +70,12 @@ Because `jj fix` repairs history rather than guarding a commit, formatting can n
 correct.
 
 **`mise run fmt` formats every file, touched or not.** `jj fix` visits only the files a revision
-changed unless told `--include-unchanged-files`, and the commit hook leaves it at that, so a
-commit costs no more than its own files. `fmt` passes the flag. Without it a formatter upgrade left
-every file outside the changed set at whatever the previous version produced -- or, for a file
-predating the pattern that now matches it, at no version's output at all: five of this
-repository's twelve Markdown files and forty-seven files in web when oxfmt reached 0.68, and in
-rdm twenty-five Rust files no commit had touched since before its rustfmt settings, found only
-because a formatter run on one file rewrote a hundred lines of it. `fmt` reported "nothing to fix"
-throughout, since it looked only at the working copy's changes. The formatters are trusted with
-the whole tree without a check after: an edge case where one changes what code means has not come
-up, and a check would be a step to pass, which this section exists to avoid.
+changed unless told `--include-unchanged-files`, and the commit hook leaves it at that, so a commit
+costs no more than its own files. `fmt` passes the flag. Without it a formatter upgrade leaves every
+file outside the changed set at whatever the previous version produced, or, for a file predating the
+pattern that now matches it, at no version's output at all. The formatters are trusted with the
+whole tree without a check after: an edge case where one changes what code means has not come up,
+and a check would be a step to pass, which this section exists to avoid.
 
 ## Baseline
 
@@ -94,11 +85,10 @@ repo should read as a short list of justified exceptions, not a restatement of t
 
 ## Strict mode
 
-**The routine levels are the ones in the config files. `mise run audit` counts every warning as
-a failure.** Both run the same tools over the same files; the only difference is whether a
-warning ends in a non-zero exit. Nothing routine changes -- `mise run check` behaves exactly as
-it did before the mode existed, which is the point of having two names rather than one stricter
-gate.
+**The routine levels are the ones in the config files. `mise run audit` counts every warning as a
+failure.** Both run the same tools over the same files; the only difference is whether a warning
+ends in a non-zero exit. Nothing routine changes, which is the point of having two names rather than
+one stricter gate.
 
 **When an audit is called for, it is strict mode that runs.** `mise run audit`, or `mise run
 audit <name>` for one repository. It is not part of an ordinary change: the warning tier exists
@@ -128,10 +118,6 @@ with no warning tier -- a test suite, a type check -- behaves identically. A str
 quietly ran a subset would be the same defect as a gate that passes while blind, which is what
 it exists to find.
 
-Measured against web when the mode landed: `check` was green while carrying 53 oxlint
-warnings, 162 clippy warnings and one svelte-check warning -- `a11y_media_has_caption` at
-`apps/site/src/lib/components/video.svelte:379`, which had stood through a green gate.
-
 ## Adding a linter or formatter
 
 Whenever a new tool of either kind is added, do this before committing it:
@@ -154,19 +140,17 @@ passes while formatting nothing. Any repository whose files reach oxfmt therefor
 next to it, this one included, where nothing else has a use for it.
 
 **`no-irregular-whitespace` is off in oxlint**, listed in `Format.overlapping` and held by the
-settings part. Verified by writing a U+00A0 into a `.ts`
-file: oxfmt rewrites it to a plain space unprompted. Leaving the rule on would report a
-problem the formatter has already solved.
+settings part. oxfmt rewrites a U+00A0 in a `.ts` file to a plain space unprompted, so leaving the
+rule on would report a problem the formatter has already solved.
 
-**A rule one project turns off is turned off in that project.** A project whose code makes an
-oxlint rule wrong more often than right carries its own `.oxlintrc.json` that `extends` the
-workspace's and states the difference, and nothing else -- see
-[repos.md](repos.md), "Configuration is inherited by position, not
-copied". oxlint reads the nearest configuration for each file, and does so whether it is run from
-the workspace or from inside the project; measured both ways. The reason for the rule being off
-goes in that project's `spec/`, because it is about that project's code. The workspace file keeps
-what is true of every project, which is why `no-await-in-loop` is not off here: its premise, that
-the iterations are independent, fails in seam's loops and nowhere has it been counted elsewhere.
+**A rule one project turns off is turned off in that project.** A project whose code makes an oxlint
+rule wrong more often than right carries its own `.oxlintrc.json` that `extends` the workspace's and
+states the difference, and nothing else -- see [repos.md](repos.md), "Configuration is inherited by
+position, not copied". oxlint reads the nearest configuration for each file, and does so whether it
+is run from the workspace or from inside the project. The reason for the rule being off goes in that
+project's `spec/`, because it is about that project's code. The workspace file keeps what is true of
+every project, which is why `no-await-in-loop` is not off here: its premise, that the iterations are
+independent, fails in seam's loops and nowhere has it been counted elsewhere.
 
 **An oxlint disable comment carries its reason on the same line**, after `--`, which the comments
 part holds:
@@ -175,10 +159,8 @@ part holds:
 // oxlint-disable-next-line no-await-in-loop -- each page needs the last one's cursor
 ```
 
-This used to be refused: an older oxlint read the ` -- why` as part of the rule list, matched no
-rule, and silently dropped the whole directive. Measured again on oxlint 1.84.0, the suffix is
-honored -- the line under it goes quiet and an identical line without it still warns. A
-`svelte/*` rule name is the exception that remains: it names nothing oxlint has, so a directive
+On oxlint 1.84.0 the suffix is honored: the line under it goes quiet and an identical line without
+it still warns. A `svelte/*` rule name is the exception: it names nothing oxlint has, so a directive
 naming one is decoration and its reason is a plain comment -- see the section below.
 
 **A warning is answered where it stands**, by every linter -- oxlint, clippy, svelte-check alike.
@@ -205,31 +187,27 @@ the sites where it was right along with the ones where it was not. That is what 
 above records for seam: a rule off for a whole project is one found wrong about that project's
 code as a whole, and the finding is written beside it.
 
-**clippy keeps its `style` group on.** The manifests name `correctness` and `suspicious` as
-`deny` and `complexity` as `warn`; `style` is left at clippy's own default, a warning. It was once
-meant to be off, on the reasoning that it overlaps rustfmt. It does not: the 2026-10 cleanup read
-every site it reported -- 133 needless borrows, `then` where `then_some` reads, `if`s that nest
-for nothing -- and none of them was layout. A `style` rule that does turn out to restate rustfmt
-is answered the way any rule is, above.
+**clippy keeps its `style` group on.** The manifests name `correctness` and `suspicious` as `deny`
+and `complexity` as `warn`; `style` is left at clippy's own default, a warning. It does not overlap
+rustfmt: what it reports, needless borrows, `then` where `then_some` reads, `if`s that nest for
+nothing, is not layout. A `style` rule that does turn out to restate rustfmt is answered the way any
+rule is, above.
 
-**oxfmt never touches `contents/`.** An article's bytes are load-bearing in a way code's are
-not: `data/build/segments.json` fingerprints byte ranges of each article, and the translation
-sidecars key paid work off those fingerprints. A formatter reflowing frontmatter produces a
-semantically identical file whose segments all read as edited -- a stale layout error at build
-time, and re-translation charges for prose nobody changed. Verified when the svelte option
-landed: reflowing one article's frontmatter broke the corpus tests until the file was
-restored. `.oxfmtrc.json` ignores the directory, and the ignore holds for `--stdin-filepath`
-runs too, so `jj fix` inherits it.
+**oxfmt never touches `contents/`.** An article's bytes are load-bearing in a way code's are not:
+`data/build/segments.json` fingerprints byte ranges of each article, and the translation sidecars
+key paid work off those fingerprints. A formatter reflowing frontmatter produces a semantically
+identical file whose segments all read as edited -- a stale layout error at build time, and
+re-translation charges for prose nobody changed. `.oxfmtrc.json` ignores the directory, and the
+ignore holds for `--stdin-filepath` runs too, so `jj fix` inherits it.
 
-**Nor seam's `corpus/cases/`.** Each case is a component written on one line on purpose, beside
-JSON holding the bytes it has to render to; in a template the whitespace between elements is text
-the output carries, so a formatter spreading the case over lines changes what it renders and every
-case fails. They are test data, as `contents/` is, and are ignored the same way -- found when
-`mise run fmt` first reached files no commit had touched.
+**Nor seam's `corpus/cases/`.** Each case is a component written on one line on purpose, beside JSON
+holding the bytes it has to render to; in a template the whitespace between elements is text the
+output carries, so a formatter spreading the case over lines changes what it renders and every case
+fails. They are test data, as `contents/` is, and are ignored the same way.
 
 ## What oxlint sees in a `.svelte` file
 
-Verified against oxlint 1.75.0 by probing a file that violates two rules at once:
+On oxlint 1.75.0, for a file that violates two rules at once:
 
 | Region                        | Linted                                            |
 | ----------------------------- | ------------------------------------------------- |
@@ -264,5 +242,5 @@ YAML is one exception: the YAML specification forbids tabs for indentation, so
 `[*.{yml,yaml}]` uses 2 spaces. This is a language constraint, not a preference.
 
 Nix is the other: nixfmt, the formatter nixpkgs and the NixOS project hold their own Nix to, indents
-with spaces and has no way to write a tab, so `[*.nix]` uses 2 spaces, which is what it writes.
-The formatter owns layout, and the one Nix formatter that is a standard decides it, 2026-10-20.
+with spaces and has no way to write a tab, so `[*.nix]` uses 2 spaces, which is what it writes. The
+formatter owns layout, and the one Nix formatter that is a standard decides it.

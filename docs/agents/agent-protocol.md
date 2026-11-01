@@ -1,30 +1,30 @@
 # Agent protocol
 
-How an agent operates in this repo: how to start, who decides what, and how to keep this
-ruleset trustworthy over time.
+How an agent operates in this repo: how to start, who decides what, and how to keep this ruleset
+trustworthy over time.
 
 ## What the rules are for
 
 The workspace's rules are two halves. **`model/` holds every rule a program can decide**, in
 ReScript: the values -- a width, a list of types, the files a repository inherits -- and the check
-that holds each one, so a rule that can be broken fails the moment it is. **`docs/` holds the
-why**, and the rules only judgment can keep: how to work with the user, what to ask, when to
-delegate. A project keeps its own `spec/` as before; a citation names which it means.
+that holds each one, so a rule that can be broken fails the moment it is. **`docs/` holds the why**,
+and the rules only judgment can keep: how to work with the user, what to ask, when to delegate. A
+project keeps its own `spec/`; a citation names which it means.
 
-- **Write down**: what was decided, why, what the alternative was, and what it costs. Anything
-  a future reader could not recover by reading the source.
-- **Leave out**: how a function is written, what a config file currently contains, anything
-  the code already states plainly. Point at the file instead of copying it.
+- **Write down**: what was decided, why, what the alternative was, and what it costs. Anything a
+  future reader could not recover by reading the source.
+- **Leave out**: how a function is written, what a config file currently contains, anything the code
+  already states plainly. Point at the file instead of copying it.
 
 The test for a sentence in `docs/`: if someone changed the code, would this sentence need editing?
 If yes, it is describing implementation and belongs in a comment next to that code. If it would
-still be true, it is a decision and belongs here. **A value the decision fixes is the model's**,
-and the doc names the file that holds it rather than the number -- see [model.md](../model.md).
+still be true, it is a decision and belongs here. **A value the decision fixes is the model's**, and
+the doc names the file that holds it rather than the number -- see [model.md](../model.md).
 
 ## One fact, one home, linked from everywhere else
 
-Nothing is written down twice. Every fact has exactly one home, and everything that needs it
-links there.
+Nothing is written down twice. Every fact has exactly one home, and everything that needs it links
+there.
 
 | Layer          | Holds                                    | Points at                        |
 | -------------- | ---------------------------------------- | -------------------------------- |
@@ -33,69 +33,62 @@ links there.
 | `model/rules/` | a decidable rule's values, and its check | back to `docs/*.md` for the why  |
 | code comments  | why this line is this way                | back to `docs/*.md` for the rule |
 
-The rules and the code are not two descriptions of one thing -- they are **one description with
-two halves**. The rules hold the decision, code holds the implementation, and each names the other
-so a reader can cross the gap in one hop. A doc that restates what the code does will drift away
-from it; a code comment that re-argues a decision makes the decision editable in two places, and
-then it is editable in neither.
+The rules and the code are not two descriptions of one thing -- they are **one description with two
+halves**. The rules hold the decision, code holds the implementation, and each names the other so a
+reader can cross the gap in one hop. A doc that restates what the code does will drift away from it;
+a code comment that re-argues a decision makes the decision editable in two places, and then it is
+editable in neither.
 
-When you catch yourself writing something that already exists elsewhere, delete it and link
-instead. The duplicate is not redundancy, it is a second thing to keep in sync, and it will
-lose sync.
+When you catch yourself writing something that already exists elsewhere, delete it and link instead.
+The duplicate is not redundancy, it is a second thing to keep in sync, and it will lose sync.
 
 ### A number a command prints is cited, not copied
 
 A count that describes the current state -- how many samples pass, how many are skipped and for
 which reason -- has its home in whatever computes it, and a document names that place rather than
-writing the figure down. The command is the live copy; the document's copy was true the day it was
-typed. seam's suite showed what that costs: the same state was written in four files, and when it
-was checked two of them had already drifted from the run, one by three samples that had passed
-since.
+writing the figure down. The command is the live copy.
 
-**A number that is evidence is not a state, and it stays.** "342 configs were not being read" is
-the reason a rule exists, measured once, and it stays true of the day it describes. The test: if
-the next run could make the sentence false while nobody edits it, the number is state and belongs
-to the command.
+**A number that is evidence is not a state, and it stays.** "342 configs were not being read" is the
+reason a rule exists, measured once, and it stays true of the day it describes. The test: if the
+next run could make the sentence false while nobody edits it, the number is state and belongs to the
+command.
 
 `check workspace refs` checks that the links resolve -- markdown links in docs, and `docs/*.md`
 citations in code. It is part of the workspace's check, because a reference that points nowhere
 fails silently: nothing breaks, the reader just follows a dead path. It deliberately ignores
-path-shaped strings in prose, since the rules use invented names as examples on purpose. In code
-it ignores nothing, which is the rule below.
+path-shaped strings in prose, since the rules use invented names as examples on purpose. In code it
+ignores nothing, which is the rule below.
 
 The rules exist to be the place an argument gets settled. When code, an agent, or a later opinion
-disagrees about how something should work, this is the reference that decides it -- which only
-works if it carries the _why_. A rule with no recorded reason loses every argument against a
-plausible-sounding alternative, because nobody can tell whether it was considered or just
-inherited.
+disagrees about how something should work, this is the reference that decides it -- which only works
+if it carries the _why_. A rule with no recorded reason loses every argument against a
+plausible-sounding alternative, because nobody can tell whether it was considered or just inherited.
 
 ## In code a doc path is a citation, so an illustration is spelled to fail
 
-The exemption above is prose's alone. In code -- and in the extensionless scripts lying beside
-it -- a path-shaped `docs/` string, or a project's `repos/<path>/spec/`, is a citation wherever it sits: a comment, a docstring, a
-string literal, a message a program prints. Narrowing the check to comment lines was considered
-and does not hold: three live citations sit outside them, two in messages a check prints and one
-in a test asserting an error text, and a dead path shown to a reader is dead wherever it sat.
+The exemption above is prose's alone. In code -- and in the extensionless scripts lying beside it --
+a path-shaped `docs/` string, or a project's `repos/<path>/spec/`, is a citation wherever it sits: a
+comment, a docstring, a string literal, a message a program prints. The check is not limited to
+comment lines: a dead path shown to a reader is dead wherever it sits.
 
-So **spell a real file, and spell an illustration so it cannot resolve** -- `docs/<f>.md`, or a
-glob like `docs/**/*.md`. Only a plausible-looking invented name trips this, and in the whole tree
-exactly one file has ever needed the escape, which is what the rule costs.
+So **spell a real file, and spell an illustration so it cannot resolve** -- `docs/<f>.md`, or a glob
+like `docs/**/*.md`. Only a plausible-looking invented name trips this.
 
 ## A citation may name a section, and then the heading is an interface
 
-Cite a section by quoting its heading beside the file: `docs/x.md, "Section name"`, or
-`docs/x.md ("Section name")`. Both spellings are checked -- from a code comment, and from one
-doc citing another -- and the check is the same one above, one level further down: a file
-still existing does not mean the section named inside it does.
+Cite a section by quoting its heading beside the file: `docs/x.md, "Section name"`, or `docs/x.md
+("Section name")`. Both spellings are checked -- from a code comment, and from one doc citing
+another -- and the check is the same one above, one level further down: a file still existing does
+not mean the section named inside it does.
 
-**So renaming a heading is a change with references to update**, exactly like moving a file.
-That is the cost of the convention and it is the point of it: without the quote a pointer decays
-into "somewhere in that file", and the reader who follows it has to guess what was meant before
-the rewrite. Paraphrasing the heading buys the same decay for the same price.
+**So renaming a heading is a change with references to update**, exactly like moving a file. That is
+the cost of the convention and it is the point of it: without the quote a pointer decays into
+"somewhere in that file", and the reader who follows it has to guess what was meant before the
+rewrite. Paraphrasing the heading buys the same decay for the same price.
 
-The quote is matched on words, not characters, so backticks, an em dash and a line break inside
-it make no difference. What it cannot survive is the heading being reworded, which is the event
-worth being told about.
+The quote is matched on words, not characters, so backticks, an em dash and a line break inside it
+make no difference. What it cannot survive is the heading being reworded, which is the event worth
+being told about.
 
 ## Cold start
 
@@ -103,53 +96,47 @@ Starting a conversation with no context about this project:
 
 1. Read `AGENTS.md` at the workspace root, where work always begins, then the `AGENTS.md` of the
    project you are about to touch, where it has one.
-2. Read the rules that cover the task: this repository's `docs/` and `model/rules/` for the
-   ones that hold everywhere, and the project's `docs/` -- `spec/` until it is renamed.
+2. Read the rules that cover the task: this repository's `docs/` and `model/rules/` for the ones
+   that hold everywhere, and the project's `docs/` -- `spec/` until it is renamed.
 3. Know which repository you are in, and start from its current `main`.
 4. Only then act.
 
-Never act first and consult the rules afterwards. If a rule would have changed what you did,
-reading it late is worth nothing.
+Never act first and consult the rules afterwards. If a rule would have changed what you did, reading
+it late is worth nothing.
 
 Step 3 exists because a change lands in one repository and the rules governing it may live in
 another. `jj workspace root` says which repository the working directory belongs to -- inside
-`repos/web` it answers about web, not about this one, which is the same fact the hook
-resolver depends on. A task begins with `jj new main` in whichever repository is being changed,
-so the rules read in step 2 are the ones `main` currently holds rather than the ones a previous
-task left the working copy on. See [repos.md](../repos.md).
+`repos/web` it answers about web, not about this one, which is the same fact the hook resolver
+depends on. A task begins with `jj new main` in whichever repository is being changed, so the rules
+read in step 2 are the ones `main` currently holds rather than the ones a previous task left the
+working copy on. See [repos.md](../repos.md).
 
 ## Working beside other agents
 
 **Agents do not talk to each other.** No harness messaging between sessions -- Claude Code's
 cross-session messaging, or any equivalent -- and no side channel invented for the purpose.
 
-Two reasons, each sufficient. A session list on this machine has shown sessions that were on
-other machines, so a message has no reliable boundary and can land somewhere with nothing to do
-with the work. And a decision made in a conversation between two agents is recorded nowhere: not
-in the rules, not in a commit, not where the user can see it -- which is the failure this whole
+Two reasons, each sufficient. A message has no reliable boundary and can land somewhere with nothing
+to do with the work. And a decision made in a conversation between two agents is recorded nowhere:
+not in the rules, not in a commit, not where the user can see it -- which is the failure this whole
 file exists to prevent.
 
-There is no longer an arrangement for two agents inside one repository; projects are separate
-repositories, so two pieces of work are two directories. What crosses between them is a commit
-and nothing else. See [repos.md](../repos.md).
+Projects are separate repositories, so two pieces of work are two directories. What crosses between
+peer sessions is a commit and nothing else. See [repos.md](../repos.md).
 
 ### A supervisor and the agents it spawns are the exception
 
-The rule above is about _peer sessions_ -- two conversations that found each other on a machine.
-An agent that spawns implementers and directs them is a different arrangement, and it works: five
-agents wrote five parts of one feature against a written contract, never compiling together, and
-the tree built on the first try when the parts were declared.
+The rule above is about _peer sessions_. An agent that spawns implementers and directs them is a
+different arrangement.
 
-It is not the default. The user says whether a session delegates, and a session they have not
-said so of works directly, spawning nothing. Once they have, [delegation.md](delegation.md) and
-the files beside it are the whole of it -- what the top level keeps, what a brief must carry, how
-concurrent implementers are kept off each other's files, who tests, who checks, and who commits.
+It is not the default. The user says whether a session delegates, and a session they have not said
+so of works directly, spawning nothing. Once they have, [delegation.md](delegation.md) and the files
+beside it are the whole of it -- what the top level keeps, what a brief must carry, how concurrent
+implementers are kept off each other's files, who tests, who checks, and who commits.
 
 What makes it legitimate rather than a violation of the rule above is one line of
-[briefs.md](briefs.md):
-**every decision reached in a message is written into the tree before the work is called done.**
-A message is where a decision is reached; it is never where one lives. The failure this section
-names is real, and that is what answers it.
+[briefs.md](briefs.md): **every decision reached in a message is written into the tree before the
+work is called done.** A message is where a decision is reached; it is never where one lives.
 
 ## Decision authority
 
@@ -166,21 +153,18 @@ Ask the user when:
 Do not ask when:
 
 - The rules already answer it. Follow them.
-- The user's described approach implies the answer. An implication carried in the user's own
-  wording counts as their decision -- honor it rather than re-asking.
+- The user's described approach implies the answer. An implication carried in the user's own wording
+  counts as their decision -- honor it rather than re-asking.
 - The choice is local, reversible, and leaves no trace in the result.
 
-Calibration matters in both directions. Escalating every trivial choice wastes the user's
-attention; silently settling a structural one takes a decision that was never yours. When
-genuinely unsure of one thing, ask one focused question.
+Calibration matters in both directions. Escalating every trivial choice wastes the user's attention;
+silently settling a structural one takes a decision that was never yours. When genuinely unsure of
+one thing, ask one focused question.
 
 ### A thread runs on its own between a charter and a ledger
 
-Decided by the author on 2026-10-23, after a day of building in threads, RFC n0o4l and those
-after it. Supervision step by step kept the architecture right and was slow, and what drifted was
-what nobody watched: a name chosen in passing, a component placed for convenience, each small and
-each taken by the next step as given. So the author's attention goes where only the author can
-decide, and mechanisms keep the rest.
+RFC n0o4l and those after it. The author's attention goes where only the author can decide, and
+mechanisms keep the rest.
 
 - **The author decides** direction and boundaries -- the layers, a contract's shape, a vendor or a
   product chosen; **every fixed value that is policy** -- a limit, a timeout, a retention, a name
@@ -190,16 +174,15 @@ decide, and mechanisms keep the rest.
   in, the tests, the names inside the system within `docs/naming.md` -- and carries on without
   asking, stopping only for a decision of the author's kind, a failure it cannot resolve, or money.
   Test machines and test accounts are rebuilt and wiped freely until the platform keeps data.
-- **A thread is touched twice**: at its start the author takes its charter, the RFC naming its
-  goal, its acceptance and the values to fix; at its end the author reads its ledger, every choice
-  made provisionally and every policy value given a default, kept in the thread's RFC as a
-  `### Ledger` under its `## Decision`, and the
-  reviewer's report below.
+- **A thread is touched twice**: at its start the author takes its charter, the RFC naming its goal,
+  its acceptance and the values to fix; at its end the author reads its ledger, every choice made
+  provisionally and every policy value given a default, kept in the thread's RFC as a `### Ledger`
+  under its `## Decision`, and the reviewer's report below.
 - **What replaces watching is a mechanism**:
   - **A rule is checked from the day it is stated.** When the author states a rule a program can
     decide, its check is written then, not recorded `Pending`; `Pending` is for a check that cannot
     yet be written, naming what it needs. A rule left to memory is broken by the first agent that
-    did not read it, as the project's own name was across four repositories.
+    did not read it.
   - **A rehearsal is the acceptance**: a command that can fail, run against what is deployed --
     `conform`, `lose`, `replace` -- decides that a step is done.
   - **A reviewer with a fresh context reads each thread at its end**, a spawned agent that built
@@ -210,44 +193,38 @@ decide, and mechanisms keep the rest.
 ### The questions of one block are asked together
 
 **When a piece of work leaves several decisions open, they are gathered first and brought in one
-round**, decided by the author on 2026-10-20: everything the block still needs is looked for before
-anything is asked, each question numbered and in plain words -- what it is, its choices and what
-each costs, a recommendation -- so the author answers them all at once, and the changes they
-settle are then made together. Asking them one after another, each found only once the last was
-answered, cost the author a round trip a question for what was one decision. A block is the work
-in hand, such as a boundary being drawn; what belongs to the next one waits for it.
+round**: everything the block still needs is looked for before anything is asked, each question
+numbered and in plain words -- what it is, its choices and what each costs, a recommendation -- so
+the author answers them all at once, and the changes they settle are then made together. A block is
+the work in hand, such as a boundary being drawn; what belongs to the next one waits for it.
 
 ### Working a backlog: one item, proposed and accepted, then done
 
-A list of known problems -- an audit, a review, a set of findings -- is worked one item at a
-time, and each one is **proposed and explicitly accepted before anything is written**. The
-proposal states the problem, the evidence for it, the options with what each costs, and a
-recommendation. Then it stops. Silence is not acceptance, and neither is the user having
-accepted the item before it.
+A list of known problems -- an audit, a review, a set of findings -- is worked one item at a time,
+and each one is **proposed and explicitly accepted before anything is written**. The proposal states
+the problem, the evidence for it, the options with what each costs, and a recommendation. Then it
+stops. Silence is not acceptance, and neither is the user having accepted the item before it.
 
-The ordinary calibration above is not enough here, for two reasons a backlog has and ordinary
-work does not.
+The ordinary calibration above is not enough here, for two reasons a backlog has and ordinary work
+does not.
 
-**Every item on the list was already judged once, by whoever wrote the list, and that judgment
-is the thing least worth trusting.** The findings that survive review are rarely the ones that
-looked most obvious in it -- three separate items in the audit this rule came out of were
-overturned by the user: a color token that read as dead was a deliberate reservation, an emoji
-that read as unapproved was wanted, and a fix recommended as too small to be worth a dependency
-got the dependency instead. A list presents each entry with equal confidence, and the confidence
-is the author's, not the reader's.
+**Every item on the list was already judged once, by whoever wrote the list, and that judgment is
+the thing least worth trusting.** The findings that survive review are rarely the ones that looked
+most obvious in it. A list presents each entry with equal confidence, and the confidence is the
+author's, not the reader's.
 
-**A list also carries momentum.** Having done four items unaided makes the fifth feel
-pre-approved, and nothing in the list marks which entry is the structural one. The rule removes
-the judgment call rather than asking for it to be made well four times running.
+**A list also carries momentum.** Having done four items unaided makes the fifth feel pre-approved,
+and nothing in the list marks which entry is the structural one. The rule removes the judgment call
+rather than asking for it to be made well four times running.
 
-Read-only investigation is exempt and needs no approval: searching, reading, type-checking,
-running the test suite, taking a screenshot. That is the material a proposal is made of, and
-none of it changes the tree.
+Read-only investigation is exempt and needs no approval: searching, reading, type-checking, running
+the test suite, taking a screenshot. That is the material a proposal is made of, and none of it
+changes the tree.
 
 ## Read the source before measuring the behavior
 
-**What this stack depends on is open source, so its behavior is not a black box unless you choose
-to treat it as one.** Svelte, SvelteKit, Vite, the Rust crates -- all of them are on disk, in
+**What this stack depends on is open source, so its behavior is not a black box unless you choose to
+treat it as one.** Svelte, SvelteKit, Vite, the Rust crates -- all of them are on disk, in
 `node_modules` or in a vendored checkout, and every question about what one of them does has an
 answer written in it. Reaching for a test first to find out is choosing to rediscover, by
 experiment, something the author already wrote down.
@@ -259,15 +236,15 @@ which is how a rule comes to be inferred from three measurements when the upstre
 governs it was named in the source all along.
 
 **This is not an argument against measuring.** An upstream that changes is exactly why the
-measurement stays: it is what fails the day the reading goes stale, and several checks exist for
-no other reason. The rule is only about which comes first, and reversing the two costs the time
-twice -- once to guess, once to find out the guess was shaped wrong.
+measurement stays: it is what fails the day the reading goes stale, and several checks exist for no
+other reason. The rule is only about which comes first, and reversing the two costs the time twice
+-- once to guess, once to find out the guess was shaped wrong.
 
-**And the order continues past the measurement.** Read the source, form the rule, measure with
-Node that the upstream does what the rule says, and only then write ours -- and once ours is
-written, add the check that holds the two together, so the next change is measured by it rather
-than by memory. Writing ours first and reading afterwards is what produces code shaped around a
-guess. This is forward development: every step is a check on the one before it.
+**And the order continues past the measurement.** Read the source, form the rule, measure with Node
+that the upstream does what the rule says, and only then write ours -- and once ours is written, add
+the check that holds the two together, so the next change is measured by it rather than by memory.
+Writing ours first and reading afterwards is what produces code shaped around a guess. This is
+forward development: every step is a check on the one before it.
 
 Where a project's whole design rests on an upstream's behavior, that project's `spec/` says so and
 names the files. See [repos/seam/spec/references.md](../../repos/seam/spec/references.md) for the
@@ -275,62 +252,51 @@ shape of that.
 
 ## A long command never holds the conversation
 
-**Anything that can run longer than about a minute, could hang, or waits for a condition to end
-runs in the background**, and the conversation goes on. That holds for every session and for every
-implementer it spawns, wherever the harness can run a job so, as the author restated on
-2026-10-31. **The agent looks at the job again within a minute at most, and sooner the shorter the
-job**: a few seconds for a step that should take seconds, tens of seconds for one that should take
-a minute, a minute for a long build. Each look is an instant read of the output, not a wait, and
-it asks whether the job moved since the last one. A job that stopped writing, or a wait on a
-condition nothing will meet, is reported at that look, never found later by the user. The agent
-reports what is there, saying plainly when a result is still pending. A user watching a
-spinner for eight minutes has no way to tell a job that is working from one that has hung, and
-twice in one session that was exactly the position they were put in.
+**Anything that can run longer than about a minute, could hang, or waits for a condition to end runs
+in the background**, and the conversation goes on. That holds for every session and for every
+implementer it spawns, wherever the harness can run a job so. **The agent looks at the job again
+within a minute at most, and sooner the shorter the job**: a few seconds for a step that should take
+seconds, tens of seconds for one that should take a minute, a minute for a long build. Each look is
+an instant read of the output, not a wait, and it asks whether the job moved since the last one. A
+job that stopped writing, or a wait on a condition nothing will meet, is reported at that look,
+never found later by the user. The agent reports what is there, saying plainly when a result is
+still pending. A user watching a spinner has no way to tell a job that is working from one that has
+hung.
 
 **A hook holds the two shapes a wait takes in the foreground**, `hooks/gates/background.res`, the
-`long-command-background` rule, added by the author on 2026-10-31 after the advisor, its context
-compacted, waited in the foreground on loops of `until ...; do sleep 5; done` with a timeout of ten
-minutes, which the harness's own refusal of a bare `sleep` never caught: a loop that sleeps, or a
-timeout past the harness's default of 120 seconds, is refused unless the call runs in the
-background, and the agent watches the job with Monitor or reads its output at the job's pace.
+`long-command-background` rule: a loop that sleeps, or a timeout past the harness's default of 120
+seconds, is refused unless the call runs in the background, and the agent watches the job with
+Monitor or reads its output at the job's pace.
 
 Four consequences:
 
-- **Anything whose duration is not known carries a timeout, every time.** A command that might
-  take a second or might take ten minutes -- a build, a fetch, a test run against the network, a
-  wait for another process -- is given a ceiling in the command itself, and the ceiling is chosen
-  from what the job should take, not from what the tool allows. The agent that omits it is betting
-  the conversation on the job finishing, and it has lost that bet: one afternoon a wait for a
-  rebuild that no source edit had triggered held the turn for the tool's full five minutes, and
-  the user had to interrupt it. A timeout that fires is a report; a wait that never ends is a
+- **Anything whose duration is not known carries a timeout, every time.** A command that might take
+  a second or might take ten minutes -- a build, a fetch, a test run against the network, a wait for
+  another process -- is given a ceiling in the command itself, and the ceiling is chosen from what
+  the job should take, not from what the tool allows. The agent that omits it is betting the
+  conversation on the job finishing. A timeout that fires is a report; a wait that never ends is a
   hang, and nobody outside can tell the two apart.
 - **A foreground command carries its own timeout**, in the command, short enough that a stuck one
   reports in seconds. The tool's own timeout is a backstop for a bug, never the plan.
 - **A poll loop is bounded in seconds, not minutes.** `for i in 1 2 3; do ...; sleep 5; done` is a
   poll; `until <cond>; do sleep 20; done` with a nine-minute ceiling is a wait wearing a poll's
-  clothes, and it was what the user interrupted.
+  clothes.
 - **The ceiling is on the whole wait, two or three times what the job should take, and is not a
   forecast of how it can fail.** A release that takes two minutes gets five; when it fires, that is
-  where looking starts. No loop can be written to foresee every way it will go wrong -- on
-  2026-10-10 a wait for lib's release polled a run id that was empty, since the push touched no
-  path the workflow watches and no run started; every read failed, none matched `completed`, and
-  the loop spent its counted retries, seven minutes, before the user asked what had hung. The
-  ceiling would have reported it in five and was the only guard that could. macOS has no
+  where looking starts. No loop can be written to foresee every way it will go wrong. macOS has no
   `timeout`; `perl -e 'alarm 300; exec @ARGV' sh -c '...'` is one.
 - **A wait needs a trigger it can name.** Before waiting for a rebuild, a restart or a file to
-  appear, the agent checks that something it did will cause it -- a source edit under the
-  watcher's filter, a job it started -- and does not wait otherwise. Waiting for an event that
-  nothing set in motion is the one wait no timeout makes sensible.
+  appear, the agent checks that something it did will cause it -- a source edit under the watcher's
+  filter, a job it started -- and does not wait otherwise. Waiting for an event that nothing set in
+  motion is the one wait no timeout makes sensible.
 - **A job that will take minutes -- a full route scan, a corpus rebuild -- is started in the
   background and left there.** The next check is a read of its output file, and if the job writes
   nothing until it finishes, the job is changed to write progress, not the wait made longer.
 - **What the agent starts, the agent stops.** A watcher, a dev loop or a server put in the
-  background outlives the session that started it: the process is reparented to launchd, its
-  output goes on being written to a scratchpad nobody will open again, and it keeps acting on the
-  machine. One rdm `dev` loop left behind that way ran for seventeen hours, spent 174 minutes of
-  CPU and closed and reopened the user's window all day, and the user found it before the agent
-  that started it did. Stop it when the work it was for is done, or end the reply by saying it is
-  still up and how to stop it.
+  background outlives the session that started it: the process is reparented to launchd, its output
+  goes on being written to a scratchpad nobody will open again, and it keeps acting on the machine.
+  Stop it when the work it was for is done, or end the reply by saying it is still up and how to
+  stop it.
 - **Docker is left as it was found.** Whoever runs a test in Docker on the author's Mac -- the
   conversation or an implementer -- takes it down when the test is done: its containers stopped and
   removed (`docker compose down -v` for a project, `docker rm -f` for a container run alone), and
@@ -339,162 +305,127 @@ Four consequences:
   megabytes -- or used once. One or two small pulled images that the next test will want again, a
   pinned `postgres` say, may stay. Docker Desktop is quit again if the agent started it. Before the
   reply ends, `docker ps -a` lists nothing of the test's and `docker images` nothing it built.
-  Stated by the author on 2026-10-08, after test containers and images had piled up on the Mac.
-- **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** web's
-  `base down` kills its tmux session and leaves `workerd` behind: after an afternoon of restarting
-  the dev servers and running the migration's snapshot harness, forty-nine of them were alive
-  holding 3175 MB, the oldest for a day and seven hours, against the two the API and the CDN
-  actually need. They break nothing. They take memory and CPU from everything else, so what they
-  produce is not an error but a machine that is slowly, unaccountably slower. Count them before a
-  long run and after a supervisor is stopped; the ones to keep are the ones serving the pinned
-  ports, and the rest are orphans however recently they were started.
+- **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** web's `base
+  down` kills its tmux session and leaves `workerd` behind, past the two the API and the CDN need.
+  They break nothing. They take memory and CPU from everything else, so what they produce is not an
+  error but a machine that is slowly, unaccountably slower. Count them before a long run and after a
+  supervisor is stopped; the ones to keep are the ones serving the pinned ports, and the rest are
+  orphans however recently they were started.
 
 ### Measure the machine before blaming the program
 
 A long-running job that has become slow is a question about the machine first and the code second,
 and the order is not a preference: reversing it produces a confident wrong answer, quickly.
 
-This was got wrong an hour before the paragraph above was written. A snapshot run that had been
-taking 2.5 seconds an item was taking 80. The dev server answered in 25 milliseconds, so the time
-was plainly not being spent there, and the conclusion drawn from those two numbers was that a wait
-inside the harness must be timing out. An agent was told so. The harness had not been touched: the
-cause was the forty-nine processes above, competing for a machine that had no error to report about
-any of it.
-
 **So the first three things to look at are the ones no program will tell you**: how many processes
-of the kind you started are alive, what they hold, and what the machine's total resident size is.
-A tool reports on itself and cannot see its neighbors, which is exactly the blindness this order
-of investigation exists to cover.
+of the kind you started are alive, what they hold, and what the machine's total resident size is. A
+tool reports on itself and cannot see its neighbors, which is exactly the blindness this order of
+investigation exists to cover.
 
 **When the machine comes back clean, the next suspect is your own concurrency, not the code under
-it.** Two copies of the same snapshot run, started together against one dev server, both stopped
-dead on the same page after 137 of 390 captures. Every reading said healthy: load 2.0 on eighteen
-cores, 81% of memory free, the server answering that same route in 173 milliseconds, no orphans.
-Both node processes and all eight browser processes sat at 0% CPU for fifteen minutes, and a
-`sample` of one showed it parked in the event loop waiting on I/O that was never going to arrive.
-The same page, captured by one run on its own, took ten minutes for all thirty variants and exited
-zero. Nothing was wrong with the harness, the page, the server or the machine. What was wrong was
-that there were two of them.
+it.**
 
-The reason there were two is the part worth carrying: they were a pair run to measure how much two
-runs of an unchanged tree disagree, so the real comparison could subtract it. When the pair was
-stopped and their 136 finished captures compared -- 152764 elements, ninety-eight properties each,
-plus geometry -- they disagreed in nothing at all. The measurement being paid for had a value of
-zero, and paying for it was what broke the run. **Estimate what a measurement can find before
-buying it**; a correction worth nothing costs the same as one worth everything, and here it cost
-more.
+**Estimate what a measurement can find before buying it**; a correction worth nothing costs the same
+as one worth everything.
 
 Waiting is not work. When the only thing left is a pending result, hand back what is finished and
 say what is pending, rather than holding the turn open for it.
 
 ## Checking your own work
 
-Make the change and hand it back. Do not stand up a browser to confirm that a color is the
-color you just typed, that a radius applied, or that a class landed -- the type checker and
-the build already catch the failures that class of edit can have, and the user is a faster
-judge of the rest than any screenshot. They will say when something is wrong.
+Make the change and hand it back. Do not stand up a browser to confirm that a color is the color you
+just typed, that a radius applied, or that a class landed -- the type checker and the build already
+catch the failures that class of edit can have, and the user is a faster judge of the rest than any
+screenshot. They will say when something is wrong.
 
 Chrome DevTools MCP for a page, and the `tauri` MCP server for the CMS window
 ([toolchain.md](../toolchain.md)), are for debugging that is genuinely hard without them: a value
-that renders differently from what the source says and nobody can say why, a layout that only
-breaks at one size, something that misbehaves after hydration and not before. The signal is that
-a question about the running application cannot be answered by reading the code -- not that a
-change was made and might in principle be wrong. Reaching a desktop window is newly possible and
-is not therefore newly worth doing; the restraint is the same one, and it was written for the
-browser only because the browser was the only thing reachable.
+that renders differently from what the source says and nobody can say why, a layout that only breaks
+at one size, something that misbehaves after hydration and not before. The signal is that a question
+about the running application cannot be answered by reading the code -- not that a change was made
+and might in principle be wrong. The same restraint applies to a desktop window.
 
 **A dry run is read before the real run, never chained to it.** A task that changes a node, the
 registry or a database is run with `--dry-run` alone, its output compared with what was expected --
-how many writes, which keys, which targets -- and only then run for real, as a separate command. On
-2026-10-13 a `registry import --dry-run` chained to the import showed 27 writes where 26 were
-expected, and the import wrote an app that was only another session's uncommitted files.
-**A real run is never run again to read its output.** What it printed is read from where it was
-kept; a run that kept nothing is answered by reading what it changed, never by writing again. On
-2026-10-13 an import was run a second time, with no dry run before it, only to count the apps it had
-left unchanged; it wrote nothing that time, which nothing had guaranteed.
+how many writes, which keys, which targets -- and only then run for real, as a separate command. So
+`registry import --dry-run` is never chained to the import. **A real run is never run again to read
+its output.** What it printed is read from where it was kept; a run that kept nothing is answered by
+reading what it changed, never by writing again.
 
 **A change to how traffic moves is proven on every path traffic takes, before it reaches a node.**
 The restraint above is about a UI the user will look at anyway; a network change is the opposite
-case, since what it breaks is invisible until everything stops. On 2026-10-08 the nodes' `edge`
-network went dual-stack after a local proof that the tunnel still dialed Caddy over IPv4 -- true for
-the public ingress, the one path the proof exercised, and false for Workers VPC, which resolved
-`caddy` to its IPv6 and was refused by a Caddy that trusts the tunnel's IPv4 alone. The console
-answered 502 from every node and the hook's deploy notices stopped, for about twenty minutes,
-across all eight. So before such a change ships: list every way traffic enters and crosses what is
-changing -- public ingress, Workers VPC, the tailnet, the app networks, the node itself -- and
-prove each, on a canary node first, the next node only once the canary still answers on all of
-them; a rollout script's check is each of those paths, not that the process came back up.
+case, since what it breaks is invisible until everything stops. Before such a change ships: list
+every way traffic enters and crosses what is changing -- public ingress, Workers VPC, the tailnet,
+the app networks, the node itself -- and prove each, on a canary node first, the next node only once
+the canary still answers on all of them; a rollout script's check is each of those paths, not that
+the process came back up.
 
-The cost is not the tool call. It is the round trip: booting a browser, waiting on a dev
-server, screenshotting, reading pixels back, all to restate what the diff already says. That
-time is the user's, and confirming the obvious spends it to reach a conclusion the next message
-would have delivered for free.
+The cost is not the tool call. It is the round trip: booting a browser, waiting on a dev server,
+screenshotting, reading pixels back, all to restate what the diff already says. That time is the
+user's, and confirming the obvious spends it to reach a conclusion the next message would have
+delivered for free.
 
 **A browser the agent drives that misbehaves once is refreshed, not reported.** The user shares the
 machine and its browser, so a background tab that comes back zoomed, blank or stale is most often
 the user's hand, not the page: reload it, or open a fresh one, and carry on measuring. Only a fault
-that comes back after a fresh tab is worth the user's attention. Decided with the author on
-2026-10-10.
+that comes back after a fresh tab is worth the user's attention.
 
-[checking.md](checking.md), "Testing is the user's; checking is the integrator's", narrows
-this by one turn: even where reading the code cannot answer the question, the answer has to be a
-number -- geometry, timing, drift, a count -- before the round trip is worth what it costs.
+[checking.md](checking.md), "Testing is the user's; checking is the integrator's", narrows this by
+one turn: even where reading the code cannot answer the question, the answer has to be a number --
+geometry, timing, drift, a count -- before the round trip is worth what it costs.
 
 ## Selfcheck
 
-Triggered whenever the user says "remember this", "update yourself", or anything of that
-shape.
+Triggered whenever the user says "remember this", "update yourself", or anything of that shape.
 
-Do not write to agent memory or any agent-private store. That content does not survive into
-the next session's view of this project and is invisible to every other agent. **Agent memory
-keeps only what is private and the state of work in progress; a lesson learned the hard way goes
-to [lessons.md](../lessons.md).** Instead:
+Do not write to agent memory or any agent-private store. That content does not survive into the next
+session's view of this project and is invisible to every other agent. **Agent memory keeps only what
+is private and the state of work in progress; a lesson learned the hard way goes to
+[lessons.md](../lessons.md).** Instead:
 
-1. Decide where the rule belongs: an existing `docs/` file, or a new one named for its aspect;
-   and, when a program can decide it, its values and check in `model/rules/` -- see
+1. Decide where the rule belongs: an existing `docs/` file, or a new one named for its aspect; and,
+   when a program can decide it, its values and check in `model/rules/` -- see
    [model.md](../model.md). A project's rule goes in its own `docs/`.
 2. Write it there.
-3. Re-read `AGENTS.md` and check it still holds. Are the rules it promotes still the most
-   important ones? Is the index complete? Has anything drifted, duplicated, or gone stale?
+3. Re-read `AGENTS.md` and check it still holds. Are the rules it promotes still the most important
+   ones? Is the index complete? Has anything drifted, duplicated, or gone stale?
 4. Repair what drifted, then tell the user what moved where.
 
-The test to apply before calling it done: a fresh agent with zero memory of this project,
-starting from `AGENTS.md` alone, must be able to recover the project's constraints and work
-correctly. If it could not, the selfcheck is not finished.
+The test to apply before calling it done: a fresh agent with zero memory of this project, starting
+from `AGENTS.md` alone, must be able to recover the project's constraints and work correctly. If it
+could not, the selfcheck is not finished.
 
-**A selfcheck the author asks for, `自检`, is that test run for real**, defined by the author on
-2026-11-01: the agent takes the rules it follows now, pretends to be an agent with zero context,
-and walks the path one would take to resume the collaboration, from `AGENTS.md` through its role's
-file and the files they link, then the same path again as it stands after a compaction, below.
-Every rule it follows that the walk does not reach, one kept in its memory or only in the
-conversation among them, is moved into the rules before the selfcheck ends.
+**A selfcheck the author asks for, `自检`, is that test run for real**: the agent takes the rules it
+follows now, pretends to be an agent with zero context, and walks the path one would take to resume
+the collaboration, from `AGENTS.md` through its role's file and the files they link, then the same
+path again as it stands after a compaction, below. Every rule it follows that the walk does not
+reach, one kept in its memory or only in the conversation among them, is moved into the rules before
+the selfcheck ends.
 
 ## After a compaction
 
 **A compaction keeps the work and drops rules, so the session that follows rereads them before it
-acts**, decided by the author on 2026-11-01 after the advisor, compacted, told them times in UTC, a
-rule its memory alone held. `AGENTS.md` is loaded again by the harness; the rest is the reread list
-the SessionStart hook gives a session whose start is a compaction, `afterCompaction` in
-`hooks/run.res`: AGENTS.md's Start here and Core rules, the role's file in this directory or the
-brief, this file's section on a long command, and [voice.md](../voice.md) for the rules a summary
-loses most often, then the memory's note of work in progress where the role keeps one.
-The author usually announces a compaction, and the agent then saves its work in progress; an
-automatic one gets the same list from the hook.
+acts**. `AGENTS.md` is loaded again by the harness; the rest is the reread list the SessionStart
+hook gives a session whose start is a compaction, `afterCompaction` in `hooks/run.res`: AGENTS.md's
+Start here and Core rules, the role's file in this directory or the brief, this file's section on a
+long command, and [voice.md](../voice.md) for the rules a summary loses most often, then the
+memory's note of work in progress where the role keeps one. The author usually announces a
+compaction, and the agent then saves its work in progress; an automatic one gets the same list from
+the hook.
 
 **The list is part of the agent protocol, not of any project's work.** A rule found lost after a
-compaction is written into the rules, and where it is one a summary keeps losing, named in that
-list in the same change, so the next compacted session reads it at once.
+compaction is written into the rules, and where it is one a summary keeps losing, named in that list
+in the same change, so the next compacted session reads it at once.
 
 ## Unprompted selfcheck
 
 The user will not keep asking for this. Adding a tool, adding a config file, or settling a
 convention triggers the same review on its own:
 
-- Does a future agent need a rule to use this correctly, or is the config file
-  self-explanatory?
-- Did resolving this require a judgment that is invisible in the resulting file? Judgments
-  leave no trace unless written down -- a config value looks arbitrary six months later.
+- Does a future agent need a rule to use this correctly, or is the config file self-explanatory?
+- Did resolving this require a judgment that is invisible in the resulting file? Judgments leave no
+  trace unless written down -- a config value looks arbitrary six months later.
 - Does an existing doc or model rule now contradict what was just added?
 
-Write the rule in the same change as the tool. A tool that lands without its rule is a tool
-the next agent will misuse.
+Write the rule in the same change as the tool. A tool that lands without its rule is a tool the next
+agent will misuse.

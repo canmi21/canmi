@@ -20,12 +20,8 @@ They are nested on the filesystem so the shared rules sit one directory up, wher
 look for them will find them; they are separate repositories so a project's history, its
 lockfile, its credentials and its issue tracker belong to it alone.
 
-The earlier arrangement was the other way round -- one project at the root with the rest nested
-inside it -- and every conflict it produced came from that inversion. Whatever sits at the root
-is shared with everything below whether it should be or not, so the site's credentials reached a
-macOS application that had no business seeing them, and its deploy tasks were callable from
-inside it. Demoting the project to a sibling did not need a mechanism; the containment was the
-whole problem.
+Whatever sits at a root is shared with everything below it whether it should be or not, credentials
+and deploy tasks among them, so no project sits at the root of another.
 
 ## Grouping threshold
 
@@ -38,47 +34,43 @@ infra's `spec/repository.md`.
 ## Configuration is inherited by position, not copied
 
 `.editorconfig`, `rustfmt.toml`, `rust-toolchain.toml`, `.oxlintrc.json`, `.oxfmtrc.json`, the
-`[tools]` in `mise.toml` and the agent hooks all live here and are found by walking up. Measured, each of them: a project
+`[tools]` in `mise.toml` and the agent hooks all live here and are found by walking up. A project
 below carries no copy and needs none.
 
-That is what decides the split. **A rule that holds for everything the author writes goes here;
-a rule about one project goes in that project.** The position is the mechanism, so there is no
-setting to keep in step and nothing to synchronize -- which is why an earlier design that copied
-these files into each project, and checked the copies, is gone.
+That is what decides the split. **A rule that holds for everything the author writes goes here; a
+rule about one project goes in that project.** The position is the mechanism, so there is no setting
+to keep in step and nothing to synchronize.
 
 **The rule is mechanical, not remembered.** `mise run check` fails when a project carries a
 version-controlled copy of `.editorconfig`, `rustfmt.toml`, `.oxlintrc.json`, `.oxfmtrc.json` or
-`jujutsu.toml`, and when it declares a tool the workspace already declares. Both existed and neither
-was visible: still carried byte-identical copies of two of them and redeclared `rust`, and
-nothing said so for as long as the copies happened to agree. A rule that only holds while two
-files match is not a rule, it is a coincidence with a deadline.
+`jujutsu.toml`, and when it declares a tool the workspace already declares. A rule that only holds
+while two files match is not a rule, it is a coincidence with a deadline.
 
-**A project shows what it inherits as a link up.** Decided by the author on 2026-10-20, first for
-monoflake: each inherited file a project uses sits at its root as a symbolic link to the
-workspace's -- `.oxfmtrc.json -> ../../.oxfmtrc.json` -- committed as a link that dangles on its
-own. Without it, someone reading the project alone sees no formatter configuration and concludes
-there is none; with it, the file is there, and where it comes from is its target. Measured on
-2026-10-20 with oxfmt 0.74, oxlint 1.89 and rustfmt: nested, each reads the link through to the
-workspace's file and behaves exactly as it did walking up; cloned alone, each takes the dangling
-link for no file and falls back to its defaults, with no error. The repos part holds every such
-link to resolve to the workspace's file of the same name, and still refuses a copy, telling it
-which link to make instead. A project links what it uses or is about to, and nothing else, so the
-links are also the list of what it takes from here.
+**A project shows what it inherits as a link up.** Each inherited file a project uses sits at its
+root as a symbolic link to the workspace's -- `.oxfmtrc.json -> ../../.oxfmtrc.json` -- committed as
+a link that dangles on its own. Without it, someone reading the project alone sees no formatter
+configuration and concludes there is none; with it, the file is there, and where it comes from is
+its target. Nested, oxfmt, oxlint and rustfmt each read the link through to the workspace's file and
+behave exactly as they do walking up; cloned alone, each takes the dangling link for no file and
+falls back to its defaults, with no error. The repos part holds every such link to resolve to the
+workspace's file of the same name, and still refuses a copy, telling it which link to make instead.
+A project links what it uses or is about to, and nothing else, so the links are also the list of
+what it takes from here.
 
 An identical copy and a divergent one are reported differently -- the first is dead weight, the
 second is the shadowing this arrangement exists to prevent -- and both fail, because a deliberate
 override has to be written down here before it is legitimate.
 
-**A copy is forbidden; a difference that says what it extends is not.** What the check is after
-is a file that replaces the workspace's, whether it happens to agree today or not. An
-`.oxlintrc.json` whose `extends` names the workspace's file and which carries only what differs
-is the opposite of that: it cannot drift from the workspace's, since it repeats none of it, and
-the difference is a rule about one project, which is where the split above says such a rule
-lives. oxlint reads the nearest configuration per file and honors `extends`, so this is its own
-mechanism rather than a workaround. The check reads the `extends` and lets that one shape
-through; the other inherited files have no such mechanism -- `.editorconfig` stops the walk
-outright -- so for them a file of the name is a copy, still. seam's, turning off
-`no-await-in-loop`, is the first; its reason is in seam's `spec/build.md`.
+**A copy is forbidden; a difference that says what it extends is not.** What the check is after is a
+file that replaces the workspace's, whether it happens to agree today or not. An `.oxlintrc.json`
+whose `extends` names the workspace's file and which carries only what differs is the opposite of
+that: it cannot drift from the workspace's, since it repeats none of it, and the difference is a
+rule about one project, which is where the split above says such a rule lives. oxlint reads the
+nearest configuration per file and honors `extends`, so this is its own mechanism rather than a
+workaround. The check reads the `extends` and lets that one shape through; the other inherited files
+have no such mechanism -- `.editorconfig` stops the walk outright -- so for them a file of the name
+is a copy, still. seam's `.oxlintrc.json` turns off `no-await-in-loop`, its reason in seam's
+`spec/build.md`.
 
 A project cloned on its own therefore has no formatter configuration and no hooks. That is
 accepted rather than worked around: the way to get a complete environment is to clone this
@@ -94,23 +86,20 @@ installed, so the copy here formats markdown and JSON and fails on a `.svelte` f
 project that has Svelte keeps a copy of its own. That is the test to apply before moving a tool
 up: plugins mean per project, otherwise once, here.
 
-Nothing is installed globally. A global install is a third place a version can come from, with
-no file recording it and nothing upgrading it -- a globally installed oxfmt sat at 0.28 for long
-enough to format this repository differently from the project beside it. What a project needs, a
-project or this repository declares.
+Nothing is installed globally. A global install is a third place a version can come from, with no
+file recording it and nothing upgrading it. What a project needs, a project or this repository
+declares.
 
-**Sharing the rules is not the same as sharing the tool that applies them.** `jj fix` is
-configured once, in `jujutsu.toml`, and `JJ_CONFIG` is set here so every repository below inherits
-it -- but the formatter it invokes is whichever one that repository's `PATH` provides. This has
-already gone wrong: a globally installed oxfmt formatted this repository at 0.28 while a project
-formatted at 0.65, one rule set through two formatters. So the version is pinned here in
-`package.json` as well, matching the projects, and that pin is the second copy to keep an eye on.
+**Sharing the rules is not the same as sharing the tool that applies them.** `jj fix` is configured
+once, in `jujutsu.toml`, and `JJ_CONFIG` is set here so every repository below inherits it -- but
+the formatter it invokes is whichever one that repository's `PATH` provides. The version is pinned
+here in `package.json` as well, matching the projects, and that pin is the second copy to keep an
+eye on.
 
 **A project may carry configuration only it can use**, and a setup worth keeping that no project
-uses stays here instead. `.mcp.json` was a project's while web had a Tauri window and is the
-workspace's now: no project is a Tauri app, and the pinned server is kept as the record of what it
-took to make one work -- see [toolchain.md](toolchain.md), "A Tauri app is inspected through
-an MCP server pinned to its plugin".
+uses stays here instead. `.mcp.json` is the workspace's: no project is a Tauri app, and the pinned
+server is kept as the record of what it takes to make one work -- see [toolchain.md](toolchain.md),
+"A Tauri app is inspected through an MCP server pinned to its plugin".
 
 ### A rule that is code inherits the same way, as a module the projects import
 
@@ -122,37 +111,30 @@ refs part runs it over this tree. A project's own reference gate calls the same 
 its skip sets, the upward walk that resolves a citation from inside it, and the walk across to a
 sibling repository that resolves one of another's.
 
-**Two copies of one rule diverge, and neither tree holds the input that would show it.** The two
-checkers had drifted in two places before they were merged: one collapsed whitespace before
-stripping punctuation and the other after, and one matched a skipped file by its path while the
-other matched its basename. Both were measured to change nothing today -- each tree holds exactly
-one lockfile, at its root, and web's whole anchor list is byte-identical either way. They were
-invisible because the input that separates them had never been written, which is the argument for
-one implementation rather than two that look alike.
+**Two copies of one rule diverge, and neither tree holds the input that would show it.** So a rule
+that is code has one implementation rather than two that look alike.
 
 **A script only one repository's CI runs lives beside the workflow that runs it, under that
 repository's `.github/`**, in a directory named for what the workflow does: machine's
-`.github/update/`, runtime's `.github/publish/`. A repository's `scripts/` keeps what is run by
-hand or by its tasks, and its top level keeps what the repository is for, an image's build or a
-machine's NixOS, so the root shows that before anything that only serves CI. Decided by the
-author on 2026-10-22.
+`.github/update/`, runtime's `.github/publish/`. A repository's `scripts/` keeps what is run by hand
+or by its tasks, and its top level keeps what the repository is for, an image's build or a machine's
+NixOS, so the root shows that before anything that only serves CI.
 
 **A task two repositories run is written once, here, in ReScript under `scripts/`** -- RFC 17b3o.
 `scripts/change/` holds what a change reaches -- `graph`, `fingerprint`, `resolved` -- and the two
-engines built on it, `verify` and `deployable`; `scripts/deploy/` holds `base`, the commit a
-push's Deploy run plans against. `artifact`, which put a run's artifact in a bucket, was removed
-with the pipeline that called it, decided by the author on 2026-10-22. **A
-repository declares what is its own as data, in `workspace.toml` at its root** -- where its apps
-and packages sit, its gates and what its files reach that no graph shows, whether it builds images,
-Workers or both, which of the workspace's movers its `update` takes, where its own name is format
-data, `[[names.data]]` of [naming.md](naming.md) -- read by `scripts/change/project.res`, which refuses a key it does not know.
-**Its one top-level key, `base`, names the workspace it sits under by that one's `.git` address**,
-decided by the author on 2026-10-20, so a reader of the repository alone learns where its rules
-and its linked configuration come from; the declared part holds it to this workspace's origin. A
-repository with nothing else to declare carries that line alone. A shared capability is taken by
-declaring it, as `[update]` takes a mover, [toolchain.md](toolchain.md), and a task of a
-repository's own that still calls a script reaches it as `node {{env.WORKSPACE}}/scripts/....res.mjs`,
-depending on `//:build`, since what ReScript compiles is never committed.
+engines built on it, `verify` and `deployable`; `scripts/deploy/` holds `base`, the commit a push's
+Deploy run plans against. **A repository declares what is its own as data, in `workspace.toml` at
+its root** -- where its apps and packages sit, its gates and what its files reach that no graph
+shows, whether it builds images, Workers or both, which of the workspace's movers its `update`
+takes, where its own name is format data, `[[names.data]]` of [naming.md](naming.md) -- read by
+`scripts/change/project.res`, which refuses a key it does not know. **Its one top-level key, `base`,
+names the workspace it sits under by that one's `.git` address**, so a reader of the repository
+alone learns where its rules and its linked configuration come from; the declared part holds it to
+this workspace's origin. A repository with nothing else to declare carries that line alone. A shared
+capability is taken by declaring it, as `[update]` takes a mover, [toolchain.md](toolchain.md), and
+a task of a repository's own that still calls a script reaches it as `node
+{{env.WORKSPACE}}/scripts/....res.mjs`, depending on `//:build`, since what ReScript compiles is
+never committed.
 
 **The workspace checks what it holds**: the scripts part of `check workspace` runs the tests of
 `scripts/` and `model/`, which nothing below holds. A repository's test of its
@@ -169,18 +151,16 @@ and the workspace is pushed before a repository that needs it.
 
 ## `.gitattributes` is the exception: it does not inherit
 
-Everything above inherits downward. `.gitattributes` does not, and that is deliberate rather
-than a gap. git resolves attributes by walking up from a file **to the top of its own worktree
-and no further**, so a separate repository below never sees this one's -- measured, in
-`repos/still`, where `git check-attr -a src/main.rs` returns nothing. This repository also
-ignores `repos/*/`, so GitHub's language statistics for it never reach a project's files either.
+Everything above inherits downward. `.gitattributes` does not, and that is deliberate rather than a
+gap. git resolves attributes by walking up from a file **to the top of its own worktree and no
+further**, so a separate repository below never sees this one's -- in `repos/still`, `git check-attr
+-a src/main.rs` returns nothing. This repository also ignores `repos/*/`, so GitHub's language
+statistics for it never reach a project's files either.
 
-The file here exists to fix what those statistics say. Linguist counts a file only when its
-language is type `programming` or `markup`; Markdown is type `prose`, so 98KB of spec documents
--- the entire point of this repository -- counted for nothing and GitHub called it 100% Python
-off the hooks and the task scripts. `*.md linguist-detectable=true` overrides that type test.
-Nothing is excluded to reach the result: with Markdown counted the split is about 68/32 against
-the Python that really is here.
+The file here exists to fix what those statistics say. Linguist counts a file only when its language
+is type `programming` or `markup`; Markdown is type `prose`, so the documents that are the entire
+point of this repository would count for nothing. `*.md linguist-detectable=true` overrides that
+type test, and nothing is excluded to reach the result.
 
 **A project sets its own, by its own logic.** A Rust application and a website have nothing to
 say to each other about what language they are written in, and the non-inheritance is what makes
@@ -210,12 +190,11 @@ prints `ignoring git submodule at ...`; jj then preserves the existing gitlink i
 writes but never updates it and never checks the content out, so the pointer could only move
 through hand-run git commits in a colocated repository.
 
-Inverting the layers was considered and measured -- a plain git outer repository with jj inside
-each submodule works, including `jj git init --colocate` onto a modern gitlink _file_. It is
-rejected on what it buys. A submodule pointer earns its cost when the superproject builds against
-the submodule, and this one builds nothing; the dependency runs the other way. Recording which
-revision of a project was current at a given commit here would be a record with no consumer, paid
-for by giving up jj at the level where jj does the most.
+A plain git outer repository with jj inside each submodule works, including `jj git init --colocate`
+onto a modern gitlink _file_. It is rejected on what it buys. A submodule pointer earns its cost
+when the superproject builds against the submodule, and this one builds nothing; the dependency runs
+the other way. Recording which revision of a project was current at a given commit here would be a
+record with no consumer, paid for by giving up jj at the level where jj does the most.
 
 **`.gitignore` still lists `repos/*/`.** Not for jj's sake -- jj stops at a nested `.jj` or
 `.git` on its own -- but for git's, which otherwise writes exactly the gitlink above the moment
@@ -240,29 +219,28 @@ seam = "canmi21:seam"
 **The directory is the key, so uniqueness comes from the format rather than from a check.** Two
 entries cannot claim one folder, and a duplicate is a parse error where it would otherwise be a
 surprise on clone. The user half is carried so an organization's repository is an entry like any
-other, and so one repository name under two owners can sit side by side under different
-directories -- which is the case a bare `user:repo` list could not express at all.
-A directory named apart from its repository is the everyday version of the same thing -- `governor`
-stood for `canmi21:axum-governor` until that repository became `lib` -- the directory reading as
-what the project is here, and the remote keeping the name it is published under.
+other, and so one repository name under two owners can sit side by side under different directories
+-- which is the case a bare `user:repo` list could not express at all. A directory named apart from
+its repository is the everyday version of the same thing, the directory reading as what the project
+is here, and the remote keeping the name it is published under.
 
 That key is also the name every command takes.
 
-mise needs the same set as task roots and cannot read that file, so `[monorepo].config_roots`
-states it a second time. Two copies of one fact, and therefore a check: the repos part of `check
-workspace` fails when they disagree. This is the shape used wherever a fact has to cross a boundary a tool cannot see.
+mise needs the same set as task roots and cannot read that file, so `[monorepo].config_roots` states
+it a second time. Two copies of one fact, and therefore a check: the repos part of `check workspace`
+fails when they disagree. This is the shape used wherever a fact has to cross a boundary a tool
+cannot see.
 
 A listed project that is not cloned is said only where somebody asks about it, by `mise run repos
 list` and by a verb given its name; mise is silent, each root written with a trailing `*` that
-matches nothing until it is cloned, decided by the author on 2026-10-29.
-That is what makes the two-clone workflow work: a machine holding one project runs that project's
-tasks and is not told off about the others.
+matches nothing until it is cloned. That is what makes the two-clone workflow work: a machine
+holding one project runs that project's tasks and is not told off about the others.
 
 ## One verb, the workspace unless told otherwise
 
 `pull`, `push`, `fmt`, `check`, `audit`, `update` and `clean` run on this workspace alone, take a
-path from `repos/registry.toml` to run on that repository, and `--all` to run on every one, decided
-by the author on 2026-10-20, so a bare verb never reaches further than the directory it is typed in:
+path from `repos/registry.toml` to run on that repository, and `--all` to run on every one, so a
+bare verb never reaches further than the directory it is typed in:
 
 ```
 mise run pull                 the workspace
@@ -279,11 +257,11 @@ because the alternative -- doing nothing quietly, or doing everything -- are bot
 saying so.
 
 **The dispatcher loops; the repository does the work.** What a verb does depends on what a
-repository is built with, so `fmt`, `check`, `audit`, `update` and `clean` each run the
-repository's own task for that verb -- `//repos/<name>:<verb>` -- and know nothing of cargo, pnpm or
-anything else underneath. A workspace that carried the implementations had to be taught every new
-stack, which is the opposite of defining a verb once. **What is the same in every repository
-stays here**: `pull`, `push` and `clone` are jj's, and every repository is a jj repository; so is
+repository is built with, so `fmt`, `check`, `audit`, `update` and `clean` each run the repository's
+own task for that verb -- `//repos/<name>:<verb>` -- and know nothing of cargo, pnpm or anything
+else underneath. A workspace that carried the implementations would have to be taught every new
+stack, which is the opposite of defining a verb once. **What is the same in every repository stays
+here**: `pull`, `push` and `clone` are jj's, and every repository is a jj repository; so is
 `update`'s revert-on-failure, which reads what changed through jj rather than through a resolver.
 See [toolchain.md](toolchain.md), "Dependency policy".
 
@@ -294,19 +272,15 @@ a time, on past a failure, so each log reads whole and one red repository does n
 others would have said.
 
 **A name is strict.** It means that repository and nothing else, in every half of every verb:
-nothing in the workspace or in a sibling is read for change, written or upgraded under it. What
-the command would not act on is refused rather than dropped -- a second name, an option the verb
-does not know, a name given to `list` or `check`, which read the whole registry -- because a
-dispatcher that ignores part of what was typed reports success on a request it did not carry out.
-`clone` with a name it did not know used to clone every repository; `update rdm` used to raise the
-workspace's toolchain. `publish` alone hands what follows the name on, unread, to the project.
+nothing in the workspace or in a sibling is read for change, written or upgraded under it. What the
+command would not act on is refused rather than dropped -- a second name, an option the verb does
+not know, a name given to `list` or `check`, which read the whole registry -- because a dispatcher
+that ignores part of what was typed reports success on a request it did not carry out. `publish`
+alone hands what follows the name on, unread, to the project.
 
 **This workspace is one of the repositories they act on**, under the name `workspace`. It has a
-remote, a working copy and files to format like any project, and the first version of these
-commands left it out: `push` reported nothing to push while this repository was a commit ahead
-of its origin, which is the worst possible way for a push command to be wrong. A command that
-means "all of them" has to mean all of them, and the one holding the others is the easiest to
-forget.
+remote, a working copy and files to format like any project. A command that means "all of them" has
+to mean all of them, and the one holding the others is the easiest to forget.
 
 **Its own half of a verb is the dispatcher's.** The workspace's `fmt`, `clean`, `update` and
 `verify` cannot be tasks of those names -- those are the loops -- so they are functions in
@@ -367,24 +341,23 @@ is the project's own question. web's mirror is dry by default and takes `--live`
 safe polarity for something that deletes. So `publish` collects whatever follows the name and
 hands it on unread, rather than recognizing a fixed list.
 
-It used to forward `--dry-run` and nothing else, which meant `publish web --live` ran a dry
-mirror, exited 0 and printed a full report of what it had not done. The documented way to publish
-could not publish, and said it had. Two lessons, both cheap: **a dispatcher that translates flags
-is claiming to know the project's vocabulary**, and **a dry run that looks exactly like a real one
-has to be checked against the thing it was supposed to change** -- the bucket, not the log.
+Forwarding `--dry-run` and nothing else would have `publish web --live` run a dry mirror, exit 0 and
+print a full report of what it had not done. So: **a dispatcher that translates flags is claiming to
+know the project's vocabulary**, and **a dry run that looks exactly like a real one has to be
+checked against the thing it was supposed to change** -- the bucket, not the log.
 
 ### verify runs what a change reaches
 
 **`mise run verify` checks the gates a change can affect, not the whole repository.** A repository
 holding several apps and libraries would otherwise compile, lint and test every one of them for an
-edit to one -- web did, before the split, for the platform and infra too, and an edit to a
-stylesheet built every crate. So what a change touched decides what runs.
+edit to one. So what a change touched decides what runs.
 
 What it touched is the working copy's own change -- what is about to be committed -- or, with
 `--since REV`, everything after that revision. `--all` runs every gate, and so does `mise run
 audit`, which asks about the whole tree by definition. `--dry-run` prints the choice; `--files`
 names files to ask about without changing them. Each repository's `[verify]` in `workspace.toml` is
-its mapping, over the workspace's engine in `scripts/change/verify.res`, and these are the rules every one keeps:
+its mapping, over the workspace's engine in `scripts/change/verify.res`, and these are the rules
+every one keeps:
 
 - **Three gates always run** -- secrets, references, comment lengths. Each is
   whole-tree and takes seconds, and a reference can break from anywhere.
@@ -406,28 +379,28 @@ describes, so a second such entry is worth a structural fix before it is worth a
 
 ## A tree grows by nesting, never by spreading
 
-Agreed with the author on 2026-10-19 for monoflake and on 2026-10-20 for every repository: **no
-directory but a repository's root holds more than `Layout.widest` entries, and none lies more than
-`Layout.deepest` deep**, counted from a top-level directory or a package's root -- a directory with
-one of `Layout.manifests` -- its first subdirectory 1. What outgrows a directory is nested in it as
-its abstraction rises, never laid beside the rest. Both numbers are for now: one reached asks first
-whether it still fits, and only then how the tree is cut below it. The root is exempt from the
+**No directory but a repository's root holds more than `Layout.widest` entries, and none lies more
+than `Layout.deepest` deep**, counted from a top-level directory or a package's root -- a directory
+with one of `Layout.manifests` -- its first subdirectory 1. What outgrows a directory is nested in
+it as its abstraction rises, never laid beside the rest. Both numbers are for now: one reached asks
+first whether it still fits, and only then how the tree is cut below it. The root is exempt from the
 count because what tools ask to find there is no part of the tree; **what sits at the root is
-configuration**, so a root `Cargo.toml` is a virtual manifest and no source file sits beside it.
-The shape part of `check` holds all three over the files version control keeps, so what is built
-or installed is never counted.
+configuration**, so a root `Cargo.toml` is a virtual manifest and no source file sits beside it. The
+shape part of `check` holds all three over the files version control keeps, so what is built or
+installed is never counted.
 
 ## `each` is the verb for everything else
 
 `mise run each <task> [args]` runs `<task>` in every repository that declares one and passes over
-the rest in silence: `each lint` is every linter a project declares, `each icons` is rdm's alone. The
-matching is mise's own `//repos/...:<task>`, so a project gains the verb by declaring the task and
-nothing here lists which ones do.
+the rest in silence: `each lint` is every linter a project declares, `each icons` is rdm's alone.
+The matching is mise's own `//repos/...:<task>`, so a project gains the verb by declaring the task
+and nothing here lists which ones do.
 
-It runs one repository at a time and goes on past a failure, from `scripts/workspace/each.res`. A fan-out that interleaves five
-logs, or stops at the first red one, answers "does it pass everywhere" worse than a loop typed by
-hand. The workspace's own tasks are outside it -- `//:check` already fans out to every verify, so
-`//...` would run them twice -- and a task nobody declares is an error rather than a clean run.
+It runs one repository at a time and goes on past a failure, from `scripts/workspace/each.res`. A
+fan-out that interleaves five logs, or stops at the first red one, answers "does it pass everywhere"
+worse than a loop typed by hand. The workspace's own tasks are outside it -- `//:check` already fans
+out to every verify, so `//...` would run them twice -- and a task nobody declares is an error
+rather than a clean run.
 
 `--dry-run` belongs to `each`, as it does to every verb here, and is taken out before the rest of
 the line reaches the task. It is the one flag `each` reads; everything else is the task's.
@@ -446,15 +419,12 @@ knowing before concluding a project has no tasks.
 
 ## A repository's own rules extend the workspace's
 
-`AGENTS.md` says every rule the user states gets written down and never left in chat only.
-**Inside a project that rule is narrower: what is written there is the project's own.** Agreed
-with the author on 2026-10-20, replacing the arrangement where a project carried `spec/` and no
-`AGENTS.md`:
+`AGENTS.md` says every rule the user states gets written down and never left in chat only. **Inside
+a project that rule is narrower: what is written there is the project's own.**
 
-- **A project keeps its rules in `docs/`**, `Layout.rulesHome`. `spec/` was the name while the rules
-  were prose alone; once what a program can decide moved into a model, what is left is the why
-  and the judgment, which is docs. A repository still holding `spec/` fails the shape part until it
-  is renamed.
+- **A project keeps its rules in `docs/`**, `Layout.rulesHome`. What a program can decide is in a
+  model, and what is left is the why and the judgment, which is docs. A repository still holding
+  `spec/` fails the shape part until it is renamed.
 - **A project may carry an `AGENTS.md` of its own**, read by both harnesses exactly as this one is.
   It extends this file: it says what is particular to that project and useful there alone, and
   restates nothing the workspace says. Work still begins here, so a project's `AGENTS.md` is read
@@ -510,19 +480,19 @@ no `--ignore-workspace` to write an outward lockfile with.
 
 The hooks are found through `jj workspace root`, which answers about the nearest repository -- so
 inside a project it answers about the project. The command in
-[`.claude/settings.json`](../.claude/settings.json) walks up from there until it finds a
-checkout that has `hooks/run.res`. A fixed path was the alternative and is wrong: the walk is what lets
-one entrypoint serve every project.
+[`.claude/settings.json`](../.claude/settings.json) walks up from there until it finds a checkout
+that has `hooks/run.res`. A fixed path is the alternative and is wrong: the walk is what lets one
+entrypoint serve every project.
 
 This is why the commit conventions reach a project without anything being installed in it: a
 commit written inside `repos/web` is held to them, and a contributor's own clone is not, which
 is the right split.
 
-**The walk starts from `pwd` when jj answers nothing.** Outside any repository `jj workspace
-root` fails, and the empty string it leaves is a fixed point of `dirname` -- it returns `.`
-forever, so the loop never reaches `/` and never ends. A hook that hangs blocks every command in
-the session, including the one that would leave the directory, so this is unrecoverable from
-inside the shell. Moving a repository is exactly such a moment, which is when it was found.
+**The walk starts from `pwd` when jj answers nothing.** Outside any repository `jj workspace root`
+fails, and the empty string it leaves is a fixed point of `dirname` -- it returns `.` forever, so
+the loop never reaches `/` and never ends. A hook that hangs blocks every command in the session,
+including the one that would leave the directory, so this is unrecoverable from inside the shell.
+Moving a repository is exactly such a moment.
 
 ## One checkout per repository
 

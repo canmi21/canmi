@@ -1,7 +1,7 @@
 # READMEs, descriptions and license years
 
-What a stranger reads first about a repository or a package: the line beside its name, the page
-it opens on, and the year on its license. All three are the author's voice, not a spec's.
+What a stranger reads first about a repository or a package: the line beside its name, the page it
+opens on, and the year on its license. All three are the author's voice, not a spec's.
 
 ## A description is one short, plain line
 
@@ -11,19 +11,18 @@ engine.`, `A refined download manager.`, `A tiny self-hosted cloud.` -- or a lin
 `Rendering is a protocol, not a render-time computation.`, `Still your Mac. Clean it safely.`
 
 - **Concrete, not grand.** A word that could describe anything -- "everything", "end to end", "in
-  one place", "every site" -- reads as written by a machine, and a first draft built on them was
-  turned down for exactly that.
+  one place", "every site" -- reads as written by a machine.
 - **No feature list, no stack, no third person.** "The author's" is a spec's phrase; a description
   is the author's own.
 - **A package's registry description** -- `description` in a `package.json` or a `Cargo.toml` --
   follows the same rule, and is the same line its repository's README gives it.
 
-The four repositories the system split into say `The canmi.net & canmi.app monorepo.`, `A small
-library of packages and crates.`, `A tiny self-hosted cloud.` and `A tiny self-hosted PaaS.`
+Repository descriptions include `The canmi.net & canmi.app monorepo.`, `A small library of packages
+and crates.`, `A tiny self-hosted cloud.` and `A tiny self-hosted PaaS.`
 
 ## A README is short, and in the first person
 
-**A repository's README is a title, a few lines, and the license**, as lattice's was:
+**A repository's README is a title, a few lines, and the license**:
 
 ```md
 # Everything Behind
@@ -55,37 +54,35 @@ MIT License © 2026 [Canmi](https://canmi.net)
   license.
 - **The title is made from the name, by what it means**, in Title Case: `Me` for `@canmi/me`, `UI`
   for `@canmi/ui`, `Axum Governor` for `axum-governor`. Not a mechanical conversion.
-- **Every fact in it is checked against the code** -- an API's name, a dependency, a feature --
-  and nothing in it tells a history that is not so: a new major is the same thing's next version,
-  not something unrelated under its name.
+- **Every fact in it is checked against the code** -- an API's name, a dependency, a feature -- and
+  nothing in it tells a history that is not so: a new major is the same thing's next version, not
+  something unrelated under its name.
 
 ## A license year is when the idea began
 
-**The year on a README's license line is the year the package was first thought of**, which is
-the author's to say: `response` and `whereabouts` were 2024, `axum-governor` 2025. It is the
-idea's year, not the code's: an idea tried before and given up, then built now, keeps the year it
-was first had, with no line of code connecting the two -- infra's panel and meter were 2024 and
-keeper 2025, though all three were written in 2026, and host is 2026. A package whose
-year nobody has said takes the year it was started in, and the question is asked rather than the
-year guessed.
+**The year on a README's license line is the year the package was first thought of**, which is the
+author's to say. The license years are 2024 for `response` and `whereabouts`, and 2025 for
+`axum-governor`. It is the idea's year, not the code's: an idea tried before and given up, then
+built now, keeps the year it was first had, with no line of code connecting the two. The license
+years for infra's panel and meter are 2024, keeper 2025, and host 2026. A package whose year nobody
+has said takes the year it was started in, and the question is asked rather than the year guessed.
 
-**An old year is not out of date.** It records when the work began, and a later year would claim
-the work is newer than it is. Nothing bumps a license year because it looks old -- not a release,
-not a new year, not a tidy-up.
+**An old year is not out of date.** It records when the work began, and a later year would claim the
+work is newer than it is. Nothing bumps a license year because it looks old -- not a release, not a
+new year, not a tidy-up.
 
 **A repository keeps one `LICENSE`, at its root** -- or, dual-licensed, the two Rust's projects
-keep, `LICENSE-MIT` and `LICENSE-APACHE` -- and its year stays as it is, whatever the
-packages' READMEs say. A package that needs the file beside it links it -- `ln -s ../../LICENSE
-LICENSE` -- rather than keeping a copy; `cargo package` and `pnpm pack` both follow the link and
-publish the text, so no two copies can differ.
+keep, `LICENSE-MIT` and `LICENSE-APACHE` -- and its year stays as it is, whatever the packages'
+READMEs say. A package that needs the file beside it links it -- `ln -s ../../LICENSE LICENSE` --
+rather than keeping a copy; `cargo package` and `pnpm pack` both follow the link and publish the
+text, so no two copies can differ.
 
 **That license is MIT, except in `rfcs` and monoflake.** `rfcs` is CC BY-NC-SA 4.0: it holds
-documents and the few settings that check them, no source, and a license written for code fits
-prose badly. Its README's line reads `CC BY-NC-SA 4.0 © 2026 [Canmi](https://canmi.net)`. Decided
-with the author on 2026-10-11. `monoflake/platform` is MIT OR Apache-2.0
-throughout, its two texts at the root as Rust's projects keep them, and `monoflake/cloud`, the glue
-and configuration that run it as the hosted platform, is private; platform's RFC fhg6w keeps the
-why, decided with the author on 2026-10-20. `monoflake/driver`, the drivers, is MIT OR Apache-2.0
-as platform is, its RFC 7ykg6, decided with the author on 2026-10-22. `monoflake/machine`, the NixOS a platform host runs,
-and `monoflake/runtime`, the images of the runtimes it runs, are MIT alone, one `LICENSE` at the
-root of each, decided with the author on 2026-10-21.
+documents and the few settings that check them, no source, and a license written for code fits prose
+badly. Its README's line reads `CC BY-NC-SA 4.0 © 2026 [Canmi](https://canmi.net)`.
+`monoflake/platform` is MIT OR Apache-2.0 throughout, its two texts at the root as Rust's projects
+keep them, and `monoflake/cloud`, the glue and configuration that run it as the hosted platform, is
+private; platform's RFC fhg6w keeps the why. `monoflake/driver`, the drivers, is MIT OR Apache-2.0
+as platform is, RFC 7ykg6. `monoflake/machine`, the NixOS a platform host runs, and
+`monoflake/runtime`, the images of the runtimes it runs, are MIT alone, one `LICENSE` at the root of
+each.

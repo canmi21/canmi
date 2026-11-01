@@ -9,10 +9,10 @@ A directory under `apps/` or `libs/` gets one word, or an abbreviation that can 
 Roughly 4 to 8 characters, lowercase, no hyphen unless the name is genuinely two words. What
 goes inside follows the rules below.
 
-Name for responsibility, never for deployment shape or product. `cdn` describes what it is;
-`res` described a slot it happened to occupy. Product and domain names are the worst
-candidates of all -- they change. A domain that was a content site can become a redirect
-without a single line of its code changing.
+Name for responsibility, never for deployment shape or product. `cdn` describes what it is; `res`
+would describe a slot it happens to occupy. Product and domain names are the worst candidates of all
+-- they change. A domain that was a content site can become a redirect without a single line of its
+code changing.
 
 **A database is a database, never a `DB`**, in prose, names and identifiers alike; the word is short
 enough already, and an abbreviation is one more spelling to search for.
@@ -21,8 +21,7 @@ enough already, and an abbreviation is one more spelling to search for.
 out, whether a package registry or a domain has the name free is not asked; the most technically
 fitting word wins. Availability is a question for publishing, met when something is published.
 
-**One word may carry two meanings, so long as the two are never needed where one reader reads.**
-Decided by the author on 2026-10-24, in place of a name having to be unique in the project. In
+**One word may carry two meanings, so long as the two are never needed where one reader reads.** In
 code, a module or a contract that uses both meanings writes each by its qualified name, never
 opening both sides and using the bare word, `qualified-meanings` in
 [model/rules/naming.res](../model/rules/naming.res). In a document it is judgment: one that
@@ -33,11 +32,10 @@ model alone, written by the integrator as the author decided it,
 [agents/integrator.md](agents/integrator.md). An implementer names only what is local to its own
 block, choosing the most exact and most technically neutral word, `global-names-modeled`.
 
-**One concept is one word, and where it varies is a dimension of it, never a second word.** Agreed
-with the author on 2026-10-18: a control of the platform and a control of an organization are both
-a control, of one half or the other, never `platform` beside `control`; a word coined only to tell
-two places of one thing apart makes a reader learn two names for one meaning and ask how they
-differ, when they do not.
+**One concept is one word, and where it varies is a dimension of it, never a second word.** A
+control of the platform and a control of an organization are both a control, of one half or the
+other, never `platform` beside `control`; a word coined only to tell two places of one thing apart
+makes a reader learn two names for one meaning and ask how they differ, when they do not.
 
 ## Default
 
@@ -93,20 +91,20 @@ stops working. `Naming.assigned` lists the ones this repository holds; Next.js's
 `Dockerfile.dockerignore`, not a suffix naming a target. Docker finds all three by those names
 without being told, and a reader finds them the same way; a variant is a name somebody has to
 already know. The Compose file is `docker-compose.yaml` rather than the shorter `compose.yaml` the
-Compose specification now prefers, or the `.yml` it still reads: its name says whose file it is,
-and its extension is written whole, as a name is, decided by the author on 2026-10-22. Where an image needs a context larger than its own directory, the `.dockerignore` sits
-at that context's root and serves every image built from it.
+Compose specification now prefers, or the `.yml` it still reads: its name says whose file it is, and
+its extension is written whole, as a name is. Where an image needs a context larger than its own
+directory, the `.dockerignore` sits at that context's root and serves every image built from it.
 
 ### A release asset names its system before its machine
 
 A file a release publishes is named `<name>-<version>-<system>-<machine>.<extension>`, the version
-slot holding a channel such as `nightly` where the release moves: `wasmtime-49.0.4-linux-x86_64.tar`,
-`rdm-nightly-macos-aarch64.dmg`. The machine is the kernel's name for it, as `uname -m` on Linux,
-Rust's targets and Nix's systems write it, `x86_64` and `aarch64`, rather than OCI's `amd64` and
-`arm64` or Node's `x64`; a manifest beside the files writes each target the same way,
-`linux-x86_64`. Where a format inside the file has its own name for the machine, as an OCI image's
-platform does, the file keeps that name inside and only its own name changes. Decided by the author
-on 2026-10-22.
+slot holding a channel such as `nightly` where the release moves:
+`wasmtime-49.0.4-linux-x86_64.tar`, `rdm-nightly-macos-aarch64.dmg`. The machine is the kernel's
+name for it, as `uname -m` on Linux, Rust's targets and Nix's systems write it, `x86_64` and
+`aarch64`, rather than OCI's `amd64` and `arm64` or Node's `x64`; a manifest beside the files writes
+each target the same way, `linux-x86_64`. Where a format inside the file has its own name for the
+machine, as an OCI image's platform does, the file keeps that name inside and only its own name
+changes.
 
 ## Asset directories are singular; infrastructure is plural
 
@@ -145,12 +143,12 @@ the point of use you want to know what a module _does_, not who invoices for it.
 - The lists of words a rule holds.
 
 **A vendor's name is held by the same means as the project's own**, `vendor-name` in
-[model/rules/naming.res](../model/rules/naming.res), with a set of names of its own, decided by
-the author on 2026-10-24. The set takes only words that are unmistakably a vendor's,
-`Naming.vendors`, never a plain English word. They may appear in a file the vendor defines, as a
-package's name in a declaration of a dependency, in an adapter module each repository declares in
-its `workspace.toml`, where a model declares its ground and its drivers, and in the lists of words a
-rule holds, as `voice.res` and `Naming.vendors`. Documents and RFCs are not read.
+[model/rules/naming.res](../model/rules/naming.res), with a set of names of its own. The set takes
+only words that are unmistakably a vendor's, `Naming.vendors`, never a plain English word. They may
+appear in a file the vendor defines, as a package's name in a declaration of a dependency, in an
+adapter module each repository declares in its `workspace.toml`, where a model declares its ground
+and its drivers, and in the lists of words a rule holds, as `voice.res` and `Naming.vendors`.
+Documents and RFCs are not read.
 
 **The test.** If the vendor were replaced tomorrow, how many names would have to change?
 One. If the answer is more, the vendor has leaked past the boundary.
@@ -158,12 +156,11 @@ One. If the answer is more, the vendor has leaked past the boundary.
 ### The project's own name is a vendor's name too
 
 Inside its own code, a project's name -- `monoflake` -- names nothing the code does, so it stays at
-the same boundary as anyone else's, decided by the author on 2026-10-20 and sharpened on
-2026-10-23. **The name appears only where a piece of data leaves the system and is mixed with
-other people's, where it must still be told as the project's.** Everything inside the system --
-a table, a unit, a directory, a bridge, a label, an option, a namespace, a module, a type, a
-function, an import -- is only one of the system's own tables, and is named for its subject alone.
-The places the name belongs:
+the same boundary as anyone else's. **The name appears only where a piece of data leaves the system
+and is mixed with other people's, where it must still be told as the project's.** Everything inside
+the system -- a table, a unit, a directory, a bridge, a label, an option, a namespace, a module, a
+type, a function, an import -- is only one of the system's own tables, and is named for its subject
+alone. The places the name belongs:
 
 - **A domain bound to the platform**, among every other name in DNS.
 - **Its published identity**, among everyone else's in a registry: a package's name or scope,
@@ -197,11 +194,11 @@ holds instead.
 
 ### The author's account name is a vendor's name too
 
-The author's public account name, `canmi21`, is treated as a vendor's, decided by the author on
-2026-10-24. **It may stand as data**: a link, a `user:repo` in `repos/registry.toml`, any format a
-repository defines, and a comment that mentions it. **It never stands in the structure**: no type,
-module, function or variable is named for it, and no code decides by it. It is no secret, so it is
-kept off the list of private identifiers, and it is not dwelt on. `account-name` in
+The author's public account name, `canmi21`, is treated as a vendor's. **It may stand as data**: a
+link, a `user:repo` in `repos/registry.toml`, any format a repository defines, and a comment that
+mentions it. **It never stands in the structure**: no type, module, function or variable is named
+for it, and no code decides by it. It is no secret, so it is kept off the list of private
+identifiers, and it is not dwelt on. `account-name` in
 [model/rules/naming.res](../model/rules/naming.res).
 
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
@@ -228,52 +225,47 @@ product, domain, deployment shape, supplier -- never gets carved into the part t
 expensive to change.
 
 **The inverse also holds: a vendor's thing must not squat on a generic name.** `libs/svg-canvas`
-styles SVG diagrams written in Claude's authoring convention. It was briefly `libs/canvas`,
-which was wrong in the opposite direction from the usual mistake -- a vendor-specific
-boundary had taken the name a real, general canvas library will want. A precise convention
-name such as `svg-canvas` is fine; the generic `canvas` name stays free for the thing that
-earns it.
+styles SVG diagrams written in Claude's authoring convention. Naming it `libs/canvas` would be wrong
+in the opposite direction from the usual mistake -- a vendor-specific boundary taking the name a
+real, general canvas library will want. A precise convention name such as `svg-canvas` is fine; the
+generic `canvas` name stays free for the thing that earns it.
 
-Inside that library the convention's own selectors (`.svg-canvas`, `.c-purple`) are left
-untouched, because they are the contract with the markup. The library name was the only part
-we owned.
+Inside that library the convention's own selectors (`.svg-canvas`, `.c-purple`) are left untouched,
+because they are the contract with the markup. The library name is the only part we own.
 
-Worked example from this repo: the commit hook is `hooks/commit.res`, not `jj-commit.res` and not
-a copy under either agent's vendor directory. Validating a commit message is not a jj-specific
-job; it would survive a move to another VCS untouched. The `jj-` prefix named the current
-supplier of the commits, which is exactly the information the filename did not need.
+Worked example from this repo: the commit hook is `hooks/commit.res`, not `jj-commit.res` and not a
+copy under either agent's vendor directory. Validating a commit message is not a jj-specific job; it
+would survive a move to another VCS untouched. A `jj-` prefix would name the current supplier of the
+commits, which is exactly the information the filename does not need.
 
 ## A resource in a vendor account is named by a drawn id
 
-**Every resource a platform or an organization makes in a vendor account is named by an id drawn
-as monoflake/platform's RFC b8f35 draws one**: 8 lowercase hex digits, bare, drawn at random at or
-above `01000000` and checked against the account's names, decided by the author on 2026-10-29,
-the platforms themselves no exception. It holds for a platform's control, its database and its buckets, for the bucket its CI
-uploads to, and for a binding's tunnel, named by the binding's own id; it is what monoflake/driver's
-RFC nrs5v already holds driver(cloudflare) to, so a name that is not in the id form marks a
-resource nobody made by rule. A name says nothing of what it holds: what each id is, is written
-in the repository that made it, as monoflake/cloud's `controls.toml` and `systems.toml`.
+**Every resource a platform or an organization makes in a vendor account is named by an id drawn as
+monoflake/platform's RFC b8f35 draws one**: 8 lowercase hex digits, bare, drawn at random at or
+above `01000000` and checked against the account's names, the platforms themselves no exception. It
+holds for a platform's control, its database and its buckets, for the bucket its CI uploads to, and
+for a binding's tunnel, named by the binding's own id; it is what monoflake/driver's RFC nrs5v
+already holds driver(cloudflare) to, so a name that is not in the id form marks a resource nobody
+made by rule. A name says nothing of what it holds: what each id is, is written in the repository
+that made it, as monoflake/cloud's `controls.toml` and `systems.toml`.
 
 **The one exception is a name the author chose by hand**, `handNamed` in
 [model/rules/naming.res](../model/rules/naming.res), today the four in the foundation platform's
-account. A name an agent or an advisor chose is never such a name, however reasonable it reads:
-`control-test` and `artifacts-test` broke the rule, and were drawn again. `vendor-resources-drawn`
-is `Pending` until monoflake/cloud's names are read from its configuration.
+account. A name an agent or an advisor chose is never such a name, however reasonable it reads.
+`vendor-resources-drawn` is `Pending` until monoflake/cloud's names are read from its configuration.
 
 **A drawn id names one resource ever**, `drawn-ids-once`: once its resource is deleted the id is not
-used again, and a replacement draws a new one, decided by the author on 2026-10-29. Cloudflare
-honors a bucket's name only the first time it is used, and an id used once is what makes a name
-say nothing but which resource it is. It is `Pending` until something records the names deleted
-resources held.
+used again, and a replacement draws a new one. Cloudflare honors a bucket's name only the first time
+it is used, and an id used once is what makes a name say nothing but which resource it is. It is
+`Pending` until something records the names deleted resources held.
 
 ## A credential has three forms, the vendor first
 
-Decided by the author on 2026-11-01, `credential-names` in
-[model/rules/naming.res](../model/rules/naming.res). **Every token or key has three forms**: its
-variable in `UPPER_SNAKE`, as a `secrets.json` and the environment hold it
-(`CLOUDFLARE_TOKEN_MANAGER`); its display in Title Case with spaces, the name in its vendor's
-dashboard (`Cloudflare Token Manager`); and its short form in lowercase and hyphens, where a secret
-becomes a file, as sops-nix's machine, platform and runner secrets do (`systems-read-key-id`).
+**Every token or key has three forms**: its variable in `UPPER_SNAKE`, as a `secrets.json` and the
+environment hold it (`CLOUDFLARE_TOKEN_MANAGER`); its display in Title Case with spaces, the name in
+its vendor's dashboard (`Cloudflare Token Manager`); and its short form in lowercase and hyphens,
+where a secret becomes a file, as sops-nix's machine, platform and runner secrets do
+(`systems-read-key-id`). `credential-names` in [model/rules/naming.res](../model/rules/naming.res).
 
 **The words run vendor, then platform, then purpose.** A token tied to its vendor names the vendor
 first and may use its terms; the platform follows, omitted for the foundation, which is the default,
@@ -328,8 +320,7 @@ underscores belongs to neither and is legible in both. Rust is free to call the 
 The corollary is that a type describing a serialized record is not an ordinary type. Its property
 names are the wire format, so they take the data rule rather than the language's, and a
 `serde(rename)` or a mapping layer is the thing to notice: either the record disagrees with the
-rule, or two spellings of one field now exist. Press's manifest carries exactly one, `frameRate`,
-which predates this.
+rule, or two spellings of one field now exist. Press's manifest carries exactly one, `frameRate`.
 
 A value is not a key and keeps whatever it is. Locale tags stay `en-US`, a content hash stays the
 hash, and a name somebody else spells is spelled their way -- see [voice.md](voice.md).

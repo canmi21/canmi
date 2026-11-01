@@ -49,34 +49,26 @@ What it is not:
 - Not self-referential. "This change", "this commit", "here we" -- the commit is the thing being
   read; it does not introduce itself.
 
-Reasoning that is worth keeping belongs in the rules -- `docs/` here, a project's `spec/` -- or beside the code, where the next reader is
-looking when they need it. The log answers what changed.
+Reasoning that is worth keeping belongs in the rules -- `docs/` here, a project's `spec/` -- or
+beside the code, where the next reader is looking when they need it. The log answers what changed.
 
 **A body is optional, and the default is not to have one.** A subject line that already says
 what changed needs nothing after it. Where a trailer is owed, the body is that trailer and
 nothing else; where no trailer is owed either, the message is one line. An empty body is not a
 message somebody neglected to finish.
 
-**When there is a body, three lines. `Commits.bodyLines` is the ceiling, not the target.** Longer than that and
-it has stopped saying what changed and started explaining why, which is the failure the list
-above describes and which no length limit alone prevents -- but a body that will not fit in
+**When there is a body, three lines. `Commits.bodyLines` is the ceiling, not the target.** Longer
+than that and it has stopped saying what changed and started explaining why, which is the failure
+the list above describes and which no length limit alone prevents -- but a body that will not fit in
 three lines is the reliable sign of it.
-
-The rule is here because it was broken at scale. Seven commits written in one afternoon carried
-bodies of fifteen to twenty-five lines each, every one of them recounting the alternatives
-weighed, the measurements taken and the reasoning behind the choice -- and every one of them
-duplicating a section of the rules or a code comment written in the same change, which is where a
-reader goes looking for exactly that. The log was left carrying a second copy of the argument,
-in the one place this file says it must not be.
 
 ### A lock a workflow moves names what moved
 
 A commit a workflow makes when it moves a lock names the packages that changed and their new
-versions, never a fixed line such as `flake.lock: Update` that every such commit repeats. Its
-type is `build` and its verb `update`. The subject names as many packages as fit its width,
-the rest counted as `and N more`; the body lists each as `name old -> new`, packed into its
-lines and counted the same way. Decided with the author on 2026-10-21 for `monoflake/machine`,
-whose `.github/update/message.nix` holds the order of the cases:
+versions, never a fixed line such as `flake.lock: Update` that every such commit repeats. Its type
+is `build` and its verb `update`. The subject names as many packages as fit its width, the rest
+counted as `and N more`; the body lists each as `name old -> new`, packed into its lines and counted
+the same way. `monoflake/machine`'s `.github/update/message.nix` holds the order of the cases:
 
 - the packages a machine holds, where any changed: `build: update linux 6.18.58 and tmux 3.8a`;
 - else the versions changed below them: `build: update dependencies go 1.27.3`;
@@ -118,9 +110,8 @@ in that list.
 
 **The address identifies a vendor, not a mailbox.** None of the three reaches anybody, and that is
 not a defect. A trailer here answers "which model wrote this" so a later reader knows how much
-scrutiny the change had; it was never a way to contact the author. An argument that a model
-without a reachable address should be credited in prose instead was made and is wrong -- it would
-apply equally to the two that came first.
+scrutiny the change had; it is not a way to contact the author. A model without a reachable address
+is credited by the trailer as any other is, not in prose.
 
 Applies going forward only. Earlier commits are not rewritten to add trailers.
 
@@ -181,12 +172,12 @@ call, its dry run read first, and is said in a line. **A push never takes `--all
 repositories hold local work that must not leave yet, as the deferred items `paused` and
 `held-back` list, and `--all` would push them with the rest.
 
-**Which agent pushes follows the roles**, decided by the author on 2026-10-24. Where roles are
-named, the integrator pushes on its own: when a wave ends, when a step of a thread is done, and
-before it ends a round of work with commits still unpushed. Where none is named, the one session
-holding both halves pushes its own work, as above: once the check passes, the form layer holds
-nothing and the work is done. **Every push waits on the form layer holding nothing**; a reviewer's
-read and the wave accepted hold for a wave worked in roles alone, [pushing.md](agents/pushing.md).
+**Which agent pushes follows the roles**. Where roles are named, the integrator pushes on its own:
+when a wave ends, when a step of a thread is done, and before it ends a round of work with commits
+still unpushed. Where none is named, the one session holding both halves pushes its own work, as
+above: once the check passes, the form layer holds nothing and the work is done. **Every push waits
+on the form layer holding nothing**; a reviewer's read and the wave accepted hold for a wave worked
+in roles alone, [pushing.md](agents/pushing.md).
 
 **A push that releases a version of our own code is asked of the user first**, in either mode,
 until the deferred item `release-push` is settled; canmi/lib's `held-back` is one such push.
@@ -238,9 +229,8 @@ and [agent-protocol.md](agents/agent-protocol.md) says what to do with the delta
 **What reached `main` is checked again, by the commits part of `check`**: every described commit
 after the repository's own `Commits.since` against the same rules the hook applies, from one
 function in `model/checks/history.res`. What came before a repository's `since` is left as it was
-written; each one was set to that repository's `main` on 2026-10-20, as the author asked, and
-every repository the registry lists has one. The hook sees only what an agent types with `-m`; the history sees
-everything, an editor's message and a human's included, after the fact.
+written, and every repository the registry lists has one. The hook sees only what an agent types
+with `-m`; the history sees everything, an editor's message and a human's included, after the fact.
 
 `hooks/commit.res` runs before any jj subcommand that can write a description and does two
 things: it checks the message, then -- once the verify gate below has passed too -- it runs `jj
@@ -248,12 +238,10 @@ fix` with the workspace's `jujutsu.toml`, wherever below it the commit is made, 
 being committed is already formatted. A malformed message is refused with the specific reason,
 which the agent reads and corrects on the spot.
 
-The guarded list is derived from which subcommands accept `-m`, not from the two that write
-most of the messages. It was `commit` and `describe` alone, and `jj split -m` carried a
-malformed co-author trailer straight past it -- caught only because a later `describe` in the
-same session was checked and rejected the identical text. A gap of that kind is silent by
-construction: the hook cannot report a command it never looked at. So when jj grows another
-way to set a message, the list grows with it -- `Commits.describing`.
+The guarded list is derived from which subcommands accept `-m`, not from the two that write most of
+the messages. A subcommand left off the list is a gap silent by construction: the hook cannot report
+a command it never looked at. So when jj grows another way to set a message, the list grows with it
+-- `Commits.describing`.
 
 The hook lives at the agent-harness layer rather than in jj, because jj offers no hook point
 at all: it has no commit hook, and it explicitly refuses aliases that shadow built-in
@@ -268,16 +256,15 @@ apply to one event. A vendor adapter never owns policy: if the harness payloads 
 the shared entrypoint normalizes their common meaning rather than growing two implementations
 that only appear equivalent.
 
-**A commit waits on a passing verify.** Agreed with the author on 2026-10-20, following
-monoflake's "a commit is made only after verify passes": `hooks/gates/verified.res` refuses a
-`Commits.committing` command until the repository's `mise run check <path>` -- or `mise run check`
-for the workspace -- passed at the working copy being committed. A pass writes the working copy's
-commit to `.jj/verified`, and the hook compares contents with `jj diff`, so describing the change
-afterwards keeps it verified and editing a file does not. A run of named parts, `check workspace
-words`, verifies nothing and writes nothing. The hook reads the working copy before the command
-runs, so an edit chained into it -- `printf x >> f && jj commit` -- is not seen, which was found by
-trying it: a commit is a command of its own. A `cd` before it is followed, so `cd repos/seam && jj
-commit` is held to seam's verify and not the workspace's.
+**A commit waits on a passing verify.** `hooks/gates/verified.res` refuses a `Commits.committing`
+command until the repository's `mise run check <path>` -- or `mise run check` for the workspace --
+passed at the working copy being committed. A pass writes the working copy's commit to
+`.jj/verified`, and the hook compares contents with `jj diff`, so describing the change afterwards
+keeps it verified and editing a file does not. A run of named parts, `check workspace words`,
+verifies nothing and writes nothing. The hook reads the working copy before the command runs, so an
+edit chained into it -- `printf x >> f && jj commit` -- is not seen: a commit is a command of its
+own. A `cd` before it is followed, so `cd repos/seam && jj commit` is held to seam's verify and not
+the workspace's.
 
 **The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
 `SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;
@@ -297,13 +284,12 @@ moment when the answer is still cheap to write -- before the conversation that p
 gone. Bug fixes are excluded on purpose: a fix records its cause at the regression test, not
 in the rules.
 
-`hooks/bookmark.res` runs at the end of a turn and refuses to hand the result back while `main`
-does not cover what was committed. It is the only hook here bound to something other than a tool
-call, and it has to be: the other two watch the Bash tool, and the moment the completion rule
-above talks about is the moment the agent _stops_ calling tools. A turn that ends on its last
-`jj describe` runs nothing afterwards for a tool hook to inspect, so the bookmark half of the
-rule held only as long as it was remembered -- and it was not. Seventeen commits went by in one
-session with the bookmark never moving.
+`hooks/bookmark.res` runs at the end of a turn and refuses to hand the result back while `main` does
+not cover what was committed. It is the only hook here bound to something other than a tool call,
+and it has to be: the other two watch the Bash tool, and the moment the completion rule above talks
+about is the moment the agent _stops_ calling tools. A turn that ends on its last `jj describe` runs
+nothing afterwards for a tool hook to inspect, so the bookmark half of the rule would hold only as
+long as it was remembered.
 
 **It refuses rather than moving the bookmark itself**, and that is the whole point of it. jj
 ships the move as `experimental-advance-branches`, which [toolchain.md](toolchain.md) leaves off
@@ -317,12 +303,13 @@ firing on those would turn a rule that protects unfinished work into one that de
 published.
 
 `hooks/delta.res` runs after a `jj rebase` and hands back the diff of the rules -- `docs/`,
-`model/`, a project's `spec/` -- and `AGENTS.md` between the working copy before the rebase and after it. It reads the previous
-state out of jj's operation log rather than remembering anything, and prints nothing when no
-rule moved. It exists because a rule written elsewhere -- another machine, an earlier session --
-reaches this checkout only through `main`, and the moment it does is otherwise invisible: the
-files change under an agent whose context still holds the old text. It does not block; whether a changed rule touches the task
-is the agent's call, and it is asked at the one moment the answer is cheap.
+`model/`, a project's `spec/` -- and `AGENTS.md` between the working copy before the rebase and
+after it. It reads the previous state out of jj's operation log rather than remembering anything,
+and prints nothing when no rule moved. It exists because a rule written elsewhere -- another
+machine, an earlier session -- reaches this checkout only through `main`, and the moment it does is
+otherwise invisible: the files change under an agent whose context still holds the old text. It does
+not block; whether a changed rule touches the task is the agent's call, and it is asked at the one
+moment the answer is cheap.
 
 What all of this does not cover, and why the rules above still have to be read rather than
 merely enforced:

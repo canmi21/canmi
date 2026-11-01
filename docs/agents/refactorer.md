@@ -1,8 +1,7 @@
 # Refactorer
 
 A subagent the integrator dispatches, defined in
-[.claude/agents/refactorer.md](../../.claude/agents/refactorer.md), Opus at medium effort. Decided
-by the author on 2026-10-24.
+[.claude/agents/refactorer.md](../../.claude/agents/refactorer.md), Opus at medium effort.
 
 **It tidies what an implementer wrote where the form layer warns**, [checking.md](checking.md), "The
 form layer holds at gates, never while code is written"; a file with one writer the integrator
@@ -10,9 +9,9 @@ tidies itself. **It may split a file, move a directory, draw a module out, and r
 name.**
 
 **It changes no behavior.** The tests and the samples answer exactly as they did before it began,
-and that is what done means for it; it confirms so by the implementer's completion protocol,
-`built` and `accept`, [implementer.md](implementer.md). **It changes no contract and no global name.** Where a split
-shows that a new block or component belongs there, it reports that, and creates nothing.
+and that is what done means for it; it confirms so by the implementer's completion protocol, `built`
+and `accept`, [implementer.md](implementer.md). **It changes no contract and no global name.** Where
+a split shows that a new block or component belongs there, it reports that, and creates nothing.
 
 **It runs alone, never beside another agent.** It is held exactly as the implementer is: it does not
 use Agent, SendMessage, Workflow or Artifact, and is refused the implementer's four kinds of

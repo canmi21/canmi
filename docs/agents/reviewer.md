@@ -1,12 +1,11 @@
 # Reviewer
 
 A subagent, defined in [.claude/agents/reviewer.md](../../.claude/agents/reviewer.md), Opus at high
-effort. Decided by the author on 2026-10-24.
+effort.
 
 **A reviewer only reads.** It starts in a fresh context, and its brief holds the diff, the rules and
 the RFCs alone, **never an implementer's reasoning or report.** **Its commands are a whitelist**,
-decided by the author on 2026-10-24, `reviewer-commands` in
-[model/rules/delegation.res](../../model/rules/delegation.res):
+`reviewer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res):
 
 - jj as `diff`, `log`, `show`, `file show` and `file list`, never `status`, and never given a flag
   in `jjRunning`;
@@ -14,31 +13,25 @@ decided by the author on 2026-10-24, `reviewer-commands` in
   never `-i`, and with no command in `sedWriting`; find never given a flag in `findWriting`; rg
   never given one in `rgRunning`;
 - `cd` to a directory, and `echo` and `printf` of literals alone, no word of the three holding `$`
-  or a backquote, printf never `-v`, and echo and printf never inside a substitution, the author's
-  widening of 2026-10-31;
+  or a backquote, printf never `-v`, and echo and printf never inside a substitution;
 - output redirected only to `redirectedTo`, and a command run by `&`, a substitution or a pipe
   judged as one of its own;
 - each segment's first word is its program: no wrapper before it and no assignment to the
-  environment, decided by the author on 2026-10-24.
+  environment.
 
-Each list beyond the author's own words, the flags that write or run a program, was added by the
-integrator on 2026-10-24 from a review, as what "only reads" already asks.
+**Every other command is refused, every mise task among them**: a check writes what it builds, which
+a role that only reads must not, and what a check concludes is the integrator's.
 
-**Every other command is refused, every mise task among them**: a check writes what it builds,
-which a role that only reads must not, and what a check concludes is the integrator's.
-
-**A way around the whitelist found after wave four is a known limit**, as a way around the
-implementer's four kinds is, [delegation.md](delegation.md), and a review does not count it a
-defect, decided by the author on 2026-10-24. The hook guards a well-meaning agent against a slip,
-not against an adversary, and a reviewer is no adversary; the mechanism is not polished further.
+**A way around the whitelist is a known limit**, as a way around the implementer's four kinds is,
+[delegation.md](delegation.md), and a review does not count it a defect. The hook guards a
+well-meaning agent against a slip, not against an adversary, and a reviewer is no adversary; the
+mechanism is not polished further.
 
 **In a public repository's wave it also reads the diff for leaks**, [pushing.md](pushing.md), "A
 push carries nothing private".
 
 **For every SQL statement a diff adds or changes, it states how many rows the statement reads and
-what quantity that grows with**, decided by the author on 2026-10-27. Every review brief carries the
-item, a Codex reviewer's included. An address allocation reading the whole range, about 262,000
-rows a call, passed review and was found in the database's own insights,
+what quantity that grows with**. Every review brief carries the item, a Codex reviewer's included,
 [lessons.md](../lessons.md).
 
 **It reports defects alone**, each with its file and line, the text quoted, and the rule it breaks;

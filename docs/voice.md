@@ -2,31 +2,31 @@
 
 ## Language
 
-- **Chat / spoken reply**: simplified Chinese mixed with English technical nouns. Don't translate established English terminology (e.g., "fetchpriority", "viewBox", "Hono", "OKLCH", "preset") — keep them as proper nouns inside Chinese sentences.
-- **The reply that ends a turn is in the chat language, and a hook holds it.** The rule above was
-  loaded at every start and still broken twice in one session: after a stretch of reading English
-  specs and English tool output, the one-line updates between tool calls turned English, and then
-  the reply did, and nothing from inside the drift notices it. So
+- **Chat / spoken reply**: simplified Chinese mixed with English technical nouns. Don't translate
+  established English terminology (e.g., "fetchpriority", "viewBox", "Hono", "OKLCH", "preset") —
+  keep them as proper nouns inside Chinese sentences.
+- **The reply that ends a turn is in the chat language, and a hook holds it.** After a stretch of
+  reading English specs and English tool output, the one-line updates between tool calls turn
+  English, and then the reply does, and nothing from inside the drift notices it. So
   [hooks/language.res](../hooks/language.res) reads the turn when it ends and holds it open while
   the reply it ends with -- the prose after its last tool call -- is English with no Chinese in it
   -- code, paths and short lines excepted, and a user who wrote English themselves answered in
   English. Only the person counts as the user: another session's message arrives in the user's place
-  in English, and until 2026-10-09 every turn one started went unchecked, a whole afternoon of
-  reports to implementers' messages written to the user in English. The lines between tool calls are
-  the work's own and are not checked: the author reads the reply a turn ends with, decided on
-  2026-10-09. The hold asks for the reply restated in Chinese; the check is a backstop, and the rule
-  is still to write it in Chinese from the start.
+  in English, and does not make an English reply right. The lines between tool calls are the work's
+  own and are not checked: the author reads the reply a turn ends with. The hold asks for the reply
+  restated in Chinese; the check is a backstop, and the rule is still to write it in Chinese from
+  the start.
 - **File content, including code comments**: English only. No Chinese. The words part holds it,
   outside the files `Voice.quoting` names, whose job is to read another language.
 - **Commit messages**: English only.
-- **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` --
-  not the British spelling of any of them; `Voice.british` in
-  [model/rules/voice.res](../model/rules/voice.res) is the list the words part holds the tree to. This is not a preference between two correct forms:
-  the platform is already American and half of it is identifiers. `color` is a CSS property, a
-  StyleX key and a token name; `license` is a route, a file and a record type. An author writing
-  `color` in the prose beside `color:` has put two spellings of one word in one file, and the
-  one that is a reader's search term is the one that loses. The rule removes the choice so the
-  file does not have to keep making it.
+- **The English is American.** `color`, `behavior`, `license`, `honor`, `traveled`, `labeled` -- not
+  the British spelling of any of them; `Voice.british` in
+  [model/rules/voice.res](../model/rules/voice.res) is the list the words part holds the tree to.
+  This is not a preference between two correct forms: the platform is already American and half of
+  it is identifiers. `color` is a CSS property, a StyleX key and a token name; `license` is a route,
+  a file and a record type. An author writing `color` in the prose beside `color:` has put two
+  spellings of one word in one file, and the one that is a reader's search term is the one that
+  loses. The rule removes the choice so the file does not have to keep making it.
 - **A name is quoted, not written, and English-only does not reach it.** The rule above governs
   what an author composes: prose, comments, identifiers, commit messages, documentation. A field
   whose value _is_ somebody else's name is not composed -- it is recorded, and it is recorded as
@@ -44,13 +44,12 @@
   source literal needed to render them. That permission is local: it does not extend to unrelated
   UI, prose, comments, commit messages or chat.
 - **The default governs writing, not auditing. An emoji already in the tree stays.** It is there
-  because somebody put it there, and nothing in the file records whether that was asked for --
-  a permission is granted in conversation and leaves no trace beside the glyph. So an assistant
-  reading one cannot tell an approved emoji from an unapproved one, and must not guess.
-  Removing on the guess destroys an intent that was expressed; leaving it costs a glyph nobody
-  minds. Ask if it matters, and take silence as leave it alone. This rule exists because the
-  opposite was done: `index.html` lost a 🎉 to a question that was asked and then answered by
-  the assistant on the user's behalf.
+  because somebody put it there, and nothing in the file records whether that was asked for -- a
+  permission is granted in conversation and leaves no trace beside the glyph. So an assistant
+  reading one cannot tell an approved emoji from an unapproved one, and must not guess. Removing on
+  the guess destroys an intent that was expressed; leaving it costs a glyph nobody minds. Ask if it
+  matters, and take silence as leave it alone. Such a question is the user's to answer, never the
+  assistant's on the user's behalf.
 - **Never in a name.** The permission above covers displayed content and nothing else. Identifiers
   -- variables, functions, types, CSS classes, file and directory names -- are never emoji and are
   never named after one, so `overview-ready-emoji` is wrong even though the class name is ASCII.
@@ -100,11 +99,10 @@ As with _app_, infer which from what is being discussed: a route, a `load`, an a
 is SvelteKit; a theme, a token, a gesture or an import from `@canmi/kit` is the package. Ask only
 when the sentence leads somewhere different under the two.
 
-**"Shared lib", "shared library" and "lib" mean the library as a whole**: the author's own code
-that depends on nothing else of theirs, kept in one repository, `lib`, and published as
-`@canmi/me`, `@canmi/kit`, `@canmi/ui`, `@canmi/web` and `@canmi/response`, and as the crates
-`canmi`, `response` and the rest. It was briefly called the kit, which is why the word needed this
-section.
+**"Shared lib", "shared library" and "lib" mean the library as a whole**: the author's own code that
+depends on nothing else of theirs, kept in one repository, `lib`, and published as `@canmi/me`,
+`@canmi/kit`, `@canmi/ui`, `@canmi/web` and `@canmi/response`, and as the crates `canmi`, `response`
+and the rest.
 
 Written into a file, the bare word is never left to be read the same way: it is "SvelteKit", or
 `@canmi/kit`. A reader of a file has no conversation to infer from.
@@ -114,8 +112,7 @@ Written into a file, the bare word is never left to be read the same way: it is 
 The author dictates by voice, and the input method turns "driver" into "Java". So in the author's
 messages, "Java" is read as "driver", the platform's drivers and `monoflake/driver` among them,
 unless the sentence is plainly about the Java language. The word comes from the input method, not
-from the author, so it is read through and never asked about or corrected. Recorded at the
-author's request on 2026-10-28.
+from the author, so it is read through and never asked about or corrected.
 
 ## A figure in the rules is dated, or it is checked
 
@@ -144,32 +141,32 @@ it.
 - Don't narrate internal deliberation in chat.
 - End-of-turn summary is one or two sentences. What changed, what's next.
 
-Match response weight to question weight: a simple question gets a direct answer, not headers and sections.
+Match response weight to question weight: a simple question gets a direct answer, not headers and
+sections.
 
 ## The author is told what a thing is, never only its id
 
 **An agent talking to the author never names a thing by its id alone**: no RFC id, no commit hash,
 no item slug such as `cdn-redirect`, no version hash. It says in one plain sentence what the thing
-is, which is what the author needs to confirm it, and adds the id only where the author must act
-on it, as in a command to run. Ids are for the relays between agents. Decided by the author on
-2026-10-29, who said the codes meant nothing to them.
+is, which is what the author needs to confirm it, and adds the id only where the author must act on
+it, as in a command to run. Ids are for the relays between agents.
 
 ## A time told to the author is US Eastern, written for a person
 
 **Every time an agent tells the author is in US Eastern time, written plainly**, as `美东晚上 11:36`,
 with the UTC it stands for beside it where a log or a schedule is read in UTC, as
-`美东晚上 11:36（03:36 UTC）`, never a bare UTC time. The offset follows the date: UTC-4 under daylight time, from
-the second Sunday of March to the first Sunday of November at 2:00, and UTC-5 otherwise, so the
-date is checked before converting. Work is named by its order, never by a part of the day such as
-`今晚`, since the author's day ends when they sleep. Restated by the author on 2026-11-01, after an
-agent kept reporting UTC times read off the integrator's messages; UTC itself stays the form of
-every log, relay between agents and stored time, [code.md](code.md), "Time is stored and run in UTC".
+`美东晚上 11:36（03:36 UTC）`, never a bare UTC time. The offset follows the date: UTC-4 under daylight
+time, from the second Sunday of March to the first Sunday of November at 2:00, and UTC-5 otherwise,
+so the date is checked before converting. Work is named by its order, never by a part of the day such as `今晚`,
+since the author's day ends when they sleep. UTC itself stays the form of every log, relay between
+agents and stored time, [code.md](code.md), "Time is stored and run in UTC".
 
 ## When to ask vs. act
 
 - **Act** when the decision is reversible, the path is clear, or existing conventions cover it.
-- **Ask** when the decision is structural (architecture, naming scope, library choice), would cause user-visible changes hard to revert, or involves a real trade-off the user should weigh.
-- Avoid stacking multiple `AskUserQuestion` calls in succession. Pick the highest-impact question, ask it, act on the answer.
+- **Ask** when the decision is structural (architecture, naming scope, library choice), would cause
+  user-visible changes hard to revert, or involves a real trade-off the user should weigh.
+- Avoid stacking multiple `AskUserQuestion` calls in succession. Pick the highest-impact question,
+  ask it, act on the answer.
 - **A question's every field is in the user's language**, the question, each label and each
-  description, simplified Chinese with English technical nouns, as the rest of the conversation is;
-  the author refused dialogs written in English twice on 2026-10-30 and 2026-10-31.
+  description, simplified Chinese with English technical nouns, as the rest of the conversation is.

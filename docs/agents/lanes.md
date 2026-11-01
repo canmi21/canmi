@@ -6,62 +6,54 @@ is [delegation.md](delegation.md); how a wave is checked and committed is
 
 ## File ownership is the whole of the concurrency control
 
-**Two implementers never share a working copy**: each works in a lane of its own, one jj
-workspace, and file ownership is what lets the lanes be merged with no conflict. Decided by the
-author on 2026-10-24, replacing one working copy shared by every implementer. Being the one
-partition the merge rests on, it has to be exact.
+**Two implementers never share a working copy**: each works in a lane of its own, one jj workspace,
+and file ownership is what lets the lanes be merged with no conflict. Being the one partition the
+merge rests on, it has to be exact.
 
 - **The file set is declared before dispatch**, not discovered during it.
-- **Disjoint sets run together; overlapping sets run in sequence.** There is no third answer, and
-  no locking cleverness worth inventing for a handful of implementers. Sets run together once
-  `implementer-commands` lands; until then one implementer runs at a time,
-  [delegation.md](delegation.md).
+- **Disjoint sets run together; overlapping sets run in sequence.** There is no third answer, and no
+  locking cleverness worth inventing for a handful of implementers. Sets run together under
+  `implementer-commands`, [delegation.md](delegation.md).
 - **The model's interfaces and its registries belong to the integrator** and to nobody else: a
   module list, a route table, a workspace's member list. **Shared code the model does not hold is
   written by one implementer in the wave before**, and the next wave's implementers use it.
-- **One refactor is one agent.** A signature and its call sites are a single task however many
-  files they span. Splitting them gives two implementers one interface to guess at
-  independently, which is the failure this repository has already paid for once: one interface
-  rewritten seven times in an afternoon, every disagreement silent, each found by a person
-  happening to describe it out loud. Parallelism is across independent concerns, never across
-  one change.
+- **One refactor is one agent.** A signature and its call sites are a single task however many files
+  they span. Splitting them gives two implementers one interface to guess at independently.
+  Parallelism is across independent concerns, never across one change.
 
 The structural repair is worth more than the discipline. Two hand-written spellings of one
-interface, in two programs that never compile together, disagree silently by construction -- and
-that afternoon ended by moving the shape into a package both import, so the eighth disagreement
-would have been a compile error. A rule that asks people to be careful is what gets written when
-the rule that makes carelessness fail loudly is not yet available.
+interface, in two programs that never compile together, disagree silently by construction; moving
+the shape into a package both import makes a disagreement a compile error. A rule that asks people
+to be careful is what gets written when the rule that makes carelessness fail loudly is not yet
+available.
 
 ### Within a repository and across them, a lane is the unit
 
-Found on 2026-10-23 running two implementers on one thread, RFC 54q45, the author having turned
-parallel work on. A file set alone is not enough where implementers share a working copy: a crate
-half written breaks the workspace another implementer builds, so **two implementers never share a
-working copy**, each in a lane of its own, one jj workspace, whether they work in one repository
-or in two. **Neither runs `mise run check`**, since two
-repositories' checks may build one ReScript package at once, and the integrator runs every check
-once both have returned. What one implementer needs of the other's side is said to the
-integrator, which passes it on: neither edits the other's files, nor asks the other directly.
+RFC 54q45. A file set alone is not enough where implementers share a working copy: a crate half
+written breaks the workspace another implementer builds, so **two implementers never share a working
+copy**, each in a lane of its own, one jj workspace, whether they work in one repository or in two.
+**Neither runs `mise run check`**, since two repositories' checks may build one ReScript package at
+once, and the integrator runs every check once both have returned. What one implementer needs of the
+other's side is said to the integrator, which passes it on: neither edits the other's files, nor
+asks the other directly.
 
 ### Some files have one writer, the integrator
 
-**Only the integrator changes these**, decided by the author on 2026-10-24: the model's rules and
-declarations, every RFC, `docs/`, `AGENTS.md`, and a root manifest, which is a Cargo workspace's
-member list, `pnpm-workspace.yaml`, `workspace.toml` and `model/plan/work.res`. **The model's rules
-and declarations** are the workspace's `model/rules/`, `model/plan/` and `model/rules.res`, and a
-repository's declaring files, as monoflake/platform's `model/graph/` and `model/contracts/`. **A
-check program is code, an implementer's**: `model/check.res` and `model/checks/`, of the workspace
-and of a repository alike. The one exception is a rule's `held` moved from `Pending` to `Check`,
-a registration the integrator writes at the merge. `Delegation.singleWriter` in
+**Only the integrator changes these**: the model's rules and declarations, every RFC, `docs/`,
+`AGENTS.md`, and a root manifest, which is a Cargo workspace's member list, `pnpm-workspace.yaml`,
+`workspace.toml` and `model/plan/work.res`. **The model's rules and declarations** are the
+workspace's `model/rules/`, `model/plan/` and `model/rules.res`, and a repository's declaring files,
+as monoflake/platform's `model/graph/` and `model/contracts/`. **A check program is code, an
+implementer's**: `model/check.res` and `model/checks/`, of the workspace and of a repository alike.
+The one exception is a rule's `held` moved from `Pending` to `Check`, a registration the integrator
+writes at the merge. `Delegation.singleWriter` in
 [model/rules/delegation.res](../../model/rules/delegation.res) lists them. **A lockfile is
-derived**: never merged by hand, it is written again by the integrator when a wave is merged.
-**An implementer's diff that touches a file outside its own directory is refused by `accept`.**
+derived**: never merged by hand, it is written again by the integrator when a wave is merged. **An
+implementer's diff that touches a file outside its own directory is refused by `accept`.**
 
 **Once `accept-in-lane` lands, in a lane `accept` runs as `accept <name> --from <base>`**, and
-passes over no file of another block in work; until then it runs as it does now. Each lane has a
-working copy of its own, so the reason `accept` once let another block's files stand, one tree
-shared by every implementer, no longer holds. `accept-in-lane` in the model, decided by the author
-on 2026-10-24.
+passes over no file of another block in work; until then it runs as it does now. `accept-in-lane` in
+the model.
 
 ### A wave opens on one base and closes in one merge
 
@@ -81,52 +73,46 @@ builds of a dependency into the dependency's own directory, so through a link th
 checkout would meet on one lock. The integrator opens one with `mise run lane open <repository>
 <name>` and closes it with `mise run lane close <name>`, a task not written yet. **A lane is closed
 once its change is in the main line**: its jj workspaces are forgotten, `cargo clean` runs,
-`node_modules` is removed, and then the directory. **A lane's workspace is forgotten only after a
-jj command run in the lane**, as `jj -R <lane> st`, learned on 2026-10-26: jj snapshots a working
-copy only when a command runs in it, so the integrator's last edit in the lane, never snapshotted,
-went with the lane's directory, removed after `jj workspace forget`, and was made again in the main
-checkout.
+`node_modules` is removed, and then the directory. **A lane's workspace is forgotten only after a jj
+command run in the lane**, as `jj -R <lane> st`: jj snapshots a working copy only when a command
+runs in it, so an edit never snapshotted goes with the lane's directory, removed after `jj workspace
+forget`.
 
 **Before a lane opens, the base workspace's working copy is frozen with `jj new`, and while a lane
-is open that working copy is not edited**, learned on 2026-10-24: an edit to the commit a lane
-stands on rebases the lane's commit, the lane's working copy goes stale, and `jj workspace
-update-stale` then overwrites the edits on the lane's disk; that wave's were recovered from a
-divergent copy jj had snapshotted.
+is open that working copy is not edited**: an edit to the commit a lane stands on rebases the lane's
+commit, the lane's working copy goes stale, and `jj workspace update-stale` then overwrites the
+edits on the lane's disk.
 
 **A lane's `target` holds no more than `Delegation.laneTarget`**, and is cleared with `cargo clean`
-past that. **A cache that can be written again is cleared by its own tool's clean**, never
-with `trash`, which frees no space; one with no clean, as `node_modules`, and a lane's directory
-being closed are removed with `rm` inside the workspace, as `AGENTS.md` has it. **The pnpm global
-store is never touched.**
+past that. **A cache that can be written again is cleared by its own tool's clean**, never with
+`trash`, which frees no space; one with no clean, as `node_modules`, and a lane's directory being
+closed are removed with `rm` inside the workspace, as `AGENTS.md` has it. **The pnpm global store is
+never touched.**
 
 ## File ownership partitions files, and that is all it partitions
 
 The section above is the whole of the concurrency control for editing. Five things sit outside
-editing, and each of them was found by being broken.
+editing.
 
-**Measurement intersects writing even where the file sets are disjoint.** An implementer
-measuring a build while other implementers edit its sources measures a tree that never existed.
-The first CSS budget figures of that session were already stale by the time they were read. A
-measurement is scheduled between waves, never beside one.
+**Measurement intersects writing even where the file sets are disjoint.** An implementer measuring a
+build while other implementers edit its sources measures a tree that never existed. A measurement is
+scheduled between waves, never beside one.
 
 **jj snapshots the whole tree, so every jj write waits for the writing to stop.** A `jj commit`
-taken while an implementer was mid-write produced `Concurrent checkout` and a divergent change id.
-The recovery is to confirm the orphan's content is live in the working copy, then `jj abandon` it.
-**An implementer types no jj command**; a task it runs, as `accept --from`, may read its own lane's
-history, and that lane is the one working copy it reaches.
+taken during writing produces `Concurrent checkout` and a divergent change id; the recovery is to
+confirm the orphan's content is live in the working copy, then `jj abandon` it. **An implementer
+types no jj command**; a task it runs, as `accept --from`, may read its own lane's history, and that
+lane is the one working copy it reaches.
 
 **A constraint adopted for concurrency is re-evaluated when the concurrency ends.** A rule that
-exists because two implementers were in flight outlives its reason unless somebody says so out
-loud.
+exists because two implementers were in flight outlives its reason unless somebody says so out loud.
 
-**The integrator's own checking method is proven to fail before it is trusted.**
-`mise run verify 2>&1 | tail` returns `tail`'s status, so every "exit 0" read that way meant
-nothing. An implementer comparing comment block counts read `jj file show -r @`, which returns the
-working copy because jj auto-snapshots it, compared new against new, and reported a perfect green
-from a comparison that had not happened. This is [code.md](../code.md), "A rule is maintainable
-only when breaking it fails loudly", pointed at the checker instead of at the code.
+**The integrator's own checking method is proven to fail before it is trusted.** `mise run verify
+2>&1 | tail` returns `tail`'s status, not verify's. `jj file show -r @` returns the working copy
+because jj auto-snapshots it, so it cannot serve as the old copy in a comparison. This is
+[code.md](../code.md), "A rule is maintainable only when breaking it fails loudly", pointed at the
+checker instead of at the code.
 
-**A project's task and the workspace's can share a name, and the wrong one passes.** `mise run
-refs` from the workspace runs the workspace's gate, which never reads `repos/web/spec`. An
-implementer verified a web edit against it twice and reported a green count line that had not
-looked at the file it changed. **The path goes in the brief**: `mise run //repos/web:refs`.
+**A project's task and the workspace's can share a name, and the wrong one passes.** `mise run refs`
+from the workspace runs the workspace's gate, which never reads `repos/web/spec`. **The path goes in
+the brief**: `mise run //repos/web:refs`.

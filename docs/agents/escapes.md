@@ -1,19 +1,17 @@
 # Escapes
 
-What an agent does when a rule stands in the way of the work, decided by the author on
-2026-10-24. How the work is split is [delegation.md](delegation.md).
+What an agent does when a rule stands in the way of the work. How the work is split is
+[delegation.md](delegation.md).
 
 ## An escape asks for the model to change
 
-**A refusal is never worked around**, decided by the author on 2026-10-31: a hook, a sandbox or a
-tool that refuses an agent's command or write stops that piece of work, and the agent reports it
-to its superior rather than reaching the same end another way, as a Codex implementer did that day
-by moving cargo's build directory to `/private/tmp` once its own was refused. The refusal is the
-friction the escape below records.
+**A refusal is never worked around**: a hook, a sandbox or a tool that refuses an agent's command or
+write stops that piece of work, and the agent reports it to its superior rather than reaching the
+same end another way. The refusal is the friction the escape below records.
 
-**An escape is a request that the model be changed, never a way past a rule.** While it waits,
-every rule still holds: the part of the work it stopped waits for the decision, and the rest goes
-on. **The decision has one of three outcomes**:
+**An escape is a request that the model be changed, never a way past a rule.** While it waits, every
+rule still holds: the part of the work it stopped waits for the decision, and the rest goes on.
+**The decision has one of three outcomes**:
 
 - the rule is followed, and the decision says how;
 - the rule is changed;
@@ -28,9 +26,9 @@ be.** Only a rule a formatter satisfies on its own is marked `ByTool` and cannot
 
 ## Who escapes to whom
 
-- **An implementer escapes to the integrator** when a contract cannot express the behavior the
-  block needs; when its samples contradict each other; when the work cannot go on without a file
-  outside its own; or when one failure has been tried three times and still fails.
+- **An implementer escapes to the integrator** when a contract cannot express the behavior the block
+  needs; when its samples contradict each other; when the work cannot go on without a file outside
+  its own; or when one failure has been tried three times and still fails.
 - **The refactorer escapes to the integrator** when a split would cut through a boundary meant to
   stay whole, or when a comment cannot say what it must within the rules.
 - **A reviewer's report of a defect is its escape.**

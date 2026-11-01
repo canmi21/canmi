@@ -2,20 +2,17 @@
 
 ## A build's cache follows where it builds
 
-Decided by the author on 2026-10-31 for this workspace and the `monoflake` repositories. The rules
-are `model/rules/toolchain.res`, the `ci-` ones.
+These rules apply to this workspace and the `monoflake` repositories and are named in
+`model/rules/toolchain.res`, the `ci-` ones.
 
 **Rust that Nix builds is built with crane**, with its dependencies as a derivation of their own.
 When only the crate's own source changes, the dependencies come from the store and only the crate is
-compiled again. `rustPlatform` compiles every dependency again on any change, and on a two-core Arm
-runner that is minutes: `machine-update` took 343 s cold there and 54 s on x86_64. The dependencies'
-derivation is needed only at build time, so it is not part of any system's closure and never goes
-to a bucket. It stays in the store of the runner that built it.
+compiled again. The dependencies' derivation is needed only at build time, so it is not part of any
+system's closure and never goes to a bucket. It stays in the store of the runner that built it.
 
 **A workflow that runs cargo on a GitHub-hosted runner uses `Swatinem/rust-cache`**, whose cache
 lives in the repository's GitHub cache. The free allowance is 10 GB per repository, not per account
-or organization, evicted least recently used and after seven days unread. On 2026-10-31 the largest
-user was monoflake/cloud with 3.4 GB, almost all of it mise's tool cache. A public repository has
+or organization, evicted least recently used and after seven days unread. A public repository has
 GitHub-hosted runners only, since the self-hosted runners admit no public repository,
 [repos/monoflake/cloud/docs/runner.md](../repos/monoflake/cloud/docs/runner.md). It has them free,
 so a public Rust repository runs the four Rust steps there: `cargo fmt`, `clippy`, the tests and
@@ -25,28 +22,25 @@ so a public Rust repository runs the four Rust steps there: `cargo fmt`, `clippy
 runner's disk persists between jobs, so uploading a cache only to download it again on the same
 machine spends time and allowance. That includes mise's tools, which already persist on the runner,
 so the workspace action turns `jdx/mise-action`'s cache off there. A cache a job can write and the
-next job reads is the same trust the author accepted for the runner's tools in RFC obvjb: only the
-author's private repositories reach those runners.
+next job reads shares the trust of the runner's tools, RFC obvjb: only the author's private
+repositories reach those runners.
 
 **Every cache on a runner has a bound, so nobody clears one by hand.** The Nix store is collected
-when the disk runs short, at the free space each runner's configuration names. A compiler cache or
-a target directory put on a runner gets a size cap of its own, such as `SCCACHE_CACHE_SIZE`, or an
-age after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
+when the disk runs short, at the free space each runner's configuration names. A compiler cache or a
+target directory put on a runner gets a size cap of its own, such as `SCCACHE_CACHE_SIZE`, or an age
+after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
 
 ## CI orchestrates, the scripts do the work
 
-Decided by the author on 2026-10-31 for every workflow of this workspace and the `monoflake`
-repositories. The rules are `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and
-`ci-shell-minimal`.
+These rules apply to every workflow of this workspace and the `monoflake` repositories and are named
+in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and `ci-shell-minimal`.
 
 **A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
-apart, and a published action is taken where one fits rather than written again in a step. One step
-that runs a whole pipeline hides which stage was slow or failed: monoflake/cloud's systems job ran
-its plan, build and upload as one step until 2026-10-31, and a cold build looked like a hang.
+apart, and a published action is taken where one fits rather than written again in a step.
 
 **A step calls an entry the repository already has**, a mise task or a script, so the same entry
-runs on the Mac. The workflow decides the order, the runners, the secrets and the conditions; what
-a stage does lives in the entry, where it is tested and run locally before CI ever runs it.
+runs on the Mac. The workflow decides the order, the runners, the secrets and the conditions; what a
+stage does lives in the entry, where it is tested and run locally before CI ever runs it.
 
 **A step's shell is the call and its plumbing alone**: the entry's name, its arguments, and passing
 outputs between steps. Logic, a loop, a parse, a retry, goes in the entry, in ReScript, which is
@@ -54,46 +48,41 @@ type-checked, tested, and runs the same on the Mac as on a runner.
 
 ## A schedule's time is nominal
 
-Decided by the author on 2026-11-01, the rule `schedule-nominal` in `model/rules/toolchain.res`.
-**GitHub runs a scheduled workflow hours late, or drops it**: from 2026-10-22 to 10-31 every cron
-of ours fired late, the 06:17, 06:31 and 07:23 ones by five to seven hours, the 19:00 one by three
-to almost four, and the 22:00 updates of 10-31 by about two and a half; moving a cron off the hour
-did not help. So monoflake/cloud's systems run every 12 hours, and a dropped run is made up within
-about a day. Anything that depends on a schedule tolerates a late or a missing run, and urgent work
-is dispatched by hand: the systems bucket's lifecycle, `expire_days` times 24 hours, is at least
-twice systems.yml's interval, so one dropped run is survived within R2's one-to-two-day deletion
-window.
+The rule is `schedule-nominal` in `model/rules/toolchain.res`. **GitHub runs a scheduled workflow
+hours late, or drops it**, and moving a cron off the hour does not help. monoflake/cloud's systems
+run every 12 hours, and a dropped run is made up within about a day. Anything that depends on a
+schedule tolerates a late or a missing run, and urgent work is dispatched by hand: the systems
+bucket's lifecycle, `expire_days` times 24 hours, is at least twice systems.yml's interval, so one
+dropped run is survived within R2's one-to-two-day deletion window.
 
 **A held object is renewed only from an age T**, `renewAfterHours` in monoflake/cloud's
-`model/pipeline.res`, decided by the author on 2026-11-01, T being the lifecycle less the interval,
-the worst delay and a job's time, its queue behind one whole job and its own run. An object left is
-younger than T, so through a late run its age stays under the lifecycle. **That covers a late run
-alone**: a dropped or failed run takes a left object to about 36 h, past the lifecycle, so surviving
-it rests on R2's deletion window and not on this inequality. A narinfo within a job's time of the
-lifecycle is uploaded rather than copied, since a copy of what R2 deleted matches nothing and
-exits 0. `scripts/tests/systems/bucket/renewal_test.res` there holds T positive, the lifecycle at
-least twice the interval, a left object's worst age under the lifecycle, and systems.yml's crons
-and each job's `timeout-minutes` against the model; the worst delay is the measurement above, which
-no test reads.
+`model/pipeline.res`, T being the lifecycle less the interval, the worst delay and a job's time, its
+queue behind one whole job and its own run. An object left is younger than T, so through a late run
+its age stays under the lifecycle. **That covers a late run alone**: a dropped or failed run takes a
+left object to about 36 h, past the lifecycle, so surviving it rests on R2's deletion window and not
+on this inequality. A narinfo within a job's time of the lifecycle is uploaded rather than copied,
+since a copy of what R2 deleted matches nothing and exits 0.
+`scripts/tests/systems/bucket/renewal_test.res` there holds T positive, the lifecycle at least twice
+the interval, a left object's worst age under the lifecycle, and systems.yml's crons and each job's
+`timeout-minutes` against the model; the worst delay is the seven-hour measurement used by
+`scheduleLateHours`, which no test reads.
 
 ## Step names
 
-**A step's `name:` starts with a capital letter**, decided by the author on 2026-11-01, as "List the
-machines" and "Install cloud's packages": only the first letter, never title case. Job names, workflow
-names and inputs stay lowercase. The `step-name-capital` rule holds it,
+**A step's `name:` starts with a capital letter**, as "List the machines" and "Install cloud's
+packages": only the first letter, never title case. Job names, workflow names and inputs stay
+lowercase. The `step-name-capital` rule holds it,
 [model/rules/toolchain.res](../model/rules/toolchain.res). A test or script matching a step by its
 name changes with it.
 
 ## Scheduled updates
 
-Decided by the author on 2026-10-31, the workspace action owns `nix` for installing Nix and
-`beside` for cloning space separated `owner/repo` repositories at main and installing their packages.
-**The action prepares only what a job asks for**, decided by the author on 2026-11-01: `beside`
-clones without the workspace's scripts, so the workspace's packages and compiled scripts come with
-`scripts` alone, which a job asks only when it runs one.
-Its `history` checks the calling repository and the workspace out whole, which the reusable update
-workflow asks because the workspace's check reads the commits a repository's RFCs name in either; a
-scheduled platform update failed there on 2026-11-01 with both shallow.
+The workspace action owns `nix` for installing Nix and `beside` for cloning space separated
+`owner/repo` repositories at main and installing their packages. **The action prepares only what a
+job asks for**: `beside` clones without the workspace's scripts, so the workspace's packages and
+compiled scripts come with `scripts` alone, which a job asks only when it runs one. Its `history`
+checks the calling repository and the workspace out whole, which the reusable update workflow asks
+because the workspace's check reads the commits a repository's RFCs name in either.
 
 The workspace and monoflake's platform, driver, machine and runtime call
 `canmi21/canmi/.github/workflows/update-repository.yml@main` from their own
@@ -109,11 +98,11 @@ repositories use hosted runners; monoflake/cloud uses its self-hosted ARM64 runn
 The update verb keeps its one-day release wait. What moves passes the repository's check before
 github-actions[bot] commits it and pushes straight to main. The named check is woken explicitly
 because a token's push starts no workflow. A failure before the commit pushes nothing; a release
-source whose releases could not be read is held back and fails the run after the other updates
-are committed, naming the held source.
+source whose releases could not be read is held back and fails the run after the other updates are
+committed, naming the held source.
 
-**The scheduled update moves no action pin**, decided by the author on 2026-10-31: in CI the
-actions mover reads and reports alone, and writes nothing under `.github/`, because GitHub refuses a
-push from the job's own `GITHUB_TOKEN` that changes a workflow file, and that token cannot be given
-the `workflows` permission. A pin in a workflow or a composite action moves by a local `mise run
-update`, committed and pushed by an agent or the author through the verb.
+**The scheduled update moves no action pin**: in CI the actions mover reads and reports alone, and
+writes nothing under `.github/`, because GitHub refuses a push from the job's own `GITHUB_TOKEN`
+that changes a workflow file, and that token cannot be given the `workflows` permission. A pin in a
+workflow or a composite action moves by a local `mise run update`, committed and pushed by an agent
+or the author through the verb.
