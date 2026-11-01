@@ -181,7 +181,8 @@ check reports and passes.
 
 A generator writing code also opens it with `@generated` in its first five lines, which rustfmt and
 the comment check read, and a reader opening the file sees before editing it. A generated file over
-the hard limit that nobody marked fails the line check.
+the hard limit that nobody marked fails the line check. `generated-marked` in
+[model/rules/code.res](../model/rules/code.res) holds the two marks together in code files.
 
 ## Why not a submodule
 

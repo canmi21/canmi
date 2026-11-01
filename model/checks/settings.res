@@ -120,6 +120,15 @@ let main = (~root): array<string> => {
   if !(read(".gitignore")->String.split("\n")->Array.includes("repos/*/")) {
     say(".gitignore does not list repos/*/")
   }
+  if (
+    !(
+      ["lanes", "lanes/"]->Array.some(line =>
+        read(".gitignore")->String.split("\n")->Array.includes(line)
+      )
+    )
+  ) {
+    say(".gitignore does not list lanes/")
+  }
   Waiting.active()
   ->Array.map(path => (path, Node.join([Registry.repos, path, "Cargo.toml"])))
   ->Array.forEach(((path, manifest)) =>

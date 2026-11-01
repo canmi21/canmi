@@ -15,6 +15,9 @@ let indentation = [("indent_style", "tab"), ("tab_width", "2")]
 /** A mise task's run, in lines; past it the task is a script and the task its one-line entry. */
 let taskLines = 5
 
+/** Minutes a package version is public before pnpm installs it. */
+let releaseAge = 1440
+
 /** Where a Cloudflare resource made with a place may be put, as `cloudflare-placed` says. */
 let places = ["wnam", "apac"]
 
@@ -144,7 +147,7 @@ let rules: array<Rule.t> = [
     name: "release-age",
     says: "pnpm-workspace.yaml holds a package version back a day before it installs",
     doc,
-    held: Pending("each pnpm repository's pnpm-workspace.yaml read for minimumReleaseAge"),
+    held: Check("repository"),
   },
   {
     name: "actions-pinned",
@@ -176,7 +179,7 @@ let rules: array<Rule.t> = [
     name: "images-pinned",
     says: "A Dockerfile pins each base image by its tag and a digest",
     doc,
-    held: Pending("each repository's Dockerfiles read for a FROM with no digest"),
+    held: Check("repository"),
   },
   {
     name: "images-current",
@@ -194,21 +197,19 @@ let rules: array<Rule.t> = [
     name: "ports-strict",
     says: "Every dev server binds a fixed port and fails when it is taken",
     doc,
-    held: Pending("each repository's dev configuration read for strictPort"),
+    held: Check("repository"),
   },
   {
     name: "test-port-zero",
     says: "A test binds port 0 and is handed a free one, never a fixed port",
     doc: "docs/code.md",
-    held: Pending("each repository's tests read for a listen on a literal port"),
+    held: Check("repository"),
   },
   {
     name: "rust-nextest",
     says: "Rust's tests run by `cargo nextest run` under a slow timeout that kills a hung test, its doctests by `cargo test --doc`",
     doc: "docs/code.md",
-    held: Pending(
-      "each Rust repository's tasks and workflows read for a `cargo test` without `--doc`, and its .config/nextest.toml for terminate-after; until every one has switched it would fail those not yet touched",
-    ),
+    held: Check("repository"),
   },
   {
     name: "test-documentation-values",

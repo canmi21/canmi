@@ -68,6 +68,6 @@ let rules: array<Rule.t> = [
     name: "generated-marked",
     says: "Generated code opens with @generated and is marked linguist-generated",
     doc: "docs/repos.md",
-    held: Pending("a list of each repository's generators and what they write"),
+    held: Check("repository"),
   },
 ]

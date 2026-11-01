@@ -541,7 +541,7 @@ real traffic.
 
 Every dev server binds a fixed port and **fails when that port is taken**. Vite gets `strictPort:
 true`; anything else refuses to fall back. Auto-incrementing to the next free port is never
-acceptable.
+acceptable. `ports-strict` in [model/rules/toolchain.res](../model/rules/toolchain.res) reads every vite config for it.
 
 The reason is not tidiness. A tool that drifts to the next port starts a second instance silently,
 and a second instance of something that writes to a project's data means two processes fetching and
@@ -692,7 +692,8 @@ The report is each repository's `outdated` task, run from the workspace's
 
 `pnpm-workspace.yaml` sets `minimumReleaseAge: 1440` -- a package version must have been public for
 24 hours before it can be installed, transitive dependencies included. Most npm compromises are
-found and yanked inside that window.
+found and yanked inside that window. `release-age` in
+[model/rules/toolchain.res](../model/rules/toolchain.res) reads it in every pnpm repository.
 
 `minimumReleaseAgeExclude` holds the exemptions. Keep the list short: every entry is an accepted
 risk, justified only when the wait costs more than it protects.
@@ -739,7 +740,8 @@ file named `Dockerfile` below the repository, passing over what a tool wrote or 
 asks each tag's registry for the digest it names now, by `HEAD` with the anonymous token the
 registry's challenge asks for, and moves the pin where it changed, the tag kept. A tag moved to
 another version, as busybox from 1.37 to 1.38, is an edit by hand. No day is waited out, since a
-registry records no time a digest was published.
+registry records no time a digest was published. `images-pinned` in
+[model/rules/toolchain.res](../model/rules/toolchain.res) refuses a `FROM` with no tag and digest.
 
 ### What one repository takes from another's releases is locked beside a manifest by `update`
 

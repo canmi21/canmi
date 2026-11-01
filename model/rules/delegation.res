@@ -247,7 +247,7 @@ let rules: array<Rule.t> = [
     name: "lanes-ignored",
     says: ".gitignore lists `lanes`, so git never tracks a lane",
     doc,
-    held: Pending("the settings part reading .gitignore for `lanes` as it does for repos"),
+    held: Check("settings"),
   },
   {
     name: "lane-task",

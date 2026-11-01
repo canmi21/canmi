@@ -146,6 +146,7 @@ let parts: array<(string, part)> = [
   ("workflows", Found(() => Workflows.main(~root))),
   ("step-names", Found(() => Step_names.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
+  ("repository", Script(() => reported(Conduct.found(~root)))),
   ("suffixes", Found(() => Suffix_owned.main(~root, ~label="workspace"))),
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),
   ("deferred", Found(Waiting.problems)),
@@ -216,6 +217,7 @@ let over = (repo): array<(string, part)> =>
     [
       ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
       ("tasks", Script(() => reported(Tasks.found(~root=repo)))),
+      ("repository", Script(() => reported(Conduct.found(~root=repo)))),
       ("placed", Found(() => Placed.found(~root=repo))),
       ("names", Found(() => Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)))),
       ("commits", Found(() => commits(repo))),
