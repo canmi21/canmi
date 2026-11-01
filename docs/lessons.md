@@ -290,6 +290,12 @@ moves into `model/rules/` with its check and leaves this file.
   readback fails unless the system applied is the one the round built, written after the round began,
   and the setting reads its expected value.
 
+- **A tool streaming a fetch's output masks the bucket's endpoint before it reaches a terminal or
+  a log an agent reads.** Nix names each path's source, and an S3 source carries the endpoint,
+  whose host names the account: on 2026-11-01 `mise run switch fog` streamed the machine's
+  `nix-store -r` into a local log, and one line tailed from it put canmi's endpoint host into a
+  session's transcript, where CI masks the same host. The switch now rewrites it as `<endpoint>`.
+
 - **An R2 token's last use says nothing when it is used through S3.** Cloudflare leaves a token's
   `last_used` empty for R2's S3 calls, so on 2026-11-01 the canmi account's R2 tokens showed no use
   while their buckets had been written; such a token is judged by its bucket's writes or by asking,
