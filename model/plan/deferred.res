@@ -300,10 +300,10 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "tailnet-start-and-update",
-    what: "monoflake/machine's module starts tailscaled before dhcpcd holds an IPv4 lease, so on fog's reboot of 2026-11-01 tailscaled came up on its cached state at +24 s, failed its control and DERP dials and backed off, and registered only at +161 s, about 2 minutes 15 seconds of tailnet absence the machine did not need; tailscaled is ordered after network-online.target with dhcpcd waiting for its lease, or the unit's own wait for the network, and a reboot-time check confirms it on the other machines; in the same change system/base/tailnet.nix adds `--auto-update=false` to services.tailscale.extraSetFlags beside `--accept-dns=false`, so only CI moves the fleet's Tailscale while the tailnet's default stays on for the author's own devices, the author's wish of 2026-11-01; made after reset B and promoted C, then B, then A, never during it",
-    repos: ["monoflake/machine", "monoflake/cloud"],
-    until: Closes("oej2a"),
+    id: "pine-reset-hang",
+    what: "pine's reboot of 2026-11-01 at 07:03 UTC, run by kernel 6.18.59, hung in the board's final reset after systemd-shutdown had synced and stopped journald, and its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes, so the author power-cycled it at 07:23; its reboot from 6.18.57 at 06:35 completed; a few reboots on 6.18.60 are tried later under watch, the capture card on the author's VM 100 showing its console, to learn whether the reset is reliable, and until then every reboot of pine is watched until it answers, never fired and forgotten",
+    repos: ["monoflake/cloud", "monoflake/machine"],
+    until: Author,
   },
   {
     id: "console-copy",
