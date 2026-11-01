@@ -4,3 +4,6 @@
 # The extensionless task scripts, stated rather than guessed from their shebang.
 .mise/tasks/repos linguist-language=Python
 .mise/tasks/tools linguist-language=Python
+
+# The rules and the plan, written from the model by mise run docs.
+model/reference/** linguist-generated

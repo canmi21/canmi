@@ -147,6 +147,7 @@ let others: array<(string, part)> = [
   ("names", Found(() => Filenames.main(~root))),
   ("words", Found(() => Words.main(~root))),
   ("docs", Found(() => Docs_force.main(~root))),
+  ("generated", Found(() => Reference.found(~root))),
   ("pins", Found(() => Pins.main(~root))),
   ("workflows", Found(() => Workflows.main(~root))),
   ("step-names", Found(() => Step_names.main(~root))),
@@ -190,8 +191,7 @@ let planned = () => {
       ~rules=Rules.all,
       ~has=name => name == "plan" || others->Array.some(((other, _)) => other == name),
       ~passes,
-      ~rfc=(item, id) =>
-        !Waiting.readable(item) || statuses(item)->Dict.get(id)->Option.isSome,
+      ~rfc=(item, id) => !Waiting.readable(item) || statuses(item)->Dict.get(id)->Option.isSome,
       ~committed=Plan.onMain,
     ),
   )

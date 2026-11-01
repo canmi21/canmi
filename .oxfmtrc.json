@@ -6,6 +6,7 @@
 	"svelte": true,
 	"ignorePatterns": [
 		"checkpoints/**",
+		"model/reference/",
 		"repos/canmi/web/data/",
 		"**/.claude/",
 		"**/contents/",

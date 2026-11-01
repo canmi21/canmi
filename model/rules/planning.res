@@ -39,6 +39,12 @@ let sections = ["Question", "Options", "Evidence", "Decision", "State"]
 
 let rules: array<Rule.t> = [
   {
+    name: "reference-generated",
+    says: "model/reference/rules.md is the rules as the model gives them, written by `mise run docs` and never by hand",
+    doc: "docs/model.md",
+    held: Check("generated"),
+  },
+  {
     name: "deferred-named",
     says: "A deferred item waits on an RFC that exists and waives only rules a part can",
     doc,
