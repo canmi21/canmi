@@ -13,7 +13,7 @@ let rfcDirectory = "docs/rfcs"
 /** Where an RFC stands, in the order it moves, the first two still open. RFC p992n. */
 let statuses = ["draft", "accepted", "landed", "declined"]
 
-/** The repositories whose docs the docs-in-force rule reads beside the workspace's, by path prefix. */
+/** The repositories whose docs `docs-in-force` reads beside the workspace's, by path prefix. */
 let docsReadIn = ["monoflake/"]
 
 /** A date in force a doc may state, such as an expiry, each as a file and the date. */

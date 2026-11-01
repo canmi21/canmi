@@ -1,4 +1,4 @@
-/** Docs and AGENTS.md against model/rules/planning.res, holding the rules in force and no history. */
+/** Holds docs/ and each AGENTS.md to the rules in force, `docs-in-force`, a dated origin found. */
 let date = `\\d{4}-\\d{2}-\\d{2}`
 let decider = `(?:author|advisor|user|integrator)`
 let deciding = `(?:decided|agreed|chosen|settled|approved)`
