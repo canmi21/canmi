@@ -277,6 +277,10 @@ moves into `model/rules/` with its check and leaves this file.
   `jq '{organization, relayed, address, origin: (.origin != null)}'`. A mask by key name passes a
   field it does not know: on 2026-10-25 one hiding `secret` and `token` printed a binding's
   `tunnel` whole, a Cloudflare tunnel token, into a session's output.
+- **A directory holding secrets is listed by names and sizes alone**, never read with a mask by
+  file name, since a secret's file can bear any name. On 2026-11-01 fog's bound/ files were read
+  with a mask passing all but `binding`, `token` and `secret`, and the binding's tunnel token, kept
+  as `bound/tunnel`, printed its first 120 characters into a session.
 - **A check's exit 0 is read with its red list**: a block in work fails nothing, its failures
   listed in red after the check, so a failing test passes the exit code. On 2026-10-26 a merge
   checked exit 0 with a test of the control failing; `task failed` and `✖` in the log showed it.
