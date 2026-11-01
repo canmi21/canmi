@@ -313,10 +313,10 @@ let rules: array<Rule.t> = [
   },
   {
     name: "schedule-nominal",
-    says: "A scheduled workflow's time is nominal; what depends on it tolerates a late or missing run, urgent work is dispatched by hand, and a systems bucket object left unrenewed is younger than T, where T + the interval + the worst delay + a job's time stays under the lifecycle",
+    says: "A scheduled workflow's time is nominal; what depends on it tolerates a late or missing run, urgent work is dispatched by hand, and a systems bucket object left unrenewed is younger than T, so through a late run its age, under T + the interval + the worst delay + a job's time, stays under the lifecycle; a dropped or failed run takes it past the lifecycle and rests on R2's deletion window",
     doc: "docs/ci.md",
     held: Pending(
-      "monoflake/cloud's scripts/tests/systems/bucket/renewal_test.res holds T's sum, the lifecycle at least twice the interval, and systems.yml's crons and timeout-minutes to model/pipeline.res; this workspace's check cannot read cloud, and no test reads the worst delay's measurement",
+      "monoflake/cloud's scripts/tests/systems/bucket/renewal_test.res holds T positive, the lifecycle at least twice the interval, a left object's worst age under the lifecycle, and systems.yml's crons and each job's timeout-minutes against model/pipeline.res, T being derived from that sum by definition; this workspace's check cannot read cloud, and no test reads the worst delay's measurement",
     ),
   },
   {

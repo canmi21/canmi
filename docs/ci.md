@@ -65,13 +65,16 @@ twice systems.yml's interval, so one dropped run is survived within R2's one-to-
 window.
 
 **A held object is renewed only from an age T**, `renewAfterHours` in monoflake/cloud's
-`model/pipeline.res`, decided by the author on 2026-11-01. T + the interval + the worst delay + a
-job's time stays under the lifecycle: an object left is younger than T, the next run starts at most
-the interval and the delay later, and it reaches its upload within the job's time, its queue behind
-one whole job with a runner host down and its own run. So T is the lifecycle less those three.
-`scripts/tests/systems/bucket/renewal_test.res` there holds the sum, and holds the interval and the
-job's time to systems.yml's crons and `timeout-minutes`; the worst delay is the measurement above,
-which no test reads.
+`model/pipeline.res`, decided by the author on 2026-11-01, T being the lifecycle less the interval,
+the worst delay and a job's time, its queue behind one whole job and its own run. An object left is
+younger than T, so through a late run its age stays under the lifecycle. **That covers a late run
+alone**: a dropped or failed run takes a left object to about 36 h, past the lifecycle, so surviving
+it rests on R2's deletion window and not on this inequality. A narinfo within a job's time of the
+lifecycle is uploaded rather than copied, since a copy of what R2 deleted matches nothing and
+exits 0. `scripts/tests/systems/bucket/renewal_test.res` there holds T positive, the lifecycle at
+least twice the interval, a left object's worst age under the lifecycle, and systems.yml's crons
+and each job's `timeout-minutes` against the model; the worst delay is the measurement above, which
+no test reads.
 
 ## Scheduled updates
 

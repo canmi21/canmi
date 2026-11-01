@@ -286,6 +286,11 @@ moves into `model/rules/` with its check and leaves this file.
   install with its workflow tests green, and all five jobs failed on `smol-toml`, which cloud
   imported undeclared and had found by walking up to the workspace's `node_modules`. A clean copy
   of the repositories alone, installed and built, then found it at once.
+- **A lane is taken only after a jj command has run in it.** jj snapshots a working copy when a
+  command runs there, so `jj duplicate` or `restore` from a lane copies the last snapshot, not its
+  files. On 2026-11-01 a lane's whole review round stayed behind while its earlier state passed the
+  check and was pushed and reported live; only a path missing on a runner showed it. Run `jj st` in
+  the lane first.
 - **A check's exit 0 is read with its red list**: a block in work fails nothing, its failures
   listed in red after the check, so a failing test passes the exit code. On 2026-10-26 a merge
   checked exit 0 with a test of the control failing; `task failed` and `✖` in the log showed it.
