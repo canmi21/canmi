@@ -16,6 +16,9 @@ tells it to.
 **It tells the integrator each time it changes or lands something**, once: what landed, whether it
 is tested, and whether it can be used at once. The integrator does the same.
 
+An outward step the author has already asked for is done without announcing it first, and reported
+only where something went wrong.
+
 **A message to another session stands on its own**: the integrator reads it without this
 conversation, so each relay names the repository, the files, the commits and the decision it
 carries, never "as discussed". It relays facts the integrator reported rather than its own guess at

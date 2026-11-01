@@ -39,7 +39,9 @@ many run at once is `implementersAtOnce` in
 [model/rules/delegation.res](../../model/rules/delegation.res). **Where a session has delegated, the
 seats are filled first**: work that does not depend on what is running is pulled out and started
 beside it, on Codex first. A seat stays empty for one reason, that what is left must run in order,
-so work is parallel unless a dependency says otherwise. **A reviewer is called once for a set of
+so work is parallel unless a dependency says otherwise. A seat holds one result that can be verified by itself. A seat
+holding several is split; one so small its agent spends more on learning the project than on the
+work is merged. **A reviewer is called once for a set of
 changes**: where A, B and C are changed together, one review comes after all three, never one after
 each.
 
