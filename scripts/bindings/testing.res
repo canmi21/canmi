@@ -1,6 +1,8 @@
 /** As much of vitest as the scripts' tests call. */
 @module("vitest") external describe: (string, unit => unit) => unit = "describe"
 @module("vitest") external test: (string, unit => unit) => unit = "test"
+/** Room for a test running real processes, set beside the tests it covers. */
+@module("vitest") @scope("vi") external setConfig: {"testTimeout": int} => unit = "setConfig"
 @module("vitest") external beforeEach: (unit => unit) => unit = "beforeEach"
 @module("vitest") external afterEach: (unit => unit) => unit = "afterEach"
 

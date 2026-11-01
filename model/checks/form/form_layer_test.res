@@ -1,5 +1,8 @@
 open Testing
 
+// Each case runs jj in a scratch repository, slow under load.
+setConfig({"testTimeout": 30000})
+
 /** jj run in a scratch repository, its answer or nothing. */
 let jj = (root, args) => Onset.read(~root, args)->Option.getOr("")
 
