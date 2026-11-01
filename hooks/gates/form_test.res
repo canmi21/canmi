@@ -75,3 +75,42 @@ describe("the form gate", () => {
     expect(said->String.includes("file-short"))->toBe(true)
   })
 })
+
+describe("the form gate over a main that already carries a finding", () => {
+  let root = temporaryRoot("form-gate-parent-")
+  let commit = "jj commit -m 'chore: a'"
+  let block = Array.fromInitializer(~length=Code.openingLines + 1, _ => "// words")
+  let wide = Array.fromInitializer(~length=Layout.widest + 1, at => (`d/${Int.toString(at)}`, "x"))
+  let clean = [("ok.md", "one\n")]
+  let cases = [
+    ("lines", [("sys/src/f.txt", long)], [("sys/src/f.txt", "short\n")]),
+    ("comments", [("sys/src/f.res", block->Array.join("\n") ++ "\nlet x = 1\n")], [("sys/src/f.res", "let x = 1\n")]),
+    ("shape", wide, []),
+  ]
+  let carrying = found => {
+    let repo = root.contents
+    jj(repo, ["git", "init", "--quiet"])
+    tree(repo, Array.concat(clean, found))
+    jj(repo, ["commit", "-m", "chore: parent"])
+    Node.realpathSync(repo)
+  }
+
+  cases->Array.forEach(((part, found, fixed)) => {
+    test(`passes a commit that fixes a ${part} finding the parent carries`, () => {
+      let repo = carrying(found)
+      found->Array.forEach(((path, _)) => Node.rmSync(Node.join([repo, path]), {recursive: true, force: true}))
+      tree(repo, fixed)
+      tree(repo, [("ok.md", "two\n"), ("new.md", "n\n")])
+      expect(Form.handle(payload(repo, commit), ~owned=everywhere))->toBe(0)
+      fixed->Array.forEach(((path, _)) =>
+        expect(Form.handle(payload(repo ++ "/sys", `${commit} ${path->String.replace("sys/", "")}`), ~owned=everywhere))->toBe(0)
+      )
+    })
+
+    test(`refuses a commit that adds a ${part} finding to a clean parent`, () => {
+      let repo = carrying([])
+      tree(repo, found)
+      expect(Form.handle(payload(repo, commit), ~owned=everywhere))->toBe(2)
+    })
+  })
+})
