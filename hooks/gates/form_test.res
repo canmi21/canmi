@@ -38,6 +38,10 @@ describe("the form gate", () => {
     expect(Form.handle(payload(repo, commit), ~owned=everywhere))->toBe(0)
   })
 
+  test("refuses where jj cannot name the repository", () => {
+    expect(Form.handle(payload("/tmp", commit), ~owned=everywhere, ~rootOf=_ => ""))->toBe(2)
+  })
+
   test("is passed by SKIP=form and by a repository the workspace does not own", () => {
     let repo = main()
     expect(Form.handle(payload(repo, `SKIP=form ${commit}`), ~owned=everywhere))->toBe(0)

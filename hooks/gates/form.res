@@ -37,7 +37,11 @@ let findings = (log: string) =>
 let program = Node.join([Registry.root, "model", "checks", "form", "commit_tree.res.mjs"])
 
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
-let handle = (payload: Payload.t, ~owned=ours): int => {
+let handle = (
+  payload: Payload.t,
+  ~owned=ours,
+  ~rootOf=place => Payload.jj(~cwd=place, ["workspace", "root"]),
+): int => {
   let command = Payload.command(payload)
   let places = Jj_command.placed(command, ~cwd=Payload.cwd(payload), Commits.committing)
   if places == [] || Jj_command.skipped(command)->Array.includes("form") {
@@ -48,11 +52,13 @@ let handle = (payload: Payload.t, ~owned=ours): int => {
       ->Array.filter(((subcommand, _)) => Commits.committing->Array.includes(subcommand))
       ->Array.map(((_, rest)) => filesets(rest))
     let refused = places->Array.filterMapWithIndex((place, index) => {
-      let repo = Payload.jj(~cwd=place, ["workspace", "root"])->String.trim
+      let repo = rootOf(place)->String.trim
       let paused =
         repo->String.startsWith(Registry.repos ++ "/") &&
           Waiting.skipped(Registry.label(repo))->Option.isSome
-      if repo == "" || !owned(repo) || !mainCheckout(repo) || paused {
+      if repo == "" {
+        Some((place, ["refused: jj could not name this repository, so no tree was judged"]))
+      } else if !owned(repo) || !mainCheckout(repo) || paused {
         None
       } else {
         let answer = Node.spawnSync(

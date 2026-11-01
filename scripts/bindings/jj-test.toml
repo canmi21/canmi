@@ -1,0 +1,10 @@
+# What a test's own jj repository runs under, with no key of the author's and no signing.
+[user]
+name = "t"
+email = "t@t.invalid"
+
+[signing]
+behavior = "drop"
+
+[ui]
+paginate = "never"

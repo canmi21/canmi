@@ -25,6 +25,19 @@ describe("a repository's [push]", () => {
   })
 
   test("a key push does not read is refused", () => {
-    expect(declared("[push]\nvisibility = \"public\"\nci = true\n")->Result.isError)->toBe(true)
+    expect(declared("[push]\nvisibility = \"public\"\ndeploy = true\n")->Result.isError)->toBe(true)
+  })
+
+  test("the workflows a push starts and releases with are read", () => {
+    let toml = "[push]\nvisibility = \"public\"\nci = [\"verify.yml\"]\nrelease = [\"publish.yml\"]\n"
+    tree(root.contents, [("workspace.toml", toml)])
+    let push = Project.read(root.contents)->Result.map(declared => declared.push)
+    expect(push->Result.map(push => (push.stated, push.ci, push.release)))->toEqual(
+      Ok((true, Some(["verify.yml"]), ["publish.yml"])),
+    )
+  })
+
+  test("a ci that is not a list of file names is refused", () => {
+    expect(declared("[push]\nci = true\n")->Result.isError)->toBe(true)
   })
 })

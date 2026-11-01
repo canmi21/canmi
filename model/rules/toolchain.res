@@ -49,6 +49,23 @@ let parserCommands = [
   "perl",
 ]
 
+/** Well-known public domains a test may name, each with what lies under it, none of them ours. */
+let publicDomains = [
+  "github.com",
+  "githubusercontent.com",
+  "cloudflare.com",
+  "cloudflarestorage.com",
+  "workers.dev",
+  "docker.io",
+  "docker.com",
+  "npmjs.org",
+  "npmjs.com",
+  "crates.io",
+  "nixos.org",
+  "rust-lang.org",
+  "tailscale.com",
+]
+
 /** Where a Cloudflare resource made with a place may be put, as `cloudflare-placed` says. */
 let places = ["wnam", "apac"]
 
@@ -252,21 +269,19 @@ let rules: array<Rule.t> = [
     name: "push-declared",
     says: "A repository's workspace.toml declares under [push] its visibility, the CI a push starts and any release",
     doc: pushing,
-    held: Pending(
-      "visibility is read by push since 2026-10-24; the CI a push starts and any release wait on a script reading them",
-    ),
+    held: Check("push"),
   },
   {
     name: "push-workflows-declared",
     says: "A workflow under .github/workflows/ that runs on a push is declared under [push]",
     doc: pushing,
-    held: Pending("each repository's workflows read against its [push]"),
+    held: Check("push"),
   },
   {
     name: "update-reminder",
     says: "pull and check report, once a day and silent otherwise, only what the scheduled update cannot take: action pins, majors, missing tools and moves pending past two days",
     doc: "docs/toolchain.md",
-    held: Pending("scripts/workspace/reminder.res's tests, once the reminder lands"),
+    held: Check("scripts"),
   },
   {
     name: "push-behind-main",

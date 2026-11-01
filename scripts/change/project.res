@@ -48,8 +48,12 @@ type datum = {file: string, spelled: array<string>}
 /** What the repository formats by nothing, its own suffixes and its directories of test data. */
 type format = {unformatted: array<string>, testData: array<string>}
 
-/** What push reads, the visibility one of `Toolchain.visibilities`. */
-type push = {visibility: string}
+/**
+ * What push reads, the visibility one of `Toolchain.visibilities` and `stated` whether it was
+ * written. The workflows a push starts are `ci` and those among them that release `release`, each
+ * a file name under .github/workflows/, `ci` none where the table does not give it.
+ */
+type push = {visibility: string, stated: bool, ci: option<array<string>>, release: array<string>}
 
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
@@ -262,13 +266,16 @@ let formatOf = (table: table): format => {
 let public = "public"
 
 let pushOf = (table: table): push => {
-  only(table, "push", ["visibility"])
+  only(table, "push", ["visibility", "ci", "release"])
   {
     visibility: switch table->Dict.get("visibility") {
     | None => public
     | Some(String(visibility)) if Toolchain.visibilities->Array.includes(visibility) => visibility
     | Some(_) => fail(`push.visibility: not one of ${Toolchain.visibilities->Array.join(", ")}`)
     },
+    stated: table->Dict.get("visibility")->Option.isSome,
+    ci: table->Dict.get("ci")->Option.map(_ => texts(table, "ci", "push")),
+    release: texts(table, "release", "push"),
   }
 }
 

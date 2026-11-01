@@ -49,13 +49,14 @@ repackaged, which [lessons.md](../lessons.md) lets be pushed as it is.
 ## A repository declares what its push sets off
 
 **Each repository declares, in a `[push]` table of its `workspace.toml`, whether it is public or
-private, which CI a push starts, and whether any of it releases a version.** A workflow under
-`.github/workflows/` that runs on a push and is not declared there is refused. Both are
-`push-declared` and `push-workflows-declared` in
+private, which CI a push starts, and whether any of it releases a version.** The keys are
+`visibility`, `ci`, a list of workflow file names, and `release`, those among them that release. A
+workflow under `.github/workflows/` that runs on a push and is not declared there is named. Both
+are `push-declared` and `push-workflows-declared` in
 [model/rules/toolchain.res](../../model/rules/toolchain.res). **`visibility = "public"` or
 `"private"` is read**, by the scan below; a repository declaring none, the workspace itself among
-them, is scanned as public. The CI and the release keys wait on a script reading them, since a key
-no script reads is refused.
+them, is scanned as public. The `push` part of the check holds the table to the workflows, its
+findings warnings.
 
 ## A push carries nothing private
 

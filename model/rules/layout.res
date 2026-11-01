@@ -18,6 +18,9 @@ let widest = 16
 /** Nor lies deeper, a top-level directory's first subdirectory or a package's counted 1. */
 let deepest = 5
 
+/** The verbs a repository's task takes `--dry-run` on, `verb-contract`; `verify` takes nothing. */
+let dryRunVerbs = ["fmt", "clean", "update"]
+
 /** A directory holding one of these is a package's root, where the depth counts from 1 again. */
 let manifests = ["Cargo.toml", "package.json", "rescript.json"]
 
@@ -88,9 +91,9 @@ let rules: array<Rule.t> = [
   },
   {
     name: "verb-contract",
-    says: "A repository's task for a verb takes --dry-run, and a dry run writes nothing",
+    says: "A repository's task for a verb of `dryRunVerbs` takes --dry-run",
     doc,
-    held: Pending("each repository's usage spec read for the flags its verb tasks take"),
+    held: Check("verbs"),
   },
   {
     name: "tree-wide",

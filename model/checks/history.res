@@ -18,6 +18,18 @@ let expected =
     `Co-Authored-By: ${name} <Model>-<Version> <${address}>`
   )
 
+/** Why the first word of a subject is not imperative, or none where it is. */
+let mood = (text: string): option<string> => {
+  let word = text->String.split(" ")->Array.getUnsafe(0)
+  let irregular = Commits.irregularPast->Array.includes(word)
+  let past = /^[a-z]{3,}ed$/->RegExp.test(word) && !(Commits.imperativeInEd->Array.includes(word))
+  let third =
+    /^[a-z]{3,}s$/->RegExp.test(word) &&
+    !(/(ss|us|is)$/->RegExp.test(word)) &&
+    !(Commits.imperativeInS->Array.includes(word))
+  irregular || past ? Some("past") : third ? Some("third-person") : None
+}
+
 /** Every way `message` breaks the rules, each a line to show whoever wrote it. */
 let problems = (message: string): array<string> => {
   let lines = message->String.trimEnd->String.split("\n")
@@ -41,6 +53,9 @@ let problems = (message: string): array<string> => {
     if text->String.endsWith(".") {
       found->Array.push(`${subject} -- a subject ends without a period`)
     }
+    mood(text)->Option.forEach(form =>
+      found->Array.push(`${subject} -- a subject is imperative, not the ${form} form`)
+    )
     let width = subject->String.length
     if width > Commits.subjectWidth {
       found->Array.push(

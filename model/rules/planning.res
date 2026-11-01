@@ -16,6 +16,9 @@ let statuses = ["draft", "accepted", "landed", "declined"]
 /** The repositories whose docs `docs-in-force` reads beside the workspace's, by path prefix. */
 let docsReadIn = ["monoflake/"]
 
+/** The repositories keeping a checklist of their own, whose todo may name a row of it. */
+let rowsKept = ["monoflake/platform"]
+
 /** A date in force a doc may state, such as an expiry, each as a file and the date. */
 let datesInForce: array<(string, string)> = []
 
@@ -33,9 +36,7 @@ let rules: array<Rule.t> = [
     name: "todo-cites-open",
     says: "A %todo or a todo! names an open row or a draft RFC, and none names one closed",
     doc,
-    held: Pending(
-      "monoflake/platform holds its own, model/checks/layout/code.res; the workspace reading every repository's",
-    ),
+    held: Check("todos"),
   },
   {
     name: "docs-in-force",

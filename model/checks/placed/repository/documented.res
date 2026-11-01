@@ -35,7 +35,9 @@ let blocks = () =>
 /** Whether `host` is a documentation domain or sits under one. */
 let documented = host => {
   let lower = host->String.toLowerCase
-  Toolchain.documentation["domains"]->Array.some(name =>
+  Toolchain.documentation["domains"]
+  ->Array.concat(Toolchain.publicDomains)
+  ->Array.some(name =>
     name->String.startsWith(".")
       ? lower->String.endsWith(name)
       : lower == name || lower->String.endsWith("." ++ name)

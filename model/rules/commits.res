@@ -29,6 +29,28 @@ let since = [
   ("console", "fb308466"),
 ]
 
+/** Past forms with no `ed` ending, and the words ending in `ed` or `s` that are imperative. */
+let irregularPast = [
+  "made",
+  "built",
+  "wrote",
+  "ran",
+  "held",
+  "took",
+  "kept",
+  "got",
+  "gave",
+  "found",
+  "began",
+  "left",
+  "sent",
+  "drew",
+  "came",
+  "chose",
+]
+let imperativeInEd = ["embed", "speed", "feed", "need", "seed", "bleed", "breed", "proceed"]
+let imperativeInS = ["alias", "bias", "canvas", "gas", "bypass"]
+
 /** The jj subcommands that make a commit, and so wait on a passing verify. */
 let committing = ["commit", "ci"]
 
@@ -56,7 +78,7 @@ let rules: array<Rule.t> = [
     name: "subject-imperative",
     says: "A subject is in the imperative mood: add, not added or adds",
     doc,
-    held: Pending("a list of the past and third-person forms a subject opens with"),
+    held: Check("commits"),
   },
   {
     name: "body-short",
@@ -86,7 +108,7 @@ let rules: array<Rule.t> = [
     name: "describing-complete",
     says: "`describing` is every jj subcommand that takes -m",
     doc,
-    held: Pending("jj's own help read for every subcommand that accepts -m"),
+    held: Check("jj-describing"),
   },
   {
     name: "since-recorded",
