@@ -85,7 +85,7 @@ let rfcs = repo =>
     ->Array.map(problem => problem.says)
   }
 
-let parts: array<(string, part)> = [
+let others: array<(string, part)> = [
   ("tools", Script(() => Tools.check(~everything=true))),
   ("repos", Script(() => Registry.check(~skip=Waiting.skipped, ()))),
   (
@@ -170,6 +170,34 @@ let parts: array<(string, part)> = [
   ("versions", Found(() => Versions.found(~root))),
   ("overlap", Found(() => Overlap_measure.main(~root))),
 ]
+
+/** Whether a part of the others passes, none where it prints or is the plan itself. */
+let passes = name =>
+  switch others->Array.find(((other, _)) => other == name) {
+  | Some((_, Found(found) | Soft(found))) => Some(found() == [])
+  | Some((_, Waivable(_, found))) => Some(found() == [])
+  | _ => None
+  }
+
+/** The plan against what it names, a commit in a repository passed over said. */
+let planned = () => {
+  let statuses = Waiting.statuses()
+  Plan.passedOver(Work.items)->Array.forEach(line => Console.log(`  passed over: ${line}`))
+  report(
+    Plan.problemsIn(
+      Work.items,
+      ~repos=Registry.paths(),
+      ~rules=Rules.all,
+      ~has=name => name == "plan" || others->Array.some(((other, _)) => other == name),
+      ~passes,
+      ~rfc=(item, id) =>
+        !Waiting.readable(item) || statuses(item)->Dict.get(id)->Option.isSome,
+      ~committed=Plan.onMain,
+    ),
+  )
+}
+
+let parts: array<(string, part)> = Array.concat(others, [("plan", Script(planned))])
 
 let known = parts->Array.map(((name, _)) => name)
 

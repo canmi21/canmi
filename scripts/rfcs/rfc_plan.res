@@ -68,22 +68,110 @@ let lines = (space): array<string> => {
   ])
 }
 
+/** An item's words cut at a word near `width`, for one line. */
+let brief = (text, ~width=96) =>
+  if text->String.length <= width {
+    text
+  } else {
+    let cut = text->String.slice(~start=0, ~end=width)
+    let at = cut->String.lastIndexOf(" ")
+    `${cut->String.slice(~start=0, ~end=at > 0 ? at : width)} ...`
+  }
+
+/** The work of model/plan/work.res by where it stands, and what is done on request. */
+let work = (~done): array<string> => {
+  let items = Work.items
+  let committed = Plan.onMain
+  let state = item => Plan.stateOf(items, item, ~committed)
+  let in_ = pick => items->Array.filter(item => pick(state(item)))
+  let line = (item: Work.item, ~extra="") => `  ${item.id}  ${brief(item.says)}${extra}`
+  let section = (title, lines) =>
+    Array.flat([[`${title} (${Int.toString(lines->Array.length)}):`], lines, [""]])
+  let under = in_(s => s == Plan.Under)
+  let ready = in_(s => s == Plan.Ready)
+  let behind = in_(s =>
+    switch s {
+    | Plan.Behind(_) => true
+    | _ => false
+    }
+  )
+  let awaits = in_(s =>
+    switch s {
+    | Plan.Awaits(_) => true
+    | _ => false
+    }
+  )
+  let finished = in_(s => s == Plan.Done)
+  let why = (item: Work.item) =>
+    switch state(item) {
+    | Plan.Behind(ids) => `; after ${ids->Array.join(", ")}`
+    | Plan.Awaits(Author) => "; waits on the author"
+    | Plan.Awaits(Closes(id)) => `; waits on ${id}`
+    | _ => ""
+    }
+  let held = (item: Work.item) =>
+    switch item.holds {
+    | Work.Holds(part) => `held by the part ${part}`
+    | Work.Committed({repo, commit}) =>
+      `${commit->String.slice(~start=0, ~end=8)} on the main of ${repo}`
+    | Work.Observed({at, what}) => `observed ${at}, ${what}`
+    | Work.Owes(_) | Work.Landing(_) => ""
+    }
+  let owed = Plan.pendingRules(Rules.all)
+  done
+    ? section(
+        "plan, done",
+        finished->Array.map(item => `  ${item.id}  ${held(item)}`),
+      )
+    : Array.flat([
+        section("plan, under way, its check warning", under->Array.map(item => line(item))),
+        section("plan, ready, nothing before it undone", ready->Array.map(item => line(item))),
+        section(
+          "plan, waiting on the items before them",
+          behind->Array.map(item => line(item, ~extra=why(item))),
+        ),
+        section(
+          "plan, waiting on a moment",
+          awaits->Array.map(item => line(item, ~extra=why(item))),
+        ),
+        section(
+          "plan, pending rules, ready, each owed a check",
+          owed->Array.map(((name, needs)) => `  ${name}  owed: ${brief(needs)}`),
+        ),
+        [
+          `plan, done: ${Int.toString(finished->Array.length)}; mise run plan --done lists them`,
+          "",
+        ],
+      ])
+}
+
 let main = () => {
   let known = Rfc_spaces.names()
-  let chosen = switch Node.args() {
+  let given = Node.args()
+  let done = given->Array.includes("--done")
+  let asked = given->Array.filter(arg => arg != "--done")
+  let chosen = switch asked {
   | [] => known
   | [space] if known->Array.includes(space) => [space]
   | _ =>
-    Console.error(`usage: mise run plan [space]; the spaces are ${known->Array.join(", ")}`)
+    Console.error(
+      `usage: mise run plan [space] [--done]; the spaces are ${known->Array.join(", ")}`,
+    )
     Node.exit(2)
   }
-  chosen->Array.forEachWithIndex((space, at) => {
-    if at > 0 {
-      Console.log("")
-    }
-    lines(space)->Array.forEach(line => Console.log(line))
-  })
-  Released.line()->Option.forEach(line => Console.log(`\n${line}`))
+  if asked == [] {
+    work(~done)->Array.forEach(line => Console.log(line))
+  }
+  if !done {
+    Console.log("RFCs, drafts and accepted ones, the accepted not yet read against the code:")
+    chosen->Array.forEachWithIndex((space, at) => {
+      if at > 0 {
+        Console.log("")
+      }
+      lines(space)->Array.forEach(line => Console.log(line))
+    })
+    Released.line()->Option.forEach(line => Console.log(`\n${line}`))
+  }
 }
 
 if Node.isMain {

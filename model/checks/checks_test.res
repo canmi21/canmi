@@ -74,17 +74,19 @@ describe("a mise task", () => {
   test(
     "joined by a hyphen warns only where the deferred renaming names the repository, guarding that the live item exists",
     () => {
-      let item: Deferred.item = {
+      let item: Work.item = {
         id: Tasks.renaming,
-        what: "renamed",
+        says: "renamed",
         repos: ["seam"],
-        until: Author,
+        after: [],
+        holds: Owes("the author's word"),
+        waits: Author,
       }
       let renamingIn = Tasks.deferredIn(~id=Tasks.renaming, ...)
       expect(renamingIn([item], ~repo="seam"))->toEqual(Some(Tasks.renaming))
       expect(renamingIn([item], ~repo="workspace"))->toEqual(None)
       expect(renamingIn([{...item, id: "other"}], ~repo="seam"))->toEqual(None)
-      expect(Deferred.items->Array.some(({id}) => id == Tasks.renaming))->toBe(true)
+      expect(Work.items->Array.some(({id}) => id == Tasks.renaming))->toBe(true)
     },
   )
 
@@ -104,7 +106,7 @@ describe("a mise task", () => {
       ),
     )->toEqual([])
     expect(Tasks.global(`[env]\n_.file = ".env.json"`, ~file="mise.toml"))->toEqual([])
-    expect(Deferred.items->Array.some(({id}) => id == Tasks.loading))->toBe(true)
+    expect(Work.items->Array.some(({id}) => id == Tasks.loading))->toBe(true)
   })
 
   test("warned of fails nothing outside AUDIT, and what it breaks fails", () => {
@@ -163,45 +165,31 @@ describe("a deferred item", () => {
     {name: "rules-in-docs", says: "", doc: "", held: Check("shape")},
     {name: "drifted", says: "", doc: "", held: Check("drift")},
   ]
-  let item: Deferred.item = {
+  let item: Work.item = {
     id: "spec-to-docs",
-    what: "",
+    says: "",
     repos: ["seam"],
-    until: Author,
+    after: [],
+    holds: Owes("the author's word"),
+    waits: Author,
     waives: ["rules-in-docs"],
   }
 
   test("names what is there, and waives only what a part can", () => {
     let statuses = Dict.fromArray([("p992n", "accepted")])
     expect(
-      Waiting.problemsIn(
-        [item, {...item, until: Closes("p992n")}],
-        ~repos=["seam"],
-        ~rules,
-        ~statuses=_ => statuses,
-      ),
-    )->toEqual(["deferred spec-to-docs: its id is taken by another item"])
+      Waiting.problemsIn([{...item, waits: Closes("p992n")}], ~rules, ~statuses=_ => statuses),
+    )->toEqual([])
     expect(
       Waiting.problemsIn(
-        [
-          {
-            ...item,
-            id: "Bad id",
-            repos: ["gone"],
-            until: Closes("zzzzz"),
-            waives: ["drifted", "none"],
-          },
-        ],
-        ~repos=["seam"],
+        [{...item, id: "bad", waits: Closes("zzzzz"), waives: ["drifted", "none"]}],
         ~rules,
         ~statuses=_ => statuses,
       ),
     )->toEqual([
-      "deferred Bad id: its id is not lowercase words joined by hyphens",
-      "deferred Bad id: gone is not in repos/registry.toml",
-      "deferred Bad id: waives drifted, held by no part that can waive: shape",
-      "deferred Bad id: waives none, which is no rule",
-      "deferred Bad id: waits on zzzzz, which is no RFC",
+      "deferred bad: waives drifted, held by no part that can waive: shape",
+      "deferred bad: waives none, which is no rule",
+      "deferred bad: waits on zzzzz, which is no RFC",
     ])
   })
 
@@ -222,8 +210,7 @@ describe("a deferred item", () => {
   test("passes over an RFC dependency when its repository cannot be read", () => {
     expect(
       Waiting.problemsIn(
-        [{...item, until: Closes("zzzzz")}],
-        ~repos=["seam"],
+        [{...item, waits: Closes("zzzzz")}],
         ~rules,
         ~readable=_ => false,
         ~statuses=_ => panic("an unavailable repository must not be read"),
@@ -486,5 +473,121 @@ describe("the area map", () => {
     )->toBe(false)
     expect(found->Array.length > 0)->toBe(true)
     expect(Settings.missing(~repos=root, ~skipped=_ => Some("not cloned")))->toEqual([])
+  })
+})
+
+describe("the plan", () => {
+  let owes: Work.item = {
+    id: "first",
+    says: "",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("a thing"),
+  }
+  let rules: array<Rule.t> = [
+    {name: "owed", says: "", doc: "", held: Pending("a check")},
+    {name: "kept", says: "", doc: "", held: Check("drift")},
+  ]
+  let found = (
+    items,
+    ~has=_ => true,
+    ~passes=_ => None,
+    ~rfc=(_, _) => true,
+    ~committed=(_, _) => Some(true),
+  ) => Plan.problemsIn(items, ~repos=["seam"], ~rules, ~has, ~passes, ~rfc, ~committed)
+
+  test("holds an item that names what is there", () => {
+    expect(
+      found([
+        owes,
+        {...owes, id: "second", repos: ["seam"], after: ["first"], why: "8q1af"},
+        {...owes, id: "third", holds: Holds("drift")},
+        {...owes, id: "fourth", holds: Landing("drift"), after: ["third"]},
+        {...owes, id: "fifth", holds: Committed({repo: "seam", commit: "ea6e2288"})},
+        {...owes, id: "sixth", holds: Observed({at: "2026-11-01", what: "seen"})},
+      ], ~passes=_ => Some(false)),
+    )->toEqual([])
+  })
+
+  test("refuses an id used twice, an after that is no item or loops, and a pending rule copied", () => {
+    expect(
+      found([
+        owes,
+        {...owes, repos: [], after: ["gone"], why: "zzzzz"},
+        {...owes, id: "owed", repos: ["elsewhere"], after: ["owed"]},
+        {...owes, id: "loop-a", after: ["loop-b"]},
+        {...owes, id: "loop-b", after: ["loop-a"]},
+      ], ~rfc=(_, id) => id != "zzzzz"),
+    )->toEqual([
+      "plan first: its id is taken by another item",
+      "plan first: names no repository",
+      "plan first: is after gone, which is no item",
+      "plan first: names zzzzz, which is no RFC",
+      "plan owed: is a pending rule, which stays in model/rules and is listed here by name",
+      "plan owed: elsewhere is not in repos/registry.toml",
+      "plan owed: is after itself",
+      "plan loop-a: is after itself through the items it follows",
+      "plan loop-b: is after itself through the items it follows",
+    ])
+  })
+
+  test("refuses a part that is missing, and a landing whose part passes", () => {
+    let has = name => name != "gone"
+    let passes = name => Some(name != "fails")
+    expect(
+      found(
+        [
+          {...owes, id: "a", holds: Holds("gone")},
+          {...owes, id: "b", holds: Landing("drift")},
+          {...owes, id: "c", holds: Landing("fails")},
+          {...owes, id: "d", holds: Holds("fails")},
+        ],
+        ~has,
+        ~passes,
+      ),
+    )->toEqual([
+      "plan a: names the part gone, which the check does not have",
+      "plan b: lands drift, which passes; move it to Holds",
+    ])
+  })
+
+  test("refuses a commit off main or malformed, and an observation without a date", () => {
+    let committed = (_, commit) => commit == "aaaaaaaa" ? Some(false) : None
+    expect(
+      found(
+        [
+          {...owes, id: "a", holds: Committed({repo: "seam", commit: "aaaaaaaa"})},
+          {...owes, id: "b", holds: Committed({repo: "seam", commit: "main"})},
+          {...owes, id: "c", holds: Committed({repo: "seam", commit: "bbbbbbbb"})},
+          {...owes, id: "d", holds: Committed({repo: "gone", commit: "bbbbbbbb"})},
+          {...owes, id: "e", holds: Observed({at: "yesterday", what: ""})},
+        ],
+        ~committed,
+      ),
+    )->toEqual([
+      "plan a: names aaaaaaaa, which is not on the main of seam",
+      "plan b: names main, which is no commit hash",
+      "plan d: names a commit in gone, which is not in repos/registry.toml",
+      "plan e: is observed on yesterday, which is no date yyyy-mm-dd",
+      "plan e: is observed with nothing said",
+    ])
+  })
+
+  test("reads each item as done, under way, ready, behind or waiting", () => {
+    let committed = (_, _) => Some(true)
+    let items: array<Work.item> = [
+      {...owes, id: "held", holds: Holds("drift")},
+      {...owes, id: "landing", holds: Landing("drift")},
+      {...owes, id: "ready", after: ["held"]},
+      {...owes, id: "behind", after: ["ready", "held"]},
+      {...owes, id: "waits", waits: Author},
+    ]
+    let read = id =>
+      items->Array.find(item => item.id == id)->Option.map(Plan.stateOf(items, _, ~committed))
+    expect(read("held"))->toEqual(Some(Plan.Done))
+    expect(read("landing"))->toEqual(Some(Plan.Under))
+    expect(read("ready"))->toEqual(Some(Plan.Ready))
+    expect(read("behind"))->toEqual(Some(Plan.Behind(["ready"])))
+    expect(read("waits"))->toEqual(Some(Plan.Awaits(Author)))
   })
 })

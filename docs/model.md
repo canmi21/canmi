@@ -13,11 +13,20 @@ and its why is an RFC, [rfcs.md](rfcs.md). A sentence nothing enforces decays wi
 | `model/rules/`    | one file per topic: the values, and the rules over them                |
 | `model/checks/`   | the checks that read those values and answer with violations           |
 | `model/check.res` | `check workspace [part ...]`, every part or those named                |
+| `model/plan/`     | `work.res`, the plan: what is to be done and what each item waits on   |
 
 It is ReScript, as every script here is, compiled by `mise run build` and never committed. A hook or
 a script that needs a value imports it from the model rather than writing it again: the commit hook
 and the history check read one `Commits.subjectWidth`, the comment gate and the docs one
 `Code.columns`.
+
+**The plan is `model/plan/work.res`**, a list of items, each with an id, what it says, the
+repositories it touches and the ids it comes `after`. What it `holds` is one of five: it owes
+something, a check part is being brought in, a check part holds it, a commit on a repository's main
+did it, or a dated observation shows it. Whether it is done is read from that and never written, and
+the `plan` part of the check holds the list to what it names. `mise run plan` prints what is under
+way, ready and waiting, `--done` what is done, and a pending rule appears there by name while it
+stays in `model/rules/`. See [planning.md](planning.md).
 
 ## What holds a rule
 

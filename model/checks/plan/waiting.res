@@ -1,5 +1,5 @@
-/** The deferred items, model/plan/deferred.res, against what they name, and what each waives. */
-open Deferred
+/** The items waiting on a moment, model/plan/work.res, against what they name and waive. */
+open Work
 
 /** The parts whose findings name the rule they break, so a rule of theirs can be waived. */
 let waivable = ["shape"]
@@ -74,30 +74,13 @@ let statuses = (): (item => Dict.t<string>) => {
 /** Whatever an item names that is not there, each one line. */
 let problemsIn = (
   items: array<item>,
-  ~repos: array<string>,
   ~rules: array<Rule.t>,
   ~statuses: item => Dict.t<string>,
   ~readable: item => bool=_ => true,
 ): array<string> => {
   let found = []
-  let seen = []
   items->Array.forEach(item => {
     let at = `deferred ${item.id}`
-    if !(/^[a-z0-9]+(-[a-z0-9]+)*$/->RegExp.test(item.id)) {
-      found->Array.push(`${at}: its id is not lowercase words joined by hyphens`)
-    }
-    if seen->Array.includes(item.id) {
-      found->Array.push(`${at}: its id is taken by another item`)
-    }
-    seen->Array.push(item.id)
-    if item.repos == [] {
-      found->Array.push(`${at}: names no repository`)
-    }
-    item.repos->Array.forEach(repo =>
-      if repo != "workspace" && !(repos->Array.includes(repo)) {
-        found->Array.push(`${at}: ${repo} is not in repos/registry.toml`)
-      }
-    )
     item.waives
     ->Option.getOr([])
     ->Array.forEach(name =>
@@ -110,8 +93,8 @@ let problemsIn = (
         )
       }
     )
-    switch item.until {
-    | Closes(id) if readable(item) && statuses(item)->Dict.get(id)->Option.isNone =>
+    switch item.waits {
+    | Some(Closes(id)) if readable(item) && statuses(item)->Dict.get(id)->Option.isNone =>
       found->Array.push(`${at}: waits on ${id}, which is no RFC`)
     | _ => ()
     }
@@ -130,7 +113,7 @@ let waiverIn = (items: array<item>, ~repo, ~rule) =>
 let waiver = (~repo, ~rule) => waiverIn(items, ~repo, ~rule)
 
 let problems = () =>
-  problemsIn(items, ~repos=Registry.paths(), ~rules=Rules.all, ~statuses=statuses(), ~readable)
+  problemsIn(items, ~rules=Rules.all, ~statuses=statuses(), ~readable)
 
 let red = text => Node.envOn("NO_COLOR") ? text : `\u001b[31m${text}\u001b[0m`
 
@@ -138,19 +121,20 @@ let red = text => Node.envOn("NO_COLOR") ? text : `\u001b[31m${text}\u001b[0m`
 let shown = (~repo: option<string>) => {
   let known = statuses()
   let due = item =>
-    switch item.until {
-    | Closes(id) =>
+    switch item.waits {
+    | Some(Closes(id)) =>
       readable(item) &&
       known(item)->Dict.get(id)->Option.mapOr(false, s => finished->Array.includes(s))
-    | Author => false
+    | Some(Author) | None => false
     }
   items
+  ->Array.filter(item => item.waits->Option.isSome)
   ->Array.filter(item => repo->Option.mapOr(true, name => item.repos->Array.includes(name)))
   ->Array.toSorted((a, b) => (due(a) ? 0. : 1.) -. (due(b) ? 0. : 1.))
   ->Array.map(item => {
-    let until = switch item.until {
-    | Closes(id) => `until ${id} lands`
-    | Author => "until the author says"
+    let until = switch item.waits {
+    | Some(Closes(id)) => `until ${id} lands`
+    | Some(Author) | None => "until the author says"
     }
     let waives = switch item.waives {
     | Some(names) => `; waives ${names->Array.join(", ")}`
@@ -158,7 +142,7 @@ let shown = (~repo: option<string>) => {
     }
     let waives = item.pauses->Option.getOr(false) ? `${waives}; paused` : waives
     red(
-      `deferred ${item.id}${due(item) ? " (due)" : ""}: ${item.what} -- ${item.repos->Array.join(
+      `deferred ${item.id}${due(item) ? " (due)" : ""}: ${item.says} -- ${item.repos->Array.join(
           ", ",
         )}; ${until}${waives}`,
     )

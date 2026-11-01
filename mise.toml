@@ -129,7 +129,7 @@ depends = ["build"]
 run = "node scripts/rfcs/rfc_new.res.mjs"
 
 [tasks.plan]
-description = "What is left in every id space's RFCs, or in one: `plan [space]`"
+description = "What is under way, ready, waiting and done, then the RFCs: `plan [space] [--done]`"
 depends = ["build"]
 run = "node scripts/rfcs/rfc_plan.res.mjs"
 

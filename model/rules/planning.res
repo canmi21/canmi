@@ -28,9 +28,15 @@ let sections = ["Question", "Options", "Evidence", "Decision", "State"]
 let rules: array<Rule.t> = [
   {
     name: "deferred-named",
-    says: "A deferred item names repositories the registry lists, an RFC that exists, and only rules a part can waive",
+    says: "A deferred item waits on an RFC that exists and waives only rules a part can",
     doc,
     held: Check("deferred"),
+  },
+  {
+    name: "plan-named",
+    says: "An item of the plan has a unique id, names registered repositories, items and RFCs that exist, an acyclic order, and a check part, commit or dated observation that holds it",
+    doc,
+    held: Check("plan"),
   },
   {
     name: "todo-cites-open",

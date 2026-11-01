@@ -125,14 +125,14 @@ let joinedFile = (path, ~executable): option<string> =>
   }
 
 /** The deferred item `id` among `items`, if it names `repo`. */
-let deferredIn = (items: array<Deferred.item>, ~id, ~repo) =>
+let deferredIn = (items: array<Work.item>, ~id, ~repo) =>
   items
   ->Array.find(item => item.id == id && item.repos->Array.includes(repo))
   ->Option.map(item => item.id)
 
 /** `lines` as failures, or as warnings while the deferred item `id` names `repo`. */
 let waived = (lines, ~id, ~repo) =>
-  switch deferredIn(Deferred.items, ~id, ~repo) {
+  switch deferredIn(Work.items, ~id, ~repo) {
   | Some(id) => ([], lines->Array.map(line => `${line}, deferred ${id}`))
   | None => (lines, [])
   }

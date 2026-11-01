@@ -5,14 +5,15 @@ what holds now, and one file may hold what does not: `roadmap.md`, the long-term
 workspace keeps no roadmap. Everything not done yet is an RFC, in the repository nearest it --
 RFC p992n, and [rfcs.md](rfcs.md) for the rest.
 
-| What                                  | Where                                                    |
-| ------------------------------------- | -------------------------------------------------------- |
-| The long-term direction               | `roadmap.md`: a few lines, never detail, steps or a date |
-| An open question, a finding           | a `draft` RFC                                            |
-| Work decided and waiting, a milestone | an `accepted` RFC                                        |
-| Chores decided, waiting on a moment   | a deferred item, `model/plan/deferred.res`               |
-| What waits on what                    | `blocked-by` on the RFC that waits, by id                |
-| What to take up next                  | `mise run plan [space]`, from the rest                   |
+| What                                    | Where                                                    |
+| --------------------------------------- | -------------------------------------------------------- |
+| The long-term direction                 | `roadmap.md`: a few lines, never detail, steps or a date |
+| An open question, a finding             | a `draft` RFC                                            |
+| Work decided and waiting, a milestone   | an `accepted` RFC                                        |
+| Chores decided, waiting on a moment     | an item of the plan with `waits`, `model/plan/work.res`  |
+| Work in hand and the order of its steps | an item of the plan, its `after` naming what comes first |
+| What waits on what                      | `blocked-by` on the RFC that waits, by id                |
+| What to take up next                    | `mise run plan [space]`, from the rest                   |
 
 **What is not done is one of three, and each has one home.**
 
@@ -20,7 +21,7 @@ RFC p992n, and [rfcs.md](rfcs.md) for the rest.
   RFC, or a row of a project's own checklist where it keeps one, as the platform does. Code that
   waits on it is a `%todo("<id>")` or a `todo!("<id>")` naming it, and on nothing else.
 - **Deferred** -- what is decided and waits on a moment, with nothing left to argue: a repository to
-  split, a directory to rename, commits held back. Each is an item of `model/plan/deferred.res`,
+  split, a directory to rename, commits held back. Each is an item of `model/plan/work.res` with `waits`,
   waiting until an RFC lands or until the author says, and listed in red at the end of every
   `check`, never failing it. One that needs an argument is an `accepted` RFC instead, and nothing
   decided is stubbed in code.
@@ -38,6 +39,11 @@ drift, read only the rest, `Waiting.active`. A repository nobody is working on i
 because its findings ask for work nobody is doing; naming it alone, `mise run check canmi/web`,
 still runs its check. The `paused` item holds every repository but the workspace and monoflake's
 two.
+
+**The plan is `model/plan/work.res`, read by `mise run plan`**, [model.md](model.md), and lists
+what is under way, what is ready because nothing before it is undone, and what waits and on what;
+`mise run plan --done` lists what is done. A pending rule appears there by name. The RFCs it prints
+after are the drafts and the accepted ones, not yet read against the code.
 
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain
