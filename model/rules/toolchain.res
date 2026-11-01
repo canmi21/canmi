@@ -18,6 +18,37 @@ let taskLines = 5
 /** Minutes a package version is public before pnpm installs it. */
 let releaseAge = 1440
 
+/** A workflow step's commands, its entries, their plumbing and the parsers a pipe feeds. */
+let entryCommands = ["mise", "node", "pnpm", "npx"]
+let plumbingCommands = [
+  "echo",
+  "printf",
+  "cd",
+  "[",
+  "[[",
+  "test",
+  "export",
+  "set",
+  "true",
+  "false",
+  "exit",
+  "gh",
+]
+let parserCommands = [
+  "grep",
+  "sed",
+  "awk",
+  "jq",
+  "cut",
+  "tr",
+  "sort",
+  "uniq",
+  "head",
+  "tail",
+  "xargs",
+  "perl",
+]
+
 /** Where a Cloudflare resource made with a place may be put, as `cloudflare-placed` says. */
 let places = ["wnam", "apac"]
 
@@ -282,41 +313,37 @@ let rules: array<Rule.t> = [
     name: "ci-crane",
     says: "Rust that Nix builds is built with crane, its dependencies a derivation of their own",
     doc: "docs/ci.md",
-    held: Pending("each repository's Nix packages read for a Rust build that is not crane's"),
+    held: Check("ci"),
   },
   {
     name: "ci-rust-cache",
     says: "A workflow that runs cargo on a GitHub-hosted runner uses Swatinem/rust-cache",
     doc: "docs/ci.md",
-    held: Pending("each repository's workflows read for a hosted job running cargo without it"),
+    held: Check("ci"),
   },
   {
     name: "ci-runner-local",
     says: "A job on a self-hosted runner keeps its caches on the runner, never in the GitHub cache",
     doc: "docs/ci.md",
-    held: Pending("each workflow's self-hosted jobs read for a cache action left on"),
+    held: Check("ci"),
   },
   {
     name: "ci-native-steps",
     says: "A workflow runs one stage a step, so each is timed and shown apart, and takes a published action where one fits",
     doc: "docs/ci.md",
-    held: Pending("each workflow's steps read for a run that chains several stages' entries"),
+    held: Check("ci-steps"),
   },
   {
     name: "ci-entries",
     says: "A workflow step calls a mise task or a script the repository holds, so the same entry runs locally",
     doc: "docs/ci.md",
-    held: Pending(
-      "each workflow's run blocks read for a command that is not an entry or its plumbing",
-    ),
+    held: Check("ci-steps"),
   },
   {
     name: "ci-shell-minimal",
     says: "A workflow step's shell holds the call and its plumbing alone; a loop, a parse or a retry lives in the entry, in ReScript",
     doc: "docs/ci.md",
-    held: Pending(
-      "each workflow's run blocks read for a loop, a pipeline parse or a branch beyond passing outputs",
-    ),
+    held: Check("ci-steps"),
   },
   {
     name: "schedule-nominal",
@@ -330,6 +357,6 @@ let rules: array<Rule.t> = [
     name: "custom-domains",
     says: "workers_dev and preview_urls are off in every wrangler configuration",
     doc,
-    held: Pending("each repository's wrangler files read; deployment is being rewritten"),
+    held: Check("domains"),
   },
 ]

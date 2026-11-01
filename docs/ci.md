@@ -3,7 +3,9 @@
 ## A build's cache follows where it builds
 
 These rules apply to this workspace and the `monoflake` repositories and are named in
-`model/rules/toolchain.res`, the `ci-` ones.
+`model/rules/toolchain.res`, the `ci-` ones. The `ci` part of the check holds `ci-crane`,
+`ci-rust-cache` and `ci-runner-local`, reading each repository's workflows, composite actions and
+Nix files.
 
 **Rust that Nix builds is built with crane**, with its dependencies as a derivation of their own.
 When only the crate's own source changes, the dependencies come from the store and only the crate is
@@ -33,7 +35,9 @@ after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
 ## CI orchestrates, the scripts do the work
 
 These rules apply to every workflow of this workspace and the `monoflake` repositories and are named
-in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and `ci-shell-minimal`.
+in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and `ci-shell-minimal`, held by the
+`ci-steps` part, a warning until the workflows that break them are rewritten. The commands an entry
+or its plumbing may be are `Toolchain.entryCommands` and `Toolchain.plumbingCommands`.
 
 **A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
 apart, and a published action is taken where one fits rather than written again in a step.

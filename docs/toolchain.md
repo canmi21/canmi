@@ -516,7 +516,9 @@ approve one and should not try; `claude mcp list` says which state it is in.
 
 ## Workers answer on custom domains only
 
-`workers_dev` and `preview_urls` are off everywhere. Every generated hostname is another route to
+`workers_dev` and `preview_urls` are off everywhere, as `custom-domains` in
+`model/rules/toolchain.res` holds in its `domains` part, a warning until monoflake/driver's three
+Workers are bound to names. Every generated hostname is another route to
 the same worker, reached without whatever sits in front of the custom domain, and nobody watches
 those addresses. A route under a custom domain of our own is not a generated address, and is
 allowed, but none is left. A more specific route wins over the domain's Worker only for a request
