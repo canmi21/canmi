@@ -103,7 +103,7 @@ describe("an RFC's frontmatter", () => {
       "`owner` is not a key the format has",
       "`name` is empty",
       "`title` is empty",
-      "`status` is not one of draft, accepted, landed, declined",
+      "`status` is not one of draft, decided, accepted, landed, declined",
       "`commits[0]` is not repo@hash",
       "`references` is missing; write [] for our own idea",
     ])
@@ -147,6 +147,99 @@ describe("an RFC's frontmatter", () => {
       "mail domain b.org could be real; write a reserved one, as in example.com",
       "host real.io could be real; write a reserved one, as in example.com",
       "address 10.0.0.1 could be real; write a reserved one, as in example.com",
+    ])
+  })
+})
+
+describe("an RFC of the new form", () => {
+  let current = (
+    ~status="draft",
+    ~extra="",
+    ~sections="## Question\n\nWhy?\n\n## Options\n\nOne.\n",
+  ) =>
+    `---
+name: "Hue Pairs"
+title: Hues come in pairs
+status: ${status}
+supersedes: []
+references: []${extra}
+---
+
+${sections}`
+  let file = (~order=3, ~day="2026-1101"): Rfc_spaces.file => {
+    day,
+    order,
+    slug: "x",
+    id: "aaaaa",
+    space: "workspace",
+    repo: "workspace",
+    area: "design",
+    path: "/w/lanes/rfcs/design/x.md",
+    where: "lanes/rfcs/design/x.md",
+  }
+  let held = (~day="2026-1101", ~order=3, text) =>
+    Rfc_check.held(
+      [{Rfc_check.file: file(~order, ~day), text}],
+      ~strays=[],
+      ~areas=["design"],
+      ~repos=["workspace"],
+      ~exists=(_, _) => Some(true),
+    )->Array.map(problem => problem.says)
+  let decided = current(
+    ~status="decided",
+    ~sections="## Question\n\nWhy?\n\n## Options\n\nOne.\n\n## Decision\n\nThis.\n",
+  )
+
+  test("passes a draft with Question and Options, and a decided one with a Decision", () => {
+    expect(held(current()))->toEqual([])
+    expect(held(decided))->toEqual([])
+    expect(held(current(~status="declined", ~sections="## Question\n\n## Decision\n")))->toEqual([])
+  })
+
+  test("refuses accepted and landed, which are history", () => {
+    expect(held(current(~status="accepted", ~sections="## Question\n\n## Decision\n")))->toEqual([
+      "lanes/rfcs/design/x.md: a accepted RFC is history; the statuses are draft, decided, declined",
+    ])
+  })
+
+  test("refuses blocked-by, underway and commits", () => {
+    expect(held(current(~extra="\nblocked-by: []\nunderway: step\ncommits: []")))->toEqual([
+      "lanes/rfcs/design/x.md: `blocked-by` is not a key of this form; the model's plan holds it",
+      "lanes/rfcs/design/x.md: `underway` is not a key of this form; the model's plan holds it",
+      "lanes/rfcs/design/x.md: `commits` is not a key of this form; the model's plan holds it",
+    ])
+  })
+
+  test("refuses a heading of work to come at any level, outside code", () => {
+    let text = current(
+      ~sections="## Question\n\n### Next steps\n\n## Options\n\n```\n## Plan\n```\n\n#### Phase 2\n",
+    )
+    expect(held(text))->toEqual([
+      "lanes/rfcs/design/x.md: `Next steps` is a Next heading; the model's plan holds the work",
+      "lanes/rfcs/design/x.md: `Phase 2` is a Phase heading; the model's plan holds the work",
+    ])
+  })
+
+  test("asks a draft for Options and no Decision, and a decided one for a Decision", () => {
+    expect(held(current(~sections="## Question\n")))->toEqual([
+      "lanes/rfcs/design/x.md: a draft asks for a `## Options`",
+    ])
+    expect(held(current(~sections="## Question\n\n## Options\n\n## Decision\n")))->toEqual([
+      "lanes/rfcs/design/x.md: a draft has no `## Decision`; it is `decided` once decided",
+    ])
+    expect(held(current(~status="decided", ~sections="## Question\n\n## Options\n")))->toEqual([
+      "lanes/rfcs/design/x.md: no `## Decision`",
+    ])
+  })
+
+  test("leaves an RFC before the cutoff in its old form", () => {
+    let old = current(
+      ~status="accepted",
+      ~extra="\nblocked-by: []\ncommits: []",
+      ~sections="## Question\n\n## Next\n\n## Decision\n",
+    )
+    expect(held(~day="2026-1101", ~order=1, old))->toEqual([
+      "lanes/rfcs/design/x.md: unknown section `Next`",
     ])
   })
 })

@@ -10,7 +10,7 @@ are drawn by the settled design system, which no address reaches before then -- 
 name `Planning.workspaceSpace`, and `canmi` for the author's other projects, kept in
 `repos/canmi/rfcs` with web's tools until that repository is taken up again. A citation may cross
 spaces and repositories, a public one citing a private id among them, which tells its reader the id
-and nothing more; `supersedes` and `blocked-by` stay within a space, where a bare id is one RFC.
+and nothing more; `supersedes` stays within a space, where a bare id is one RFC.
 A commit an RFC names is `<repo>@<hash>`, `<repo>` being `workspace` or a path from
 `repos/registry.toml`. A commit in a retired repository, named in `Planning.retired`, is kept as
 written and not checked.
@@ -37,15 +37,14 @@ space to the format, reading every cloned repository of it. Web's `apps/space/rf
 pages and still checks `canmi/rfcs`. The task is `rfc`, named by one word, docs/toolchain.md, so an
 RFC landed earlier may call it `new-rfc`.
 
-**Everything not done is an RFC too, by its status** -- RFC p992n and [planning.md](planning.md):
-`draft` for an open question or a finding, `accepted` for decided work or a milestone, `landed`
-once built and pushed, naming its commits, or `declined`. A draft or an accepted RFC is edited as
-the work moves; a landed or declined one is frozen. **`blocked-by` names the RFCs that must land
-first, by id**, the graph held acyclic by the `rfcs` part of check; `mise run plan [space]` lists what
-nothing open blocks, then each of the rest behind the chain it waits on. **`underway`, optional on
-a draft or an accepted RFC, names the step being worked now**, and `plan` prints those first, so a
-reader starting cold knows what is in hand and what comes next. `rfc new` starts a draft
-unless given `--status`, and takes `--day` for a question older than its RFC.
+**An RFC records why, and what is not done is the model's plan** -- RFC 8q1af and
+[planning.md](planning.md). From 2026-1101-02 on (`Planning.newFormFrom`) an RFC is a `draft`, a
+question with its options and no decision, a `decided` one holding a Decision, or `declined`; it
+has no `blocked-by`, `underway` or `commits`, and no Steps, Plan, Order, Next, Roadmap or Phase
+heading, all held by the `rfcs` part of check. Older RFCs keep `accepted` and `landed` as history,
+and neither a plan nor a fact about the code is read from them. `rfc new` starts a draft from a
+Question and Options, adds a Decision under `--status decided`, and takes `--day` for a question
+older than its RFC.
 
 **Its license is CC BY-NC-SA 4.0**, the one repository that is not MIT -- [readme.md](readme.md),
 "A license year is when the idea began".

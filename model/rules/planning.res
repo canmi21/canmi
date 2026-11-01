@@ -10,8 +10,20 @@ let retired = ["platform", "infra"]
 /** Where a repository keeps its RFCs, one directory deep in areas. */
 let rfcDirectory = "docs/rfcs"
 
-/** Where an RFC stands, in the order it moves, the first two still open. RFC p992n. */
-let statuses = ["draft", "accepted", "landed", "declined"]
+/** Where an RFC stands, in the order it moves. Accepted and landed are history. RFC 8q1af. */
+let statuses = ["draft", "decided", "accepted", "landed", "declined"]
+
+/** The place, `yyyy-mmdd-nn`, from which an RFC is of the new form. RFC 8q1af. */
+let newFormFrom = "2026-1101-02"
+
+/** The only statuses an RFC of the new form may have. */
+let newStatuses = ["draft", "decided", "declined"]
+
+/** Frontmatter keys an RFC of the new form does not have, as the model's plan holds them. */
+let newFormKeysRefused = ["blocked-by", "underway", "commits"]
+
+/** Headings, at any level, an RFC of the new form does not have, matched by their first word. */
+let newFormHeadingsRefused = ["Steps", "Plan", "Order", "Next", "Roadmap", "Phase"]
 
 /** The repositories whose docs `docs-in-force` reads beside the workspace's, by path prefix. */
 let docsReadIn = ["monoflake/"]

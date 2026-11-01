@@ -13,7 +13,7 @@ let usage = () => {
     "  --in a repository repos/registry.toml lists that declares [rfcs], the workspace's",
   )
   Console.error(
-    `  own unless given; the status one of ${Planning.statuses->Array.join(", ")}, draft`,
+    `  own unless given; the status one of ${Planning.newStatuses->Array.join(", ")}, draft`,
   )
   Console.error(`  unless given; e.g. mise run rfc new "Hue Pairs" design --in monoflake/platform`)
   Node.exit(2)
@@ -47,12 +47,12 @@ name: ${quoted(name)}
 title:
 status: ${status}
 supersedes: []
-blocked-by: []
-commits: []
 references: []
 ---
 
 ## Question
+
+## Options
 ${status == "draft" ? "" : "\n## Decision\n"}`
 
 let main = () => {
@@ -79,7 +79,7 @@ let main = () => {
   if (
     !(Rfc_name.area->RegExp.test(area)) ||
     !(Rfc_name.slug->RegExp.test(slug)) ||
-    !(Planning.statuses->Array.includes(status)) ||
+    !(Planning.newStatuses->Array.includes(status)) ||
     Rfc_name.parse(`${day}-01-a-aaaaa.md`) == None
   ) {
     usage()

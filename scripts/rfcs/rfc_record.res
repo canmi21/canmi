@@ -192,7 +192,7 @@ let sections = body => {
  * Every way a body's sections stray from the four, their order, or the ones its status asks, none
  * asked where the status could not be read.
  */
-let checkSections = (body, ~status: option<string>) => {
+let checkSections = (body, ~status: option<string>, ~newForm=false) => {
   let order = Planning.sections
   let found = sections(body)
   let problems =
@@ -213,11 +213,74 @@ let checkSections = (body, ~status: option<string>) => {
   }
   switch status {
   | Some("draft") if known->Array.includes("Decision") =>
-    problems->Array.push("a draft has no `## Decision`; it is `accepted` once decided")
+    problems->Array.push(
+      newForm
+        ? "a draft has no `## Decision`; it is `decided` once decided"
+        : "a draft has no `## Decision`; it is `accepted` once decided",
+    )
+  | Some("draft") if newForm && !(known->Array.includes("Options")) =>
+    problems->Array.push("a draft asks for a `## Options`")
   | Some("draft") | None => ()
   | Some(_) if !(known->Array.includes("Decision")) => problems->Array.push("no `## Decision`")
   | Some(_) => ()
   }
+  problems
+}
+
+/** Every heading of a body at any level, outside fenced code. */
+let headings = body => {
+  let fenced = ref(false)
+  body
+  ->String.split("\n")
+  ->Array.filterMap(line =>
+    if /^(```|~~~)/->RegExp.test(line) {
+      fenced := !fenced.contents
+      None
+    } else if !fenced.contents && /^#{1,6} /->RegExp.test(line) {
+      Some(line->String.replaceRegExp(/^#+ +/, "")->String.trim)
+    } else {
+      None
+    }
+  )
+}
+
+/**
+ * What an RFC of the new form may not hold, a status outside its three, the keys and headings
+ * that forecast work, which the model's plan keeps. RFC 8q1af.
+ */
+let checkNewForm = (text, ~status: option<string>) => {
+  let problems = []
+  switch status {
+  | Some(status) if !(Planning.newStatuses->Array.includes(status)) =>
+    problems->Array.push(
+      `a ${status} RFC is history; the statuses are ${Planning.newStatuses->Array.join(", ")}`,
+    )
+  | _ => ()
+  }
+  switch split(text) {
+  | Some((yaml, _)) =>
+    switch Yaml.parse(yaml) {
+    | exception JsExn(_) => ()
+    | Object(fields) =>
+      Planning.newFormKeysRefused->Array.forEach(key =>
+        if fields->Dict.get(key)->Option.isSome {
+          problems->Array.push(`\`${key}\` is not a key of this form; the model's plan holds it`)
+        }
+      )
+    | _ => ()
+    }
+  | None => ()
+  }
+  headings(body(text))->Array.forEach(heading => {
+    let first = heading->String.split(" ")->Array.getUnsafe(0)
+    switch Planning.newFormHeadingsRefused->Array.find(word =>
+      word->String.toLowerCase == first->String.toLowerCase
+    ) {
+    | Some(word) =>
+      problems->Array.push(`\`${heading}\` is a ${word} heading; the model's plan holds the work`)
+    | None => ()
+    }
+  })
   problems
 }
 

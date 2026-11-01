@@ -69,11 +69,10 @@ Every rule the user states gets written down. Never leave one in chat only.
 - A rule that belongs to one project goes in that project's `docs/`, not here; one two projects
   share comes here.
 - Never restate the rules here. Link to them.
-- What is not done yet is an RFC, in the repository nearest it: a `draft` for an open question,
-  an `accepted` one for decided work, blocked by others by id, each id unique in its repository's
-  id space. **To know what is left, run `mise run plan`**; a project's `docs/` keeps its rules and at most a short
-  `roadmap.md`. What is decided and only waits on a moment is a deferred item,
-  `model/plan/work.res`, listed in red at the end of every check. See
+- What is not done yet is in the model's plan, `model/plan/`, each item with what it waits on, whether
+  it is done derived from a check, a commit or dated evidence. **To know what is left, run `mise run
+  plan`.** An RFC records why a decision was made, frozen once decided; a question not yet decided is
+  a `draft`. A project's `docs/` keeps its rules and at most a short `roadmap.md`. See
   [docs/planning.md](docs/planning.md).
 - Agent memory keeps only what is private and the state of work in progress; a lesson learned the
   hard way is written into [docs/lessons.md](docs/lessons.md).

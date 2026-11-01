@@ -1,18 +1,18 @@
-# Planning: a short roadmap, everything not done an RFC
+# Planning: a short roadmap, the model's plan for what is not done
 
 Every repository's rules -- this workspace's `docs/` and `model/`, each project's `docs/` -- hold
 what holds now, and one file may hold what does not: `roadmap.md`, the long-term direction. The
-workspace keeps no roadmap. Everything not done yet is an RFC, in the repository nearest it --
-RFC p992n, and [rfcs.md](rfcs.md) for the rest.
+workspace keeps no roadmap. What is not done yet is the model's plan, `model/plan/work.res`, and
+only a question not yet decided is a draft RFC -- RFC 8q1af, and [rfcs.md](rfcs.md) for the rest.
 
 | What                                    | Where                                                    |
 | --------------------------------------- | -------------------------------------------------------- |
 | The long-term direction                 | `roadmap.md`: a few lines, never detail, steps or a date |
 | An open question, a finding             | a `draft` RFC                                            |
-| Work decided and waiting, a milestone   | an `accepted` RFC                                        |
+| Work decided and waiting, a milestone   | an item of the plan, `model/plan/work.res`               |
 | Chores decided, waiting on a moment     | an item of the plan with `waits`, `model/plan/work.res`  |
 | Work in hand and the order of its steps | an item of the plan, its `after` naming what comes first |
-| What waits on what                      | `blocked-by` on the RFC that waits, by id                |
+| What waits on what                      | `after` on the item that waits, by id                    |
 | What to take up next                    | `mise run plan [space]`, from the rest                   |
 
 **What is not done is one of three, and each has one home.**
@@ -23,7 +23,7 @@ RFC p992n, and [rfcs.md](rfcs.md) for the rest.
 - **Deferred** -- what is decided and waits on a moment, with nothing left to argue: a repository to
   split, a directory to rename, commits held back. Each is an item of `model/plan/work.res` with `waits`,
   waiting until an RFC lands or until the author says, and listed in red at the end of every
-  `check`, never failing it. One that needs an argument is an `accepted` RFC instead, and nothing
+  `check`, never failing it. One that needs an argument is a draft RFC until it is decided, and nothing
   decided is stubbed in code.
 - **Not done at all** -- a rule, or a `declined` RFC; never a list of things to do.
 
@@ -43,7 +43,7 @@ two.
 **The plan is `model/plan/work.res`, read by `mise run plan`**, [model.md](model.md), and lists
 what is under way, what is ready because nothing before it is undone, and what waits and on what;
 `mise run plan --done` lists what is done. A pending rule appears there by name. The RFCs it prints
-after are the drafts and the accepted ones, not yet read against the code.
+after are the drafts and the older accepted ones, history not yet read against the code.
 
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain
@@ -51,9 +51,8 @@ it waits on. Neither carries an argument, which lives in the RFC. **The plan's l
 many patches monoflake/driver's main is past its last Release**, and says so where it cannot read
 either.
 
-**An RFC moves as the thing it names moves.** A draft is `accepted` once decided, `landed` once
-built and pushed, or `declined`; the rules the work changed are written in the commit that lands it,
-and cite it by id. A roadmap direction leaves when it is reached or dropped. Nothing is struck
+**An RFC moves once, when its question is answered.** A draft is `decided` or `declined`, then
+frozen; the rules the work changed are written in the commit that lands it, and cite it by id. A roadmap direction leaves when it is reached or dropped. Nothing is struck
 through and kept.
 
 **A question that is open is a draft even when it was found in a rules file.** An "Open" or

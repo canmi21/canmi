@@ -11,7 +11,7 @@ let run = args =>
   )
 
 describe("rfc new options", () => {
-  let status = ["--status", "accepted"]
+  let status = ["--status", "decided"]
   let into = ["--in", "workspace"]
   [[status], [into], [status, into], [into, status]]->Array.forEach(options => {
     for first in 0 to 2 {
@@ -44,7 +44,7 @@ describe("rfc new options", () => {
   })
 
   ["--status", "--in", "--day"]->Array.forEach(flag => {
-    [[], ["--dry-run"], ["--status", "accepted"], ["--in", "workspace"]]->Array.forEach(
+    [[], ["--dry-run"], ["--status", "decided"], ["--in", "workspace"]]->Array.forEach(
       after => {
         let args = Array.concat(["Option Probe", "agents", flag], after)
         test(

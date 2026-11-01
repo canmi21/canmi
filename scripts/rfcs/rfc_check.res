@@ -79,11 +79,17 @@ let held = (
     let (front, found) = Rfc_record.readFront(text)
     let body = Rfc_record.body(text)
     let status = front->Option.map(front => front.status)
-    let own = Array.concat(found, Rfc_record.checkSections(body, ~status))
+    let newForm = Rfc_name.place(file.day, file.order) >= Planning.newFormFrom
+    let own = Array.concat(found, Rfc_record.checkSections(body, ~status, ~newForm))
+    if newForm {
+      own->Array.pushMany(Rfc_record.checkNewForm(text, ~status))
+    }
     own->Array.pushMany(Rfc_record.checkPlain(body))
     switch front {
     | Some(front) =>
-      own->Array.pushMany(Rfc_record.checkStatus(front))
+      if !newForm {
+        own->Array.pushMany(Rfc_record.checkStatus(front))
+      }
       own->Array.pushMany(Rfc_private.check(`${front.title}\n${body}`))
       front.supersedes->Array.forEach(id =>
         switch byId->Map.get(id) {
