@@ -91,6 +91,10 @@ moves into `model/rules/` with its check and leaves this file.
 
 ## Shell
 
+- **A hook that cannot run fails a pre-tool call closed.** A workspace lane holds no build, so on
+  2026-11-01 the launcher found the lane's unbuilt hooks/ and exited 1, which Claude Code treats as
+  non-blocking, and every PreToolUse guard passed in silence. It now runs the main checkout's hooks
+  from a lane and exits 2 for a pre-tool call when nothing is built, hooks/run_test.res.
 - **A wait on a oneshot reads its ActiveState, never `systemctl is-active`.** A oneshot running
   is `activating`, which `is-active` reports as not active, so a loop waiting while it is active
   ends at once. On 2026-10-26 such a wait ended a machine's upgrade watch after twenty seconds,

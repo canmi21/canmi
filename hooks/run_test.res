@@ -3,17 +3,19 @@ open Testing
 let root = Registry.root
 let entry = Node.join([root, "hooks", "run.res.mjs"])
 
-/** What both adapters run, walking up to the checkout with hooks/ and building it if need be. */
-let command = `d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f "$d/hooks/run.res" ] && [ "$d" != / ]; do d=$(dirname "$d"); done; [ -f "$d/hooks/run.res" ] || exit 0; e="$d/hooks/run.res.mjs"; r="$d/node_modules/.bin/rescript"; [ -f "$e" ] || { "$r" build >&2; [ -f "$e" ] || { "$r" clean >&2; "$r" build >&2; }; }; [ -f "$e" ] || { echo "hooks: $e is not built and building did not make it; run mise run build in $d" >&2; exit 1; }; exec node "$e"`
+/** What both adapters run, walking up to the checkout with hooks/, building it if it can, else a
+ * lane falling back to its main checkout's; nothing built fails a pre-tool call closed. */
+let command = fail =>
+  `d=$(jj workspace root 2>/dev/null || pwd); while [ ! -f "$d/hooks/run.res" ] && [ "$d" != / ]; do d=$(dirname "$d"); done; [ -f "$d/hooks/run.res" ] || exit 0; e="$d/hooks/run.res.mjs"; r="$d/node_modules/.bin/rescript"; if [ ! -f "$e" ] && [ -x "$r" ]; then "$r" build >&2; [ -f "$e" ] || { "$r" clean >&2; "$r" build >&2; }; fi; if [ ! -f "$e" ] && [ -f "$d/.jj/repo" ]; then m=$(cd "$d/.jj" && cd "$(cat repo)/../.." && pwd); [ -f "$m/hooks/run.res.mjs" ] && e="$m/hooks/run.res.mjs"; fi; [ -f "$e" ] || { echo "hooks: $e is not built and building did not make it; run mise run build in $d" >&2; exit ${fail}; }; exec node "$e"`
 
 type adapter = {hooks: Dict.t<array<{"hooks": array<{"command": string}>}>>}
 @scope("JSON") @val external parseAdapter: string => adapter = "parse"
 
-let invoke = (~cwd=root, ~through=false, payload: string) => {
+let invoke = (~cwd=root, ~through=false, ~fail="2", payload: string) => {
   let result = through
     ? Node.spawnSync(
         "/bin/sh",
-        ["-c", command],
+        ["-c", command(fail)],
         {cwd, input: payload, encoding: "utf8", timeout: 20000},
       )
     : Node.spawnSync("node", [entry], {cwd, input: payload, encoding: "utf8", timeout: 20000})
@@ -61,14 +63,14 @@ describe("the shared entrypoint", () => {
     let codex = parseAdapter(Node.readFileSync(Node.join([root, ".codex", "hooks.json"])))
     expect(claude.hooks)->toEqual(codex.hooks)
     codex.hooks
-    ->Dict.valuesToArray
+    ->Dict.toArray
     ->Array.forEach(
-      groups =>
+      ((event, groups)) =>
         groups->Array.forEach(
           group => {
             expect(group["hooks"]->Array.length)->toBe(1)
             let first = group["hooks"]->Array.getUnsafe(0)
-            expect(first["command"])->toBe(command)
+            expect(first["command"])->toBe(command(event == "PreToolUse" ? "2" : "1"))
           },
         ),
     )
@@ -110,6 +112,40 @@ describe("the shared entrypoint", () => {
     expect(status)->toBe(2)
     expect(stderr)->toContain("Commit message rejected")
   })
+
+  test(
+    "a lane without its own build runs its main checkout's hooks, and nothing built fails closed",
+    () => {
+      let lane = Node.mkdtempSync(Node.join([Node.tmpdir(), "hook-lane-"]))
+      Node.mkdirAll(Node.join([lane, "hooks"]))
+      Node.mkdirAll(Node.join([lane, ".jj"]))
+      Node.writeFileSync(Node.join([lane, "hooks", "run.res"]), "")
+      // The repository a lane points at, this checkout's own or the one a lane's pointer names.
+      let pointer = Node.join([root, ".jj", "repo"])
+      let repository = Node.existsSync(Node.join([pointer, "store"]))
+        ? pointer
+        : Node.realpathSync(Node.join([root, ".jj", Node.readFileSync(pointer)->String.trim]))
+      Node.writeFileSync(Node.join([lane, ".jj", "repo"]), repository)
+      let rejected = JSON.stringifyAny({
+        "cwd": root,
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "tool_input": {"command": "jj commit -m 'Not conventional'"},
+      })->Option.getOr("{}")
+      let (status, _, stderr) = invoke(~cwd=lane, ~through=true, rejected)
+      expect(status)->toBe(2)
+      expect(stderr)->toContain("Commit message rejected")
+      Node.writeFileSync(
+        Node.join([lane, ".jj", "repo"]),
+        Node.join([lane, "nowhere", ".jj", "repo"]),
+      )
+      let (status, _, _) = invoke(~cwd=lane, ~through=true, rejected)
+      expect(status)->toBe(2)
+      let (status, _, _) = invoke(~cwd=lane, ~through=true, ~fail="1", "{}")
+      expect(status)->toBe(1)
+      Node.rmSync(lane, {recursive: true, force: true})
+    },
+  )
 
   test("a second stop is let through in silence", () => {
     expect(
