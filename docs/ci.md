@@ -57,7 +57,8 @@ hours late, or drops it**, and moving a cron off the hour does not help. monofla
 run every 12 hours, and a dropped run is made up within about a day. Anything that depends on a
 schedule tolerates a late or a missing run, and urgent work is dispatched by hand: the systems
 bucket's lifecycle, `expire_days` times 24 hours, is at least twice systems.yml's interval, so one
-dropped run is survived within R2's one-to-two-day deletion window.
+dropped run is survived within R2's one-to-two-day deletion window. The schedule holds monoflake/cloud's C
+alone; B and A build only when a roll asks, so their objects expire between rolls.
 
 **A held object is renewed only from an age T**, `renewAfterHours` in monoflake/cloud's
 `model/pipeline.res`, T being the lifecycle less the interval, the worst delay and a job's time, its

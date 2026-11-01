@@ -187,7 +187,7 @@ let items: array<item> = [
   },
   {
     id: "fleet-planned",
-    what: "ivy and dusk, idle, frozen and unbound under monoflake/cloud's organizations/canmi/machines since the planned/ directory went, are reflashed onto the fleet's update once the author has moved their work off them, their secrets entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
+    what: "ivy and dusk, idle and unbound under monoflake/cloud's organizations/canmi/machines, follow the fleet in configuration and only their deployment is held, until the author has moved their work off them, their secrets entered then, in no ring, systems.toml or workflow until then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
     repos: ["monoflake/cloud"],
     until: Author,
   },
@@ -277,7 +277,25 @@ let items: array<item> = [
   },
   {
     id: "pine-firmware-source",
-    what: "pine's SPI image was built on pine from u-boot tag v2026.10 and rkbin master, in no lock, its reflash by flashcp written nowhere; the firmware's source and the reflash are written down in monoflake/cloud",
+    what: "pine's SPI image was built on pine from u-boot v2026.10 at 55084065 and rkbin at 3e288fe, with DDR v1.13, BL31 v1.25 and no BL32, in no lock, recorded only in the README beside its backup under ~/.local/share/monoflake/pine-fw-2026-11-01; the firmware's source and the reflash by flashcp are written down in monoflake/cloud",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
+    id: "absent-system-pointer",
+    what: "with B and A out of systems.yml's schedule, each of their machines' daily system update ends failed once its pointer expires, a day or two after a roll, inferred from monoflake/machine's flow.rs and not seen on a machine; the next machine candidate treats an absent system pointer or signature, a 404 alone, as nothing to do, as the driver does, lanes/absentptr, and this closes when it reaches B and A",
+    repos: ["monoflake/machine", "monoflake/cloud"],
+    until: Author,
+  },
+  {
+    id: "ivy-dusk-secrets",
+    what: "before ivy or dusk is ever deployed, .sops.yaml in monoflake/cloud names &ivy and &dusk on organizations/canmi/secrets.json, the rule scripts/tests/platforms/platforms_test.res holds",
+    repos: ["monoflake/cloud"],
+    until: Author,
+  },
+  {
+    id: "route-pref-cleared",
+    what: "removing tailnet.routes does not clear tailscale's pref, as monoflake/machine's tailnet doc says, so whoever next deploys pine or ivy runs `tailscale set --advertise-routes=` on it by hand",
     repos: ["monoflake/cloud"],
     until: Author,
   },
