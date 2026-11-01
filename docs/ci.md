@@ -59,8 +59,10 @@ Decided by the author on 2026-11-01, the rule `schedule-nominal` in `model/rules
 of ours fired late, the 06:17, 06:31 and 07:23 ones by five to seven hours, the 19:00 one by three
 to almost four, and the 22:00 updates of 10-31 by about two and a half; moving a cron off the hour
 did not help. So monoflake/cloud's systems run every 12 hours, and a dropped run is made up within
-about a day. Anything that depends on a schedule tolerates a late or a missing run, as the systems
-bucket's two-day lifecycle does, and urgent work is dispatched by hand.
+about a day. Anything that depends on a schedule tolerates a late or a missing run, and urgent work
+is dispatched by hand: the systems bucket's lifecycle, `expire_days` times 24 hours, is at least
+twice systems.yml's interval, so one dropped run is survived within R2's one-to-two-day deletion
+window.
 
 ## Scheduled updates
 
