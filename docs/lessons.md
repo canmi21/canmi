@@ -290,6 +290,11 @@ moves into `model/rules/` with its check and leaves this file.
   readback fails unless the system applied is the one the round built, written after the round began,
   and the setting reads its expected value.
 
+- **An R2 token's last use says nothing when it is used through S3.** Cloudflare leaves a token's
+  `last_used` empty for R2's S3 calls, so on 2026-11-01 the canmi account's R2 tokens showed no use
+  while their buckets had been written; such a token is judged by its bucket's writes or by asking,
+  never by an empty last use.
+
 - **A device is proposed for a role only after its cores, memory and disk are read.** On 2026-10-31
   the advisor offered a home single-board computer as an aarch64 CI runner because A's machines are arm; it has
   one core and one gigabyte, and the author refused it. The figures come from fleet.md, the host,

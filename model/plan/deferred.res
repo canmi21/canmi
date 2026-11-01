@@ -306,6 +306,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "canmi-frozen-tokens",
+    what: "five older account tokens in the canmi Cloudflare account stay frozen, untouched, as the advisor left them on 2026-11-01 after revoking Artifact Download and Artifact Upload, whose bucket did not exist: ATA R2 Read and ATA R2 Write (bucket ata, last written 2026-02-28), R2 Objects Bucket (last written 2026-10-11), All Tunnel Edit (last used 2026-10-15), All Zones Automation (2026-10-15) and All Zones DNS (2026-10-08); an R2 token's last use stays empty under S3 calls, so never used is no evidence for the first three; each is renamed under the token naming rule or revoked with canmi/web's unfreeze, or when monoflake/cloud RFC oej2a item 8 step 6 moves the author's three user tokens, Proxmox ACME, Edge Proxy DDNS and canmi worker build, into the canmi account",
+    repos: ["monoflake/cloud", "canmi/web"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
