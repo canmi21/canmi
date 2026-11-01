@@ -252,6 +252,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "local-update-round",
+    what: "a local `mise run update` round, in a lane, tested and pushed per repository, for what the scheduled update cannot take, from the daily summary of 2026-11-01 02:00 UTC: the Mac's installed tools inside their pins, node 26.13.0, pnpm 12.17.0, oxlint 1.90.0, usage 7.1.4 and watchexec 2.8.0; the action pins the bot cannot move, the workspace's jdx/mise-action v5.2.4, monoflake/runtime's docker/login-action v4.7.0 and monoflake/driver's setup action's platform@main pin; and the exact pins needing --major, wrangler 4.156.0 in monoflake/platform and monoflake/driver and rusqlite 0.41 in monoflake/driver, a 0.x move whose changelog is read and driver's tests run; until a quiet moment after monoflake/cloud's reset of B",
+    repos: ["workspace", "monoflake/platform", "monoflake/driver", "monoflake/runtime"],
+    until: Author,
+  },
+  {
     id: "operate-retire",
     what: "monoflake/cloud's operate makes a `control:` target whole as though a directory, and monoflake/platform's deploy task declares no --retire and --forget though its tool takes them, so nobody retires or forgets through operate until both are fixed, in lane 9's small fixes, provisional, chosen by the advisor on 2026-10-27",
     repos: ["monoflake/cloud", "monoflake/platform"],
