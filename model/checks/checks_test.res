@@ -447,3 +447,44 @@ describe("a rule's gate", () => {
     expect(Check.known->Array.includes("placed"))->toBe(true)
   })
 })
+
+describe("a subagent's definition", () => {
+  let definition = (fields: string) => `---\nname: x\n${fields}---\n\nBody.\n`
+
+  test("passes at Sonnet low or above, and where a field is absent and inherits", () => {
+    [
+      "model: sonnet\neffort: low\n",
+      "model: opus\neffort: high\n",
+      "",
+      "model: inherit\n",
+    ]->Array.forEach(
+      fields => expect(Settings.floor(definition(fields), ~file="a.md"))->toEqual([]),
+    )
+  })
+
+  test("fails at Haiku, and at an effort that is none", () => {
+    expect(Settings.floor(definition("model: haiku\n"), ~file="a.md"))->toEqual([
+      "a.md: model haiku is below sonnet, the floor of every subagent of ours",
+    ])
+    expect(Settings.floor(definition("effort: lowest\n"), ~file="a.md")->Array.length)->toBe(1)
+  })
+
+  test("reads the frontmatter alone, not a body line that looks like a field", () => {
+    expect(Settings.floor("---\nname: x\n---\nmodel: haiku\n", ~file="a.md"))->toEqual([])
+  })
+})
+
+describe("the area map", () => {
+  test("names every path that exists, one in a repository passed over aside", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "areas-"]))
+    Testing.tree(root, [("monoflake/machine/system/nix/update/default.nix", "")])
+    let found = Settings.missing(~repos=root, ~skipped=_ => None)
+    expect(
+      found->Array.includes(
+        "area update: monoflake/machine/system/nix/update does not exist under repos/",
+      ),
+    )->toBe(false)
+    expect(found->Array.length > 0)->toBe(true)
+    expect(Settings.missing(~repos=root, ~skipped=_ => Some("not cloned")))->toEqual([])
+  })
+})

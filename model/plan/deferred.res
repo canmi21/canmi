@@ -258,6 +258,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-check-higher",
+    what: "levels 4 and 5 of a driver update's health check, asking each app through a health path, and conform on the machine during an update, wanted later; until then a candidate's rehearsal covers them, monoflake/machine's update",
+    repos: ["monoflake/machine", "monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],

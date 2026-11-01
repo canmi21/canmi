@@ -95,6 +95,52 @@ let releasing = [
   ("machine", ["builder", "local"]),
 ]
 
+/** The models and efforts of a subagent of ours, each from the least to the most. */
+let models = ["haiku", "sonnet", "opus"]
+let efforts = ["low", "medium", "high", "xhigh", "max"]
+
+/** The floor of every subagent of ours, `subagent-floor`, an absent field inheriting. */
+let floorModel = "sonnet"
+let floorEffort = "low"
+
+/** Where the subagents are defined, one Markdown file each. */
+let definitions = ".claude/agents"
+
+/** What a scout answers within, and the longest answer it gives, in lines. */
+let scoutAnswer = 40
+
+/** Where a scribe may write, only a file with this suffix, and in its lane. */
+let scribeSuffix = ".md"
+
+/** The docs directory is named once, so no citation reads the map's paths as workspace docs. */
+let docs = "docs"
+
+/** An area of the map a scout is pointed at, each with its entry paths under repos/. */
+let areas = [
+  ("update", ["monoflake/machine/system/nix/update", "monoflake/machine/" ++ docs ++ "/update.md"]),
+  ("control", ["monoflake/platform/code/products/control"]),
+  ("gateway", ["monoflake/platform/code/products/gateway"]),
+  ("driver", ["monoflake/driver/machine"]),
+  (
+    "fleet",
+    [
+      "monoflake/cloud/platforms",
+      "monoflake/cloud/organizations",
+      "monoflake/cloud/" ++ docs ++ "/fleet.md",
+    ],
+  ),
+  (
+    "ci",
+    [
+      "monoflake/cloud/.github/workflows",
+      "monoflake/machine/.github/workflows",
+      "monoflake/cloud/runner",
+    ],
+  ),
+  ("reset", ["monoflake/cloud/scripts/systems/reset"]),
+  ("network", ["monoflake/machine/system/network", "monoflake/machine/" ++ docs ++ "/network.md"]),
+]
+
 /** Where the lanes live, beside repos/, one `<name>/monoflake/<repository>` each. */
 let lanes = "lanes"
 
@@ -195,6 +241,24 @@ let rules: array<Rule.t> = [
     name: "reviewer-commands",
     says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`, `readers` with `moving` and `labeling` beside them, `moving` and `labeling` given no word holding a `$` or a backquote, printf no `-v`, and `labeling` never inside a substitution: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; each segment's first word is its program, no wrapper and no assignment before it; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own",
     doc: "docs/agents/reviewer.md",
+    held: Hook("hooks/agent_commands"),
+  },
+  {
+    name: "subagent-floor",
+    says: "Every subagent of ours runs as `floorModel` at `floorEffort` or above, nothing of ours is Haiku; a definition naming no model or no effort inherits and passes",
+    doc: "docs/agents/delegation.md",
+    held: Check("settings"),
+  },
+  {
+    name: "areas-exist",
+    says: "Each entry path of `areas` exists under repos/, one in a repository not cloned passed over",
+    doc: "docs/agents/reader.md",
+    held: Check("settings"),
+  },
+  {
+    name: "scribe-writes-markdown",
+    says: "A scribe writes inside its own lane alone, and only a file ending in `scribeSuffix`; any other write is refused and reported",
+    doc: "docs/agents/scribe.md",
     held: Hook("hooks/agent_commands"),
   },
   {

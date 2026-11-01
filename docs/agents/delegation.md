@@ -67,7 +67,8 @@ quotes, judged as a command where the shell would run it; and any spelling the h
 **The user names a session's role in words at its start**, with no hook and no command to start it.
 Each role has one file beside this one, and reading it is enough to recover what the role does and
 where it stops: [advisor](advisor.md), [integrator](integrator.md), [implementer](implementer.md),
-[reviewer](reviewer.md), [refactorer](refactorer.md) and [reader](reader.md).
+[reviewer](reviewer.md), [refactorer](refactorer.md), [reader](reader.md), which holds the scout, and
+[scribe](scribe.md).
 
 **The top level is split by what it decides**. Where an advisor is named, the paraphrase, the
 judgment and the decisions belong to the user and the advisor; the sequence, who owns which file,
@@ -85,9 +86,17 @@ session.
 - **The refactorer** runs alone, changes no behavior, and is held exactly as the implementer is.
 - **Reading work goes first to the built-in Explore**, as a reader.
 
-The implementer, the reviewer and the refactorer are defined in
+- **The scout** only reads, answers one question from named files or one area of the map, and quotes
+  where it found the answer, [reader.md](reader.md).
+- **The scribe** edits Markdown files alone, in a lane, [scribe.md](scribe.md).
+
+The implementer, the reviewer, the refactorer, the scout and the scribe are defined in
 [.claude/agents/](../../.claude/agents/), each definition's body pointing to its role file and
 saying nothing more. **No subagent is given a `memory` field.**
+
+**The floor of every subagent of ours is `floorModel` at `floorEffort`**, nothing of ours is Haiku,
+`subagent-floor` in [model/rules/delegation.res](../../model/rules/delegation.res), held by the
+`settings` part of the workspace's check reading each definition.
 
 **Deploying and rehearsing belong to the integrator alone**; no operator role exists.
 

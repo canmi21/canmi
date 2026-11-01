@@ -441,6 +441,27 @@ let placed = (payload: Payload.t): int =>
     2
   }
 
+/** The files of `files` a scribe may not write, those not ending in `Delegation.scribeSuffix`. */
+let unwritable = files => files->Array.filter(file => Node.extname(file) != Delegation.scribeSuffix)
+
+/** The exit status the harness reads, 2 refusing a scribe any write but Markdown in its lane. */
+let scribed = (payload: Payload.t): int =>
+  switch placed(payload) {
+  | 0 =>
+    switch unwritable(written(payload)) {
+    | [] => 0
+    | files =>
+      Console.error(
+        `Write refused by hooks/agent_commands.res: a scribe writes only ` ++
+        `${Delegation.scribeSuffix} files, and ${files->Array.join(
+            ", ",
+          )} is not one. ` ++ `Stop and report to the integrator, docs/agents/scribe.md.`,
+      )
+      2
+    }
+  | refused => refused
+  }
+
 /** Formats one file by its suffix in `Format.owners`, failing nothing. */
 let formatted = (file: string) => {
   let file = Some(file)
@@ -496,11 +517,12 @@ if Node.isMain {
   switch (given, given->Option.flatMap(roleOf), payload) {
   | (Some("format"), _, payload) => Node.exit(payload->Option.mapOr(0, format))
   | (Some("lane"), _, payload) => Node.exit(payload->Option.mapOr(0, placed))
+  | (Some("scribe"), _, payload) => Node.exit(payload->Option.mapOr(0, scribed))
   | (_, Some(role), Some(payload)) => Node.exit(handle(role, payload))
   | (_, Some(_), None) => Node.exit(0)
   | _ =>
     Console.error(
-      "hooks/agent_commands.res: name the role, implementer, refactorer or reviewer, or format or lane.",
+      "hooks/agent_commands.res: name the role, implementer, refactorer or reviewer, or format, lane or scribe.",
     )
     Node.exit(2)
   }

@@ -122,6 +122,11 @@ depends = ["build"]
 run = "node scripts/rfcs/rfc_plan.res.mjs"
 
 # The integrator's own scan before a private repository's push, docs/agents/pushing.md.
+[tasks.compare]
+description = "Compare an edited doc with its original on headings, bold leads and code spans: `compare <original> <edited>`"
+depends = ["build"]
+run = "node scripts/docs/doc_compare.res.mjs"
+
 [tasks.scan]
 description = "Count the private identifiers a git diff on stdin adds, the group allowed in a repository apart, and fail on any other: `jj diff --git ... | scan --in <repository>`"
 depends = ["build"]

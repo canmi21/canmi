@@ -512,3 +512,48 @@ describe("an implementer's writes", () => {
     expect(Agent_commands.outside(~cwd, [inLane, main]))->toEqual([main])
   })
 })
+
+describe("a scribe's writes", () => {
+  let lane = Node.join([Agent_commands.lanesRoot, "words"])
+  let refused = (~cwd=lane, files) =>
+    Array.concat(Agent_commands.outside(~cwd, files), Agent_commands.unwritable(files))
+
+  test("pass for a Markdown file in its lane", () => {
+    expect(refused([Node.join([lane, "notes", "a.md"]), "notes/b.md"]))->toEqual([])
+  })
+
+  test("are refused for any other suffix, in its lane or not", () => {
+    let code = Node.join([lane, "model", "a.res"])
+    expect(
+      Agent_commands.unwritable([code, Node.join([lane, "AGENTS"]), "notes/a.md.bak"]),
+    )->toEqual([code, Node.join([lane, "AGENTS"]), "notes/a.md.bak"])
+    expect(Agent_commands.unwritable(["notes/a.md", "A.md"]))->toEqual([])
+  })
+
+  test("are refused for a Markdown file outside its lane", () => {
+    let main = "/Users/someone/workspace/notes/a.md"
+    let sibling = Node.join([Agent_commands.lanesRoot, "other", "notes", "a.md"])
+    expect(refused([main, sibling]))->toEqual([main, sibling])
+  })
+
+  test("end in status 0 for a Markdown file and 2 for another, through the hook's entry", () => {
+    let status = file =>
+      Node.spawnSync(
+        "node",
+        [Node.join([Registry.root, "hooks", "agent_commands.res.mjs"]), "scribe"],
+        {
+          cwd: Registry.root,
+          input: JSON.stringify(
+            JSON.Object(
+              Dict.fromArray([
+                ("cwd", JSON.String(Registry.root)),
+                ("tool_input", JSON.Object(Dict.fromArray([("file_path", JSON.String(file))]))),
+              ]),
+            ),
+          ),
+        },
+      ).status->Nullable.toOption
+    expect(status(Node.join([Node.tmpdir(), "scribe-test.md"])))->toEqual(Some(0))
+    expect(status(Node.join([Node.tmpdir(), "scribe-test.res"])))->toEqual(Some(2))
+  })
+})

@@ -30,6 +30,87 @@ let jsonComment = RegExp.fromString("^\\s*//.*$", ~flags="gm")
 
 let scriptLike = [".py", ".ts", ".js", ".mjs", ".sh", ".fish", ""]
 
+/** The value `key` takes in a definition's frontmatter, if any. */
+let field = (text, key) => {
+  let lines = text->String.split("\n")
+  let close = lines->Array.slice(~start=1)->Array.findIndex(line => line->String.trim == "---")
+  let head = lines->Array.get(0)->Option.map(String.trim) == Some("---") ? close : -1
+  lines
+  ->Array.slice(~start=1, ~end=head + 1)
+  ->Array.findMap(line =>
+    line->String.startsWith(`${key}:`)
+      ? Some(line->String.slice(~start=key->String.length + 1)->String.trim)
+      : None
+  )
+}
+
+/** Where a name stands in a ranking, if the value holds one of its names. */
+let rank = (ranking: array<string>, value, ~whole) => {
+  let value = value->String.toLowerCase
+  ranking
+  ->Array.findIndex(name => whole ? value == name : value->String.includes(name))
+  ->(at => at < 0 ? None : Some(at))
+}
+
+/** What a definition's frontmatter breaks of the floor, an absent field inheriting. */
+let floor = (text, ~file) => {
+  let below = (key, ranking, least, ~whole) =>
+    switch field(text, key)->Option.map(value => (value, rank(ranking, value, ~whole))) {
+    | Some(value, Some(at)) if at < ranking->Array.indexOf(least) => [
+        `${file}: ${key} ${value} is below ${least}, the floor of every subagent of ours`,
+      ]
+    | _ => []
+    }
+  let unknown = switch field(text, "effort") {
+  | Some(value) if rank(Delegation.efforts, value, ~whole=true) == None => [
+      `${file}: effort ${value} is no effort of ${Delegation.efforts->Array.join(", ")}`,
+    ]
+  | _ => []
+  }
+  [
+    below("model", Delegation.models, Delegation.floorModel, ~whole=false),
+    below("effort", Delegation.efforts, Delegation.floorEffort, ~whole=true),
+    unknown,
+  ]->Array.flat
+}
+
+/** The repository of a path under repos/, the longest registered path it starts with. */
+let repositoryOf = path =>
+  Registry.paths()
+  ->Array.filter(repo => path == repo || path->String.startsWith(`${repo}/`))
+  ->Array.toSorted((a, b) => Float.fromInt(b->String.length - a->String.length))
+  ->Array.get(0)
+
+/** Each entry path of the map that is no file or directory, a repository passed over aside. */
+let missing = (~repos, ~skipped) =>
+  Delegation.areas->Array.flatMap(((area, paths)) =>
+    paths->Array.filterMap(path =>
+      switch repositoryOf(path) {
+      | None => Some(`area ${area}: ${path} lies in no repository of the registry`)
+      | Some(repo) if skipped(repo)->Option.isSome => None
+      | Some(_) if Node.existsSync(Node.join([repos, path])) => None
+      | Some(_) => Some(`area ${area}: ${path} does not exist under repos/`)
+      }
+    )
+  )
+
+/** Each subagent definition against the floor, and the area map against the tree. */
+let subagents = (~root): array<string> => {
+  let directory = Node.join([root, Delegation.definitions])
+  let defined = Node.existsSync(directory)
+    ? Node.readdir(directory)->Array.filter(name => name->String.endsWith(".md"))
+    : []
+  Array.concat(
+    defined->Array.flatMap(name =>
+      floor(
+        Node.readFileSync(Node.join([directory, name])),
+        ~file=`${Delegation.definitions}/${name}`,
+      )
+    ),
+    missing(~repos=Registry.repos, ~skipped=Waiting.skipped),
+  )
+}
+
 let main = (~root): array<string> => {
   let read = name => References.read(Node.join([root, name]))
   let found = []
@@ -98,5 +179,5 @@ let main = (~root): array<string> => {
   tracked
   ->Array.filter(path => path != "LICENSE" && Node.basename(path)->String.startsWith("LICENSE"))
   ->Array.forEach(path => say(`${path} is a second license`))
-  found
+  Array.concat(found, subagents(~root))
 }
