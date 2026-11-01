@@ -280,17 +280,17 @@ let jj = (repo, args) => {
 let range = `remote_bookmarks(exact:"main", exact:"origin")..main ~ root()`
 
 /** Each commit a push of main from `repo` sends, with its own diff and its description. */
-let outgoing = repo =>
-  jj(repo, ["log", "--no-graph", "-r", range, "-T", `commit_id ++ "\\n"`])->Result.flatMap(ids =>
+let outgoingWith = read =>
+  read(["log", "--no-graph", "-r", range, "-T", `commit_id ++ "\\n"`])->Result.flatMap(ids =>
     ids
     ->String.split("\n")
     ->Array.filter(id => id != "")
     ->Array.reduce(Ok([]), (gathered, id) =>
       gathered->Result.flatMap(
         commits =>
-          jj(repo, ["diff", "-r", id, "--git"])->Result.flatMap(
+          read(["diff", "-r", id, "--git"])->Result.flatMap(
             diff =>
-              jj(repo, ["log", "--no-graph", "-r", id, "-T", "description"])->Result.map(
+              read(["log", "--no-graph", "-r", id, "-T", "description"])->Result.map(
                 message =>
                   commits->Array.concat([{id: id->String.slice(~start=0, ~end=12), diff, message}]),
               ),
@@ -299,19 +299,29 @@ let outgoing = repo =>
     )
   )
 
-/** Each file `repo` tracks with its text, one that cannot be read passed over. */
-let files = repo =>
-  jj(repo, ["file", "list"])->Result.map(listed =>
+let outgoing = repo => outgoingWith(args => jj(repo, args))
+
+let filesWith = (read, content) =>
+  read(["file", "list"])->Result.flatMap(listed =>
     listed
     ->String.split("\n")
     ->Array.filter(path => path != "")
-    ->Array.filterMap(path =>
-      try {
-        Some((path, Node.readFileSync(Node.join([repo, path]))))
-      } catch {
-      | _ => None
-      }
+    ->Array.reduce(Ok([]), (gathered, path) =>
+      gathered->Result.flatMap(
+        files => content(path)->Result.map(text => files->Array.concat([(path, text)])),
+      )
     )
+  )
+
+let files = repo =>
+  filesWith(
+    args => jj(repo, args),
+    path =>
+      try {
+        Ok(Node.readFileSync(Node.join([repo, path])))
+      } catch {
+      | _ => Error(`cannot read tracked file ${path}`)
+      },
   )
 
 /** The hits in what `repo` sends and in what it tracks, or why it could not be scanned. */

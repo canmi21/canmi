@@ -77,10 +77,20 @@ let scanned = (pending: array<(string, option<array<string>>)>, ~dry) => {
  * form layer holds nothing in any of them.
  */
 let push = (name, ~dry, ~everything) => {
-  let pending =
-    Registry.selected(name, ~everything)
-    ->Array.filter(Registry.isRepository)
-    ->Array.map(repo => (repo, ahead(repo)))
+  let selected = Registry.selected(name, ~everything)->Array.filter(Registry.isRepository)
+  let pending = switch Push_state.planned(selected, repo =>
+    Push_state.ready(args => Scan.jj(repo, args))
+    ->Result.flatMap(_ =>
+      switch ahead(repo) {
+      | Some(commits) => Ok(commits)
+      | None => Error("cannot tell what to push")
+      }
+    )
+    ->Result.mapError(why => `${Registry.label(repo)}: ${why}`)
+  ) {
+  | Ok(pending) => pending
+  | Error(why) => Registry.fail(`${why}, so ${dry ? "a push would push" : "push pushes"} nothing`)
+  }
   let held = pending->Array.filter(((repo, commits)) =>
     switch commits {
     | Some([]) | None => false
