@@ -107,18 +107,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "cache-rest",
-    what: "monoflake/machine's cache, after its review of 2026-10-25, leaves: a small machine's daily garbage collection can delete a path between its builder's query and its fetch, so the fetch lacks it; two builders' sweeps can race on one bucket; R2's answer to a missing pointer, read on the first live run of 2026-10-26, is 404 over S3 and empty output with exit 0 through rclone cat, which the sweep and the fetch now both handle",
-    repos: ["monoflake/machine"],
-    until: Author,
-  },
-  {
-    id: "cache-lookup-cost",
-    what: "monoflake/machine's cache looks its paths up in R2 one narinfo at a time, an rclone cat each: a builder's run upgrading itself on 2026-10-27 took 49 minutes of wall clock for 7.6 of CPU, found at 26 minutes still reading narinfo after narinfo, and a builder's run for another machine that day reached its start timeout at 50 minutes; the lookup's cost is measured and cut",
-    repos: ["monoflake/machine"],
-    until: Author,
-  },
-  {
     id: "d1-rows-weekly",
     what: "a weekly read of the controls' D1 rows read per query, through Cloudflare's GraphQL analytics, flagging any query above about 1000 rows an execution, the fourth measure after the address allocation's cost of 2026-10-27, the other three a budget in monoflake/platform's model, a rule in its docs/code.md and an item in every review",
     repos: ["monoflake/platform", "monoflake/cloud"],
@@ -134,12 +122,6 @@ let items: array<item> = [
     id: "domain-proof",
     what: "monoflake/platform's control proves an organization holds a domain an app declares as its ingress before the gateway carries it, by RFC vr5lw's TXT record, CNAME or HTTP challenge; until then a declared domain is taken by the first live app that declares it, and only names the author binds to the gateway Worker by hand reach the gateway at all, RFC oomwh, provisional, chosen by the advisor on 2026-10-27",
     repos: ["monoflake/platform"],
-    until: Author,
-  },
-  {
-    id: "cache-missed-slot",
-    what: "monoflake/machine's cache ends a run that misses its slot, started late, as a failed unit, though missing it is the intended result; a missed slot ends as a skip",
-    repos: ["monoflake/machine"],
     until: Author,
   },
   {
@@ -217,7 +199,7 @@ let items: array<item> = [
   },
   {
     id: "fleet-planned",
-    what: "the machines monoflake/cloud keeps under planned/, written but not deployed, are reflashed and moved into their owner's machines/ once the author has moved their work off them, their host keys, secrets and cache roles entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
+    what: "ivy and dusk, idle, frozen and unbound under monoflake/cloud's organizations/canmi/machines since the planned/ directory went, are reflashed onto the fleet's update once the author has moved their work off them, their secrets entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
     repos: ["monoflake/cloud"],
     until: Author,
   },
