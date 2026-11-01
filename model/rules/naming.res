@@ -32,7 +32,6 @@ let handNamed = [
   ("monoflake", "d1", "control"),
   ("monoflake", "r2", "artifacts"),
   ("monoflake", "worker", "gateway"),
-  ("monoflake", "r2", "caches"),
 ]
 
 let doc = "docs/naming.md"

@@ -255,7 +255,7 @@ resource nobody made by rule. A name says nothing of what it holds: what each id
 in the repository that made it, as monoflake/cloud's `controls.toml` and `systems.toml`.
 
 **The one exception is a name the author chose by hand**, `handNamed` in
-[model/rules/naming.res](../model/rules/naming.res), today the five in the foundation platform's
+[model/rules/naming.res](../model/rules/naming.res), today the four in the foundation platform's
 account. A name an agent or an advisor chose is never such a name, however reasonable it reads:
 `control-test` and `artifacts-test` broke the rule, and were drawn again. `vendor-resources-drawn`
 is `Pending` until monoflake/cloud's names are read from its configuration.

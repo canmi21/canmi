@@ -228,20 +228,8 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "mainland-orphan-binding",
-    what: "close the binding opened for the mainland consumer on 2026-10-27, 1356310062 (50d7a62e) under monoflake on the foundation platform's control, which no host joined, holding no address and no tunnel, once the control can close bindings; until then it stays, read from its D1 and never deleted by hand",
-    repos: ["monoflake/cloud", "monoflake/platform"],
-    until: Author,
-  },
-  {
     id: "test-orphan-binding",
     what: "close the binding the test control opened on 2026-10-29, 4141627861 (f6dc39d5) under the test platform's organization, whose route was refused by the old control's and whose tunnel was deleted by hand, no host joined, once the control can close bindings, monoflake/platform's RFC m2ks6; until then it stays, read from its D1 and never deleted by hand, and the database is not wiped",
-    repos: ["monoflake/cloud", "monoflake/platform"],
-    until: Author,
-  },
-  {
-    id: "reset-orphan-bindings",
-    what: "close the two bindings sora and oak opened on 2026-10-27 under monoflake on the foundation platform's control, sora's 1856388407 (6ea63d37) and oak's 1565746770 (5d536652), and delete their tunnels in its Cloudflare account, left by their reset onto the test platform, at step 5 of monoflake/cloud's RFC oej2a item 8 with A's reset, as the author decided on 2026-10-30, their ids read from each machine's own binding; until then they stay and are never deleted by hand",
     repos: ["monoflake/cloud", "monoflake/platform"],
     until: Author,
   },
@@ -297,18 +285,6 @@ let items: array<item> = [
     id: "runner-token",
     what: "the self-hosted runners' token in monoflake/cloud's runner/secrets.json, shared by ci-raleigh, ci-tokyo and ci-sanjose, the fine-grained token ci-runner whose resource owner is the monoflake organization and whose one permission is the organization's Self-hosted runners, read and write, made on 2026-10-30, expires on 2027-10-30; before then the author makes the next one, enters it with `mise run secret monoflake/cloud/runner runner-token`, and runs `mise run runner update`, RFC obvjb",
     repos: ["monoflake/cloud"],
-    until: Author,
-  },
-  {
-    id: "reset-rotations",
-    what: "monoflake/cloud's secrets.json was exposed on 2026-10-29, and what of A's and B's controls a reset alone leaves valid is replaced at their resets, A's at step 5 of RFC oej2a item 8 and B's at step 6, as the author decided that day: each control's sealing key, never replaced unless exposed as that step says, each one's operator secret, CONTROL_OPERATOR and CONTROL_PRODUCTION_OPERATOR, and A's tunnel token, CONTROL_CLOUDFLARE_TOKEN. Each is typed in by the author through `mise run secret` and put into its control by the integrator; until then each control keeps its own. A's three were typed in by the author on 2026-10-31, CONTROL_OPERATOR and CONTROL_SEALING_KEY as 32 random bytes in unpadded base64url and CONTROL_CLOUDFLARE_TOKEN a new token holding Cloudflare Tunnel Edit alone on the monoflake account, the old token deleted, the author accepting that A's running control refuses the Mac's tools until its reset; what is left of A's is the integrator putting them into A's control at step 5. CLOUDFLARE_API_TOKEN and TAILSCALE_API_TOKEN were rolled by the author on 2026-10-29, each new one verified and each old one refused; the test platform's values and its account's tokens are kept on purpose, the test being the test",
-    repos: ["monoflake/cloud"],
-    until: Author,
-  },
-  {
-    id: "production-nix-key",
-    what: "A's and B's CI signs with one Nix key, `ci<nix@monoflake.com>-1`, its last number counting rotations with both keys trusted while one replaces the other, as the author decided on 2026-10-29, and with one ssh ed25519 pointer key, `ci-pointers`, shared by A and B, as the author decided on 2026-10-31; both were made by the advisor on 2026-10-31 and set as monoflake/cloud's GitHub secrets NIX_SIGNING_KEY and POINTER_SIGNING_KEY, the author's one copy of each in `~/.ssh/monoflake_nix` and `~/.ssh/monoflake_pointer_ed25519` on the Mac, no other kept, a lost key rotated. What is left waits on step 5 of monoflake/cloud's RFC oej2a item 8: the public halves written into monoflake/cloud's config and A's and B's machines as the test platform's were, and the four old builder keys, each named for its builder and ending in -cache-1, removed with the old cache code after that reset",
-    repos: ["monoflake/cloud", "monoflake/machine"],
     until: Author,
   },
   {
