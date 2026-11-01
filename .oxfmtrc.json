@@ -5,6 +5,7 @@
 	"printWidth": 100,
 	"svelte": true,
 	"ignorePatterns": [
+		"checkpoints/**",
 		"repos/canmi/web/data/",
 		"**/.claude/",
 		"**/contents/",

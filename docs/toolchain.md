@@ -278,6 +278,14 @@ Three consequences worth knowing:
 Prefer the mise registry short name (`oxlint`) over a backend-qualified one (`npm:oxlint`); both
 resolve to the same package, and the short form keeps `mise.toml` readable.
 
+### Each layer pins only the layer directly beneath it
+
+NixOS holds a machine and its container runtime, and never what runs inside a container, whose image
+pins its own language and dependencies. For a project, Nix pins at most the version of mise, mise pins
+the tools, and each tool or language's own lockfile pins its dependencies. Nix does not reach past the
+next layer. Two exceptions: machine-update is built by the machine's flake as part of the
+machine layer, and nixfmt, statix and deadnix come from nixpkgs, as they work on Nix alone.
+
 ### Nix is installed on the machine, and pins its own tools
 
 Nix is a daemon and a store the whole machine shares, installed by the NixOS project's own
