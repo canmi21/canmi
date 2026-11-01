@@ -120,7 +120,7 @@ let items: array<item> = [
   },
   {
     id: "binding-hex-rest",
-    what: "after the binding hex wave of 2026-10-25: a binding made before it whose last container item goes names its next one in hex, its images left in its decimal namespace; the decimal token id is parsed four times, in conform, lose, replace and deploy, where the ids library could hold it once",
+    what: "after the binding hex wave of 2026-10-25: a binding made before it whose last container item goes names its next one in hex, its images left in its decimal namespace",
     repos: ["monoflake/driver", "monoflake/platform"],
     until: Author,
   },
@@ -139,12 +139,6 @@ let items: array<item> = [
   {
     id: "objects-draw-conditional",
     what: "monoflake/platform's control on its objects state draws an app's id serialized per isolate rather than by a conditional insert across requests, against RFC b8f35, odds about one in 2^32, and its forget deletes unconditionally, so a deploy in another request can declare between its read and its deletes and run an app the control has forgotten; both retire with the production platform at RFC 8yl4b, when the footing rebuilds it",
-    repos: ["monoflake/platform"],
-    until: Author,
-  },
-  {
-    id: "tool-ids-module",
-    what: "monoflake/platform's deploy, conform, replace and lose each carry a near identical `Ids` module with no interface of the model's, to become one shared module or an interface each, as the author chooses",
     repos: ["monoflake/platform"],
     until: Author,
   },
