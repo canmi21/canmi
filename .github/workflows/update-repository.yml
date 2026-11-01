@@ -55,6 +55,7 @@ jobs:
           path: ${{ inputs.path }}
           credentials: true
           scripts: true
+          history: true
           nix: ${{ inputs.nix }}
           beside: ${{ inputs.beside }}
 

@@ -19,6 +19,9 @@ inputs:
   beside:
     description: Other repositories as space separated owner/repo, cloned at main with packages installed
     default: ""
+  history:
+    description: Check out the calling repository whole, for a job that runs the workspace's check on it
+    default: "false"
 
 runs:
   using: composite
@@ -29,11 +32,13 @@ runs:
         persist-credentials: ${{ inputs.path == '' && inputs.credentials || 'false' }}
         # The workspace alone is checked whole, its RFCs naming commits of its own history.
         fetch-depth: ${{ inputs.path == '' && '0' || '1' }}
+    # A repository's RFCs name commits of its own history, which the workspace's check reads.
     - if: inputs.path != ''
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         path: repos/${{ inputs.path }}
         persist-credentials: ${{ inputs.credentials }}
+        fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}
     # mise's monorepo refuses a root none of whose config roots exist, so the workspace alone
     # takes its smallest repository beside it, read by nothing.
     - if: inputs.path == ''
