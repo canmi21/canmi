@@ -47,6 +47,10 @@ the advisor have reviewed them.
   reaches for `rm` and, outside the whitelist, gets a refusal it has to recover from. Carry the flag
   fact into the brief: the rule survives being paraphrased and that one detail does not, so an agent
   holding `rm -rf` habits goes looking for the switch and falls back when it finds none.
+- **Anything that may run past `foregroundSeconds` runs in the background or under Monitor, and is
+  looked at every few seconds to a few tens**, `built` and `accept` among it;
+  [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", is the
+  rule, and the hook refuses the rest.
 - **It types no version control command**, neither jj nor git: it does not commit, move a bookmark
   or push. A task it runs, as `accept --from`, may read its own lane's history.
 - **It never prints the environment or a secret**: no `mise env` or `mise set`, no `env` or

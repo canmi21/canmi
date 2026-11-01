@@ -95,6 +95,69 @@ let releasing = [
   ("machine", ["builder", "local"]),
 ]
 
+/** The longest a foreground call may run or ask to run, `long-command-background`. */
+let foregroundSeconds = 15
+
+/** What always runs past `foregroundSeconds`, in the background whatever its timeout. */
+let longTasks = [
+  "check",
+  "verify",
+  "audit",
+  "build",
+  "test",
+  "update",
+  "fmt",
+  "systems",
+  "iterate",
+  "ship",
+  "install",
+  "stand",
+  "conform",
+  "reset",
+  "switch",
+  "built",
+  "accept",
+  "blocks",
+  "archive",
+  "dev",
+  "release",
+  "publish",
+  "deploy",
+  "retire",
+  "lose",
+  "replace",
+  "builder",
+  "local",
+  "machines",
+  "nixed",
+  "prepare",
+  "generate",
+]
+let longTaskFlags = [("nudge", "--wait")]
+let longCommands = [
+  ["vitest"],
+  ["cargo", "build"],
+  ["cargo", "test"],
+  ["cargo", "clippy"],
+  ["cargo", "nextest"],
+  ["nix", "build"],
+  ["nix", "flake", "check"],
+  ["rescript", "build"],
+  ["gh", "run", "watch"],
+  ["pnpm", "install"],
+  ["pnpm", "i"],
+]
+
+/** A flag that makes a long task short, the plan it prints or the list it reads. */
+let shortFlags = ["--dry-run", "-n", "--pending"]
+
+/** The watcher's stall, bound and line patterns, as regular expression sources. */
+let stallSeconds = 30
+let watchBoundSeconds = 1800
+let watchProgress = "\\b(?:passed|ok|done|finished|built|compiling|running)\\b"
+let watchFailure = "\\b(?:error|errors|failed|failure|fatal|panic|refused|timed out)\\b"
+let watchEnd = "^(?:exit|status|ended)[: =]"
+
 /** The models and efforts of a subagent of ours, each from the least to the most. */
 let models = ["haiku", "sonnet", "opus"]
 let efforts = ["low", "medium", "high", "xhigh", "max"]
@@ -221,7 +284,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "long-command-background",
-    says: "A shell command that waits in a loop that sleeps, or asks for a timeout past the harness's default of 120 seconds, runs in the background, never in the foreground",
+    says: "A foreground shell command never runs past `foregroundSeconds`: one that waits in a loop that sleeps, asks for a timeout past it, or runs a task of `longTasks`, a task given a flag of `longTaskFlags` or a command of `longCommands`, the plan a flag of `shortFlags` asks aside, is refused; it runs in the background or under Monitor and is looked at again every few seconds to a few tens, the watcher's stall of `stallSeconds` naming a hang",
     doc: "docs/agents/agent-protocol.md",
     held: Hook("hooks/gates/background"),
   },

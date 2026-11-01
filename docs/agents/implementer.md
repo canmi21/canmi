@@ -51,6 +51,11 @@ behavior its block needs, when its samples contradict each other, when the work 
 a file outside its own, or when one failure has been tried three times and still fails. The part
 that is stopped waits; the rest goes on.
 
+**Nothing it runs blocks the turn**: `built`, `accept`, a test run and anything else that may run
+past `foregroundSeconds` goes to the background or under Monitor and is looked at every few seconds
+to a few tens, [agent-protocol.md](agent-protocol.md), "A long command never holds the
+conversation"; `hooks/gates/background.res` refuses it otherwise.
+
 **It does not commit.** It reports four things:
 
 - whether it is done;

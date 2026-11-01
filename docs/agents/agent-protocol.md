@@ -252,21 +252,21 @@ shape of that.
 
 ## A long command never holds the conversation
 
-**Anything that can run longer than about a minute, could hang, or waits for a condition to end runs
-in the background**, and the conversation goes on. That holds for every session and for every
-implementer it spawns, wherever the harness can run a job so. **The agent looks at the job again
-within a minute at most, and sooner the shorter the job**: a few seconds for a step that should take
-seconds, tens of seconds for one that should take a minute, a minute for a long build. Each look is
-an instant read of the output, not a wait, and it asks whether the job moved since the last one. A
-job that stopped writing, or a wait on a condition nothing will meet, is reported at that look,
-never found later by the user. The agent reports what is there, saying plainly when a result is
-still pending. A user watching a spinner has no way to tell a job that is working from one that has
-hung.
+**Anything that may run past `foregroundSeconds`, could hang, or waits for a condition runs in the
+background or under Monitor**, and the conversation goes on, in every session and every implementer
+it spawns. **The agent looks at the job every few seconds to a few tens of seconds**, sooner the
+shorter the job, each look an instant read of the output that asks whether it moved since the last.
+**To look, it reads the output file, or runs `mise run watch <file>` under Monitor**, which prints a
+line for each progress or failure line the file gains, a line naming a stall after `stallSeconds`
+without growth, and ends on an end line or at `watchBoundSeconds`. A job that stopped, or a wait
+nothing will meet, is reported at that look, never found later by the user, and a result still
+pending is said so. A user watching a spinner cannot tell a working job from a hung one.
 
-**A hook holds the two shapes a wait takes in the foreground**, `hooks/gates/background.res`, the
-`long-command-background` rule: a loop that sleeps, or a timeout past the harness's default of 120
-seconds, is refused unless the call runs in the background, and the agent watches the job with
-Monitor or reads its output at the job's pace.
+**A hook holds it in the foreground**, `hooks/gates/background.res`, the `long-command-background`
+rule: a loop that sleeps, a timeout past `foregroundSeconds`, and any task of `longTasks`, task with
+a flag of `longTaskFlags` or command of `longCommands` is refused unless the call runs in the
+background or ends in `&`, a flag of `shortFlags` aside. A background `mise run check` still stamps
+the verify gate for the next commit.
 
 Four consequences:
 

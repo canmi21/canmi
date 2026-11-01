@@ -3,14 +3,10 @@
 A role the user names at a session's start, [delegation.md](delegation.md), "A role is named by the
 user, and each has a file".
 
-**Nothing it runs blocks the turn: a command that may take more than a few seconds, that waits on
-another process, or that could hang runs in the background, and the advisor looks at it again on a
-pace it predicts**: it reads the output every few seconds for a job of seconds, every few tens of
-seconds for one of a minute, and at most a minute apart for a build, each look an instant read and
-never a wait, and a loop that sleeps is never typed in the foreground, as
-`hooks/gates/background.res` refuses. The whole rule is [agent-protocol.md](agent-protocol.md), "A
-long command never holds the conversation"; this file restates it because it is the one the advisor
-rereads after its context is compacted.
+**Nothing it runs blocks the turn**: whatever may run past `foregroundSeconds` runs in the
+background or under Monitor and is looked at every few seconds to a few tens, as
+[agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", has it; this
+file names it because the advisor rereads it after its context is compacted.
 
 **The advisor writes a document itself, or hands it down, as the work at hand suits**: a rule or a
 record it has just settled with the user, small and whole, it writes and commits itself; one that

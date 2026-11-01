@@ -110,6 +110,12 @@ description = "Run a task in every repository that declares it, one after anothe
 depends = ["build"]
 run = "node scripts/workspace/each.res.mjs"
 
+# For Monitor, a line for each progress or failure line a job's output gains and one for a stall.
+[tasks.watch]
+description = "Watch a job's output file for Monitor: `watch <file> [--stall <seconds>]`"
+depends = ["build"]
+run = "node scripts/workspace/watch.res.mjs"
+
 # An RFC by its id space, the workspace's own or what a repository's `[rfcs] ids` names.
 [tasks.rfc]
 description = "Start an RFC: `rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`"

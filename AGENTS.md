@@ -95,6 +95,11 @@ are faster than any verification loop -- so a round of work ends with something 
 by hand, a page to click or a curl to run, and where there is nothing to try, with a rehearsal that
 passed. See [docs/agents/delegation.md](docs/agents/delegation.md).
 
+**Long commands** -- anything that may run past a few seconds runs in the background or under
+Monitor and is looked at every few seconds to a few tens, `mise run watch <file>` doing the looking;
+a hook refuses the rest. See [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md), "A long
+command never holds the conversation".
+
 **Commits** -- Conventional Commits, the types and widths in `model/rules/commits.res`. Omit the
 scope in most cases. Subject starts lowercase, imperative mood, 96 characters at most. Plain text
 throughout, never Markdown. **A body is optional and usually absent**: it says what changed, in

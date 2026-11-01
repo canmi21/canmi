@@ -1,9 +1,10 @@
-/** Refuses a shell command that would hold the conversation, a polling wait or a long timeout. */
+/** Refuses a shell command that would hold the conversation, long-command-background. */
 /** A loop that sleeps between its tests, the shape of a wait typed in the foreground. */
 let pollingLoop = /\b(?:until|while)\b[\s\S]*?\bdo\b[\s\S]*?\bsleep\b[\s\S]*?\bdone\b/
 
-/** The longest foreground timeout a call may ask for, the harness's default, in milliseconds. */
-let longest = 120000.
+/** The longest foreground timeout a call may ask for, in milliseconds. */
+let longest =
+  Delegation.foregroundSeconds->Int.toFloat *. 1000.
 
 let timeout = (payload: Payload.t) =>
   switch payload
@@ -21,6 +22,114 @@ let background = (payload: Payload.t) =>
 /** Whether a command line waits by polling, outside the body of a quoted here-document. */
 let polls = command => pollingLoop->RegExp.test(Push.withoutQuotedBodies(command))
 
+let startsWith = (words, prefix) =>
+  prefix->Array.everyWithIndex((word, at) => words[at] == Some(word))
+
+/** The segment's words that run in the foreground, a lone or trailing `&` sending the rest away. */
+let foreground = (segment: array<string>) => {
+  let piece = ref([])
+  segment->Array.forEach(word =>
+    if word == "&" {
+      piece := []
+    } else if word->String.length > 1 && word->String.endsWith("&") {
+      piece := []
+    } else {
+      piece.contents->Array.push(word)
+    }
+  )
+  piece.contents
+}
+
+/** The task a `mise run` names, past a `//repos/x:` path and the options before it. */
+let taskOf = (words: array<string>) => {
+  let at = ref(0)
+  while (
+    at.contents < words->Array.length && words->Array.getUnsafe(at.contents)->String.startsWith("-")
+  ) {
+    at :=
+      at.contents + (
+        ["-j", "--jobs", "-C", "--cd", "-E", "--env", "-o", "--output"]->Array.includes(
+          words->Array.getUnsafe(at.contents),
+        )
+          ? 2
+          : 1
+      )
+  }
+  words[at.contents]->Option.map(name => {
+    let bare =
+      name->String.startsWith("//")
+        ? name->String.split(":")->Array.slice(~start=1)->Array.join(":")
+        : name
+    bare
+  })
+}
+
+/** Whether the words after `mise` run a task that is always long, or a long command under exec. */
+let rec miseLong = (words: array<string>) => {
+  let at = ref(0)
+  while (
+    at.contents < words->Array.length && words->Array.getUnsafe(at.contents)->String.startsWith("-")
+  ) {
+    at :=
+      at.contents + (
+        ["-C", "--cd", "-E", "--env"]->Array.includes(words->Array.getUnsafe(at.contents)) ? 2 : 1
+      )
+  }
+  let rest = words->Array.slice(~start=at.contents + 1)
+  switch words[at.contents] {
+  | Some("run") | Some("r") =>
+    switch taskOf(rest) {
+    | None => false
+    | Some(task) =>
+      let head = task->String.split(":")->Array.getUnsafe(0)
+      !(rest->Array.some(word => Delegation.shortFlags->Array.includes(word))) &&
+      (Delegation.longTasks->Array.includes(head) ||
+        Delegation.longTaskFlags->Array.some(((name, flag)) =>
+          name == head && rest->Array.includes(flag)
+        ))
+    }
+  | Some("exec") | Some("x") =>
+    switch rest->Array.findIndex(word => word == "--") {
+    | -1 => false
+    | dash => commandLong(rest->Array.slice(~start=dash + 1))
+    }
+  | _ => false
+  }
+}
+/** Whether a program and its arguments are one of the always-long commands. */
+and commandLong = (words: array<string>) =>
+  switch words[0] {
+  | None => false
+  | Some(first) =>
+    let program = Node.basename(first)
+    let rest = words->Array.slice(~start=1)->Array.filter(word => !(word->String.startsWith("+")))
+    if program == "mise" {
+      miseLong(rest)
+    } else if Delegation.shells->Array.includes(program) {
+      switch rest->Array.findIndex(word =>
+        word->String.startsWith("-") && word->String.includes("c")
+      ) {
+      | -1 => false
+      | at => rest[at + 1]->Option.mapOr(false, text => lineLong(text))
+      }
+    } else {
+      let named = Array.concat([program], rest)
+      Delegation.longCommands->Array.some(long => named->startsWith(long))
+    }
+  }
+/** Whether a command line runs an always-long command in the foreground in any segment. */
+and lineLong = (command: string) =>
+  Jj_command.segments(Push.withoutQuotedBodies(command))->Array.some(segment => {
+    let piece = foreground(segment)
+    switch Jj_command.commandAt(piece) {
+    | Some(at) => commandLong(piece->Array.slice(~start=at))
+    | None => false
+    }
+  })
+
+/** Whether a command line runs an always-long command in the foreground. */
+let long = lineLong
+
 /** Why a foreground call would hold the conversation, or nothing where it would not. */
 let held = (payload: Payload.t) =>
   if background(payload) {
@@ -31,7 +140,7 @@ let held = (payload: Payload.t) =>
     switch timeout(payload) {
     | Some(milliseconds) if milliseconds > longest =>
       Some(`it asks for a timeout of ${Float.toString(milliseconds /. 1000.)} seconds`)
-    | _ => None
+    | _ => long(Payload.command(payload)) ? Some("it runs a command that always runs long") : None
     }
   }
 
@@ -42,7 +151,7 @@ let refuse = (payload: Payload.t): int =>
   | Some(why) =>
     Console.error(
       `Command refused by hooks/gates/background.res: ${why}, which holds the conversation.\n` ++
-      "Run it with run_in_background, or watch for its end with Monitor, and read its output at the job's own pace.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
+      "Run it with run_in_background, or under Monitor with `mise run watch <file>`, and read its output every few seconds.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
     )
     2
   }
