@@ -149,13 +149,14 @@ The same kind of credential can be secret elsewhere. A token a Worker calls anot
 never reaches a browser, so it stays a wrangler secret. What decides is exposure,
 not the kind of thing it is.
 
-**A credential is issued only for what runs on a server or in CI; a task that runs only on the
-author's Mac uses the author's logged-in CLIs**, `cf`, `wrangler` and `tailscale`, decided by the
-author on 2026-10-29 with the DNS task. A token kept for a Mac's task is one more secret to rotate
-and leak for what a login already grants. **The one exception is the test platform's Cloudflare
-token, which serves both its Worker and its install**, decided by the author on 2026-10-29: the
-test platform is disposable and stands in one account of its own, so one credential makes and runs
-all of it. The two other platforms' credentials are decided at monoflake/cloud's reset.
+**A credential is issued only for what runs on a server, in CI or in the cloud; a task that runs
+only on the author's Mac uses the author's logged-in CLIs**, `cf`, `wrangler`, `gh` and
+`tailscale`, decided by the author on 2026-10-29 with the DNS task and applied to every platform at
+monoflake/cloud's reset on 2026-11-01. A token kept for a Mac's task is one more secret to rotate
+and leak for what a login already grants. What runs elsewhere holds an account-owned token in the
+account it acts in, never a user-owned one, minted by that account's token manager; the author's
+own login is the one user-level credential left. The test platform's exception, one token for both
+its Worker and its install, was retired on 2026-11-01 once its install ran on the login.
 
 ### A secret is typed in, never written down
 
