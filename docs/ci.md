@@ -82,9 +82,10 @@ name changes with it.
 ## Scheduled updates
 
 The workspace action owns `nix` for installing Nix and `beside` for cloning space separated
-`owner/repo` repositories at main and installing their packages. **The action prepares only what a
-job asks for**: `beside` clones without the workspace's scripts, so the workspace's packages and
-compiled scripts come with `scripts` alone, which a job asks only when it runs one. Its `history`
+`owner/repo` repositories at the commit the caller's `[versions] pin` names, or else at main, and
+installing their packages. **The action prepares only what a job asks for**: the workspace's
+packages and compiled scripts come with `scripts`, which a job asks only when it runs one, and where
+a caller declares a pin, which is read by them. Its `history`
 checks the calling repository and the workspace out whole, which the reusable update workflow asks
 because the workspace's check reads the commits a repository's RFCs name in either.
 
@@ -99,8 +100,11 @@ the runner labels as JSON, `nix` to install Nix, and `beside` for the repositori
 and `wake` names the workflow to dispatch on main when the preceding stages succeed. Public
 repositories use hosted runners; monoflake/cloud uses its self-hosted ARM64 runners.
 
-The update verb keeps its one-day release wait. What moves passes the repository's check before
-github-actions[bot] commits it and pushes straight to main. The named check is woken explicitly
+The update verb keeps its one-day release wait. The workflow runs in this order: update, the
+message naming what moved, `mise run bump` rolling the versions as a landing on main does,
+[commits.md](commits.md), "A package's version rolls at landing", then the check, then the commit.
+What moves passes the repository's check before github-actions[bot] commits it and pushes straight
+to main. The named check is woken explicitly
 because a token's push starts no workflow. A failure before the commit pushes nothing; a release
 source whose releases could not be read is held back and fails the run after the other updates are
 committed, naming the held source.

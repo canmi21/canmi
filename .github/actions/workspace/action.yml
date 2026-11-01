@@ -17,7 +17,7 @@ inputs:
     description: Install Nix for a repository whose stages need it
     default: "false"
   beside:
-    description: Other repositories as space separated owner/repo, cloned at main with packages installed
+    description: Other repositories as space separated owner/repo, cloned at the declared pin or main
     default: ""
   history:
     description: Check out the calling repository and the workspace whole, for the workspace's check
@@ -70,9 +70,24 @@ runs:
       shell: bash
       env:
         BESIDE: ${{ inputs.beside }}
+        CALLER: ${{ inputs.path }}
+        SCRIPTS: ${{ inputs.scripts }}
       run: |
+        ready="$SCRIPTS"
         for repository in $BESIDE; do
           into="$GITHUB_WORKSPACE/repos/$repository"
           [ -d "$into" ] || git clone --depth 1 --branch main "https://github.com/$repository" "$into"
+          if grep -q '^pin =' "$GITHUB_WORKSPACE/repos/$CALLER/workspace.toml" 2>/dev/null; then
+            if [ "$ready" != true ]; then
+              pnpm install --frozen-lockfile
+              mise run build
+              ready=true
+            fi
+            ref="$(node scripts/release/versions/beside.res.mjs "$GITHUB_WORKSPACE/repos/$CALLER" "$into")"
+            if [ "$ref" != main ]; then
+              git -C "$into" fetch --depth 1 origin "$ref"
+              git -C "$into" checkout --detach FETCH_HEAD
+            fi
+          fi
           [ ! -f "$into/package.json" ] || (cd "$into" && pnpm install --frozen-lockfile)
         done

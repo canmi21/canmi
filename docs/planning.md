@@ -41,7 +41,9 @@ two.
 
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain
-it waits on. Neither carries an argument, which lives in the RFC.
+it waits on. Neither carries an argument, which lives in the RFC. **The plan's last line says how
+many patches monoflake/driver's main is past its last Release**, and says so where it cannot read
+either.
 
 **An RFC moves as the thing it names moves.** A draft is `accepted` once decided, `landed` once
 built and pushed, or `declined`; the rules the work changed are written in the commit that lands it,

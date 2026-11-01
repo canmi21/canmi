@@ -225,11 +225,48 @@ record of the afternoon.
 The rebase is also where rule changes arrive: the rules move with `main` like everything else,
 and [agent-protocol.md](agents/agent-protocol.md) says what to do with the delta.
 
+## A package's version rolls at landing
+
+**Every package is `major.minor.patch`**, a paused repository aside. **Only the author moves a
+major**: the check refuses any other raise of a package it already holds, and `SKIP=major` names the
+escape.
+
+- **A package serving one interface has its minor equal to that interface's version**, and starts
+  there. One serving several interfaces, or none, has a minor of its own, an integer from `0.1.0`
+  that a breaking change raises, the patch going back to zero, or that the lander raises by
+  judgment, `mise run bump --minor <package>`. A raise of one of several interfaces raises the
+  minor as well. `monoflake/driver`'s `driver-machine` continues at `0.1.4`.
+- **A patch rises on a change to what the package counts**: its own files outside `docs/` and
+  `tests/` directories, `*_test.*` files, Markdown and license files, and the settings of the
+  linter, the formatter and the ignore files; what it declares under `[versions.counts]` in
+  `workspace.toml`; and the packages it depends on by path. A repository's root is a package too,
+  counting only the files in no subpackage. A version moved in a manifest is no change of it.
+- **A lockfile move raises each binary or Worker built from it, and the root, and no library.**
+
+**Versions roll at landing on a main line, by `mise run bump`, and never in a lane**: it refuses a
+lane's checkout, `--dry-run` aside, and writes the manifests and `Cargo.lock` of a main checkout.
+It computes what is owed from the commit the landing leaves, so a second run asks the same and a
+raise written by hand is kept. A landing that owes a raise is refused by the versions part of
+`mise run check`, which names the package and what it is owed, and a `Cargo.lock` that holds a
+crate at another version than its manifest is refused likewise. A push replays that part over each
+first-parent commit of `main` it sends, a later raise paying what an earlier one owes once it
+reaches it, a package gone at the tip owing nothing, so a landing committed by path passes and one
+with no raise does not; `mise run bump` raises what those commits still owe, so what the push
+refuses it can pay. A sibling crate in `Cargo.lock` at another version than the pinned commit holds
+is refused too: the lock is restored or the pin moved. See
+[repos.md](repos.md), "One verb, the workspace unless told otherwise", for the verb and what
+`[versions]` declares.
+
+**Publishing is unchanged**: a raise publishes nothing, and a release stays what it was.
+
+The rules are `versions-rolled` and `versions-at-push` in `model/rules/commits.res`, and RFC z7o68
+holds the why.
+
 ## Enforcement
 
 **What reached `main` is checked again, by the commits part of `check`**: every described commit
 after the repository's own `Commits.since` against the same rules the hook applies, from one
-function in `model/checks/history.res`. What came before a repository's `since` is left as it was
+function in `model/checks/landed/history.res`. What came before a repository's `since` is left as it was
 written, and every repository the registry lists has one. The hook sees only what an agent types
 with `-m`; the history sees everything, an editor's message and a human's included, after the fact.
 
@@ -269,8 +306,9 @@ the workspace's.
 
 **The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
 `SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;
-`Commits.skippable` lists what it may name, `verify` and `form` for a commit and `scan` for a push,
-[agents/checking.md](agents/checking.md), [agents/pushing.md](agents/pushing.md). Each use is a
+`Commits.skippable` lists what it may name, `verify` and `form` for a commit, `scan` for a push and
+`major` for a major moved by the author, [agents/checking.md](agents/checking.md),
+[agents/pushing.md](agents/pushing.md), "A package's version rolls at landing" above. Each use is a
 record of friction, [agents/friction.md](agents/friction.md), and is allowed for a gate's first
 passage and where a rule names it, [planning.md](planning.md), "A gate's first passage may warn
 where its later ones refuse". An implementer uses none and reports the

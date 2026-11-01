@@ -83,6 +83,7 @@ let main = () => {
     }
     lines(space)->Array.forEach(line => Console.log(line))
   })
+  Released.line()->Option.forEach(line => Console.log(`\n${line}`))
 }
 
 if Node.isMain {

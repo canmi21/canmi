@@ -57,8 +57,9 @@ the integrator wrote is tidied by the integrator itself, with no refactorer disp
    parallel under `implementer-commands`.
 2. The integrator merges the lanes in one merge with a parent for each, runs `mise run fmt` on the
    merge, and runs the logic layer's check.
-3. The integrator commits in each repository's main checkout, the form layer refusing,
-   `form-at-commit`.
+3. The integrator runs `mise run bump <path>` in each repository's main checkout, after the merge
+   and before the commit that lands, [commits.md](../commits.md), "A package's version rolls at
+   landing", then commits there, the form layer refusing, `form-at-commit`.
 4. Where the form layer refuses, the refactorer is dispatched into the lane, and the commit is
    made again.
 5. A reviewer reads the diff.

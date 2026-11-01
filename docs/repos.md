@@ -257,6 +257,30 @@ loop lives once. A name that is not in the registry is an error that lists the n
 because the alternative -- doing nothing quietly, or doing everything -- are both worse than
 saying so.
 
+**`bump` rolls versions and is the one verb that is not a loop over tasks.**
+`mise run bump [name | --all] [--dry-run] [--minor <package>]` raises every package of a repository
+to what a landing on its main line owes, [commits.md](commits.md), "A package's version rolls at
+landing". With no name it is the workspace; a name is that repository, and `--all` is the workspace
+and every repository not paused. A repository paused, not cloned or holding no package is passed
+over, one with no jj beside it fails, and so does a lane's, which `--dry-run` may still read.
+`--dry-run` lists each package that would move and writes nothing. `--minor` raises the named
+package, by its directory or its name, by a minor, refusing a name matching none and a package
+serving one interface. A repository's own `bump` task hands its path
+to this one.
+
+**`[versions]` in a repository's `workspace.toml` declares what its packages serve and count.**
+`counts` maps a package's directory to the paths outside it that raise its patch. `serves` maps a
+package's directory to the interfaces it serves. `contracts` is the `contracts.json` that holds
+each interface's `version`. `repository` is the sibling repository, by relative path, whose
+`contracts.json` is read, and `pin` is the file in this repository that names that sibling's
+commit as an action's `ref: <commit> # <repository>`. With a `repository` and a `pin` the contracts
+are read at the pinned commit, with a `repository` alone from the sibling's disk. **A pin to a
+sibling repository refuses the roll** where a crate moves and the sibling's disk differs from the
+pinned commit in the crates it depends on, where the pin names no commit of the sibling, or where
+the sibling cannot be read at it; nothing is written and the bump fails. Where contracts cannot be
+read at both ends, `bump` warns and raises a changed package by its patch alone; the check says
+nothing of them, and an unchanged package stays.
+
 **The dispatcher loops; the repository does the work.** What a verb does depends on what a
 repository is built with, so `fmt`, `check`, `audit`, `update` and `clean` each run the repository's
 own task for that verb -- `//repos/<name>:<verb>` -- and know nothing of cargo, pnpm or anything

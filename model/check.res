@@ -167,6 +167,7 @@ let parts: array<(string, part)> = [
   ("lanes", Found(() => Lane_state.held(~root))),
   ("lane-state", Soft(() => Lane_state.state(~root))),
   ("friction", Soft(() => Friction.problems(~directory=Friction.expand(Delegation.friction)))),
+  ("versions", Found(() => Versions.found(~root))),
 ]
 
 let known = parts->Array.map(((name, _)) => name)
@@ -240,6 +241,7 @@ let over = (repo): array<(string, part)> =>
       ("plain", Soft(() => Comments.plain(~root=repo))),
       ("identifiers", Found(() => Identifiers.found(~root=repo))),
       ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
+      ("versions", Found(() => Versions.found(~root=repo))),
     ],
     switch Waiting.declared()->Array.find(((name, _)) => name == Registry.label(repo)) {
     | Some(_) => [("rfcs", Found(() => rfcs(Registry.label(repo))))]

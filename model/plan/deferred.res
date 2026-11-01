@@ -253,7 +253,7 @@ let items: array<item> = [
   },
   {
     id: "pine-reset-hang",
-    what: "pine hung in the board's final reset on cold reboots run by kernel 6.18.59 at 07:03 UTC and 6.18.60 at 08:45 UTC on 2026-11-01, the journal ending at journald's stop after systemd-shutdown synced, while one run by 6.18.57 at 06:35 had worked; its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes. Warm reset is the mitigation under watch, its cause unproven: three reboots on 6.18.60 from 08:59 to 09:02 UTC, each after `echo warm > /sys/kernel/reboot/mode`, came back in 47, 45 and 46 s, a small sample; `reboot=warm` is in its board.nix and takes effect at its next boot, and until a boot confirms `cat /sys/kernel/reboot/mode` reads warm, each reboot first sets it by hand. Every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine. If warm ever hangs, the next options are a USB-TTL serial at 1500000 baud or a smart plug",
+    what: "pine hung in the board's final reset on cold reboots run by kernel 6.18.59 at 07:03 UTC and 6.18.60 at 08:45 UTC on 2026-11-01, the journal ending at journald's stop after systemd-shutdown synced, while one run by 6.18.57 at 06:35 had worked; its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes. Warm reset has not held, its cause unproven: three reboots on 6.18.60 from 08:59 to 09:02 UTC, each after `echo warm > /sys/kernel/reboot/mode`, came back in 47, 45 and 46 s, and a fourth at 22:30:44 UTC on 2026-11-01, warm set by hand the same way, hung after a normal shutdown, the journal ending at its stop, and was power-cycled by the author about 5 minutes on, before the watchdog armed for 10 minutes could act, so that reboot leaves the watchdog untested. The boot of 22:35 UTC holds `reboot=warm` from its board.nix with the mode reading warm; no reboot from the parameter alone has run, the second planned was not, and no further reboot of pine runs without the author. Every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine. The next options are a USB-TTL serial at 1500000 baud or a smart plug",
     repos: ["monoflake/cloud", "monoflake/machine"],
     until: Author,
   },
@@ -267,6 +267,12 @@ let items: array<item> = [
     id: "driver-import-notfound",
     what: "a deployment's import failed once with `import the archive: NotFound: not found`, in one conform on snow of three at driver 0.1.4, containerd logging no error, cause not known, perhaps its GC collecting a first import, as `imported()` holds no lease; candidate two takes a lease around the import, released after `read_image`, and refutes this by `images rm --sync` during a first import if cheap",
     repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
+    id: "versions-on-unpause",
+    what: "a paused repository meets the version rule only when unpaused, and four need settling first: canmi/lib's release publishes each dated package whose tree changed, so its first roll would publish them all; seam's crates/lowering has `version.workspace = true` and a test-app fixture has a package.json with no name, each stuck under the versions part; canmi/web's spec/architecture/workspace.md and apps/rdm's spec/release.md say the opposite of the roll, RFC z7o68",
+    repos: ["canmi/lib", "seam", "canmi/web", "apps/rdm"],
     until: Author,
   },
   {

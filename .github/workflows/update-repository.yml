@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       beside:
-        description: Other repositories the check reads, each cloned at its main beside this one
+        description: Other repositories the check reads, each cloned at the declared pin or else main beside this one
         type: string
         default: ""
       prepare:
@@ -78,14 +78,21 @@ jobs:
         id: moved
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" moved "$REPOSITORY"
 
+      # The message names what the update moved, so it is written before the roll adds its own.
+      - name: Write the message
+        if: steps.moved.outputs.moved == 'true'
+        run: ${{ inputs.message || 'node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" message "$REPOSITORY" "$RUNNER_TEMP/message"' }}
+
+      # What the update moved is a landing on main, its versions rolled as a lander rolls them.
+      - name: Roll the versions
+        if: steps.moved.outputs.moved == 'true'
+        working-directory: .
+        run: mise run bump ${REPOSITORY:+"$REPOSITORY"}
+
       - name: Check
         if: steps.moved.outputs.moved == 'true'
         working-directory: .
         run: mise run check ${REPOSITORY:+"$REPOSITORY"}
-
-      - name: Write the message
-        if: steps.moved.outputs.moved == 'true'
-        run: ${{ inputs.message || 'node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" message "$REPOSITORY" "$RUNNER_TEMP/message"' }}
 
       - name: Commit and push
         if: steps.moved.outputs.moved == 'true'

@@ -116,6 +116,12 @@ description = "Watch a job's output file for Monitor: `watch <file> [--stall <se
 depends = ["build"]
 run = "node scripts/workspace/watch.res.mjs"
 
+# Versions roll at a landing on a main line and never in a lane.
+[tasks.bump]
+description = "Raise what a landing on a main line changes: `bump [name | --all] [--dry-run] [--minor <package>]`"
+depends = ["build"]
+run = "node scripts/release/versions/bump.res.mjs"
+
 # An RFC by its id space, the workspace's own or what a repository's `[rfcs] ids` names.
 [tasks.rfc]
 description = "Start an RFC: `rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`"
@@ -136,7 +142,7 @@ run = "node scripts/docs/doc_compare.res.mjs"
 [tasks.scan]
 description = "Count the private identifiers a git diff on stdin adds, the group allowed in a repository apart, and fail on any other: `jj diff --git ... | scan --in <repository>`"
 depends = ["build"]
-run = "node scripts/workspace/scan.res.mjs"
+run = "node scripts/workspace/push/scan.res.mjs"
 
 # What the scripts compile to, never committed, which every task running one depends on.
 [tasks.build]

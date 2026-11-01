@@ -107,7 +107,9 @@ three lines or so, and never why. The reasoning goes to the rules or beside the 
 somebody is looking for it -- a log carrying it twice is the mistake this rule exists to stop. A
 hook refuses a malformed message, and the commits part of the check reads every one since. **A
 commit waits until `mise run check <path>` passed at the working copy**; `SKIP=verify jj commit
-...` names the escape. See [docs/commits.md](docs/commits.md).
+...` names the escape. **A package's version rolls at landing on a main line by `mise run bump`,
+never in a lane.** See [docs/commits.md](docs/commits.md), "A package's version rolls at
+landing".
 
 **Comments** -- a comment points rather than argues, **in one or two lines of plain statement, its
 prose with no colon and no dash**. The settled argument lives in the rules and

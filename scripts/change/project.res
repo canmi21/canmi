@@ -55,6 +55,16 @@ type format = {unformatted: array<string>, testData: array<string>}
  */
 type push = {visibility: string, stated: bool, ci: option<array<string>>, release: array<string>}
 
+/** What a landing's roll reads beyond the defaults, each table keyed by a package's directory. */
+type versions = {
+  counts: Dict.t<array<string>>,
+  serves: Dict.t<array<string>>,
+  /** The contracts file, the sibling repository holding it, and the file pinning that sibling. */
+  contracts: option<string>,
+  repository: option<string>,
+  pin: option<string>,
+}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -69,6 +79,7 @@ type declared = {
   names: array<datum>,
   format: format,
   push: push,
+  versions: versions,
 }
 
 exception Malformed(string)
@@ -279,6 +290,34 @@ let pushOf = (table: table): push => {
   }
 }
 
+let listsOf = (table: table, key) =>
+  tableAt(table, key, "versions")
+  ->Option.getOr(Dict.make())
+  ->Dict.keysToArray
+  ->Array.map(name => (
+    name,
+    texts(tableAt(table, key, "versions")->Option.getOrThrow, name, `versions.${key}`),
+  ))
+  ->Dict.fromArray
+
+let textOf = (table: table, key): option<string> =>
+  switch table->Dict.get(key) {
+  | None => Option.None
+  | Some(String(text)) => Some(text)
+  | Some(_) => fail(`versions.${key}: not a path`)
+  }
+
+let versionsOf = (table: table): versions => {
+  only(table, "versions", ["counts", "serves", "contracts", "repository", "pin"])
+  {
+    counts: listsOf(table, "counts"),
+    serves: listsOf(table, "serves"),
+    contracts: textOf(table, "contracts"),
+    repository: textOf(table, "repository"),
+    pin: textOf(table, "pin"),
+  }
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -303,6 +342,7 @@ let read = (root: string): result<declared, string> => {
             "names",
             "format",
             "push",
+            "versions",
           ],
         )
         Ok({
@@ -324,6 +364,9 @@ let read = (root: string): result<declared, string> => {
           names: tableAt(top, "names", "workspace.toml")->Option.mapOr([], namesOf),
           format: formatOf(tableAt(top, "format", "workspace.toml")->Option.getOr(Dict.make())),
           push: pushOf(tableAt(top, "push", "workspace.toml")->Option.getOr(Dict.make())),
+          versions: versionsOf(
+            tableAt(top, "versions", "workspace.toml")->Option.getOr(Dict.make()),
+          ),
         })
       | _ => Error(`${path}: not a table`)
       }
@@ -373,6 +416,13 @@ let formatAt = (root: string): format =>
   switch read(root) {
   | Ok(declared) => declared.format
   | Error(_) => noFormat
+  }
+
+/** The `[versions]` table of the repository at `root`, empty where none is declared or read. */
+let versionsAt = (root: string): versions =>
+  switch read(root) {
+  | Ok(declared) => declared.versions
+  | Error(_) => versionsOf(Dict.make())
   }
 
 /** Whether `relative`, a path from the root, lies under one of `format`'s test data directories. */

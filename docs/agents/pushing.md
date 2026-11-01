@@ -13,7 +13,9 @@ warnings would keep that promise by half. **The gate measures the tree of the co
 bookmark points to, read from the repository**, never from the disk and never checked out: each such
 commit is measured once, a directory's width and depth from `jj file list -r <commit>` and a file's
 length and its comments from `jj file show -r <commit>`. A check that refuses reads only what the
-repository holds, so its result can be had again, and the working copy is local state.
+repository holds, so its result can be had again, and the working copy is local state. **A push
+also replays the `versions` part of the check over its outgoing commits**,
+[commits.md](../commits.md), "A package's version rolls at landing".
 
 **An agent pushes only by `mise run push`**, `push-through-verb`, held by `hooks/gates/push.res`: a
 `jj git push` or `git push` an agent types is refused before it runs, the body of a quoted

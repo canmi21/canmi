@@ -54,9 +54,12 @@ let imperativeInS = ["alias", "bias", "canvas", "gas", "bypass"]
 /** The jj subcommands that make a commit, and so wait on a passing verify. */
 let committing = ["commit", "ci"]
 
-/** The escape a command names to pass a gate, `verify` and `form` a commit's, `scan` a push's. */
+/**
+ * The escape a command names to pass a gate, `verify` and `form` a commit's, `scan` a push's, and
+ * `major` the author's move of a major.
+ */
 let skip = "SKIP"
-let skippable = ["verify", "form", "scan"]
+let skippable = ["verify", "form", "scan", "major"]
 
 let doc = "docs/commits.md"
 let rules: array<Rule.t> = [
@@ -127,5 +130,17 @@ let rules: array<Rule.t> = [
     says: "A turn ends with main covering every described, non-empty commit",
     doc,
     held: Hook("hooks/bookmark"),
+  },
+  {
+    name: "versions-rolled",
+    says: "Every package is major.minor.patch, the author alone moves a major, and a landing on a main line owing a raise is refused",
+    doc,
+    held: Check("versions"),
+  },
+  {
+    name: "versions-at-push",
+    says: "A push replays the versions part over its outgoing commits, a later raise paying an earlier one's",
+    doc,
+    held: Check("versions"),
   },
 ]
