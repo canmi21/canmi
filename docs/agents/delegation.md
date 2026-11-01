@@ -38,9 +38,12 @@ only on what it truly depends on; each implementer has a lane of its own and a d
 files no other lane touches, so two lanes never own one file. Review, verification and the check
 once per wave stay as they are. How many run at once is `implementersAtOnce` in
 [model/rules/delegation.res](../../model/rules/delegation.res).
-**Where a session has delegated, no seat waits while unblocked work is left**, the author's word of
-2026-11-01 on finding sessions idle: work that does not depend on what is running is pulled out and
-started beside it, on Codex first, and only work that would be redone later waits.
+**Where a session has delegated, the seats are filled first**: work that does not depend on what is
+running is pulled out and started beside it, on Codex first. A seat stays empty for one reason, that
+what is left must run in order, so work is parallel unless a dependency says otherwise.
+
+**A reviewer is called once for a set of changes**: where A, B and C are changed together, one review
+comes after all three, never one after each.
 
 **The command hooks guard against a slip, not against malice**, decided by the author on
 2026-10-24: an implementer works with the integrator, so the hooks cover the common spellings of a

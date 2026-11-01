@@ -103,7 +103,7 @@ let lanes = "lanes"
  * 2026-10-24, each in a lane of its own owning files no other lane touches,
  * docs/agents/delegation.md.
  */
-let implementersAtOnce = 6
+let implementersAtOnce = 10
 
 /** The most a lane's `target` holds, in gigabytes, before `cargo clean` clears it. */
 let laneTarget = 10

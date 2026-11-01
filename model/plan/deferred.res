@@ -181,7 +181,7 @@ let items: array<item> = [
   },
   {
     id: "cloud-lock-move",
-    what: "monoflake/cloud moves its machines' lock to monoflake/machine's newest commit by itself, with a canary first, the author's wish of 2026-10-27; until then the integrator moves it by hand when a change needs testing, each move cleared by the advisor",
+    what: "monoflake/cloud moves C's locks to monoflake/machine's newest commit by itself, with a canary first; B's and A's stay by hand at a candidate the author chooses to roll, RFC stc9g",
     repos: ["monoflake/cloud"],
     until: Author,
   },
