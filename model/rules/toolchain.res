@@ -246,7 +246,7 @@ let rules: array<Rule.t> = [
     name: "test-documentation-values",
     says: "A test and its fixtures write out only the addresses, domains and placeholders `documentation` holds",
     doc: pushing,
-    held: Pending("each repository's tests and fixtures read for literals outside `documentation`"),
+    held: Check("repository"),
   },
   {
     name: "push-declared",

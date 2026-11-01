@@ -78,7 +78,7 @@ let rules: array<Rule.t> = [
     name: "account-name",
     says: "The author's account name, canmi21, appears in no identifier and no code that decides by it, only as data and in comments",
     doc,
-    held: Pending("a scan of identifiers in every repository's code for the account name"),
+    held: Check("identifiers"),
   },
   {
     name: "vendor-resources-drawn",
@@ -133,6 +133,6 @@ let rules: array<Rule.t> = [
     name: "rebrand-kept",
     says: "Twitter is Twitter in identifiers, modules, files, commands and URLs",
     doc,
-    held: Pending("a scan that tells the bare letter X as a name from every other X"),
+    held: Check("identifiers"),
   },
 ]

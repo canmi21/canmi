@@ -158,6 +158,7 @@ let parts: array<(string, part)> = [
   ("tasks", Script(() => reported(Tasks.found(~root)))),
   ("placed", Found(() => Placed.found(~root))),
   ("plain", Soft(() => Comments.plain(~root))),
+  ("identifiers", Found(() => Identifiers.found(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
   ("lanes", Found(() => Lane_state.held(~root))),
   ("lane-state", Soft(() => Lane_state.state(~root))),
@@ -233,6 +234,7 @@ let over = (repo): array<(string, part)> =>
       ("domains", Soft(() => Wrangler.main(~root=repo))),
       ("suffixes", Found(() => Suffix_owned.main(~root=repo, ~label=Registry.label(repo)))),
       ("plain", Soft(() => Comments.plain(~root=repo))),
+      ("identifiers", Found(() => Identifiers.found(~root=repo))),
       ("drift", Soft(() => Drift.main(~only=Some(Registry.label(repo))))),
     ],
     switch Waiting.declared()->Array.find(((name, _)) => name == Registry.label(repo)) {

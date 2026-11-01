@@ -2,7 +2,13 @@
  * What a repository's tooling and tests keep, over its tracked files. A soft rule warns until the
  * repositories that break it today are fixed.
  */
-let soft = ["rust-nextest", "release-age", "ports-strict", "generated-marked"]
+let soft = [
+  "rust-nextest",
+  "release-age",
+  "ports-strict",
+  "generated-marked",
+  "test-documentation-values",
+]
 
 /** The findings that fail and those that warn, each of a repository's rules read once. */
 let found = (~root): (array<string>, array<string>) => {
@@ -14,6 +20,7 @@ let found = (~root): (array<string>, array<string>) => {
     ("test-port-zero", Ports.tests(~root, ~paths)),
     ("rust-nextest", Rust_tests.main(~root, ~paths)),
     ("generated-marked", Generated.main(~root, ~paths)),
+    ("test-documentation-values", Documented.main(~root, ~paths)),
   ]
   let say = ((rule, problems)) => problems->Array.map(problem => `${problem} (${rule})`)
   (

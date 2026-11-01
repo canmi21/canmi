@@ -199,7 +199,8 @@ link, a `user:repo` in `repos/registry.toml`, any format a repository defines, a
 mentions it. **It never stands in the structure**: no type, module, function or variable is named
 for it, and no code decides by it. It is no secret, so it is kept off the list of private
 identifiers, and it is not dwelt on. `account-name` in
-[model/rules/naming.res](../model/rules/naming.res).
+[model/rules/naming.res](../model/rules/naming.res); the identifiers part of the check reads
+source for the name in an identifier and in a comparison or a match arm.
 
 ### A rebrand does not oblige a rename, and a one-letter name is refused outright
 
@@ -211,7 +212,8 @@ A name has one job: to say which thing this is, at the point somebody reads it. 
 that job in a codebase, where a single letter already means an axis, an unknown, a placeholder
 and a coordinate -- `crate::x` and `cms x` read as something nobody got round to naming. A
 rebrand is the owner's decision about their product; what a name has to accomplish in source is
-unaffected by it, so following one is a cost with no matching benefit.
+unaffected by it, so following one is a cost with no matching benefit. `rebrand-kept` is held by the identifiers
+part, which refuses a path named by the bare letter, an `x.com` address and a module or type `X`.
 
 Two things are still the vendor's, exactly as the rule above says. Their **identifiers** --
 Grok's `x_user_search` is the name of a real tool and renaming it breaks the call. And their
