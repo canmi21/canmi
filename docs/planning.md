@@ -63,6 +63,11 @@ polish. A tool is improved before the work it serves only when it lies on the lo
 over the runs left outweighs what it costs. The loops differ in their targets: an inner loop run
 many times a day aims at a minute or two, an outer one run a few times a day at minutes.
 
+**A gate's first passage may warn where its later ones refuse.** A gate with no earlier state to
+compare against, a tool the old version lacks, or a check of a thing not yet deployed cannot hold on
+the first run, so that one run goes through, says plainly what it let pass, and is named in what it
+ships. From the next run the gate refuses, and what the first run let pass is fixed then.
+
 **A design is worked out top down, one layer at a time, every area together.** It starts from what
 its users need, numbered layer 0 at the face, and goes down a layer only once every area of the
 layer above has come down to it: no area is followed to the bottom while another is still open
