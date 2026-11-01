@@ -47,6 +47,75 @@ describe("a command that always runs long", () => {
   let refused = command => Background.refuse(payload(command))
   let refusedWith = (~timeout, command) => Background.refuse(payload(~timeout, command))
 
+  ["&>", ">&", "&>>", "|&"]->Array.forEach(operator => {
+    test(
+      `keeps ${operator} in the foreground`,
+      () => {
+        [
+          `mise run check ${operator} /tmp/example.log`,
+          `(mise run check; echo done) ${operator} /tmp/example.log`,
+          `mise run check ${operator} /tmp/example.log; echo done`,
+        ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, 2)))
+        if operator == "|&" {
+          expect(refused("echo ready |& mise run check"))->toEqual(2)
+        }
+      },
+    )
+
+    test(
+      `allows ${operator} with a real background operator`,
+      () => {
+        expect(refused(`(mise run check ${operator} /tmp/example.log; echo done) &`))->toEqual(0)
+        if operator != "|&" {
+          expect(refused(`mise run check ${operator} /tmp/example.log &`))->toEqual(0)
+        }
+      },
+    )
+  })
+
+  test("passes every command inside a background group", () => {
+    // Splitting at the inner semicolon used to lose the background scope of the build.
+    [
+      "(node_modules/.bin/rescript build > /tmp/b.log 2>&1; echo $? > /tmp/b.status) &",
+      "(rescript build; cargo test; echo done) &",
+      "((cargo test; rescript build); mise run build) &",
+      "(echo 'quoted ) & ('; cargo test; echo done) &",
+      "(echo \"quoted ) & (\"; cargo test) &",
+      "(echo escaped \\); cargo test) &",
+      "(echo $(printf ')'); cargo test) &",
+      "(echo `printf ')'`; cargo test) &",
+      "(echo \"escaped \\\" ) &\"; cargo test) &",
+      "(cargo test; echo done)& echo started",
+      "(cargo test; echo done) &\ncat /tmp/b.log",
+      "(until test -e f; do sleep 2; done) &",
+      "sh -c '(rescript build; echo done) &'",
+    ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, 0)))
+  })
+
+  test("refuses foreground work around groups", () => {
+    [
+      "(rescript build; echo done)",
+      "((cargo test); echo done)",
+      "(echo done; cargo test)",
+      "(cargo test; echo done) && echo started",
+      "(cargo test; echo done) '&'",
+      "(cargo test; echo done) \"&\"",
+      "(cargo test; echo done) \\&",
+      "(cargo test; echo done) & rescript build",
+      "(cargo test; echo done) & (rescript build; echo done)",
+      "rescript build; (cargo test; echo done) &",
+      "((cargo test; echo done) & rescript build)",
+      "(echo done) & until test -e f; do sleep 2; done",
+      "(until test -e f; do sleep 2; done)",
+      "cargo test '&'",
+      "cargo test \"&\"",
+      "cargo test 'quoted&'",
+      "cargo test \\&",
+      "cargo test && echo done",
+      "sh -c '(rescript build; echo done)'",
+    ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, 2)))
+  })
+
   test("is refused in the foreground whatever its timeout, or none", () => {
     [
       "mise run check",

@@ -19,26 +19,111 @@ let background = (payload: Payload.t) =>
   ->Payload.object("tool_input")
   ->Option.mapOr(false, input => input->Payload.flag("run_in_background"))
 
-/** Whether a command line waits by polling, outside the body of a quoted here-document. */
-let polls = command => pollingLoop->RegExp.test(Push.withoutQuotedBodies(command))
+// Keep group boundaries until their background operator is known before splitting commands.
+let foregroundText = command => {
+  let chars = command->Node.codePoints
+  let length = chars->Array.length
+  let rec scan = start => {
+    let at = ref(start)
+    let quote = ref("")
+    let output = ref("")
+    let piece = ref("")
+    let closed = ref(false)
+    let append = text => piece := piece.contents ++ text
+    let flush = () => {
+      output := output.contents ++ piece.contents
+      piece := ""
+    }
+    while at.contents < length && !closed.contents {
+      let char = chars->Array.getUnsafe(at.contents)
+      let next = chars[at.contents + 1]
+      if char == "\\" && quote.contents != "'" {
+        append(char ++ next->Option.getOr(""))
+        at := at.contents + 2
+      } else if quote.contents == "'" {
+        append(char)
+        if char == "'" {
+          quote := ""
+        }
+        at := at.contents + 1
+      } else if char == "`" || (char == "$" && next == Some("(")) {
+        let stop = Jj_command.substitutionEnd(chars, at.contents)->Option.getOr(length)
+        append(chars->Array.slice(~start=at.contents, ~end=stop)->Array.join(""))
+        at := stop
+      } else if quote.contents == "\"" {
+        append(char)
+        if char == "\"" {
+          quote := ""
+        }
+        at := at.contents + 1
+      } else if char == "'" || char == "\"" {
+        quote := char
+        append(char)
+        at := at.contents + 1
+      } else if char == "(" {
+        let (inner, stop, balanced) = scan(at.contents + 1)
+        let after = ref(stop)
+        while [Some(" "), Some("\t"), Some("\r")]->Array.includes(chars[after.contents]) {
+          after := after.contents + 1
+        }
+        if (
+          balanced &&
+          chars[after.contents] == Some("&") &&
+          !([Some("&"), Some(">")]->Array.includes(chars[after.contents + 1]))
+        ) {
+          append(";")
+          flush()
+          at := after.contents + 1
+        } else {
+          append(";" ++ inner ++ ";")
+          flush()
+          at := stop
+        }
+      } else if char == ")" && start > 0 {
+        closed := true
+        at := at.contents + 1
+      } else if char == "&" && next == Some("&") {
+        append("&&")
+        flush()
+        at := at.contents + 2
+      } else if char == "&" && next == Some(">") {
+        append("&>")
+        at := at.contents + 2
+      } else if char == "|" && next == Some("&") {
+        append("|")
+        flush()
+        at := at.contents + 2
+      } else if (
+        char == "&" &&
+        at.contents > 0 &&
+        [Some(">"), Some("<")]->Array.includes(chars[at.contents - 1])
+      ) {
+        append(char)
+        at := at.contents + 1
+      } else if char == "&" {
+        piece := ";"
+        flush()
+        at := at.contents + 1
+      } else {
+        append(char)
+        if [";", "\n", "|"]->Array.includes(char) {
+          flush()
+        }
+        at := at.contents + 1
+      }
+    }
+    flush()
+    (output.contents, at.contents, closed.contents)
+  }
+  let (text, _, _) = scan(0)
+  text
+}
+
+/** Whether a foreground command waits by polling outside a quoted here-document. */
+let polls = command => pollingLoop->RegExp.test(foregroundText(Push.withoutQuotedBodies(command)))
 
 let startsWith = (words, prefix) =>
   prefix->Array.everyWithIndex((word, at) => words[at] == Some(word))
-
-/** The segment's words that run in the foreground, a lone or trailing `&` sending the rest away. */
-let foreground = (segment: array<string>) => {
-  let piece = ref([])
-  segment->Array.forEach(word =>
-    if word == "&" {
-      piece := []
-    } else if word->String.length > 1 && word->String.endsWith("&") {
-      piece := []
-    } else {
-      piece.contents->Array.push(word)
-    }
-  )
-  piece.contents
-}
 
 /** The task a `mise run` names, past a `//repos/x:` path and the options before it. */
 let taskOf = (words: array<string>) => {
@@ -119,8 +204,7 @@ and commandLong = (words: array<string>) =>
   }
 /** Whether a command line runs an always-long command in the foreground in any segment. */
 and lineLong = (command: string) =>
-  Jj_command.segments(Push.withoutQuotedBodies(command))->Array.some(segment => {
-    let piece = foreground(segment)
+  Jj_command.segments(foregroundText(Push.withoutQuotedBodies(command)))->Array.some(piece => {
     switch Jj_command.commandAt(piece) {
     | Some(at) => commandLong(piece->Array.slice(~start=at))
     | None => false
