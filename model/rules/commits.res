@@ -32,9 +32,9 @@ let since = [
 /** The jj subcommands that make a commit, and so wait on a passing verify. */
 let committing = ["commit", "ci"]
 
-/** The escape a command names to pass a gate, `SKIP=verify` a commit's and `SKIP=scan` a push's. */
+/** The escape a command names to pass a gate, `verify` and `form` a commit's, `scan` a push's. */
 let skip = "SKIP"
-let skippable = ["verify", "scan"]
+let skippable = ["verify", "form", "scan"]
 
 let doc = "docs/commits.md"
 let rules: array<Rule.t> = [

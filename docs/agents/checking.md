@@ -23,13 +23,30 @@ writes, a refactorer among them, is still checked by each repository's own check
 
 ### The form layer holds at gates, never while code is written
 
-**Nobody checks the form layer while code is being written.** At a commit it only warns, and the
-commit goes through, `form-at-commit`; **before a push it is an error, and the push stops**, by the
-means `audit` already has, counting the form layer's warnings as failures, in either mode,
-`push-form-clear`, [pushing.md](pushing.md). Push holds it over the tree of the commit each pushed
-bookmark points to. A warning of the form layer says the commit it first appeared in and how many
-commits have passed since, worked out from the repository's history; that is a hint, and changes no
-result.
+**Nobody checks the form layer while code is being written.** A change is judged as it enters a
+repository's main line, `form-at-commit`: a commit in a lane only warns, and a commit onto the main
+line, made in that repository's main checkout, is refused on any finding of the form layer. Before
+a push it is an error again, the last net, by the means `audit` already has, counting the form
+layer's warnings as failures, in either mode, `push-form-clear`, [pushing.md](pushing.md).
+
+**The commit gate is `hooks/gates/form.res`.** It tells a main checkout from a lane by the checkout
+itself: in a main checkout `.jj/repo` is a directory, and in a lane, a jj workspace, it is the
+pointer to the checkout's store, so a lane copied or opened anywhere is a lane and a clone is its
+own main checkout. Each repository is judged alone, a paused one passed over. **What is judged is
+the tree the commit would leave**, read from the repository and never checked out: the working copy
+whole for a plain commit, and for a commit by path the working copy where the paths name a file and
+its parent's version of every other changed one, so edits left out of the commit are not judged. A
+commit by path onto a merge is judged on the whole working copy. The gate runs the form part
+alone, `shape`, `lines` and `comments`, the same measure a push takes, never a whole verify.
+
+**A refusal names the file and the rule, and says to take the change back to the lane**, fix it
+there and land it again. **The escape is `SKIP=form jj commit ...`**, as `SKIP=verify` is,
+[commits.md](../commits.md); each use is a record of friction, [friction.md](friction.md), and a
+repository already holding a finding when the gate first reaches it lands its first commit by it,
+[planning.md](../planning.md), "A gate's first passage may warn". Push holds the form layer over
+the tree of the commit each pushed bookmark points to. A warning of the form layer says the commit
+it first appeared in and how many commits have passed since, worked out from the repository's
+history; that is a hint, and changes no result.
 
 **The refactorer tidies only what an implementer wrote.** A warning in a file with one writer that
 the integrator wrote is tidied by the integrator itself, with no refactorer dispatched.
@@ -40,8 +57,10 @@ the integrator wrote is tidied by the integrator itself, with no refactorer disp
    parallel under `implementer-commands`.
 2. The integrator merges the lanes in one merge with a parent for each, runs `mise run fmt` on the
    merge, and runs the logic layer's check.
-3. The integrator commits, the form layer only warning, `form-at-commit`.
-4. Where the form layer warns, the refactorer is dispatched.
+3. The integrator commits in each repository's main checkout, the form layer refusing,
+   `form-at-commit`.
+4. Where the form layer refuses, the refactorer is dispatched into the lane, and the commit is
+   made again.
 5. A reviewer reads the diff.
 6. The wave is accepted, as "Acceptance comes before the push" gives.
 7. The push gate, where the full check runs, [pushing.md](pushing.md).

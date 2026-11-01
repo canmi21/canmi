@@ -268,8 +268,8 @@ the workspace's.
 
 **The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
 `SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;
-`Commits.skippable` lists what it may name, `verify` for a commit and `scan` for a push,
-[agents/pushing.md](agents/pushing.md). A repository that cannot pass yet is no reason to stop
+`Commits.skippable` lists what it may name, `verify` and `form` for a commit and `scan` for a push,
+[agents/checking.md](agents/checking.md), [agents/pushing.md](agents/pushing.md). A repository that cannot pass yet is no reason to stop
 work in it, so the gate is passed by saying so rather than by working around it.
 
 `hooks/decision.res` runs _after_ the commit lands and asks the question the diff

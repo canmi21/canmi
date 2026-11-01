@@ -258,7 +258,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "push-form-clear",
-    says: "Every push waits on the form layer holding nothing in the commit each pushed bookmark points to, read from the repository; a commit may carry form warnings, only the state pushed must be clean",
+    says: "Every push waits on the form layer holding nothing in the commit each pushed bookmark points to, read from the repository; a commit in a lane may carry form warnings, and a push, the last net after the commit onto a main line, holds the same measure",
     doc: pushing,
     held: Gate("push"),
     layer: Form,

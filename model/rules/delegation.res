@@ -365,9 +365,9 @@ let rules: array<Rule.t> = [
   },
   {
     name: "form-at-commit",
-    says: "At a commit the form layer only warns, saying the commit it first appeared in and how many since",
+    says: "A commit in a lane only warns of the form layer; a commit onto a repository's main line, made in its main checkout, is refused on any form finding in the tree it would leave, each repository alone, a paused one passed over, and `SKIP=form` the escape",
     doc: checking,
-    held: Check("shape"),
+    held: Hook("hooks/gates/form"),
     layer: Form,
   },
 ]

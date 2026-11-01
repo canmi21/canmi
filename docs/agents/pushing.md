@@ -5,7 +5,9 @@ The gate a push passes, what it sets off, and what it must not carry out. Who pu
 
 ## A wave's push passes a gate
 
-**Every push waits on the form layer holding nothing**, in either mode, `push-form-clear`: the gate
+**Every push waits on the form layer holding nothing**, in either mode, `push-form-clear`, the last
+net after the commit onto a main line refused the same findings, [checking.md](checking.md),
+"The form layer holds at gates, never while code is written": the gate
 exists so that a debt never outlives the next push, and a session with no role pushing past its
 warnings would keep that promise by half. **The gate measures the tree of the commit each pushed
 bookmark points to, read from the repository**, never from the disk and never checked out: each such

@@ -73,8 +73,12 @@ let handle = (payload: Payload.t): int =>
         | 0 =>
           switch Verified.handle(payload) {
           | 0 =>
-            Commit.fix(payload)
-            0
+            switch Form.handle(payload) {
+            | 0 =>
+              Commit.fix(payload)
+              0
+            | refused => refused
+            }
           | refused => refused
           }
         | refused => refused
