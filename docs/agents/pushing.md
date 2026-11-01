@@ -32,15 +32,18 @@ session with no role pushes once the check passes and the form layer holds nothi
 [commits.md](../commits.md), "When a change is done, and when it is pushed". **A public repository
 also passes the scan for leaks** below; a private one is not scanned.
 
-**A push that releases a version of our own code** may need a further gate, decided once the first
-such push comes, the deferred item `release-push`; until then it is asked of the user first, in
-either mode, [commits.md](../commits.md), "When a change is done, and when it is pushed". As things
-stand, monoflake/platform's and monoflake/cloud's pushes start no CI; monoflake/driver's release
-runs on every push to main and daily at 06:31 UTC, releasing whenever the source version is
-unreleased, so a push carrying a version bump of our own code is asked of the author first, while a
-dependency move alone raises no version and rides the next release; every repository's update runs
-on a daily schedule and by hand, never on a push, and monoflake/runtime's publish on a push and on a
-weekly one, and both handle their own edge cases; and what runtime publishes is an upstream image
+**monoflake/driver's push releases nothing**: `release.yml` runs by `workflow_dispatch` alone, at the
+version in source. An agent dispatches it at one moment, when the author says to move what C has
+tested onto A and B: that order is the permission, and the Release is one step of that roll, a
+candidate rehearsed, its Release dispatched, then rings and the rest C, B, A. No Release otherwise, and
+none in C's loop, monoflake/cloud's RFC stc9g.
+
+**Any other push that releases a version of our own code** is asked of the user first, in either mode,
+the deferred item `release-push`, [commits.md](../commits.md), "When a change is done, and when it is
+pushed". As things stand, monoflake/platform's, cloud's and driver's pushes run their verify, an
+after-the-fact check; every repository's update runs on a daily schedule and by hand, never on a push,
+and monoflake/runtime's publish on a push and on a weekly one, and both handle their own edge cases;
+and what runtime publishes is an upstream image
 repackaged, which [lessons.md](../lessons.md) lets be pushed as it is.
 
 ## A repository declares what its push sets off

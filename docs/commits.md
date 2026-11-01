@@ -181,6 +181,7 @@ in roles alone, [pushing.md](agents/pushing.md).
 
 **A push that releases a version of our own code is asked of the user first**, in either mode,
 until the deferred item `release-push` is settled; canmi/lib's `held-back` is one such push.
+monoflake/driver's pushes release nothing, [pushing.md](agents/pushing.md).
 
 ### Leave the working copy above `main`, not on it
 
