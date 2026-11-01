@@ -55,7 +55,7 @@ let rules: array<Rule.t> = [
     name: "overlap-measured",
     says: "A new linter's overlap with its formatter is found by feeding the formatter a violation",
     doc,
-    held: Pending("a fixture per overlapping rule, formatted and linted"),
+    held: Check("overlap"),
   },
   {
     name: "svelte-beside-oxfmt",

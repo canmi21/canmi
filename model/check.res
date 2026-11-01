@@ -168,6 +168,7 @@ let parts: array<(string, part)> = [
   ("lane-state", Soft(() => Lane_state.state(~root))),
   ("friction", Soft(() => Friction.problems(~directory=Friction.expand(Delegation.friction)))),
   ("versions", Found(() => Versions.found(~root))),
+  ("overlap", Found(() => Overlap_measure.main(~root))),
 ]
 
 let known = parts->Array.map(((name, _)) => name)
