@@ -64,4 +64,8 @@ closes first": each stage of a real run, its time from the log or the command th
 how often the loop runs, so the slowest stage per iteration is named. It reports the table again
 after each stage is worked.
 
+**A step outside the plan the advisor cleared is said before it is taken**, in one line to the
+advisor, as moving `main` back to push a cleared range alone; asked by the advisor on 2026-10-26,
+who had accepted such a step but wanted to hear of it first.
+
 **It reports facts and problems, and gives no advice.**

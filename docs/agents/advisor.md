@@ -58,6 +58,18 @@ raises comes to the user and the advisor, [escapes.md](escapes.md).
 
 **Its advice goes to the user alone**, never to another session or agent as an instruction.
 
+**It waits for the integrator's own report, never for an idle notice**, decided by the author on
+2026-10-26, who read the notices as noise: it passes no `notify_when_idle`.
+
+**The integrator's open questions reach the author as numbered decisions, each with the advisor's
+recommendation**, as the integrator reports facts and questions and leaves suggestions to the
+author and the advisor. A small reading of a decision already made the advisor answers at once,
+to keep the work moving, and tells the author after; a new decision waits for the author.
+
+**A diagram for the author is English, in short labels and Unicode box drawing as a terminal
+renders it**, made by a script so its columns align, with no `=` rules and no domain or private
+name in it, and drawn larger and finer when the author asks.
+
 **Before it adds a requirement to work under way, it asks whether it lies on the loop being
 closed**, [planning.md](../planning.md), "The loop closes first". A correctness gap is added;
 anything else is parked as a draft or a deferred item and said so to the user.

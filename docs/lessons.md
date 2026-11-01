@@ -290,6 +290,11 @@ moves into `model/rules/` with its check and leaves this file.
   readback fails unless the system applied is the one the round built, written after the round began,
   and the setting reads its expected value.
 
+- **A device is proposed for a role only after its cores, memory and disk are read.** On 2026-10-31
+  the advisor offered a home single-board computer as an aarch64 CI runner because A's machines are arm; it has
+  one core and one gigabyte, and the author refused it. The figures come from fleet.md, the host,
+  or the author, and are said in the proposal.
+
 ## Planning
 
 - **A loop is closed before any of its stages is refined.** By 2026-10-30 the fleet's update work
