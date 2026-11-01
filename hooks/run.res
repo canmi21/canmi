@@ -71,12 +71,16 @@ let handle = (payload: Payload.t): int =>
       | 0 =>
         switch Background.refuse(payload) {
         | 0 =>
-          switch Verified.handle(payload) {
+          switch Codex_usage.refuse(payload) {
           | 0 =>
-            switch Form.handle(payload) {
+            switch Verified.handle(payload) {
             | 0 =>
-              Commit.fix(payload)
-              0
+              switch Form.handle(payload) {
+              | 0 =>
+                Commit.fix(payload)
+                0
+              | refused => refused
+              }
             | refused => refused
             }
           | refused => refused
@@ -88,15 +92,21 @@ let handle = (payload: Payload.t): int =>
     | refused => refused
     }
   | Some("PostToolUse") =>
-    combined([Decision.context(payload), Delta.context(payload)])->Option.forEach(message =>
-      say(post(message))
-    )
+    combined([
+      Decision.context(payload),
+      Delta.context(payload),
+      Stale_jobs.context(payload),
+    ])->Option.forEach(message => say(post(message)))
     0
   | Some("Stop") =>
-    // One hold at a time, the bookmark's first and the language judged at the next stop.
+    // One hold at a time, the bookmark's first, then a silent job, and the language judged last.
     switch Bookmark.response(payload) {
     | Some(held) => say(held)
-    | None => Language.response(payload)->Option.forEach(say)
+    | None =>
+      switch Stale_jobs.response(payload) {
+      | Some(held) => say(held)
+      | None => Language.response(payload)->Option.forEach(say)
+      }
     }
     0
   | _ => 0

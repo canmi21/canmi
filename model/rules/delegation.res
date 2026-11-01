@@ -95,6 +95,9 @@ let releasing = [
   ("machine", ["builder", "local"]),
 ]
 
+/** A background job's description holding this word may go silent, `stale-job-looked-at`. */
+let quietMark = "quiet"
+
 /** The longest a foreground call may run or ask to run, `long-command-background`. */
 let foregroundSeconds = 15
 
@@ -280,6 +283,18 @@ let rules: array<Rule.t> = [
     says: "An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, one part of the workspace's check aside, and --pending always; a task that deploys; and ssh, rsync or wrangler. A task it runs may read its own lane's history",
     doc: "docs/agents/implementer.md",
     held: Hook("hooks/agent_commands"),
+  },
+  {
+    name: "stale-job-looked-at",
+    says: "A job silent for `stallSeconds` is said at most every five minutes for one hour of silence and held once at a stop per job and silence, a TaskStop ending it as a notice does, a description holding `quietMark` exempt, an unreadable transcript letting the stop through, named",
+    doc: "docs/agents/agent-protocol.md",
+    held: Hook("hooks/gates/stale_jobs"),
+  },
+  {
+    name: "codex-quota",
+    says: "`codex exec` is refused while a window reads 100, naming the reset, an unreadable reading passing with a warning",
+    doc: "docs/agents/delegation.md",
+    held: Hook("hooks/gates/codex_usage"),
   },
   {
     name: "long-command-background",

@@ -256,6 +256,10 @@ shape of that.
 
 ## A long command never holds the conversation
 
+**A job gone silent is named and held**, `stale-job-looked-at` in
+[model/rules/delegation.res](../../model/rules/delegation.res): a job meant to go silent says
+`quiet` in its description, and a job's notice, which a hung one never sends, is not a look.
+
 **Anything that may run past `foregroundSeconds`, could hang, or waits for a condition runs in the
 background or under Monitor**, and the conversation goes on, in every session and every implementer
 it spawns. **The agent looks at the job every few seconds to a few tens of seconds**, sooner the

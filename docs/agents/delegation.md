@@ -219,7 +219,8 @@ which is long enough to bury the thing worth checking. The cheapest place in the
 a misparaphrased intent is before three implementers have acted on it, and a line is cheap enough to
 be read at a glance where a full brief is not.
 
-**Codex comes first while it has quota**: an implementer is dispatched on Codex whenever Codex still
+**`codex exec` is refused while a window reads 100**, `codex-quota` in
+[model/rules/delegation.res](../../model/rules/delegation.res). **Codex comes first while it has quota**: an implementer is dispatched on Codex whenever Codex still
 has quota, and on Claude only while it has none.
 
 - **Quota is read at dispatch, and only then.** Before new work is dispatched the integrator reads
