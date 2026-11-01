@@ -25,3 +25,7 @@ A spec carries its rules and the history of each. Where does the history go?
 - **The drain runs over the workspace and monoflake**, the rest being paused, one repository at a
   time, cloud first. A dated origin with no RFC to take it gets one before it leaves the doc. The
   check `docs-in-force` lands with the last of them.
+- **`docs/lessons.md` stays, holding each lesson's practice alone**, decided by the author on
+  2026-11-01. A drained doc's old text stays in the repository's history, read at the commit before
+  its drain, as the `rfcs` and `words` parts refuse quoted paths and old names in the tree: this
+  file's old lessons at workspace@5c8353e2, so that history is never rewritten.

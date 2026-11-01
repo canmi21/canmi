@@ -1,329 +1,163 @@
 # Lessons
 
-What an agent working here learned the hard way, each the habit it left and what happened. They were
-kept in agent memory once; the author asked on 2026-10-20 that they stand here, where every agent
-reads them. Agent memory keeps only what is private and the state of work in progress --
-[agent-protocol.md](agents/agent-protocol.md), "Selfcheck". A lesson a program can come to decide
-moves into `model/rules/` with its check and leaves this file.
+The practices learned the hard way that are in force, with their history in the RFCs.
+For private notes and work in progress, see [agent-protocol.md](agents/agent-protocol.md),
+"Selfcheck".
 
 ## Commits
 
-- **A commit names its paths literally, never by a command substitution.** The commit hook read a
-  `jj commit` given its paths by `$(jj diff --name-only | grep flake.lock)` as a commit ending at
-  the pipe inside the substitution, so the message after it went unread, and a 102-character
-  subject reached monoflake/cloud's main on 2026-10-27. `hooks/input/jj_command.res` now keeps a
-  substitution inside its word, and the check reads that repository after the commit, its `since`
-  in `model/rules/commits.res`.
-- **The co-author trailer names the model running now**: `Claude <Model>-<Version>`, read from
-  the session's own system prompt, never copied from a handover, a memory or an earlier commit,
-  and never passed through a shell variable, which the commit hook reads unexpanded. On
-  2026-09-04 a seam commit named the model a handover had named; on 2026-10-07 a day of commits
-  carried `(1M context)` through `$T`.
-- **A check and a commit are two calls.** The verify gate judges a command before any of it runs,
-  so `mise run check && jj commit` is refused however the check ends. A check's status is read
-  before anything outward, never through a pipe -- `check | tail && commit` takes `tail`'s -- and
-  never past a `;`: on 2026-10-05 and 2026-10-07 failing trees were pushed that way. An edit sent
-  in the commit's own call is judged by the stamp from before it, so the gate lets it through: on
-  2026-10-22 a platform commit passed so, its check having failed past a `;`.
-- **A commit by path can void the stamp.** `jj commit <paths>` runs the hook's `jj fix`, which may
-  reformat what it commits, so the tree left is no longer the one that passed: check again before
-  the next commit. Seen on 2026-10-20.
-- **A check can void its own stamp.** A crate added to a workspace's members is written into
-  `Cargo.lock` by the cargo the check runs, so the tree it leaves is not the one it passed: on
-  2026-10-20 a commit after it was refused. A check after a change of members runs twice.
-- **An implementer sent a message is working again until it says it is idle.** Its report done, a
-  question answered still sets it editing, so its repository is committed only after its last
-  idle: on 2026-10-23 a test it added after answering was swept into a docs commit beside it.
-- **No check runs while an implementer builds.** A check builds every block, and two builds of one
-  ReScript package at once collide on its lock, failing whichever started second, so the
-  integrator's checks and commits wait until the wave has returned.
-- **Each commit is its own call, alone in its message, opened by `jj root &&`.** Calls sent in one
-  message run in one shell, so one's `cd` lands in the other's: on 2026-10-13 a commit sent in a
-  parallel batch landed empty in the workspace and a chained push sent it, and on 2026-10-20 a
-  commit sent beside a check did the same, `main` moved onto it, caught before the push. A
-  `jj root` printing the wrong repository is the signal to stop, not to read past.
-- **`jj st` is read after every commit by path.** A rename is a delete and an add, so naming the
-  new path leaves the delete behind; a path holding `[`, `]`, `~`, `&` or `|` is fileset syntax and
-  is dropped unless written `'file:"..."'`. Name files, never a directory, which sweeps in another
-  session's edits.
-- **An edit is seen before it is committed.** BSD `sed` matches nothing with GNU's `\|` and says
-  nothing; on 2026-10-07 an empty commit went out after one. Edit with Python, asserting the count,
-  or the Edit tool, and see the change in `jj st` or a grep first.
-- **A check's warnings are read before a commit meant for a push.** `check` only warns of a
-  comment past its width, and the push's form layer refuses it: on 2026-10-27 two pushes stopped so,
-  one in a moved test, one in a lane's script, and each took a commit more.
-- **A formatter runs before an exact-match edit, never between two.** A reflow moved the text a
-  replacement was looking for, and the replacement silently did nothing.
-
-- **An RFC's place in the day is drawn before its file moves into a lane.** `rfc new` draws the
-  day's number from what the default checkouts hold, so an RFC moved into a lane is invisible to the
-  next draw, and each lane's check sees only its own: on 2026-10-24 platform's b75yr and driver's
-  5n9cy both took 2026-1024-08 in the monoflake space and broke check on both mains once pushed.
-  Draw every number an RFC for a lane needs before its file moves, or keep the file in the default
-  checkout until it lands. **At push, the rfcs check holds the commits being pushed against the other
-  repositories' mains on origin**, provisional, chosen by the advisor on 2026-10-24, the published
-  truth, and refuses a day's number already taken there, the one moment a collision becomes
-  everyone's problem; drawing over lanes is left out, since it would spend numbers on drafts a lane
-  may drop. Pending until built.
+- **A commit names its paths literally, never by a command substitution.**
+- **The co-author trailer names the model running now.** Read it from the current system prompt,
+  never from a handover, memory, or earlier commit; write the trailer literally, without a shell
+  variable.
+- **A check and a commit are two calls.** Read the check's own exit status before a commit or push;
+  never infer it from a later command after `;` or a pipe. Keep edits out of the commit's call. A
+  push may follow a check through `&&` only when the check's own status gates it.
+- **Recheck whenever a commit or check changes the verified tree.** Check again after a commit by
+  path reformats files. Run the check twice after changing Cargo workspace members, since Cargo may
+  update `Cargo.lock`.
+- **An implementer sent a message is working again until it says it is idle.** Wait for its latest
+  idle report before committing its repository.
+- **Each commit is its own call, alone in its message, opened by `jj root &&`.** Stop if the root
+  names the wrong repository.
+- **`jj st` is read after every commit by path.** Include both sides of a rename, quote fileset
+  metacharacters with `'file:"..."'`, and name files rather than directories to exclude other
+  sessions' edits.
+- **An edit is seen before it is committed.** Use Python with an asserted replacement count or the
+  Edit tool, then inspect the result with a status read or search. Do not use GNU `sed` syntax with
+  BSD `sed`.
+- **A check's warnings are read before a commit meant for a push.** Resolve warnings that the push's
+  form layer would refuse.
+- **A formatter runs before an exact-match edit, never between two.**
+- **An RFC's place in the day is drawn before its file moves into a lane.** Draw every number needed
+  before moving the files, or keep them in the default checkout until they land. At push, check the
+  outgoing RFC numbers against the other repositories' mains on origin.
 
 ## Other sessions and formatters
 
-- **`fmt` names its repository, and a formatter run by hand names its files.** On 2026-09-26 a bare
-  `mise run fmt` reformatted rdm's spec under another session's uncommitted files; on 2026-10-04 a
-  bare `oxfmt` rewrote 54 unrelated files, markdown tables among them.
-- **A write across repositories first looks for another session**: `jj op log` for operations
-  that are not this session's, and `pgrep -fl claude`. A repository in use is skipped and named.
-  On 2026-09-25 `jj fix` in seam, beside another session's scratch file, left its working copy
-  divergent.
-- **Two processes never build one ReScript tree at once.** Every cloud task starts with `rescript
-  build`, which compiles the platform sibling too; on 2026-10-31 a check run beside another
-  session's `mise run nudge` in the same checkout failed on "Corrupted compiled interface", and
-  passed run again. A failure of that shape is rerun alone before it is read as a defect.
-- **A commit rewritten is followed by `jj st` in every lane standing on it.** Rewording a pushed
-  commit rebases each lane's change onto the new one and leaves that lane's working copy stale,
-  as an edit to the base does, [lanes.md](agents/lanes.md); on 2026-10-27 a reworded commit of
-  monoflake/machine did so to the lane on it, and `jj workspace update-stale` left the lane's
-  edits in a divergent copy, recovered by `jj edit`. Each lane is read before the next step there.
-- **A lane's sibling runs its own `generate` before anything builds against it.** A new jj
-  workspace holds what is committed, never what a task generates and git ignores, so on 2026-10-27
-  a lane's driver failed to build against its platform sibling, which lacked
-  `code/libs/envelope/generated` until `mise run generate` ran there.
+- **`fmt` names its repository, and a formatter run by hand names its files.**
+- **A write across repositories first looks for another session.** Inspect `jj op log` for other
+  sessions' operations and `pgrep -fl claude`; skip and name any repository in use.
+- **Two processes never build one ReScript tree at once.** Include sibling trees a task builds. Wait
+  for implementers to finish before checking or committing; rerun lock or corrupted-interface
+  failures alone before treating them as defects.
+- **A commit rewritten is followed by `jj st` in every lane standing on it.** Read each lane before
+  continuing there; see [lanes.md](agents/lanes.md).
+- **A lane's sibling runs its own `generate` before anything builds against it.**
 
 ## Shell
 
-- **A hook that cannot run fails a pre-tool call closed.** A workspace lane holds no build, so on
-  2026-11-01 the launcher found the lane's unbuilt hooks/ and exited 1, which Claude Code treats as
-  non-blocking, and every PreToolUse guard passed in silence. It now runs the main checkout's hooks
-  from a lane and exits 2 for a pre-tool call when nothing is built, hooks/run_test.res.
-- **A wait on a oneshot reads its ActiveState, never `systemctl is-active`.** A oneshot running
-  is `activating`, which `is-active` reports as not active, so a loop waiting while it is active
-  ends at once. On 2026-10-26 such a wait ended a machine's upgrade watch after twenty seconds,
-  and its memory sampler was stopped while the upgrade still ran; `systemctl show -p ActiveState`
-  read until it is neither `activating` nor `active` is the wait.
-- **A computed list of paths is built in Python**, asserted non-empty and passed by
-  `subprocess.run`. The Bash tool's zsh does not split `$list`, and macOS's bash 3.2 has no
-  `mapfile`; on 2026-10-04 an empty list made `jj restore` restore the whole working copy.
-- **A tool is run through mise, never as the Bash tool's PATH finds it.** That PATH puts a global
-  pnpm 11 ahead of mise's pinned 12, so a bare `pnpm install` in a repository below rewrites its
-  lockfile with the wrong one; `mise exec -- pnpm ...` or a mise task runs the pinned one. Seen
-  on 2026-10-20.
-- **Nix reads a flake from git's index, which jj does not fill.** In a colocated repository a
-  file the working copy adds is in no commit git's index stands on, so a flake evaluated in place
-  misses it, silently unless it is `flake.nix` itself; `git add -N` would show it, and is git. A task
-  that runs Nix copies the flake's own files to a temporary directory and reads it as `path:`, as
-  `monoflake/platform`'s `nixfmt` and `nixed` do. Seen on 2026-10-20.
-- **A running script is never edited.** bash reads a script as it runs it, so a script rewritten
-  under a background run executed half a line; on 2026-10-25 a machine's install stopped with 127,
-  command not found. A copy is edited and started fresh.
-- **A wait for a rebuild waits on an edit its watcher sees.** On 2026-09-05 a loop waited for rdm's
-  binary to change after an edit to `spec/` alone, and nothing was ever going to rebuild.
-- **A task that may ask is read whole, never sent to `/dev/null`.** `mise run secret` asks before it
-  replaces a value already set, and stdin from `/dev/null` answers no; on 2026-10-27 a new token was
-  kept out so, its "kept" line discarded with the rest, and only an API call still refused showed it.
-- **A long command is run with the tool's `run_in_background`, its output read, never a condition
-  polled.** The harness says when it exits, and the output is read in between at the pace
-  [agent-protocol.md](agents/agent-protocol.md) gives; a loop polling for a condition waits on one
-  the step may already have passed, and waits for nothing, as the author found on 2026-10-26. Steps are taken one at a time, each read
-  before the next.
-- **A jump host goes in `~/.ssh/config` for its one machine, never as `-J` in `NIX_SSHOPTS`.** Nix
-  hands those options to every ssh it opens, the builder's own on localhost among them, so all of
-  them went through the jump on 2026-10-26.
-- **A secret reaches a remote script only on the stdin of a script already copied there.** The
-  script goes by `scp` first and `ssh host 'sh /root/script'` reads the secret from the pipe; an
-  `ssh ... < <(cat; cat script)` meant to send both replaced the pipe, so on 2026-10-28 the shell
-  ran each secret line as a command and its errors printed a bucket's endpoint and reading token
-  into a transcript. Busybox's `pkill -x` matches the binary's name too, so a `nix-store` is `nix`
-  there and is stopped by its pid.
-- **A unit `systemd-run` starts has no PATH beyond systemd's own.** It carries none of the login
-  shell's, so a script started that way on 2026-10-26 found none of its tools; the script sets its
-  own PATH or names each tool by its store path.
-- **A remote step carries a keepalive and a timeout.** An `ssh` starting a oneshot on a builder
-  hung after the run had finished, with no `ServerAliveInterval` to notice the connection gone and no
-  `timeout` around it, and a rollout waiting on it stood still for three hours on 2026-10-27; every
-  `ssh` a script runs sets `-o ServerAliveInterval=15 -o ServerAliveCountMax=4`, under a `timeout`
-  longer than the step's own.
-
-- **An address is redacted by a pattern BSD `sed` reads.** macOS's `sed -E` has no `\b`, so a
-  pattern built on it matches nothing and prints every address it was meant to hide; on 2026-10-23
-  tailnet addresses reached a transcript so. Replace digits outright, `tr '0-9' '#'`, or use Python.
-- **A socket unit's address changed is not taken by a switch.** NixOS left
-  `driver-machine-entry.socket` holding its old address, so the entry bound the new one itself and
-  refused connections while it restarted, found by `replace` on 2026-10-23; the socket is restarted
-  once by hand after such a switch, and `replace` run after it.
+- **A hook that cannot run fails a pre-tool call closed.** Use the main checkout's built hooks from
+  a lane, and exit 2 for a pre-tool call when no build is available.
+- **A wait on a oneshot reads its ActiveState, never `systemctl is-active`.** Read `systemctl show
+  -p ActiveState` until the state is neither `activating` nor `active`.
+- **A computed list of paths is built in Python**, asserted nonempty, and passed by
+  `subprocess.run`.
+- **A tool is run through mise, never as the Bash tool's PATH finds it.** Use `mise exec -- <tool>
+  ...` or a mise task.
+- **Evaluate a flake from a temporary copy of its own files using `path:`.** Do not rely on git's
+  index to include files added in a jj working copy.
+- **A running script is never edited.** Edit a copy and start it fresh.
+- For rebuild wait triggers, see [agent-protocol.md](agents/agent-protocol.md).
+- **A task that may ask is read whole, never sent to `/dev/null`.** Keep its stdin interactive and
+  read all its output.
+- **Run long commands with the tool's background facility and read their output.** Follow
+  [agent-protocol.md](agents/agent-protocol.md) for timing; take steps one at a time, reading each
+  result before the next, rather than polling for a condition a step may have passed.
+- **A jump host goes in `~/.ssh/config` for its one machine, never as `-J` in `NIX_SSHOPTS`.**
+- **A secret reaches a remote script only on the stdin of a script already copied there.** Copy the
+  script with `scp` first, then pipe the secret to `ssh host 'sh /root/script'`. Stop BusyBox
+  processes by pid when `pkill -x` would match their shared binary name.
+- **Set PATH in a script started by `systemd-run`, or name tools by their store paths.**
+- **A remote step carries a keepalive and a timeout.** Every scripted `ssh` sets `-o
+  ServerAliveInterval=15 -o ServerAliveCountMax=4`, under a timeout longer than the step's own.
+- **An address is redacted by a pattern BSD `sed` reads.** Avoid `\b` in macOS `sed -E`; replace
+  digits with `tr '0-9' '#'` or use Python.
+- **Restart a socket unit by hand after switching its address.** Run `replace` after the restart.
 
 ## Code
 
-- **A Worker's RPC binding is never held in a ReScript option of an abstract type.** Every name
-  read on a Fetcher is present, so the option's unwrapping took a VPC binding for a nested option
-  and handed on an object with no `fetch`; on 2026-10-23 the control reached no host so, while the
-  local control, reaching its host by address, passed. The abstract type is marked `@notUndefined`.
-- **A query's cost is measured, never assumed from its tests passing.** The control's address
-  allocation generated its whole range and filtered it, about 262,000 rows read a call, ten binds
-  77% of its database time; every test and review passed it, and the author found it in D1's
-  insights on 2026-10-27. A rows-read budget in platform's model is to hold each statement, its lane
-  opened that day, and a reviewer states each statement's rows,
-  [agents/reviewer.md](agents/reviewer.md).
-- **A shell script's test on the host's PATH never proves its package's inputs.** monoflake/machine's
-  driver fetcher called `cmp`, which every developer's PATH holds and its `writeShellApplication`'s
-  `runtimeInputs` did not; its tests passed, its first run on okra on 2026-10-30 installed, and its
-  second refused, `cmp: command not found`. A command the script calls is checked against the
-  package's inputs in review, and the second run of anything stateful is part of a live test.
+- **Mark a Worker's abstract RPC binding type `@notUndefined` before holding it in a ReScript
+  option.**
+- **A query's cost is measured, never assumed from its tests passing.** Measure rows read against a
+  budget for each statement; follow [agents/reviewer.md](agents/reviewer.md) for reporting rows and
+  their growth.
+- **A shell script's test on the host's PATH never proves its package's inputs.** Review every
+  command against the package's runtime inputs, and include a second run in live tests of stateful
+  behavior.
 
 ## Remotes, and what cannot be taken back
 
-- **An outward step asked is done alone.** "Push it, and then it is archived" asked for a push; the
-  archiving, and the settings the author changed first, were theirs. 2026-10-20.
-- **A push that publishes the author's own code to a registry is asked for first.** A repository
-  whose CI publishes a crate or an npm package on a push to main is pushed only once the author says
-  so -- `canmi/lib`'s releases its packages. On 2026-10-15 two pushes published npm versions nobody
-  asked for. An image or a GitHub release that repackages upstream's code, as `monoflake/runtime`
-  and `monoflake/machine` do, is pushed without asking, the author said on 2026-10-23, and so is the
-  author's own code whose CI publishes nothing.
-- **A write naming a Worker first finds the Worker by that name.** A non-interactive `wrangler
-  secret put` answers its own "create a new Worker?" with yes: on 2026-10-06 it made an empty Worker
-  named as the config said, while the real one was deployed under the dashboard's name.
-- **Before a push, the workflows that run on it are read, not the doc that describes them.** On
-  2026-10-31 monoflake/driver's version was raised to pass its verify guard and pushed, believed
-  to release by hand alone as pushing.md then said; its release.yml runs on every push and
-  published driver-machine 0.1.2 unasked, and the scheduled update moved machine to it within the
-  hour. A raised version is a release wherever a workflow publishes an unreleased one.
-- **A delete through Cloudflare's `cf` passes `--force` and is read back afterwards.** Run without a
-  terminal, its delete commands stop at their confirmation prompt and still exit 0. On 2026-10-31
-  the scratch bucket `advisor-copy-probe` survived a delete that reported success.
-- **A push follows a check whose exit was read, never one chained after it.** On 2026-11-01 a
-  driver check and the push's dry run ran in one background call joined by `;`, the check's
-  `exit 1` printed above the dry run's success, and the push went on: a Rust test flaky under the
-  full check's load had failed, and passed three times alone. The check's own exit line is read,
-  or the push is joined to it by `&&`.
-- **A push and what depends on it are two calls.** The next step reads the push's own exit code,
-  never through a pipe, which reports its last command's, unless the shell runs with `pipefail`. On
-  2026-10-29 `push | tail && gh workflow run` had its push refused by the form layer and triggered
-  monoflake/cloud's systems run on the old main anyway; it was canceled before it uploaded.
-- **A push across repositories that depend on each other stops at its first failure.** Each is
-  pushed in its own call, its result read before the next, and those after a refused one wait,
-  never in a loop and never by `--all`, [commits.md](commits.md). On
-  2026-10-24 one shell loop pushed monoflake/platform, then had driver refused by its line limit
-  and went on to push cloud, so cloud landed before driver against the cleared order, and driver's
-  public main did not build against platform's new contracts until driver followed.
-- **A repository is pushed only once what it compiles against from a sibling is pushed too.** At
-  home a repository builds against the siblings' working copies, so code another repository has
-  not committed compiles there and fails in CI. On 2026-10-31 monoflake/cloud imported driver's
-  `Worker_install`, held uncommitted in driver, and cloud's scheduled systems run failed to compile.
-- **A NixOS switch starts a timer held by hand again.** A switch restarts every unit its
-  configuration enables, timers among them, so a timer stopped for a step is stopped again after
-  each switch. On 2026-10-25 both of monoflake's test machines had their daily upgrade timer
-  stopped for a switch, and each switch started it again, caught from its output. **A timer
-  started again fires a slot it missed at once**: systemd counts a calendar timer's next slot from
-  its last trigger, or failing that its previous start, so a slot passed while it was stopped is due
-  the moment it starts, `Persistent` or not. On 2026-10-26 a builder's timer for another machine,
-  restored by a switch, ran at once. `systemctl list-timers` is read before a timer is restored.
-- **A unit a socket-activated daemon requires is not run by the switch.** A switch starts what is
-  enabled, and nix-daemon waits for its socket, so on 2026-10-27 each builder's preparation of its
-  build subvolume, required by the daemon, ran only when started by hand after the switch.
-- **A workflow never run before is run once in a clean copy first.** On 2026-10-27 the driver's
-  first release failed at its install, its platform pin five days behind what the driver's own model
-  needs; a copy made by `git archive` of the three repositories, built with nothing generated,
-  proved the fix before the second push.
-- **A push past the private-identifier scan is said to the advisor first**, the hit and why it is
-  none, the advisor said on 2026-10-27, after one went out on a bare word the author then dropped.
-- **A push goes through `mise run push <repo>`, never `jj git push` alone.** Only the verb runs the
-  form layer and the private-identifier scan, [commits.md](commits.md); jj has no push hook. From
-  2026-10-28 the integrator pushed monoflake/cloud by `jj git push --bookmark main`, so three
-  comments over 100 columns went out unstopped, and the verb's first push on 2026-10-29 met all
-  three at once. It happened again to the workspace on 2026-10-31, so `push-through-verb` now
-  holds it by a hook, [agents/pushing.md](agents/pushing.md).
-- **A machine's secrets file is part of its system.** sops-nix copies a `sopsFile` whole into the
-  store, so a key added to a machine's `secrets.json` for one program changes that machine's
-  system, and a file several machines read changes each of theirs. On 2026-10-27 a new reader of
-  the cache's keys changed eleven systems by their secrets alone. The drvPaths of every machine are
-  compared before a secret is pushed.
-- **A pinned installer is read for what it fetches itself.** On 2026-10-26 a reinstall script
-  pinned by its hash downloaded a second script, `trans.sh`, from its upstream's main branch
-  during the install, on two machines; pinning one pinned nothing it fetched.
-- **`tailscale up --reset` clears every preference set before it.** On 2026-10-26 it cleared a
-  relay port that a unit had set at boot, so the port stopped listening after a machine joined;
-  the unit setting it is run again after a join, until the join stops resetting.
-- **A binary cache answering 409 fails the fetch, and Nix does not retry it.** On 2026-10-26 R2
-  answered one narinfo request with 409 and a machine's daily fetch failed; the same request was
-  answered 200 an hour later. A failed fetch is retried before it is reported as a fault.
-- **An agent is forwarded to a machine only when the author or the advisor says so.** For as long
-  as `ssh -A` runs, root on the far machine can use the author's key against any host it reaches;
-  on 2026-10-26 one measurement was run so unasked. A measurement uses a key made for it, or runs
-  from the Mac across both hops.
+- **An outward step asked is done alone.** Perform only the requested external action; leave
+  separate settings changes or archiving to the requester.
+- **A push that publishes the author's own code to a registry is asked for first.** Pushes that
+  publish no code, and images or GitHub releases that repackage upstream code, need no additional
+  permission.
+- **A write naming a Worker first finds the Worker by that name.** Verify the deployed name before a
+  noninteractive write that could create a Worker.
+- **Before a push, the workflows that run on it are read, not the doc that describes them.** Treat a
+  version bump as a release when a workflow publishes an unreleased version.
+- **A delete through Cloudflare's `cf` passes `--force` and is read back afterward.**
+- **A push and what depends on it are two calls.** Read the push's own exit code before continuing;
+  a pipe requires `pipefail` to preserve a failed push's status.
+- **A push across repositories that depend on each other stops at its first failure.** Push each in
+  its own call and read its result before the next; use neither a loop nor `--all`. See
+  [commits.md](commits.md).
+- **A repository is pushed only once what it compiles against from a sibling is pushed too.**
+- **Stop a timer held for a step again after every NixOS switch.** Read `systemctl list-timers`
+  before restoring it; a missed calendar slot can fire immediately, with or without `Persistent`.
+- **Start required preparation units explicitly after a switch when their socket-activated daemon
+  has not run.**
+- **Run a new workflow, or one with a setup step removed, in a clean copy first.** Install and build
+  only the repositories the workflow receives, with no generated files or parent dependencies
+  supplied by the development checkout; YAML tests alone do not prove jobs run.
+- **A push past the private-identifier scan is said to the advisor first.** State the hit and why it
+  is not a leak before bypassing the scan.
+- For the required push command, see [agents/pushing.md](agents/pushing.md).
+- **Compare every machine's drvPath before pushing a secret change.** A shared `sopsFile` changes
+  every system that reads it.
+- **A pinned installer is read for what it fetches itself.** Inspect the sources and pins of its
+  downloaded scripts too.
+- **Reapply preferences cleared by `tailscale up --reset` after joining.** Rerun the unit that sets
+  them until joining no longer resets them.
+- **Retry a failed binary-cache fetch before reporting a fault.** Include HTTP 409 failures, which
+  Nix does not retry.
+- **An agent is forwarded to a machine only when the author or the advisor says so.** Otherwise use
+  a key made for the measurement or run from the Mac across both hops.
 - **A machine outside monoflake/cloud's fleet is not logged into unless the author or the advisor
-  names it**, read-only or not. A question of who configures it is answered from the repositories.
-  On 2026-10-26 the integrator ran one read-only command as root on such a machine to answer which
-  repository kept it, which the repositories already answered.
-- **After a push, the next task starts.** Watching a deploy or polling a registry's propagation
-  stalls the session for nothing asked; the author says when a publish is out.
-- **A place, a name or a credential is read against `model/rules` before it is proposed or
-  approved, and a provisional choice never overrides a written rule.** On 2026-10-29 the integrator
-  proposed enam for the test platform's CI bucket and the advisor approved it as provisional,
-  though `cloudflare-placed` allows wnam or apac alone unless the author names another place; the
-  check passed it because the create read its place at run time, and the bucket was rolled.
-- **A deleted resource's name is never used again**, `drawn-ids-once` in
-  [model/rules/naming.res](../model/rules/naming.res). On 2026-10-29 the plan to make that bucket
-  again in wnam under its old name was caught by the author: Cloudflare honors a bucket's name only
-  the first time, so its replacement drew a new id.
+  names it.** This includes read-only access; answer repository ownership questions from the
+  repositories.
+- **After a push, the next task starts.** Leave deploy watching and registry propagation polling to
+  an explicit request.
+- **Check a place, name, or credential against `model/rules` before proposing or approving it.** A
+  provisional choice never overrides a written rule.
+- For retired resource names, see [`drawn-ids-once`](../model/rules/naming.res).
 
 ## Reading and reporting
 
-- **A contradiction is quoted before it is filed**: both clauses whole, side by side. On 2026-10-19
-  a conflict was filed between two drafts from a summary of one, which on reading said the opposite.
-- **The author's shorthand is understood, never offered back as a name.** Cloudflare's two letters
-  typed in chat are Cloudflare in every file and every proposal, as [naming.md](naming.md) asks, and
-  the words part of the check refuses them. 2026-10-20.
-- **A record holding a secret is read by naming the fields wanted, never by masking the rest**, as
-  `jq '{organization, relayed, address, origin: (.origin != null)}'`. A mask by key name passes a
-  field it does not know: on 2026-10-25 one hiding `secret` and `token` printed a binding's
-  `tunnel` whole, a Cloudflare tunnel token, into a session's output.
-- **A directory holding secrets is listed by names and sizes alone**, never read with a mask by
-  file name, since a secret's file can bear any name. On 2026-11-01 fog's bound/ files were read
-  with a mask passing all but `binding`, `token` and `secret`, and the binding's tunnel token, kept
-  as `bound/tunnel`, printed its first 120 characters into a session.
-- **A test reading a workflow's YAML proves no job runs**, so removing a step from a job's setup is
-  run first in a layout without it. On 2026-11-01 monoflake/cloud's systems dropped the workspace's
-  install with its workflow tests green, and all five jobs failed on `smol-toml`, which cloud
-  imported undeclared and had found by walking up to the workspace's `node_modules`. A clean copy
-  of the repositories alone, installed and built, then found it at once.
-- **A lane is taken only after a jj command has run in it.** jj snapshots a working copy when a
-  command runs there, so `jj duplicate` or `restore` from a lane copies the last snapshot, not its
-  files. On 2026-11-01 a lane's whole review round stayed behind while its earlier state passed the
-  check and was pushed and reported live; only a path missing on a runner showed it. Run `jj st` in
-  the lane first.
-- **A check's exit 0 is read with its red list**: a block in work fails nothing, its failures
-  listed in red after the check, so a failing test passes the exit code. On 2026-10-26 a merge
-  checked exit 0 with a test of the control failing; `task failed` and `✖` in the log showed it.
-- **A command handed to the author is first run in a form that changes nothing**, from the directory
-  they will type it in: no arguments, `--dry-run`, or a value refused before any prompt. On
-  2026-10-26 `mise run secret` was handed with a `cd` into a repository, where mise resolves that
-  repository's tasks and found none; `secret` is the workspace's, run from its root.
-- **A readback asserts its expected value, never prints it.** A rollout's readback printed a
-  machine's version and its count of a new setting, and the count it printed empty went unread; on
-  2026-10-27 a machine reported fetched took an old pointer and stayed on the old system. Each
-  readback fails unless the system applied is the one the round built, written after the round began,
-  and the setting reads its expected value.
-
-- **A tool streaming a fetch's output masks the bucket's endpoint before it reaches a terminal or
-  a log an agent reads.** Nix names each path's source, and an S3 source carries the endpoint,
-  whose host names the account: on 2026-11-01 `mise run switch fog` streamed the machine's
-  `nix-store -r` into a local log, and one line tailed from it put canmi's endpoint host into a
-  session's transcript, where CI masks the same host. The switch now rewrites it as `<endpoint>`.
-
-- **An R2 token's last use says nothing when it is used through S3.** Cloudflare leaves a token's
-  `last_used` empty for R2's S3 calls, so on 2026-11-01 the canmi account's R2 tokens showed no use
-  while their buckets had been written; such a token is judged by its bucket's writes or by asking,
-  never by an empty last use.
-
-- **A device is proposed for a role only after its cores, memory and disk are read.** On 2026-10-31
-  the advisor offered a home single-board computer as an aarch64 CI runner because A's machines are arm; it has
-  one core and one gigabyte, and the author refused it. The figures come from fleet.md, the host,
-  or the author, and are said in the proposal.
+- **A contradiction is quoted before it is filed.** Put both clauses in full side by side.
+- **The author's shorthand is understood, never offered back as a name.** Expand vendor names in
+  every file and proposal.
+- **A record holding a secret is read by naming the fields wanted, never by masking the rest.**
+  Select only needed fields, as `jq '{organization, relayed, address, origin: (.origin != null)}'`.
+- **A directory holding secrets is listed by names and sizes alone.** Never select files to read by
+  excluding secret-looking names.
+- **A lane is taken only after a jj command has run in it.** Run `jj st` there before duplicating or
+  restoring from its snapshot.
+- **A check's exit 0 is read with its red list.** Read failures listed after the check, including
+  `task failed`; blocks in progress can report failures without failing the exit code.
+- **A command handed to the author is first run in a form that changes nothing.** Rehearse from the
+  directory they will use, with no arguments, `--dry-run`, or a value refused before a prompt.
+- **A readback asserts its expected value, never prints it.** Fail unless the applied system matches
+  the round's build, the record was written after the round began, and the setting has its expected
+  value.
+- **A tool streaming a fetch's output masks the bucket's endpoint before it reaches a terminal or a
+  log an agent reads.** Replace the endpoint with `<endpoint>`.
+- **Judge an R2 token used through S3 by its bucket's writes or by asking.** Never infer nonuse from
+  an empty `last_used`.
+- **A device is proposed for a role only after its cores, memory and disk are read.** Read the
+  figures from fleet documentation, the host, or the author, and include them in the proposal.
 
 ## Planning
 
-- **A loop is closed before any of its stages is refined.** By 2026-10-30 the fleet's update work
-  kept gaining refinements to stages of a loop not yet closed end to end, while the loop itself ran
-  slowly, and nothing said which stage cost most. The author asked for the loop closed first, then
-  timed from real runs, then only its slowest stage worked, [planning.md](planning.md), "The loop
-  closes first".
+- For closing, timing, and improving loops, see [planning.md](planning.md).
