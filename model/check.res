@@ -154,6 +154,9 @@ let parts: array<(string, part)> = [
   ("placed", Found(() => Placed.found(~root))),
   ("plain", Soft(() => Comments.plain(~root))),
   ("drift", Soft(() => Drift.main(~only=None))),
+  ("lanes", Found(() => Lane_state.held(~root))),
+  ("lane-state", Soft(() => Lane_state.state(~root))),
+  ("friction", Soft(() => Friction.problems(~directory=Friction.expand(Delegation.friction)))),
 ]
 
 let known = parts->Array.map(((name, _)) => name)

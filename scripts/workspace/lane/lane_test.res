@@ -1,0 +1,160 @@
+open Testing
+
+let root = "/base"
+let registered = ["monoflake/platform", "monoflake/driver", "canmi/web"]
+let open_ = (~exists=_ => false, ~cloned=_ => true, ~hasPackage=_ => false, ~root=root, opened) =>
+  Lane.openPlan(~root, ~registered, ~cloned, ~exists, ~hasPackage, opened)
+
+let found = (lane, rel): Lane_state.found => {lane, rel, path: `/base/lanes/${lane}/${rel}`}
+
+describe("opening a lane", () => {
+  test(
+    "adds a jj workspace on main for the target and each sibling, and installs in the background",
+    () => {
+      let plan = open_(
+        ~hasPackage=one => one == "monoflake/platform",
+        {target: "monoflake/platform", name: "wave", siblings: ["monoflake/driver"]},
+      )
+      expect(plan)->toEqual(
+        Ok([
+          Lane.MakeDir("/base/lanes/wave/monoflake"),
+          Run({
+            cwd: "/base/repos/monoflake/platform",
+            program: "jj",
+            args: [
+              "workspace",
+              "add",
+              "--name",
+              "wave",
+              "-r",
+              "main",
+              "/base/lanes/wave/monoflake/platform",
+            ],
+          }),
+          Background({
+            cwd: "/base/lanes/wave/monoflake/platform",
+            command: "pnpm install --frozen-lockfile",
+            log: "/base/lanes/wave/monoflake-platform-install.log",
+          }),
+          MakeDir("/base/lanes/wave/monoflake"),
+          Run({
+            cwd: "/base/repos/monoflake/driver",
+            program: "jj",
+            args: [
+              "workspace",
+              "add",
+              "--name",
+              "wave",
+              "-r",
+              "main",
+              "/base/lanes/wave/monoflake/driver",
+            ],
+          }),
+        ]),
+      )
+    },
+  )
+
+  test("puts the workspace's own lane at canmi", () => {
+    switch open_({target: "workspace", name: "rules", siblings: []}) {
+    | Ok([_, Run({cwd, args})]) =>
+      expect(cwd)->toBe("/base")
+      expect(args->Array.at(-1))->toEqual(Some("/base/lanes/rules/canmi"))
+    | _ => expect("a plan")->toBe("two steps")
+    }
+  })
+
+  test(
+    "refuses a bad name, an existing lane, an unknown or uncloned repository, and a lane",
+    () => {
+      let refused = plan => plan->Result.isError
+      expect(open_({target: "workspace", name: "../x", siblings: []})->refused)->toBe(true)
+      expect(
+        open_(~exists=_ => true, {target: "workspace", name: "x", siblings: []})->refused,
+      )->toBe(true)
+      expect(open_({target: "monoflake/nope", name: "x", siblings: []})->refused)->toBe(true)
+      expect(
+        open_(~cloned=_ => false, {target: "canmi/web", name: "x", siblings: []})->refused,
+      )->toBe(true)
+      expect(open_({target: "workspace", name: "x", siblings: ["canmi/web"]})->refused)->toBe(true)
+      expect(
+        open_(~root="/base/lanes/a/canmi", {target: "workspace", name: "x", siblings: []})->refused,
+      )->toBe(true)
+    },
+  )
+})
+
+describe("closing a lane", () => {
+  let two = [found("wave", "monoflake/platform"), found("wave", "monoflake/driver")]
+  let plan = Lane.closePlan(~root, ~registered, ~hasCargo=_ => true, ~name="wave", two)
+
+  let guard = repo =>
+    `(in /base/lanes/wave/monoflake/${repo}) refuse if jj log -r 'main..@ ~ empty()' ` ++
+    `lists a change, lanes/wave/monoflake/${repo}`
+  test("snapshots and judges every working copy before it forgets any", () => {
+    let steps = plan->Result.getOr([])
+    let guards = steps->Array.filterMap(
+      step =>
+        switch step {
+        | Lane.Guard(_) => Some(true)
+        | _ => None
+        },
+    )
+    expect(guards->Array.length)->toBe(2)
+    expect(steps->Array.slice(~start=0, ~end=4)->Array.map(Lane.shown))->toEqual([
+      "(in /base/lanes/wave/monoflake/platform) jj st",
+      guard("platform"),
+      "(in /base/lanes/wave/monoflake/driver) jj st",
+      guard("driver"),
+    ])
+  })
+
+  test("then forgets, cleans cargo, removes node_modules and the directory", () => {
+    let shown = plan->Result.getOr([])->Array.map(Lane.shown)
+    expect(shown->Array.slice(~start=4, ~end=7))->toEqual([
+      "(in /base/repos/monoflake/platform) jj workspace forget wave",
+      "(in /base/lanes/wave/monoflake/platform) cargo clean",
+      "remove /base/lanes/wave/monoflake/platform/node_modules",
+    ])
+    expect(shown->Array.at(-1))->toEqual(Some("remove /base/lanes/wave"))
+  })
+
+  test("refuses a lane run from a lane, a bad name, none found and a stray path", () => {
+    let close = (~root=root, ~name="wave", workspaces) =>
+      Lane.closePlan(~root, ~registered, ~hasCargo=_ => false, ~name, workspaces)->Result.isError
+    expect(close(~root="/base/lanes/a/canmi", two))->toBe(true)
+    expect(close(~name="..", two))->toBe(true)
+    expect(close([]))->toBe(true)
+    expect(close([found("wave", "workspace")]))->toBe(true)
+  })
+
+  test("removes nothing outside lanes/", () => {
+    expect(Lane.perform(~root, Remove("/base/repos/x"))->Result.isError)->toBe(true)
+    expect(Lane.perform(~root, Remove("/base/lanes"))->Result.isError)->toBe(true)
+  })
+})
+
+describe("the arguments of lane", () => {
+  test("keep the words, the siblings given with --with and the dry run apart", () => {
+    expect(Lane.parse(["open", "a", "b", "--with", "c", "-n", "--with", "d"]))->toEqual((
+      ["open", "a", "b"],
+      ["c", "d"],
+      true,
+    ))
+  })
+})
+
+describe("a real lane", () => {
+  let base = Testing.temporaryRoot("lane-")
+  test("is refused its close while a working copy holds a change not in main", () => {
+    let repo = Node.join([base.contents, "repo"])
+    let jj = args => Node.spawnSync("jj", args, {cwd: repo, encoding: "utf8"})
+    Testing.tree(base.contents, [("repo/a.txt", "one")])
+    ignore(Node.spawnSync("jj", ["git", "init", repo], {encoding: "utf8"}))
+    ignore(jj(["bookmark", "create", "main", "-r", "@"]))
+    expect(Lane.unlandedIn(repo))->toEqual(Ok(""))
+    ignore(jj(["new", "-m", "feat: x"]))
+    Node.writeFileSync(Node.join([repo, "b.txt"]), "two")
+    expect(Lane.unlandedIn(repo)->Result.getOr("")->String.includes("feat: x"))->toBe(true)
+  })
+})

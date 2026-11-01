@@ -70,13 +70,21 @@ does not matter.
 as `lanes/<name>/monoflake/<repository>`; **a sibling repository is a jj workspace of that sibling's
 own, on the same base commit**, never a symbolic link to its main checkout: ReScript writes what it
 builds of a dependency into the dependency's own directory, so through a link the lanes and the main
-checkout would meet on one lock. The integrator opens one with `mise run lane open <repository>
-<name>` and closes it with `mise run lane close <name>`, a task not written yet. **A lane is closed
-once its change is in the main line**: its jj workspaces are forgotten, `cargo clean` runs,
-`node_modules` is removed, and then the directory. **A lane's workspace is forgotten only after a jj
-command run in the lane**, as `jj -R <lane> st`: jj snapshots a working copy only when a command
-runs in it, so an edit never snapshotted goes with the lane's directory, removed after `jj workspace
-forget`.
+checkout would meet on one lock. The integrator opens one with `mise run lane open
+<repository|workspace> <name> [--with <repository> ...]` and closes it with `mise run lane close
+<name>`, each taking
+`--dry-run`; `lane-task` in [model/rules/delegation.res](../../model/rules/delegation.res). **Open**
+adds a jj workspace on `main` at `lanes/<name>/<repository path>`, or `lanes/<name>/canmi` for the
+workspace, one for each `--with` sibling too, and starts `pnpm install` in the background where a
+`package.json` is. **A lane is closed once its change is in the main line**: close runs `jj st` in
+each of the lane's workspaces, so an edit is snapshotted, and refuses, leaving the lane as it is,
+where any working copy holds a change `main` lacks; otherwise the jj workspaces are forgotten,
+`cargo clean` runs, `node_modules` is removed, and then the directory. **A lane's workspace is
+forgotten only after a jj command run in the lane**: jj snapshots a working copy only when a command
+runs in it, so an edit never snapshotted would go with the lane's directory. The task runs from the
+base workspace, never from inside a lane. The `lanes` part of the check holds the task declared and
+named here, and `lane-state` warns of a lane that is no workspace of a registered path and of a
+`target` past the limit below, `lane-target`.
 
 **Before a lane opens, the base workspace's working copy is frozen with `jj new`, and while a lane
 is open that working copy is not edited**: an edit to the commit a lane stands on rebases the lane's

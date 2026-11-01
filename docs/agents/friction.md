@@ -14,6 +14,9 @@ repository. **One record is one file**, named for its date and the id of the rul
 **The refactorer's report gives each change in that form**, the rule's id, where, and what changed,
 and the integrator writes each down as a record, [refactorer.md](refactorer.md).
 
-**`mise run friction` sums them by rule id**, a task not written yet. Once they are dealt with, the
+**`mise run friction` sums them by rule id**, `friction-summed`, and the `friction` part of the
+check warns of a file that is no record, `friction-written`, both in
+[model/rules/delegation.res](../../model/rules/delegation.res). A day may hold two records of one
+rule, the second ending in `-2`. Once they are dealt with, the
 user decides whether all of them are deleted, some, or none. What they teach is written into the
 rules, the model or a script of the repository they concern.

@@ -144,3 +144,15 @@ description = "Compile the scripts, the model and the hooks, and remove what no 
 run = "rescript build && node scripts/prune.res.mjs"
 sources = ["scripts/**/*.res", "model/**/*.res", "hooks/**/*.res", "rescript.json"]
 outputs = { auto = true }
+
+# A lane of an implementer, opened and closed with its jj workspaces, docs/agents/lanes.md.
+[tasks.lane]
+description = "Open or close a lane: `lane open <repository|workspace> <name> [--with <repository>] | close <name> [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/lane/lane.res.mjs"
+
+# The records of friction summed by rule id, docs/agents/friction.md.
+[tasks.friction]
+description = "Sum the records of friction by rule id: `friction [--in <directory>]`"
+depends = ["build"]
+run = "node scripts/workspace/lane/friction.res.mjs"

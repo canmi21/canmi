@@ -253,13 +253,13 @@ let rules: array<Rule.t> = [
     name: "lane-task",
     says: "A lane is opened and closed by `mise run lane`, closed once its change is in the main line",
     doc,
-    held: Pending("the lane task, open and close, not written yet"),
+    held: Check("lanes"),
   },
   {
     name: "lane-target",
     says: "A lane's target holds `laneTarget` gigabytes at most",
     doc,
-    held: Pending("the lane task measuring each lane's target"),
+    held: Check("lane-state"),
   },
   {
     name: "cache-not-trashed",
@@ -349,13 +349,13 @@ let rules: array<Rule.t> = [
     name: "friction-written",
     says: "A record of friction is one file under `friction`, named for its date and its rule's id",
     doc: "docs/agents/friction.md",
-    held: Pending("the friction task, not written yet"),
+    held: Check("friction"),
   },
   {
     name: "friction-summed",
     says: "mise run friction sums the records of friction by rule id",
     doc: "docs/agents/friction.md",
-    held: Pending("the friction task, not written yet"),
+    held: Check("scripts"),
   },
   {
     name: "fmt-on-merge",
