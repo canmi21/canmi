@@ -91,6 +91,8 @@ describe("closing a lane", () => {
   let guard = repo =>
     `(in /base/lanes/wave/monoflake/${repo}) refuse if jj log -r 'main..@ ~ empty()' ` ++
     `lists a change, lanes/wave/monoflake/${repo}`
+  let lengths = repo =>
+    `(in /base/lanes/wave/monoflake/${repo}) judge the files changed from main, lengths`
   test("snapshots and judges every working copy before it forgets any", () => {
     let steps = plan->Result.getOr([])
     let guards = steps->Array.filterMap(
@@ -101,9 +103,11 @@ describe("closing a lane", () => {
         },
     )
     expect(guards->Array.length)->toBe(2)
-    expect(steps->Array.slice(~start=0, ~end=4)->Array.map(Lane.shown))->toEqual([
+    expect(steps->Array.slice(~start=0, ~end=6)->Array.map(Lane.shown))->toEqual([
+      lengths("platform"),
       "(in /base/lanes/wave/monoflake/platform) jj st",
       guard("platform"),
+      lengths("driver"),
       "(in /base/lanes/wave/monoflake/driver) jj st",
       guard("driver"),
     ])
@@ -111,7 +115,7 @@ describe("closing a lane", () => {
 
   test("then forgets, cleans cargo, removes node_modules and the directory", () => {
     let shown = plan->Result.getOr([])->Array.map(Lane.shown)
-    expect(shown->Array.slice(~start=4, ~end=7))->toEqual([
+    expect(shown->Array.slice(~start=6, ~end=9))->toEqual([
       "(in /base/repos/monoflake/platform) jj workspace forget wave",
       "(in /base/lanes/wave/monoflake/platform) cargo clean",
       "remove /base/lanes/wave/monoflake/platform/node_modules",
@@ -134,12 +138,42 @@ describe("closing a lane", () => {
   })
 })
 
+describe("handing a lane in", () => {
+  let two = [found("wave", "monoflake/platform"), found("wave", "monoflake/driver")]
+  let plan = (~root=root, ~name="wave", workspaces) =>
+    Lane.handedPlan(~root, ~registered, ~own=[], ~name, workspaces)
+
+  test("judges every workspace of the lane by every rule", () => {
+    expect(plan(two)->Result.getOr([])->Array.map(Lane.shown))->toEqual([
+      "(in /base/lanes/wave/monoflake/platform) judge the files changed from main, every rule",
+      "(in /base/lanes/wave/monoflake/driver) judge the files changed from main, every rule",
+    ])
+  })
+
+  test("refuses a lane run from a lane, a bad name, none found and a stray path", () => {
+    expect(plan(~root="/base/lanes/a/canmi", two)->Result.isError)->toBe(true)
+    expect(plan(~name="..", two)->Result.isError)->toBe(true)
+    expect(plan([])->Result.isError)->toBe(true)
+    expect(plan([found("wave", "workspace")])->Result.isError)->toBe(true)
+  })
+})
+
 describe("the arguments of lane", () => {
   test("keep the words, the siblings given with --with and the dry run apart", () => {
     expect(Lane.parse(["open", "a", "b", "--with", "c", "-n", "--with", "d"]))->toEqual((
       ["open", "a", "b"],
       ["c", "d"],
+      [],
       true,
+    ))
+  })
+
+  test("keep the directories given with --own", () => {
+    expect(Lane.parse(["handed", "a", "--own", "x/y", "--own", "z"]))->toEqual((
+      ["handed", "a"],
+      [],
+      ["x/y", "z"],
+      false,
     ))
   })
 })

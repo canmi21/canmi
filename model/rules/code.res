@@ -20,11 +20,9 @@ let doc = "docs/code.md"
 let rules: array<Rule.t> = [
   {
     name: "split-before-work",
-    says: "A file past `splitBeforeLines` is split by a refactorer before work is dispatched on it, and an implementer checks what it touched against `hardLines` before it hands in",
+    says: "A lane closes and is handed in only with each file it changed under `hardLines`, and each past `splitBeforeLines` is listed",
     doc: "docs/agents/delegation.md",
-    held: Pending(
-      "a dispatch reading the sizes of a brief's files, and a lane check over the files it touched",
-    ),
+    held: Check("lanes"),
   },
   {
     name: "file-short",

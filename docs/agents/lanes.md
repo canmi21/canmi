@@ -82,7 +82,13 @@ where any working copy holds a change `main` lacks; otherwise the jj workspaces 
 `cargo clean` runs, `node_modules` is removed, and then the directory. **A lane's workspace is
 forgotten only after a jj command run in the lane**: jj snapshots a working copy only when a command
 runs in it, so an edit never snapshotted would go with the lane's directory. The task runs from the
-base workspace, never from inside a lane. The `lanes` part of the check holds the task declared and
+base workspace, never from inside a lane. **A lane is judged by its diff before it is handed back**: `mise run lane handed <name> [--own
+<directory> ...]` reads the files each of the lane's workspaces changed from where it forked from
+`main`, and refuses one past `hardLines`, one in `singleWriter`, a lockfile, and, where `--own`
+names the block's directories, a file outside them; a file past `splitBeforeLines` is listed.
+`split-before-work` in [model/rules/code.res](../../model/rules/code.res) and `single-writer`, `own-directory` and
+`lockfile-derived` in [model/rules/delegation.res](../../model/rules/delegation.res) are held there;
+close refuses the same lengths. The `lanes` part of the check holds the task declared and
 named here, and `lane-state` warns of a lane that is no workspace of a registered path and of a
 `target` past the limit below, `lane-target`.
 

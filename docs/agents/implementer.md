@@ -25,6 +25,9 @@ again, written by monoflake/platform's model:
   and hands back;
 - **it writes unit tests only for logic inside its block that the samples do not reach**; the
   samples are not its to write or to change;
+- **before it hands back, it runs `mise run lane handed <name>`**, which refuses a file it changed
+  past `hardLines`, one only the integrator changes, `singleWriter`, and a lockfile, and lists a file
+  past `splitBeforeLines`, [lanes.md](lanes.md);
 - **it never needs a whole repository's check, `fmt`, a deploy, a rehearsal or jj**, and where it
   believes it does it escapes, [escapes.md](escapes.md).
 

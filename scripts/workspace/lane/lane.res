@@ -1,11 +1,13 @@
 /**
  * `lane open <repository|workspace> <name> [--with <repository> ...] [--dry-run]` and
- * `lane close <name> [--dry-run]`, docs/agents/lanes.md.
+ * `lane close <name> [--dry-run]` and `lane handed <name> [--own <directory> ...]`,
+ * docs/agents/lanes.md.
  */
 type step =
   | Run({cwd: string, program: string, args: array<string>})
   | Guard({cwd: string, dir: string})
   | Background({cwd: string, command: string, log: string})
+  | Handed({cwd: string, dir: string, own: array<string>, all: bool})
   | MakeDir(string)
   | Remove(string)
 
@@ -103,6 +105,7 @@ let closePlan = (~root, ~registered, ~hasCargo, ~name, workspaces: array<Lane_st
     Ok(
       Array.concat(
         kept->Array.flatMap(((one, _)) => [
+          Handed({cwd: one.path, dir: `lanes/${name}/${one.rel}`, own: [], all: false}),
           Run({cwd: one.path, program: "jj", args: ["st"]}),
           Guard({cwd: one.path, dir: `lanes/${name}/${one.rel}`}),
         ]),
@@ -121,11 +124,33 @@ let closePlan = (~root, ~registered, ~hasCargo, ~name, workspaces: array<Lane_st
   }
 }
 
+/** What the steps of a handing in are, every workspace of the lane judged by every rule. */
+let handedPlan = (~root, ~registered, ~own, ~name, workspaces: array<Lane_state.found>) =>
+  switch (fromBase(root), workspaces) {
+  | (Error(why), _) => Error(why)
+  | _ if !(namePattern->RegExp.test(name)) =>
+    Error(`${name} is no lane name, which is lowercase words joined by hyphens`)
+  | (_, []) => Error(`lanes/${name} holds no jj workspace`)
+  | _ if workspaces->Array.some(one => Lane_state.sourceOf(~root, ~registered, one.rel) == None) =>
+    Error(`lanes/${name} holds a path that is neither canmi nor a registered repository's`)
+  | _ =>
+    Ok(
+      workspaces->Array.map(one => Handed({
+        cwd: one.path,
+        dir: `lanes/${name}/${one.rel}`,
+        own,
+        all: true,
+      })),
+    )
+  }
+
 let shown = step =>
   switch step {
   | Run({cwd, program, args}) => `(in ${cwd}) ${program} ${args->Array.join(" ")}`
   | Guard({cwd, dir}) => `(in ${cwd}) refuse if jj log -r '${unlanded}' lists a change, ${dir}`
   | Background({cwd, command, log}) => `(in ${cwd}) ${command} in the background, log ${log}`
+  | Handed({cwd, all}) =>
+    `(in ${cwd}) judge the files changed from main, ${all ? "every rule" : "lengths"}`
   | MakeDir(dir) => `mkdir -p ${dir}`
   | Remove(path) => `remove ${path}`
   }
@@ -162,6 +187,10 @@ let perform = (~root, step) =>
     | Ok(changes) => Error(`${dir} holds changes not in main, so it stays open:\n${changes}`)
     | Error(why) => Error(`${dir} could not be judged: ${why}`)
     }
+  | Handed({cwd, dir, own, all}) =>
+    Handed.report(~cwd, ~dir, ~own, ~all) == 0
+      ? Ok()
+      : Error(`${dir} holds a change that is refused above, so it stays open`)
   | Background({cwd, command, log}) =>
     Node.run("sh", ["-c", `cd '${cwd}' && nohup ${command} > '${log}' 2>&1 &`]) == 0
       ? Ok()
@@ -199,27 +228,29 @@ let finish = (~root, ~dry, plan) =>
     }
   }
 
-/** The `--with` repositories of an argument list and the words that are not flags. */
+/** The `--with` repositories, `--own` directories and the words of an argument list. */
 let parse = (argv: array<string>) => {
   let dry = argv->Array.some(arg => arg == "-n" || arg == "--dry-run")
-  let rec go = (rest: list<string>, words, siblings) =>
+  let rec go = (rest: list<string>, words, siblings, own) =>
     switch rest {
-    | list{"--with", one, ...more} => go(more, words, Array.concat(siblings, [one]))
-    | list{"-n" | "--dry-run", ...more} => go(more, words, siblings)
-    | list{word, ...more} => go(more, Array.concat(words, [word]), siblings)
-    | list{} => (words, siblings)
+    | list{"--with", one, ...more} => go(more, words, Array.concat(siblings, [one]), own)
+    | list{"--own", one, ...more} => go(more, words, siblings, Array.concat(own, [one]))
+    | list{"-n" | "--dry-run", ...more} => go(more, words, siblings, own)
+    | list{word, ...more} => go(more, Array.concat(words, [word]), siblings, own)
+    | list{} => (words, siblings, own)
     }
-  let (words, siblings) = go(argv->List.fromArray, [], [])
-  (words, siblings, dry)
+  let (words, siblings, own) = go(argv->List.fromArray, [], [], [])
+  (words, siblings, own, dry)
 }
 
 let usage =
   "usage: mise run lane open <repository|workspace> <name> " ++
-  "[--with <repository> ...] [--dry-run]\n" ++ "       mise run lane close <name> [--dry-run]"
+  "[--with <repository> ...] [--dry-run]\n" ++
+  "       mise run lane close <name> [--dry-run]\n" ++ "       mise run lane handed <name> [--own <directory> ...] [--dry-run]"
 
 let main = (argv: array<string>): int => {
   let root = Registry.root
-  let (words, siblings, dry) = parse(argv)
+  let (words, siblings, own, dry) = parse(argv)
   let registered = Registry.paths()
   switch words {
   | ["open", target, name] =>
@@ -231,7 +262,16 @@ let main = (argv: array<string>): int => {
       ~hasPackage=one => Node.existsSync(Node.join([source(~root, one), "package.json"])),
       {target, name, siblings},
     )->finish(~root, ~dry)
-  | ["close", name] if siblings == [] =>
+  | ["handed", name] if siblings == [] =>
+    Lane_state.workspacesOf(
+      ~root,
+      ~subdirs=Lane_state.realSubdirs,
+      ~isWorkspace=Lane_state.realIsWorkspace,
+      name,
+    )
+    ->handedPlan(~root, ~registered, ~own, ~name)
+    ->finish(~root, ~dry)
+  | ["close", name] if siblings == [] && own == [] =>
     let workspaces = Lane_state.workspacesOf(
       ~root,
       ~subdirs=Lane_state.realSubdirs,

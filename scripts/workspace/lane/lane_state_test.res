@@ -38,13 +38,14 @@ describe("the lanes on disk", () => {
 
   test("must have the lane task, the friction task and the docs naming their verbs", () => {
     let good = "[tasks.lane]\n[tasks.friction]"
-    let lanes = "mise run lane open and mise run lane close"
+    let lanes = "mise run lane open, mise run lane close and mise run lane handed"
     expect(Lane_state.declared(~mise=good, ~lanes, ~friction="mise run friction"))->toEqual([])
     expect(Lane_state.declared(~mise="", ~lanes="", ~friction=""))->toEqual([
       "mise.toml declares no [tasks.lane]",
       "mise.toml declares no [tasks.friction]",
       "the lanes doc does not name `mise run lane open`",
       "the lanes doc does not name `mise run lane close`",
+      "the lanes doc does not name `mise run lane handed`",
       "the friction doc does not name `mise run friction`",
     ])
   })

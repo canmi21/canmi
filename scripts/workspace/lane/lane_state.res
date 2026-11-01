@@ -98,7 +98,7 @@ let declared = (~mise, ~lanes, ~friction) =>
   [
     mise->String.includes("[tasks.lane]") ? [] : ["mise.toml declares no [tasks.lane]"],
     mise->String.includes("[tasks.friction]") ? [] : ["mise.toml declares no [tasks.friction]"],
-    ["mise run lane open", "mise run lane close"]->Array.filterMap(verb =>
+    ["mise run lane open", "mise run lane close", "mise run lane handed"]->Array.filterMap(verb =>
       lanes->String.includes(verb) ? None : Some(`the lanes doc does not name \`${verb}\``)
     ),
     friction->String.includes("mise run friction")

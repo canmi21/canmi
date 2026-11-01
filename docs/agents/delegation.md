@@ -46,7 +46,7 @@ each.
 **A file near its limit is split before the work, not at the push**, `split-before-work` in
 [model/rules/code.res](../../model/rules/code.res): one past `splitBeforeLines` gets a refactorer
 first, beside the implementer's lane, and an implementer checks what it touched against `hardLines`
-before it hands in.
+before it hands in, `mise run lane handed`, [lanes.md](lanes.md).
 
 **The command hooks guard against a slip, not against malice**: an implementer works with the
 integrator, so the hooks cover the common spellings of a command and no more. **An implementer is
