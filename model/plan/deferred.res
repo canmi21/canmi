@@ -101,12 +101,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "builder-lock-rest",
-    what: "monoflake/machine's builder lock, after its review of 2026-10-25, leaves: callers that reuse the builder hold no lock, so `builder up` remakes a stale one under a copy; a changed entry.sh is not seen as stale; the piped tasks' freshness check covers cloud's scripts and not machine's Builder; taking over a dead holder's lock is not atomic; a holder killed before writing its pid, or a reused pid, leaves a lock nobody takes over; the keys read depend on SSH_AUTH_SOCK, so a shell without an agent sees the builder as stale; the lock lives in the user's TMPDIR; a waiter prints nothing",
-    repos: ["monoflake/machine", "monoflake/cloud"],
-    until: Author,
-  },
-  {
     id: "d1-rows-weekly",
     what: "a weekly read of the controls' D1 rows read per query, through Cloudflare's GraphQL analytics, flagging any query above about 1000 rows an execution, the fourth measure after the address allocation's cost of 2026-10-27, the other three a budget in monoflake/platform's model, a rule in its docs/code.md and an item in every review",
     repos: ["monoflake/platform", "monoflake/cloud"],
@@ -204,12 +198,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "driver-verify-workflow",
-    what: "monoflake/driver runs its verify, the release's version guard among it, in a workflow on every push, so a commit pushed without the local check is still held; until then a lookup that fails warns and passes, provisional, chosen by the advisor on 2026-10-27, its RFC 8c0rg",
-    repos: ["monoflake/driver"],
-    until: Author,
-  },
-  {
     id: "test-orphan-binding",
     what: "close the binding the test control opened on 2026-10-29, 4141627861 (f6dc39d5) under the test platform's organization, whose route was refused by the old control's and whose tunnel was deleted by hand, no host joined, once the control can close bindings, monoflake/platform's RFC m2ks6; until then it stays, read from its D1 and never deleted by hand, and the database is not wiped",
     repos: ["monoflake/cloud", "monoflake/platform"],
@@ -222,21 +210,9 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "driver-release-fixes",
-    what: "the four post-release findings of lane 13's third review, a held source still moving its resolved names while its texts say kept, bump inferring a minor from the local platform checkout's contracts rather than the pinned commit, first, a renamed column turning old heads into rows, and a failed read of another day's manifest reddening a released run, as one small lane, provisional, chosen by the advisor on 2026-10-27",
-    repos: ["workspace", "monoflake/driver"],
-    until: Author,
-  },
-  {
     id: "driver-single-build",
     what: "a push carrying a version bump builds monoflake/driver twice: build.yml always builds and uploads the driver-machine artifact that monoflake/cloud's ring.yml `--build <run>` deploys to the test ring, and release.yml builds again when the version is unreleased, so the released archives are a second build of the tested commit rather than the tested files; the fix, when wanted, has release publish build's artifact, by calling build.yml or downloading its run's artifact, which changes ring.yml's source and the 06:31 UTC run; low priority, the author judging it no problem on 2026-11-01",
     repos: ["monoflake/driver"],
-    until: Author,
-  },
-  {
-    id: "operate-retire",
-    what: "monoflake/cloud's operate makes a `control:` target whole as though a directory, and monoflake/platform's deploy task declares no --retire and --forget though its tool takes them, so nobody retires or forgets through operate until both are fixed, in lane 9's small fixes, provisional, chosen by the advisor on 2026-10-27",
-    repos: ["monoflake/cloud", "monoflake/platform"],
     until: Author,
   },
   {
@@ -283,7 +259,7 @@ let items: array<item> = [
   },
   {
     id: "pine-reset-hang",
-    what: "pine's reboot of 2026-11-01 at 07:03 UTC, run by kernel 6.18.59, hung in the board's final reset after systemd-shutdown had synced and stopped journald, and its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes, so the author power-cycled it at 07:23; its reboot from 6.18.57 at 06:35 completed; a few reboots on 6.18.60 are tried later under watch, the capture card re-attached to the author's VM for those tests alone and removed after, to learn whether the reset is reliable; until then every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine",
+    what: "pine's reboot of 2026-11-01 at 07:03 UTC, run by kernel 6.18.59, hung in the board's final reset after systemd-shutdown had synced and stopped journald, and its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes, so the author power-cycled it at 07:23; its reboot from 6.18.57 at 06:35 completed; a few reboots on 6.18.60 are tried later under watch, the capture card re-attached to the author's VM for those tests alone and removed after, to learn whether the reset is reliable; until then every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine; reproduced on 2026-11-01 at 08:45 UTC on 6.18.60, the first of three watched reboots, the journal again ending at journald's stop after systemd-shutdown synced, while a reboot run by 6.18.57 at 06:35 had worked; no kernel line reaches the journal past that point, so a further look needs the kernel's own output on the serial console or HDMI, with the capture card attached for it; the author power-cycles",
     repos: ["monoflake/cloud", "monoflake/machine"],
     until: Author,
   },

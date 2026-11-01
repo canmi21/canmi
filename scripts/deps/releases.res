@@ -228,8 +228,12 @@ let moves = async (sources: array<source>, ~locked, ~file, ~lock, ~fetch=github)
   let held = []
   for index in 0 to sources->Array.length - 1 {
     let {repository, names, own} = sources->Array.getUnsafe(index)
+    let sourcePins = []
+    let sourceItems = []
+    let messages = []
     // A name nothing has locked yet is left out rather than written as a table with no version.
-    let kept = name => locked->field(name)->Option.forEach(was => pins->Array.push((name, was)))
+    let kept = name =>
+      locked->field(name)->Option.forEach(was => sourcePins->Array.push((name, was)))
     let hold = () =>
       if !(held->Array.includes(repository)) {
         held->Array.push(repository)
@@ -250,13 +254,13 @@ let moves = async (sources: array<source>, ~locked, ~file, ~lock, ~fetch=github)
           hold()
           kept(name)
         | Ok(None) =>
-          log(`releases: ${lock} ${name} ${version}, nothing released to move to`)
+          messages->Array.push(`releases: ${lock} ${name} ${version}, nothing released to move to`)
           kept(name)
         | Ok(Some(pin)) if pin->text("version") == Some(version) =>
-          log(`releases: ${lock} ${name} ${version}, the newest released`)
-          pins->Array.push((name, pin))
+          messages->Array.push(`releases: ${lock} ${name} ${version}, the newest released`)
+          sourcePins->Array.push((name, pin))
         | Ok(Some(pin)) =>
-          items->Array.push(
+          sourceItems->Array.push(
             Reminder.item(
               "release",
               `${file} ${name}`,
@@ -264,10 +268,21 @@ let moves = async (sources: array<source>, ~locked, ~file, ~lock, ~fetch=github)
               pin->text("version")->Option.getOr(""),
             ),
           )
-          log(`releases: ${file} ${name} ${version} -> ${pin->text("version")->Option.getOr("")}`)
-          pins->Array.push((name, pin))
+          messages->Array.push(
+            `releases: ${file} ${name} ${version} -> ${pin->text("version")->Option.getOr("")}`,
+          )
+          sourcePins->Array.push((name, pin))
         }
       }
+    }
+    if held->Array.includes(repository) {
+      names->Array.forEach(name =>
+        locked->field(name)->Option.forEach(was => pins->Array.push((name, was)))
+      )
+    } else {
+      sourcePins->Array.forEach(pin => pins->Array.push(pin))
+      sourceItems->Array.forEach(item => items->Array.push(item))
+      messages->Array.forEach(log)
     }
   }
   {pins, held}

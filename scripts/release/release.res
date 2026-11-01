@@ -153,11 +153,19 @@ let notesOf = (manifest, ~body, ~columns) => {
       | cells => Some(Manifest.row(cells))
       }
     )
+  let lines = body->String.split("\n")->Array.map(String.trim)
   let earlier =
-    body
-    ->String.split("\n")
-    ->Array.map(String.trim)
-    ->Array.filter(line => line->String.startsWith("| ") && !(head->Array.includes(line)))
+    lines
+    ->Array.mapWithIndex((line, index) => (line, lines->Array.get(index + 1)))
+    ->Array.filterMap(((line, next)) => {
+      let separator = line => /^\|(?:\s*:?-{3,}:?\s*\|)+$/->RegExp.test(line)
+      line->String.startsWith("| ") &&
+      !(head->Array.includes(line)) &&
+      !separator(line) &&
+      !(next->Option.mapOr(false, separator))
+        ? Some(line)
+        : None
+    })
     ->Array.filter(line => !(rows->Array.some(row => leading(row) == leading(line))))
     ->Array.reduce([], (kept, line) =>
       kept->Array.some(held => leading(held) == leading(line)) ? kept : [...kept, line]
@@ -260,7 +268,7 @@ let release = async (artifacts, ~releases, ~repository, ~columns, ~directory) =>
 
 /** Each published release whose manifest's entries carry their rows, but `except`, its notes
  * edited where they are not what that manifest renders, as a failed edit leaves them. */
-let repaired = async (releases, ~repository, ~columns, ~except=[]) => {
+let repaired = async (releases, ~repository, ~columns, ~except=[], ~readingRequired=true) => {
   let rec next = async (holding, done) =>
     switch holding {
     | [] => done
@@ -269,7 +277,10 @@ let repaired = async (releases, ~repository, ~columns, ~except=[]) => {
       let rest = holding->Array.slice(~start=1)
       let tag = release->Manifest.text("tag_name")->Option.getOr("")
       switch await manifestOf(release) {
-      | Error(why) => await next(rest, Error(why))
+      | Error(why) if readingRequired => await next(rest, Error(why))
+      | Error(why) =>
+        Console.error(`release: warning: ${tag}, notes not repaired, ${why}`)
+        await next(rest, done)
       | Ok(None) => await next(rest, done)
       | Ok(Some(manifest)) =>
         let rowed =
@@ -314,11 +325,18 @@ let releasing = async (artifacts, ~releases, ~repository, ~columns, ~directory) 
   | Error(why) => Error(why)
   | Ok([]) =>
     Console.log("release: nothing new to release")
-    await repaired(releases, ~repository, ~columns)
+    await repaired(releases, ~repository, ~columns, ~readingRequired=false)
   | Ok(artifacts) =>
     switch await release(artifacts, ~releases, ~repository, ~columns, ~directory) {
     | Error(why) => Error(`not released: ${why}`)
-    | Ok() => await repaired(releases, ~repository, ~columns, ~except=[Manifest.day(Date.now())])
+    | Ok() =>
+      await repaired(
+        releases,
+        ~repository,
+        ~columns,
+        ~except=[Manifest.day(Date.now())],
+        ~readingRequired=false,
+      )
     }
   }
 }

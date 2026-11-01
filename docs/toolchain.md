@@ -863,8 +863,8 @@ the release's own download and each hash the manifest's. The source holds the de
 runtime released a day after upstream, so none is waited out again. Decided with the author on 2026-10-22.
 A table in the manifest naming its own `source` and one list takes that list from that repository,
 as `monoflake/machine`'s `[driver]` takes `driver-machine` from `monoflake/driver`, and each pin it
-locks records its `source`. A source whose releases cannot be read keeps its pins as they were while
-the others are written, and the run exits 2 naming it, which `update` keeps and warns of, provisional,
+locks records its `source`. A source with any name whose releases cannot be read keeps all its pins
+as they were, moving none of its names, while the others are written, and the run exits 2 naming it, which `update` keeps and warns of, provisional,
 chosen by the advisor on 2026-10-27; it exits 1 and writes nothing when no source was read.
 
 ### A release is the workspace's script, each repository building what it releases
@@ -880,7 +880,8 @@ published last when new, or added to when it stands, each file uploaded with `--
 one `manifest.json` merged and uploaded, each entry carrying its row, and the notes' table rendered
 from it last, on every run that touches the day, one with nothing new among them, so notes a failed
 edit left short are made whole by the next run and none is doubled, provisional, chosen by the
-advisor on 2026-10-27. An artifact counts as released only once
+advisor on 2026-10-27. A failed read of another day's manifest skips that day's notes with a warning
+and leaves the released run green. An artifact counts as released only once
 a published release's manifest lists its version, and `release listed` prints every one so a build
 can skip what is out. Every manifest has one shape, `{release, artifacts}`,
 `scripts/release/manifest.res`; runtime's first, `{release, runtimes}` with each entry's `runtime`
