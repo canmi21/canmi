@@ -281,6 +281,11 @@ moves into `model/rules/` with its check and leaves this file.
   file name, since a secret's file can bear any name. On 2026-11-01 fog's bound/ files were read
   with a mask passing all but `binding`, `token` and `secret`, and the binding's tunnel token, kept
   as `bound/tunnel`, printed its first 120 characters into a session.
+- **A test reading a workflow's YAML proves no job runs**, so removing a step from a job's setup is
+  run first in a layout without it. On 2026-11-01 monoflake/cloud's systems dropped the workspace's
+  install with its workflow tests green, and all five jobs failed on `smol-toml`, which cloud
+  imported undeclared and had found by walking up to the workspace's `node_modules`. A clean copy
+  of the repositories alone, installed and built, then found it at once.
 - **A check's exit 0 is read with its red list**: a block in work fails nothing, its failures
   listed in red after the check, so a failing test passes the exit code. On 2026-10-26 a merge
   checked exit 0 with a test of the control failing; `task failed` and `✖` in the log showed it.
