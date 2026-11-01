@@ -301,7 +301,7 @@ let items: array<item> = [
   },
   {
     id: "pine-reset-hang",
-    what: "pine's reboot of 2026-11-01 at 07:03 UTC, run by kernel 6.18.59, hung in the board's final reset after systemd-shutdown had synced and stopped journald, and its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes, so the author power-cycled it at 07:23; its reboot from 6.18.57 at 06:35 completed; a few reboots on 6.18.60 are tried later under watch, the capture card on the author's VM 100 showing its console, to learn whether the reset is reliable, and until then every reboot of pine is watched until it answers, never fired and forgotten",
+    what: "pine's reboot of 2026-11-01 at 07:03 UTC, run by kernel 6.18.59, hung in the board's final reset after systemd-shutdown had synced and stopped journald, and its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes, so the author power-cycled it at 07:23; its reboot from 6.18.57 at 06:35 completed; a few reboots on 6.18.60 are tried later under watch, the capture card re-attached to the author's VM for those tests alone and removed after, to learn whether the reset is reliable; until then every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine",
     repos: ["monoflake/cloud", "monoflake/machine"],
     until: Author,
   },
