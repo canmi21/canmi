@@ -146,6 +146,12 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - For retired resource names, see [`drawn-ids-once`](../model/rules/naming.res).
 - **A cloud commit reaches canmi and A through the `systems` cron while they remain in its matrix**, so
   "not deployed" needs them out of it first.
+- **A driver import failed once with `import the archive: NotFound: not found`**, in a conform on snow at
+  driver 0.1.4 on 2026-11-01, not reproduced in 9 conforms on mint and okra nor in 24 imports under
+  forced collection on oak, cause unknown; reopen if it recurs. A lease is drafted in
+  `~/.local/share/monoflake/driver-import-lease-2026-11-01.diff`: before taking it up, weigh a lease
+  with no expiry leaking on a crash, a failed delete failing a good import, and a shared id across
+  concurrent imports of one hosted image.
 
 ## Reading and reporting
 

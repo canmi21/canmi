@@ -264,12 +264,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "driver-import-notfound",
-    what: "a deployment's import failed once with `import the archive: NotFound: not found`, in one conform on snow of three at driver 0.1.4, containerd logging no error, cause not known, perhaps its GC collecting a first import, as `imported()` holds no lease; candidate two takes a lease around the import, released after `read_image`, and refutes this by `images rm --sync` during a first import if cheap",
-    repos: ["monoflake/driver"],
-    until: Author,
-  },
-  {
     id: "versions-on-unpause",
     what: "a paused repository meets the version rule only when unpaused, and four need settling first: canmi/lib's release publishes each dated package whose tree changed, so its first roll would publish them all; seam's crates/lowering has `version.workspace = true` and a test-app fixture has a package.json with no name, each stuck under the versions part; canmi/web's spec/architecture/workspace.md and apps/rdm's spec/release.md say the opposite of the roll, RFC z7o68",
     repos: ["canmi/lib", "seam", "canmi/web", "apps/rdm"],
