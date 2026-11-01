@@ -60,9 +60,18 @@ let handle = (payload: Payload.t, ~owned=ours): int => {
           [program, repo, place, ...arguments[index]->Option.getOr([])],
           {encoding: "utf8", maxBuffer: 268435456, timeout: 90000},
         )
-        answer.status->Nullable.toOption == Some(1)
-          ? Some((repo, findings(answer.stdout->Nullable.getOr(""))))
-          : None
+        // Anything but a clean pass refuses, a timeout or a crash included, never a silent pass.
+        answer.status->Nullable.toOption == Some(0)
+          ? None
+          : Some((
+              repo,
+              Array.concat(
+                findings(answer.stdout->Nullable.getOr("")),
+                answer.status->Nullable.toOption == Some(1)
+                  ? []
+                  : ["refused: the form program did not finish, so no tree was judged"],
+              ),
+            ))
       }
     })
     switch refused[0] {

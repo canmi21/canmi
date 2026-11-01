@@ -70,7 +70,9 @@ if Node.isMain {
       let place = args->Array.getUnsafe(1)
       switch tree(repo, ~place, ~filesets=args->Array.slice(~start=2)) {
       | Some(found) => refused(repo, found)->Array.length > 0 ? 1 : 0
-      | None => 0
+      | None =>
+        Console.log("refused: the working copy could not be snapshotted, so no tree was judged")
+        1
       }
     | _ => 2
     },
