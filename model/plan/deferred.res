@@ -253,7 +253,7 @@ let items: array<item> = [
   },
   {
     id: "local-update-round",
-    what: "a local `mise run update` round, in a lane, tested and pushed per repository, for what the scheduled update cannot take, from the daily summary of 2026-11-01 02:00 UTC: the Mac's installed tools inside their pins, node 26.13.0, pnpm 12.17.0, oxlint 1.90.0, usage 7.1.4 and watchexec 2.8.0; the action pins the bot cannot move, the workspace's jdx/mise-action v5.2.4, monoflake/runtime's docker/login-action v4.7.0 and monoflake/driver's setup action's platform@main pin; and the exact pins needing --major, wrangler 4.156.0 in monoflake/platform and monoflake/driver and rusqlite 0.41 in monoflake/driver, a 0.x move whose changelog is read and driver's tests run; until a quiet moment after monoflake/cloud's reset of B",
+    what: "a local `mise run update` round, in a lane, tested and pushed per repository, for what the scheduled update cannot take, from the daily summary of 2026-11-01 02:00 UTC: the Mac's installed tools inside their pins, node 26.13.0, pnpm 12.17.0, oxlint 1.90.0, usage 7.1.4 and watchexec 2.8.0; the action pins the bot cannot move, the workspace's jdx/mise-action v5.2.4, monoflake/runtime's docker/login-action v4.7.0 and monoflake/driver's setup action's platform@main pin; and the exact pins needing --major, wrangler 4.156.0 in monoflake/platform and monoflake/driver and rusqlite 0.41 in monoflake/driver, a 0.x move whose changelog is read and driver's tests run; done as soon as it can be without interrupting monoflake/cloud's reset of B, the author's word of 2026-11-01: each repository's moves made and verified in a lane now, and the Mac's tools installed and the lanes landed at a pause between the reset's steps",
     repos: ["workspace", "monoflake/platform", "monoflake/driver", "monoflake/runtime"],
     until: Author,
   },
@@ -301,7 +301,13 @@ let items: array<item> = [
   },
   {
     id: "canmi-frozen-tokens",
-    what: "five older account tokens in the canmi Cloudflare account stay frozen, untouched, as the advisor left them on 2026-11-01 after revoking Artifact Download and Artifact Upload, whose bucket did not exist: ATA R2 Read and ATA R2 Write (bucket ata, last written 2026-02-28), R2 Objects Bucket (last written 2026-10-11), All Tunnel Edit (last used 2026-10-15), All Zones Automation (2026-10-15) and All Zones DNS (2026-10-08); an R2 token's last use stays empty under S3 calls, so never used is no evidence for the first three; each is renamed under the token naming rule or revoked with canmi/web's unfreeze, or when monoflake/cloud RFC oej2a item 8 step 6 moves the author's three user tokens, Proxmox ACME, Edge Proxy DDNS and canmi worker build, into the canmi account",
+    what: "five older account tokens in the canmi Cloudflare account stay frozen, untouched, as the advisor left them on 2026-11-01 after revoking Artifact Download and Artifact Upload, whose bucket did not exist: ATA R2 Read and ATA R2 Write (bucket ata, last written 2026-02-28), R2 Objects Bucket (last written 2026-10-11), All Tunnel Edit (last used 2026-10-15), All Zones Automation (2026-10-15) and All Zones DNS (2026-10-08); an R2 token's last use stays empty under S3 calls, so never used is no evidence for the first three; each is renamed under the token naming rule or revoked with canmi/web's unfreeze, or once monoflake is mostly done, whichever is first, the author's word of 2026-11-01",
+    repos: ["monoflake/cloud", "canmi/web"],
+    until: Author,
+  },
+  {
+    id: "user-tokens-move",
+    what: "the author's three user tokens, Proxmox ACME, Edge Proxy DDNS and canmi worker build, are reissued as account-owned tokens in the canmi Cloudflare account under the token naming rule, each when what it serves is migrated, not in monoflake/cloud's reset of B, the author's word of 2026-11-01",
     repos: ["monoflake/cloud", "canmi/web"],
     until: Author,
   },
