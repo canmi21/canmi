@@ -211,6 +211,16 @@ export or an unreachable branch, each of which is paid on every build, every aud
 So the test has two halves, and both must hold: **would the set be incoherent without it, and is
 its cost paid by nobody?** Where the answer to either is no, it is dead and goes.
 
+## Time is stored and run in UTC
+
+**A server runs in UTC, and every time a program stores, sends or logs is UTC**, decided by the
+author on 2026-11-01. What decides is a machine's role, not where it stands: every machine of the
+fleet runs in UTC, the ones at home among them, as okra, pine, ivy and dusk do. Only a machine
+outside the fleet that the author uses by hand keeps its local time zone: the author's own computer,
+and a host such as the home Proxmox host, which the fleet does not manage. A front end receives UTC and formats it for the
+person reading, in their own time zone and in a form meant for people; no API sends a local time.
+What an agent tells the author is [voice.md](voice.md), "A time told to the author is US Eastern".
+
 ## A UI draws what an API gives
 
 **A UI computes nothing; it draws what its API returns, and may only format it.** Agreed with the

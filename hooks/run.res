@@ -44,11 +44,23 @@ let session = message =>
         ),
       )
 
+/** What a session reads again once its context is compacted, docs/agents/agent-protocol.md. */
+let afterCompaction = "Your context was compacted, and a summary keeps the work but drops rules. Before acting, read again: AGENTS.md's Start here and Core rules; your role's file in docs/agents/ (advisor.md, integrator.md) or the brief you were given; docs/voice.md, whose rules a summary loses most often (simplified Chinese to the author with English nouns, AskUserQuestion fields in Chinese, every time in US Eastern with UTC beside it, never a bare id); and docs/agents/agent-protocol.md, \"A long command never holds the conversation\". Then your memory's note of work in progress, where your role keeps one. The list is kept in docs/agents/agent-protocol.md, \"After a compaction\"."
+
+/** The context a session starts with, the compaction note first where the start is one. */
+let opening = (payload: Payload.t) =>
+  [payload->Payload.text("source") == Some("compact") ? afterCompaction : "", Reminder.line()]
+  ->Array.filter(part => part != "")
+  ->Array.join("\n\n")
+
 let handle = (payload: Payload.t): int =>
   switch payload->Payload.text("hook_event_name") {
   | Some("SessionStart") =>
-    try {session(Reminder.line())->Option.forEach(say)} catch {
-    | _ => ()
+    try {session(opening(payload))->Option.forEach(say)} catch {
+    | _ =>
+      session(
+        payload->Payload.text("source") == Some("compact") ? afterCompaction : "",
+      )->Option.forEach(say)
     }
     0
   | Some("PreToolUse") =>

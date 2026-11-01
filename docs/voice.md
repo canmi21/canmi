@@ -154,6 +154,17 @@ is, which is what the author needs to confirm it, and adds the id only where the
 on it, as in a command to run. Ids are for the relays between agents. Decided by the author on
 2026-10-29, who said the codes meant nothing to them.
 
+## A time told to the author is US Eastern, written for a person
+
+**Every time an agent tells the author is in US Eastern time, written plainly**, as `美东晚上 11:36`,
+with the UTC it stands for beside it where a log or a schedule is read in UTC, as
+`美东晚上 11:36（03:36 UTC）`, never a bare UTC time. The offset follows the date: UTC-4 under daylight time, from
+the second Sunday of March to the first Sunday of November at 2:00, and UTC-5 otherwise, so the
+date is checked before converting. Work is named by its order, never by a part of the day such as
+`今晚`, since the author's day ends when they sleep. Restated by the author on 2026-11-01, after an
+agent kept reporting UTC times read off the integrator's messages; UTC itself stays the form of
+every log, relay between agents and stored time, [code.md](code.md), "Time is stored and run in UTC".
+
 ## When to ask vs. act
 
 - **Act** when the decision is reversible, the path is clear, or existing conventions cover it.

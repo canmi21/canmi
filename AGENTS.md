@@ -19,7 +19,9 @@ the ones that follow the author everywhere, and the project's own `AGENTS.md` an
 until it is renamed -- for the ones belonging to the project you are about to touch. If none answers
 a decision you are about to make, ask the user. Decisions belong to the user, not to you -- unless
 their described approach already implies the answer. See
-[docs/agents/agent-protocol.md](docs/agents/agent-protocol.md).
+[docs/agents/agent-protocol.md](docs/agents/agent-protocol.md). **After a compaction, read the
+rules again before acting**: the SessionStart hook names what, and the list is that file's "After a
+compaction".
 
 ## What this repository is
 

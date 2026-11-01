@@ -35,6 +35,27 @@ let post = cwd =>
   })->Option.getOr("{}")
 
 describe("the shared entrypoint", () => {
+  test("a session started by a compaction is told what to read again", () => {
+    let (status, stdout, _) = invoke(
+      JSON.stringifyAny({
+        "cwd": root,
+        "hook_event_name": "SessionStart",
+        "source": "compact",
+      })->Option.getOr("{}"),
+    )
+    expect(status)->toBe(0)
+    expect(stdout)->toContain("Your context was compacted")
+    expect(stdout)->toContain("docs/voice.md")
+    let (_, fresh, _) = invoke(
+      JSON.stringifyAny({
+        "cwd": root,
+        "hook_event_name": "SessionStart",
+        "source": "startup",
+      })->Option.getOr("{}"),
+    )
+    expect(fresh->String.includes("Your context was compacted"))->toBe(false)
+  })
+
   test("SessionStart provides the reminder as context and is silent without it", () => {
     expect(Run.session(""))->toEqual(None)
     expect(Run.session("1 action; mise run update --dry-run for detail"))->toEqual(

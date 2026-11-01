@@ -462,6 +462,29 @@ The test to apply before calling it done: a fresh agent with zero memory of this
 starting from `AGENTS.md` alone, must be able to recover the project's constraints and work
 correctly. If it could not, the selfcheck is not finished.
 
+**A selfcheck the author asks for, `自检`, is that test run for real**, defined by the author on
+2026-11-01: the agent takes the rules it follows now, pretends to be an agent with zero context,
+and walks the path one would take to resume the collaboration, from `AGENTS.md` through its role's
+file and the files they link, then the same path again as it stands after a compaction, below.
+Every rule it follows that the walk does not reach, one kept in its memory or only in the
+conversation among them, is moved into the rules before the selfcheck ends.
+
+## After a compaction
+
+**A compaction keeps the work and drops rules, so the session that follows rereads them before it
+acts**, decided by the author on 2026-11-01 after the advisor, compacted, told them times in UTC, a
+rule its memory alone held. `AGENTS.md` is loaded again by the harness; the rest is the reread list
+the SessionStart hook gives a session whose start is a compaction, `afterCompaction` in
+`hooks/run.res`: AGENTS.md's Start here and Core rules, the role's file in this directory or the
+brief, this file's section on a long command, and [voice.md](../voice.md) for the rules a summary
+loses most often, then the memory's note of work in progress where the role keeps one.
+The author usually announces a compaction, and the agent then saves its work in progress; an
+automatic one gets the same list from the hook.
+
+**The list is part of the agent protocol, not of any project's work.** A rule found lost after a
+compaction is written into the rules, and where it is one a summary keeps losing, named in that
+list in the same change, so the next compacted session reads it at once.
+
 ## Unprompted selfcheck
 
 The user will not keep asking for this. Adding a tool, adding a config file, or settling a
