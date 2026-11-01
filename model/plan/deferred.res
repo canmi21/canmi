@@ -253,7 +253,7 @@ let items: array<item> = [
   },
   {
     id: "pine-reset-hang",
-    what: "pine hung in the board's final reset on cold reboots run by kernel 6.18.59 at 07:03 UTC and 6.18.60 at 08:45 UTC on 2026-11-01, the journal ending at journald's stop after systemd-shutdown synced, while one run by 6.18.57 at 06:35 had worked; its DesignWare hardware watchdog, armed with a 10 minute timeout, did not reset it in 20 minutes. Warm reset has not held, its cause unproven: three reboots on 6.18.60 from 08:59 to 09:02 UTC, each after `echo warm > /sys/kernel/reboot/mode`, came back in 47, 45 and 46 s, and a fourth at 22:30:44 UTC on 2026-11-01, warm set by hand the same way, hung after a normal shutdown, the journal ending at its stop, and was power-cycled by the author about 5 minutes on, before the watchdog armed for 10 minutes could act, so that reboot leaves the watchdog untested. The boot of 22:35 UTC holds `reboot=warm` from its board.nix with the mode reading warm; no reboot from the parameter alone has run, the second planned was not, and no further reboot of pine runs without the author. Every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine. The next options are a USB-TTL serial at 1500000 baud or a smart plug",
+    what: "pine hung in the board's final reset on its old firmware, cold in 2 of 3 reboots and warm in 1 of 4 on 2026-11-01, the journal ending at journald's stop after systemd-shutdown synced; its hardware watchdog did not reset it in 20 minutes on one. It boots from its SPI flash, not the UFS boot LUN. Its SPI image was replaced on 2026-11-01 by U-Boot v2026.10, DDR v1.13 and BL31 v1.25, and 8 of 8 reboots then returned in 38 to 47 s, 5 warm by `reboot=warm` alone and 3 cold set by hand, a small sample with no cause proved. Every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine. The rescue is a TF card with rescue-sd.img from ~/.local/share/monoflake/pine-fw-2026-11-01 and the switch at UFS/SD, unproved; next would be a USB-TTL serial at 1500000 baud or a smart plug",
     repos: ["monoflake/cloud", "monoflake/machine"],
     until: Author,
   },
@@ -273,6 +273,12 @@ let items: array<item> = [
     id: "versions-on-unpause",
     what: "a paused repository meets the version rule only when unpaused, and four need settling first: canmi/lib's release publishes each dated package whose tree changed, so its first roll would publish them all; seam's crates/lowering has `version.workspace = true` and a test-app fixture has a package.json with no name, each stuck under the versions part; canmi/web's spec/architecture/workspace.md and apps/rdm's spec/release.md say the opposite of the roll, RFC z7o68",
     repos: ["canmi/lib", "seam", "canmi/web", "apps/rdm"],
+    until: Author,
+  },
+  {
+    id: "pine-firmware-source",
+    what: "pine's SPI image was built on pine from u-boot tag v2026.10 and rkbin master, in no lock, its reflash by flashcp written nowhere; the firmware's source and the reflash are written down in monoflake/cloud",
+    repos: ["monoflake/cloud"],
     until: Author,
   },
   {

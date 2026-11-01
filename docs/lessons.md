@@ -44,6 +44,10 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **A commit rewritten is followed by `jj st` in every lane standing on it.** Read each lane before
   continuing there; see [lanes.md](agents/lanes.md).
 - **A lane's sibling runs its own `generate` before anything builds against it.**
+- **Read Codex's quota before each dispatch, and read each seat's exit.** A seat started with none left
+  ends at once, [delegation.md](agents/delegation.md); saying it runs needs its exit read.
+- **An implementer cannot run ssh or git, and a brief asking it to stops it.** Run those yourself and
+  hand it the result, or leave them out of the brief.
 
 ## Shell
 
@@ -74,6 +78,14 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **An address is redacted by a pattern BSD `sed` reads.** Avoid `\b` in macOS `sed -E`; replace
   digits with `tr '0-9' '#'` or use Python.
 - **Restart a socket unit by hand after switching its address.** Run `replace` after the restart.
+- **A background job's exit notice never comes from a hung job.** Each job gets a timeout, a remote
+  command in one uses ServerAliveInterval, and a look by Monitor or timer starts in the same call.
+- **Never send a probe's stderr to /dev/null.** A missing tool then reads as an empty result: an absent
+  `strings` once reported a full flash chip as empty.
+- **In the Bash tool's zsh, `$var` holding a command does not split**, so use a function; `==` at a line
+  start in an unquoted `echo` breaks; `cd` carries to the next call, so use absolute paths and a subshell.
+- **`mise run watch` on a log holding file contents gives false ended and failure lines**, and reads
+  `failed=0` as a failure. Watch a status file, or print no such word.
 
 ## Code
 
@@ -132,6 +144,8 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **Check a place, name, or credential against `model/rules` before proposing or approving it.** A
   provisional choice never overrides a written rule.
 - For retired resource names, see [`drawn-ids-once`](../model/rules/naming.res).
+- **A cloud commit reaches canmi and A through the `systems` cron while they remain in its matrix**, so
+  "not deployed" needs them out of it first.
 
 ## Reading and reporting
 
@@ -160,6 +174,10 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   an empty `last_used`.
 - **A device is proposed for a role only after its cores, memory and disk are read.** Read the
   figures from fleet documentation, the host, or the author, and include them in the proposal.
+- **An estimate comes from a measurement, or says "unmeasured".** A figure is checked before it is passed
+  on.
+- **Read the record before speaking to it.** Advice on a machine starts from its deferred item and logs,
+  not from memory of them.
 
 ## Planning
 
