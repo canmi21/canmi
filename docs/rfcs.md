@@ -19,6 +19,13 @@ written and not checked.
 `docs/rfcs/*/*-2ut6h.md` in a repository of its space, whatever its area and slug became. An RFC names no page and no spec, so
 which rules it settled is read off the citations.
 
+**`docs/` and an `AGENTS.md` hold only the rules in force; how a rule came to be, its date, who
+decided it and what went wrong before it, stays in the RFCs**, RFC prm4e. **Among RFCs the later
+date has the highest priority**: where two differ the earlier one is out of date on that point and
+is left as written, so an old RFC is read as history and may hold stale information. The rules in
+force outrank every RFC. **A doc is a short entry**: whatever a program can hold goes to the model
+with its check, [model.md](model.md), and the doc names it.
+
 **An RFC is plain Markdown**, CommonMark with GFM, and calls no component of the design system it
 decides, so a frozen record never changes when the system does -- RFC ejy85.
 

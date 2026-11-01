@@ -56,12 +56,16 @@ Every rule the user states gets written down. Never leave one in chat only.
 
 - This file holds the most important, most universal rules, plus the index below.
 - **A rule a program can decide goes in `model/rules/`, with the check that holds it**, or marked
-  `Pending` with what the check would need; its why goes in `docs/`, which names the model file
+  `Pending` with what the check would need; its why goes in an RFC, and `docs/` names the model file
   rather than repeating a value. `mise run check workspace --pending` lists what no check holds
   yet; **a pending rule is the goal, and until its check lands the present behavior holds**. See
   [docs/model.md](docs/model.md).
 - Anything only judgment can keep gets a topic file in `docs/`, split by aspect, linked from the
   index.
+- **`docs/` and an `AGENTS.md` hold only the rules in force, and how a rule came to be stays in the
+  RFCs.** Where two RFCs differ the later date wins, an earlier one may hold stale information, and
+  the rules in force outrank every RFC. Whatever a program can hold moves to the model, leaving the
+  doc a short entry. See [docs/rfcs.md](docs/rfcs.md).
 - A rule that belongs to one project goes in that project's `docs/`, not here; one two projects
   share comes here.
 - Never restate the rules here. Link to them.

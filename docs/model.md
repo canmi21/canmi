@@ -1,17 +1,15 @@
 # The model holds what a program can decide
 
 **Every rule of the workspace's that a program can decide is written once, in `model/`, with the
-check that holds it**; its doc keeps the question, what was decided and why, and names the model
-file instead of repeating a value. Agreed with the author on 2026-10-20, following monoflake's "the
-model is the spec; a draft keeps the why", and for the reason [code.md](code.md) gives in "A rule is
-maintainable only when breaking it fails loudly": a sentence nothing enforces decays without a
-sound.
+check that holds it**; its doc is a short entry naming the model file instead of repeating a value,
+and its why is an RFC, [rfcs.md](rfcs.md). A sentence nothing enforces decays without a sound,
+[code.md](code.md), "A rule is maintainable only when breaking it fails loudly".
 
 ## The shape
 
 | Path              | Holds                                                                     |
 | ----------------- | ------------------------------------------------------------------------- |
-| `model/rule.res`  | what a rule is: a name, what it says, the doc with its why, what holds it |
+| `model/rule.res`  | what a rule is: a name, what it says, the doc naming it, what holds it    |
 | `model/rules/`    | one file per topic: the values, and the rules over them                   |
 | `model/checks/`   | the checks that read those values and answer with violations              |
 | `model/check.res` | `check workspace [part ...]`, every part or those named                   |

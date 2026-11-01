@@ -32,6 +32,14 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "docs-in-force",
+    says: "A doc under docs/ and an AGENTS.md hold only the rules in force, no rule's date, decider or history",
+    doc: "docs/rfcs.md",
+    held: Pending(
+      "a part reading docs/ and each AGENTS.md outside docs/rfcs for a dated origin, once RFC prm4e has drained them",
+    ),
+  },
+  {
     name: "rfc-form",
     says: "An RFC is named, placed and written as RFC 2ut6h has it, its id and place unique in its id space",
     doc: "docs/rfcs.md",
