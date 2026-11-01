@@ -2,6 +2,9 @@
 let softLines = 500
 let hardLines = 1000
 
+/** A file past this many lines is split before work is dispatched on it, `split-before-work`. */
+let splitBeforeLines = 800
+
 /** A block's body lines, those of the block opening a file, and the columns every line keeps. */
 let blockLines = 6
 let openingLines = 10
@@ -15,6 +18,14 @@ let separator = /^\s*(?:\/\/|#|\*|\/\*)\s*([-=*#~_])\1{2,}/
 
 let doc = "docs/code.md"
 let rules: array<Rule.t> = [
+  {
+    name: "split-before-work",
+    says: "A file past `splitBeforeLines` is split by a refactorer before work is dispatched on it, and an implementer checks what it touched against `hardLines` before it hands in",
+    doc: "docs/agents/delegation.md",
+    held: Pending(
+      "a dispatch reading the sizes of a brief's files, and a lane check over the files it touched",
+    ),
+  },
   {
     name: "file-short",
     says: "A file of ours aims under `softLines`, and one over `hardLines` fails",
