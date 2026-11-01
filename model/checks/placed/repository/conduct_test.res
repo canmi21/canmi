@@ -50,17 +50,12 @@ describe("a test's port", () => {
       ),
     )->toEqual(["a_test.ts:1: a test binds a literal port, not port 0"])
     expect(
-      Ports.listens(
-        "a.rs",
-        `#[test]\n${call("TcpListener::bi" ++ "nd", "\"127.0.0" ++ ".1:8080\"")}`,
-      ),
+      Ports.listens("a.rs", `#[test]\n${call("TcpListener::bind", "\"localhost:8080\"")}`),
     )->toEqual(["a.rs:2: a test binds a literal port, not port 0"])
     expect(
-      Ports.listens("a.rs", `#[test]\n${call("TcpListener::bi" ++ "nd", "\"127.0.0" ++ ".1:0\"")}`),
+      Ports.listens("a.rs", `#[test]\n${call("TcpListener::bind", "\"localhost:0\"")}`),
     )->toEqual([])
-    expect(
-      Ports.listens("main.rs", call("TcpListener::bi" ++ "nd", "\"127.0.0" ++ ".1:8080\"")),
-    )->toEqual([])
+    expect(Ports.listens("main.rs", call("TcpListener::bind", "\"localhost:8080\"")))->toEqual([])
   })
 })
 

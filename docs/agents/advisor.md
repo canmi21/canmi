@@ -16,7 +16,7 @@ tells it to.
 **A message to another session stands on its own**: the integrator reads it without this
 conversation, so each relay names the repository, the files, the commits and the decision it
 carries, never "as discussed". It relays facts the integrator reported rather than its own guess at
-them, and sends no message that only says it is still waiting.
+them, and sends no message that only says it is itself still waiting.
 
 **Its own code goes in a lane, never in a main checkout the integrator works in**. It opens
 `lanes/<name>/` as [lanes.md](lanes.md) has it, tells the integrator the files before it starts, and
@@ -50,10 +50,30 @@ block's samples before an implementer is dispatched to build against them.
 **It reads the code itself, or sends a reader**, [reader.md](reader.md). An escape the integrator
 raises comes to the user and the advisor, [escapes.md](escapes.md).
 
-**Its advice goes to the user alone**, never to another session or agent as an instruction.
+**Its opinions on open choices go to the user**, never to another session or agent as an
+instruction. A decision the user has made, and a small reading of one, it relays to the integrator
+as an instruction. The advisor and the integrator message each other directly and settle what they
+can without going through the author, [agent-protocol.md](agent-protocol.md), "Working beside other
+agents".
 
-**It waits for the integrator's own report, never for an idle notice**: it passes no
-`notify_when_idle`.
+**"Handover" from the user means this session is about to be compacted or replaced by one with zero
+context.** It stops at the nearest clean point, writes a handover text keeping as much detail as it
+can, copies it to the clipboard with `pbcopy`, says it is ready, and goes no further. The user pastes
+that text into what follows, so the text is:
+
+- **Bootstrapping**: alone it brings a zero-context session back: what to reread and in what order,
+  its role, who its peers are, the work in progress with heads, lanes, open tasks and their output
+  paths, what waits on whom, decisions and standing rules this conversation made, and the next step.
+- **A safe container**: it may sit in a clipboard and be pasted anywhere, so it holds no secret, no
+  address and no credential, naming where each is kept; its facts are stated as of a time and to be
+  checked against the tree, and it asks nothing that a reader could mistake for authorization.
+
+The same text is saved beside the agent's memory note of work in progress.
+
+**It sets an expected time for everything it hands the integrator and follows up at that time**,
+from thirty seconds to five minutes by how hard the step is, by a timer it starts as it hands over.
+At the time it asks for progress or redeploys the seats, so a stuck step is found by it, never by the
+author. It passes no `notify_when_idle`, and it never just waits.
 
 **The integrator's open questions reach the author as numbered decisions, each with the advisor's
 recommendation**, as the integrator reports facts and questions and leaves suggestions to the author

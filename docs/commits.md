@@ -270,8 +270,13 @@ the workspace's.
 **The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
 `SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;
 `Commits.skippable` lists what it may name, `verify` and `form` for a commit and `scan` for a push,
-[agents/checking.md](agents/checking.md), [agents/pushing.md](agents/pushing.md). A repository that cannot pass yet is no reason to stop
-work in it, so the gate is passed by saying so rather than by working around it.
+[agents/checking.md](agents/checking.md), [agents/pushing.md](agents/pushing.md). Each use is a
+record of friction, [agents/friction.md](agents/friction.md), and is allowed for a gate's first
+passage and where a rule names it, [planning.md](planning.md), "A gate's first passage may warn
+where its later ones refuse". An implementer uses none and reports the
+gate that stopped it to the integrator, [agents/escapes.md](agents/escapes.md). A repository that
+cannot pass yet is no reason to stop work in it, so the gate is passed by saying so rather than by
+working around it.
 
 `hooks/decision.res` runs _after_ the commit lands and asks the question the diff
 cannot: was a decision made here that nobody wrote down? It fires when a `feat`, `refactor`,

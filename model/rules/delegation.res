@@ -208,8 +208,7 @@ let areas = [
 let lanes = "lanes"
 
 /**
- * At most six implementers at once, raised by the author on 2026-11-01 from the three chosen on
- * 2026-10-24, each in a lane of its own owning files no other lane touches,
+ * How many implementers run at once, each in a lane of its own owning files no other lane touches,
  * docs/agents/delegation.md.
  */
 let implementersAtOnce = 10

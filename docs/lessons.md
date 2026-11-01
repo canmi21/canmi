@@ -135,6 +135,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 
 ## Reading and reporting
 
+- **A finding is fixed, or passed by a named escape, and never hidden.** Do not split a string, rename a
+  word or move a line so a check cannot see it; fix what it asks, or use `SKIP=<gate>` or a rule's
+  `exempts`, or take the rule to the integrator or the author.
 - **A contradiction is quoted before it is filed.** Put both clauses in full side by side.
 - **The author's shorthand is understood, never offered back as a name.** Expand vendor names in
   every file and proposal.

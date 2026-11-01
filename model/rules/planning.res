@@ -13,6 +13,12 @@ let rfcDirectory = "docs/rfcs"
 /** Where an RFC stands, in the order it moves, the first two still open. RFC p992n. */
 let statuses = ["draft", "accepted", "landed", "declined"]
 
+/** The repositories whose docs the docs-in-force rule reads beside the workspace's, by path prefix. */
+let docsReadIn = ["monoflake/"]
+
+/** A date in force a doc may state, such as an expiry, each as a file and the date. */
+let datesInForce: array<(string, string)> = []
+
 /** An RFC's sections, in the only order they may stand. RFC 2ut6h. */
 let sections = ["Question", "Options", "Evidence", "Decision", "State"]
 
@@ -35,9 +41,7 @@ let rules: array<Rule.t> = [
     name: "docs-in-force",
     says: "A doc under docs/ and an AGENTS.md hold only the rules in force, no rule's date, decider or history",
     doc: "docs/rfcs.md",
-    held: Pending(
-      "a part reading docs/ and each AGENTS.md outside docs/rfcs for a dated origin, once RFC prm4e has drained them",
-    ),
+    held: Check("docs"),
   },
   {
     name: "rfc-form",

@@ -113,21 +113,25 @@ working copy on. See [repos.md](../repos.md).
 
 ## Working beside other agents
 
-**Agents do not talk to each other.** No harness messaging between sessions -- Claude Code's
-cross-session messaging, or any equivalent -- and no side channel invented for the purpose.
+**Other sessions do not talk to each other.** No harness messaging between peer sessions --
+Claude Code's cross-session messaging, or any equivalent -- and no side channel invented for the
+purpose. The exceptions are the advisor and the integrator, who message each other directly and
+settle what they can between them without going through the author, and a supervisor and the agents
+it spawns, below.
 
-Two reasons, each sufficient. A message has no reliable boundary and can land somewhere with nothing
-to do with the work. And a decision made in a conversation between two agents is recorded nowhere:
-not in the rules, not in a commit, not where the user can see it -- which is the failure this whole
-file exists to prevent.
+Two reasons for the rule, each sufficient. A message has no reliable boundary and can land somewhere
+with nothing to do with the work. And a decision made in a conversation between two agents is
+recorded nowhere unless it is written down, which is the failure this whole file exists to prevent:
+a decision the advisor and the integrator settle between them is written into the tree before the
+work is called done, as a decision reached in a message always is.
 
 Projects are separate repositories, so two pieces of work are two directories. What crosses between
-peer sessions is a commit and nothing else. See [repos.md](../repos.md).
+any other peer sessions is a commit and nothing else. See [repos.md](../repos.md).
 
 ### A supervisor and the agents it spawns are the exception
 
-The rule above is about _peer sessions_. An agent that spawns implementers and directs them is a
-different arrangement.
+The rule above is about _peer sessions_, the advisor and the integrator aside. An agent that spawns
+implementers and directs them is a different arrangement.
 
 It is not the default. The user says whether a session delegates, and a session they have not said
 so of works directly, spawning nothing. Once they have, [delegation.md](delegation.md) and the files

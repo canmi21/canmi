@@ -7,12 +7,12 @@ and its why is an RFC, [rfcs.md](rfcs.md). A sentence nothing enforces decays wi
 
 ## The shape
 
-| Path              | Holds                                                                     |
-| ----------------- | ------------------------------------------------------------------------- |
-| `model/rule.res`  | what a rule is: a name, what it says, the doc naming it, what holds it    |
-| `model/rules/`    | one file per topic: the values, and the rules over them                   |
-| `model/checks/`   | the checks that read those values and answer with violations              |
-| `model/check.res` | `check workspace [part ...]`, every part or those named                   |
+| Path              | Holds                                                                  |
+| ----------------- | ---------------------------------------------------------------------- |
+| `model/rule.res`  | what a rule is: a name, what it says, the doc naming it, what holds it |
+| `model/rules/`    | one file per topic: the values, and the rules over them                |
+| `model/checks/`   | the checks that read those values and answer with violations           |
+| `model/check.res` | `check workspace [part ...]`, every part or those named                |
 
 It is ReScript, as every script here is, compiled by `mise run build` and never committed. A hook or
 a script that needs a value imports it from the model rather than writing it again: the commit hook
@@ -33,14 +33,14 @@ is the one, as [repos.md](repos.md) gives in "A repository's own rules extend th
 runs the repository's own verify, then `Check.over` -- the shape, tasks, placed, names, commits
 and drift parts -- over it.
 
-**A decidable rule enters with its check, or as `Pending`, and never as a sentence alone.** Agreed
-with the author on 2026-10-20, so what is left is a count rather than a memory: every run of
+**A decidable rule enters with its check, or as `Pending`, and never as a sentence alone.** What is
+left is a count rather than a memory: every run of
 `check workspace` ends with how many rules are pending, and `check workspace --pending` lists them.
 The rules part holds each `Check` to a part that exists, each `Hook` to a file, and each `Gate` to a
 file or a name in `Rule.gates`.
 
 **A rule marked `Pending` describes the goal, and until its check lands the behavior of now is
-what holds**, decided by the author on 2026-10-24. A document citing a pending rule says so: what
+what holds**. A document citing a pending rule says so: what
 it describes holds "once `<rule>` lands", and until then the present behavior does.
 
 **A check is proven before it is trusted**: a violation is planted, the check is seen to name it,

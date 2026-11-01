@@ -27,9 +27,9 @@ before it -- a foundation being laid, one piece at a time -- the integrator disp
 implementer rather than idling while several wait on each other. Implementers run side by side again
 once there are independent pieces.
 
-**No implementers run in parallel until the hooks holding their commands have landed**,
-`implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res). The hooks
-hold implementers spawned without a name.
+**The hooks hold an implementer's commands**, `implementer-commands` in
+[model/rules/delegation.res](../../model/rules/delegation.res). They hold implementers spawned
+without a name.
 
 **The integrator schedules the queue itself**: it judges what is independent and runs those pieces
 side by side, neither all serial nor split hard. A piece waits only on what it truly depends on;

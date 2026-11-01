@@ -67,6 +67,8 @@ many times a day aims at a minute or two, an outer one run a few times a day at 
 compare against, a tool the old version lacks, or a check of a thing not yet deployed cannot hold on
 the first run, so that one run goes through, says plainly what it let pass, and is named in what it
 ships. From the next run the gate refuses, and what the first run let pass is fixed then.
+**Three things are never let through, a first run included**: printing a secret, a private
+identifier in a public push, and a test key trusted by production, because none can be taken back.
 
 **A design is worked out top down, one layer at a time, every area together.** It starts from what
 its users need, numbered layer 0 at the face, and goes down a layer only once every area of the

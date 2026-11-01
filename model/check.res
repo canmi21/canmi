@@ -142,6 +142,7 @@ let parts: array<(string, part)> = [
   ("commits", Found(() => Array.concat(commits(root), recorded()))),
   ("names", Found(() => Filenames.main(~root))),
   ("words", Found(() => Words.main(~root))),
+  ("docs", Found(() => Docs_force.main(~root))),
   ("pins", Found(() => Pins.main(~root))),
   ("workflows", Found(() => Workflows.main(~root))),
   ("step-names", Found(() => Step_names.main(~root))),

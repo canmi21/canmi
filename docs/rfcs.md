@@ -20,7 +20,8 @@ written and not checked.
 which rules it settled is read off the citations.
 
 **`docs/` and an `AGENTS.md` hold only the rules in force; how a rule came to be, its date, who
-decided it and what went wrong before it, stays in the RFCs**, RFC prm4e. **Among RFCs the later
+decided it and what went wrong before it, stays in the RFCs**, RFC prm4e, held by the `docs` part, `docs-in-force` in
+[model/rules/planning.res](../model/rules/planning.res). **Among RFCs the later
 date has the highest priority**: where two differ the earlier one is out of date on that point and
 is left as written, so an old RFC is read as history and may hold stale information. The rules in
 force outrank every RFC. **A doc is a short entry**: whatever a program can hold goes to the model
@@ -33,8 +34,8 @@ decides, so a frozen record never changes when the system does -- RFC ejy85.
 starts one in the workspace or in the repository named, making its slug of its name and picking its
 id and its place in the day within its space; the `rfcs` part of every check holds each file of a
 space to the format, reading every cloned repository of it. Web's `apps/space/rfcs` draws the
-pages and still checks `canmi/rfcs`. The task was `new-rfc` until 2026-10-26, when tasks came to
-be named by one word, docs/toolchain.md, so an RFC landed before then names it so.
+pages and still checks `canmi/rfcs`. The task is `rfc`, named by one word, docs/toolchain.md, so an
+RFC landed earlier may call it `new-rfc`.
 
 **Everything not done is an RFC too, by its status** -- RFC p992n and [planning.md](planning.md):
 `draft` for an open question or a finding, `accepted` for decided work or a milestone, `landed`

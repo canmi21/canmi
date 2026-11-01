@@ -7,7 +7,9 @@ What an agent does when a rule stands in the way of the work. How the work is sp
 
 **A refusal is never worked around**: a hook, a sandbox or a tool that refuses an agent's command or
 write stops that piece of work, and the agent reports it to its superior rather than reaching the
-same end another way. The refusal is the friction the escape below records.
+same end another way. The refusal is the friction the escape below records. An implementer does not
+name `SKIP=<gate>` on a command, [commits.md](../commits.md), "The escape is named on the command";
+it reports the gate to the integrator.
 
 **An escape is a request that the model be changed, never a way past a rule.** While it waits, every
 rule still holds: the part of the work it stopped waits for the decision, and the rest goes on.
