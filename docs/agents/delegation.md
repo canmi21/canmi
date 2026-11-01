@@ -43,6 +43,11 @@ so work is parallel unless a dependency says otherwise. **A reviewer is called o
 changes**: where A, B and C are changed together, one review comes after all three, never one after
 each.
 
+**A file near its limit is split before the work, not at the push**, `split-before-work` in
+[model/rules/code.res](../../model/rules/code.res): one past `splitBeforeLines` gets a refactorer
+first, beside the implementer's lane, and an implementer checks what it touched against `hardLines`
+before it hands in.
+
 **The command hooks guard against a slip, not against malice**: an implementer works with the
 integrator, so the hooks cover the common spellings of a command and no more. **An implementer is
 refused four kinds of command alone**, `implementer-commands`:
