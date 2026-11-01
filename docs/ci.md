@@ -64,6 +64,15 @@ is dispatched by hand: the systems bucket's lifecycle, `expire_days` times 24 ho
 twice systems.yml's interval, so one dropped run is survived within R2's one-to-two-day deletion
 window.
 
+**A held object is renewed only from an age T**, `renewAfterHours` in monoflake/cloud's
+`model/pipeline.res`, decided by the author on 2026-11-01. T + the interval + the worst delay + a
+job's time stays under the lifecycle: an object left is younger than T, the next run starts at most
+the interval and the delay later, and it reaches its upload within the job's time, its queue behind
+one whole job with a runner host down and its own run. So T is the lifecycle less those three.
+`scripts/tests/systems/bucket/renewal_test.res` there holds the sum, and holds the interval and the
+job's time to systems.yml's crons and `timeout-minutes`; the worst delay is the measurement above,
+which no test reads.
+
 ## Scheduled updates
 
 Decided by the author on 2026-10-31, the workspace action owns `nix` for installing Nix and
