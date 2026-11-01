@@ -9,7 +9,7 @@ let root = Node.resolve([Node.dirname(Node.fileURLToPath(Node.importMetaUrl)), "
 /** The repository's directory, the workspace itself for an empty path. */
 let place = path => path == "" ? root : Node.join([root, "repos", path])
 
-let usage = "scheduled beside <repositories> | colocate <path> | update <path> | moved <path> | message <path> <file> | commit <path> <file> | held <names>"
+let usage = "scheduled colocate <path> | update <path> | moved <path> | message <path> <file> | commit <path> <file> | held <names>"
 
 let fail = why => {
   Console.error(`scheduled: ${why}`)
@@ -29,22 +29,6 @@ let ran = (~cwd, command, args) => {
     fail(`${command} ${args->Array.join(" ")} exited ${Int.toString(status)}`)
   }
 }
-
-/** Another repository a check reads, cloned at its main beside this one, as at home. */
-let beside = (~exists=Node.existsSync, ~run=ran, repositories) =>
-  repositories->Array.forEach(repository => {
-    let into = place(repository)
-    if !exists(into) {
-      run(
-        ~cwd=root,
-        "git",
-        ["clone", "--depth", "1", "--branch", "main", `https://github.com/${repository}`, into],
-      )
-    }
-    if exists(Node.join([into, "package.json"])) {
-      run(~cwd=into, "pnpm", ["install", "--frozen-lockfile"])
-    }
-  })
 
 /** jj beside git in the workspace and the repository, as update snapshots and restores by jj. */
 let colocate = path =>
@@ -131,7 +115,6 @@ let commit = (path, file) => {
 
 let main = async () =>
   switch Node.args() {
-  | ["beside", repositories] => beside(repositories->String.split(" ")->Array.filter(r => r != ""))
   | ["colocate", path] => colocate(path)
   | ["update", path] => await update(path)
   | ["moved", path] => moved(path)

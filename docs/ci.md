@@ -68,6 +68,9 @@ window.
 
 Decided by the author on 2026-10-31, the workspace action owns `nix` for installing Nix and
 `beside` for cloning space separated `owner/repo` repositories at main and installing their packages.
+**The action prepares only what a job asks for**, decided by the author on 2026-11-01: `beside`
+clones without the workspace's scripts, so the workspace's packages and compiled scripts come with
+`scripts` alone, which a job asks only when it runs one.
 Its `history` checks the calling repository and the workspace out whole, which the reusable update
 workflow asks because the workspace's check reads the commits a repository's RFCs name in either; a
 scheduled platform update failed there on 2026-11-01 with both shallow.

@@ -53,11 +53,11 @@ runs:
         working_directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
         cache: ${{ runner.environment == 'github-hosted' }}
     - name: install the workspace's packages
-      if: inputs.scripts == 'true' || inputs.beside != ''
+      if: inputs.scripts == 'true'
       shell: bash
       run: pnpm install --frozen-lockfile
     - name: compile the workspace's scripts
-      if: inputs.scripts == 'true' || inputs.beside != ''
+      if: inputs.scripts == 'true'
       shell: bash
       run: mise run build
     - name: install nix
@@ -70,4 +70,9 @@ runs:
       shell: bash
       env:
         BESIDE: ${{ inputs.beside }}
-      run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" beside "$BESIDE"
+      run: |
+        for repository in $BESIDE; do
+          into="$GITHUB_WORKSPACE/repos/$repository"
+          [ -d "$into" ] || git clone --depth 1 --branch main "https://github.com/$repository" "$into"
+          [ ! -f "$into/package.json" ] || (cd "$into" && pnpm install --frozen-lockfile)
+        done
