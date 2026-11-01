@@ -217,7 +217,7 @@ let items: array<item> = [
   },
   {
     id: "fleet-planned",
-    what: "the machines monoflake/cloud keeps under planned/, written but not deployed, are reflashed and moved into machines/ once the author has moved their work off them, their host keys, secrets and cache roles entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
+    what: "the machines monoflake/cloud keeps under planned/, written but not deployed, are reflashed and moved into their owner's machines/ once the author has moved their work off them, their host keys, secrets and cache roles entered then; one already has its peer relay's port open at its provider, the author said on 2026-10-26",
     repos: ["monoflake/cloud"],
     until: Author,
   },
