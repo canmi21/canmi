@@ -49,7 +49,7 @@ jobs:
       run:
         working-directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
     steps:
-      - name: check out the workspace and the repository
+      - name: Check out the workspace and the repository
         uses: canmi21/canmi/.github/actions/workspace@main
         with:
           path: ${{ inputs.path }}
@@ -59,39 +59,39 @@ jobs:
           nix: ${{ inputs.nix }}
           beside: ${{ inputs.beside }}
 
-      - name: put jj beside git
+      - name: Put jj beside git
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" colocate "$REPOSITORY"
 
-      - name: prepare
+      - name: Prepare
         if: inputs.prepare != ''
         run: ${{ inputs.prepare }}
 
       # The movers read releases through gh and the API, which answer a token more than no one.
-      - name: update
+      - name: Update
         id: update
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" update "$REPOSITORY"
 
-      - name: see what moved
+      - name: See what moved
         id: moved
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" moved "$REPOSITORY"
 
-      - name: check
+      - name: Check
         if: steps.moved.outputs.moved == 'true'
         working-directory: .
         run: mise run check ${REPOSITORY:+"$REPOSITORY"}
 
-      - name: write the message
+      - name: Write the message
         if: steps.moved.outputs.moved == 'true'
         run: ${{ inputs.message || 'node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" message "$REPOSITORY" "$RUNNER_TEMP/message"' }}
 
-      - name: commit and push
+      - name: Commit and push
         if: steps.moved.outputs.moved == 'true'
         run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" commit "$REPOSITORY" "$RUNNER_TEMP/message"
 
-      - name: wake ${{ inputs.wake }}
+      - name: Wake ${{ inputs.wake }}
         if: inputs.wake != ''
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,7 +99,7 @@ jobs:
         run: gh workflow run "$WAKE" --repo "$GITHUB_REPOSITORY" --ref main
 
       # A release source held back fails the run once the rest is committed, naming it.
-      - name: held
+      - name: Held
         if: ${{ (success() || failure()) && steps.update.outputs.held != '' }}
         env:
           HELD: ${{ steps.update.outputs.held }}

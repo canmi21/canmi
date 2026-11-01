@@ -76,6 +76,14 @@ least twice the interval, a left object's worst age under the lifecycle, and sys
 and each job's `timeout-minutes` against the model; the worst delay is the measurement above, which
 no test reads.
 
+## Step names
+
+**A step's `name:` starts with a capital letter**, decided by the author on 2026-11-01, as "List the
+machines" and "Install cloud's packages": only the first letter, never title case. Job names, workflow
+names and inputs stay lowercase. The `step-name-capital` rule holds it,
+[model/rules/toolchain.res](../model/rules/toolchain.res). A test or script matching a step by its
+name changes with it.
+
 ## Scheduled updates
 
 Decided by the author on 2026-10-31, the workspace action owns `nix` for installing Nix and

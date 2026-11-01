@@ -60,6 +60,12 @@ let doc = "docs/toolchain.md"
 let pushing = "docs/agents/pushing.md"
 let rules: array<Rule.t> = [
   {
+    name: "step-name-capital",
+    says: "A GitHub Actions step's name starts with a capital letter, its rest lowercase by our rules",
+    doc: "docs/ci.md",
+    held: Check("step-names"),
+  },
+  {
     name: "pin-major",
     says: "A [tools] pin matches `pin`, or carries a comment naming what would lift it",
     doc,
