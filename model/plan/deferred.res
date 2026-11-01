@@ -258,6 +258,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "driver-single-build",
+    what: "a push carrying a version bump builds monoflake/driver twice: build.yml always builds and uploads the driver-machine artifact that monoflake/cloud's ring.yml `--build <run>` deploys to the test ring, and release.yml builds again when the version is unreleased, so the released archives are a second build of the tested commit rather than the tested files; the fix, when wanted, has release publish build's artifact, by calling build.yml or downloading its run's artifact, which changes ring.yml's source and the 06:31 UTC run; low priority, the author judging it no problem on 2026-11-01",
+    repos: ["monoflake/driver"],
+    until: Author,
+  },
+  {
     id: "operate-retire",
     what: "monoflake/cloud's operate makes a `control:` target whole as though a directory, and monoflake/platform's deploy task declares no --retire and --forget though its tool takes them, so nobody retires or forgets through operate until both are fixed, in lane 9's small fixes, provisional, chosen by the advisor on 2026-10-27",
     repos: ["monoflake/cloud", "monoflake/platform"],

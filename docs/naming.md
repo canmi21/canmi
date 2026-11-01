@@ -266,6 +266,26 @@ honors a bucket's name only the first time it is used, and an id used once is wh
 say nothing but which resource it is. It is `Pending` until something records the names deleted
 resources held.
 
+## A credential has three forms, the vendor first
+
+Decided by the author on 2026-11-01, `credential-names` in
+[model/rules/naming.res](../model/rules/naming.res). **Every token or key has three forms**: its
+variable in `UPPER_SNAKE`, as a `secrets.json` and the environment hold it
+(`CLOUDFLARE_TOKEN_MANAGER`); its display in Title Case with spaces, the name in its vendor's
+dashboard (`Cloudflare Token Manager`); and its short form in lowercase and hyphens, where a secret
+becomes a file, as sops-nix's machine, platform and runner secrets do (`systems-read-key-id`).
+
+**The words run vendor, then platform, then purpose.** A token tied to its vendor names the vendor
+first and may use its terms; the platform follows, omitted for the foundation, which is the default,
+so only `TEST` and `PRODUCTION` appear (`CLOUDFLARE_TEST_TOKEN_MANAGER`, `CONTROL_TEST_OPERATOR`,
+`NIX_SIGNING_KEY`); the purpose ends it. **A credential with no tie to its vendor takes a neutral
+name**, the vendor's tie first and neutrality second: an R2 token is used over S3, whose client is
+neutral and whose endpoint names the vendor, so it is Systems Write, not a Cloudflare name.
+
+**Names planned for a rotation wait for it**: GitHub's `NIX_SIGNING_KEY_TEST` and
+`POINTER_SIGNING_KEY_TEST` become `NIX_TEST_SIGNING_KEY` and `POINTER_TEST_SIGNING_KEY` at the test
+keys' next rotation, as a GitHub secret's value cannot be read back to move it.
+
 ## Inside code
 
 Identifiers follow the language's own convention with no interference from this document:
