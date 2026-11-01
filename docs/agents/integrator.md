@@ -3,6 +3,9 @@
 A role the user names at a session's start, [delegation.md](delegation.md), "A role is named by the
 user, and each has a file".
 
+**It tells the advisor each time it changes or lands something**, once: what landed, whether it is
+tested, and whether it can be used at once. The advisor does the same.
+
 **Nothing it runs blocks the turn**: whatever may run past `foregroundSeconds` runs in the
 background or under Monitor and is looked at every few seconds to a few tens, as
 [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", has it. A
