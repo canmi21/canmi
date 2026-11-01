@@ -79,11 +79,9 @@ describe("a release", () => {
     )
   })
 
-  test("keeps its notes a table of the declared columns, each row added once", () => {
+  test("keeps its notes a table of the declared columns", () => {
     let head = Manifest.header(columns)->Array.join("\n")
     expect(head)->toBe("| Program | Version | Commit | Download |\n| --- | --- | --- | --- |")
-    expect(Manifest.appended("", ~columns, "| a |"))->toBe(`${head}\n| a |`)
-    expect(Manifest.appended(`${head}\n| a |\n`, ~columns, "| a |"))->toBe(`${head}\n| a |`)
     expect(Manifest.filled("download/{release}/a", ~release="2026.10.22"))->toBe(
       "download/2026.10.22/a",
     )
@@ -267,7 +265,7 @@ describe("a day's release", () => {
             expectAs(rows->Array.length, `rows after a failed ${failed} step`)->toBe(1)
             expectAs(listed->Array.length, `entries after a failed ${failed} step`)->toBe(1)
             expectAs(state.body, `notes after a failed ${failed} step`)->toBe(
-              `${head}\n${workerdRow}\n${rows->Array.getUnsafe(0)}`,
+              `${head}\n${rows->Array.getUnsafe(0)}\n${workerdRow}`,
             )
           }
         },
@@ -303,7 +301,7 @@ describe("a day's release", () => {
         )
         expect(again)->toEqual(Ok())
         expect(calls())->toEqual([
-          ["release", "edit", tag, "--notes", `${head}\n${workerdRow}\n${row("c1")}`, ...named],
+          ["release", "edit", tag, "--notes", `${head}\n${row("c1")}\n${workerdRow}`, ...named],
         ])
       },
     )
@@ -473,7 +471,7 @@ describe("a day's release", () => {
         expect(calls())->toEqual([
           ["release", "upload", tag, image, "--clobber", ...repo],
           ["release", "upload", tag, manifest(), "--clobber", ...repo],
-          ["release", "edit", tag, "--notes", `${head}\n${wasmtime}\n${line}`, ...repo],
+          ["release", "edit", tag, "--notes", `${head}\n${line}\n${wasmtime}`, ...repo],
         ])
       },
     )

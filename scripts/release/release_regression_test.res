@@ -19,7 +19,7 @@ test("renaming columns removes old table heads and preserves legacy artifact row
     ]->Array.join("\n")
   let notes = Release.notesOf(manifest, ~body=old, ~columns)
   // Comparing old heads with the new labels used to preserve them as data rows.
-  equal(notes, [...Manifest.header(columns), legacy, row]->Array.join("\n"))
+  equal(notes, [...Manifest.header(columns), row, legacy]->Array.join("\n"))
   equal(Release.notesOf(manifest, ~body=notes, ~columns), notes)
 })
 
@@ -110,4 +110,25 @@ test("an unreadable older manifest warns on an already released run", () => {
 
 test("a failed notes edit still fails after an older manifest could not be read", () => {
   repair(~already=true, ~failedEdit=true)
+})
+
+test("a day's rows are newest first, the entries of one commit keeping their order", () => {
+  let columns = ["Driver", "Version"]
+  let entry = (name, version, commit) =>
+    `{"name":"${name}","version":"${version}","commit":"${commit}","row":["${name}","${version}"]}`
+  let manifest = JSON.parseOrThrow(
+    `{"artifacts":[${entry("a", "0.1.3", "x")},${entry("b", "0.1.3", "x")},${entry(
+        "a",
+        "0.1.4",
+        "y",
+      )}]}`,
+  )
+  let notes = Release.notesOf(manifest, ~body="", ~columns)
+  equal(
+    notes,
+    [...Manifest.header(columns), "| a | 0.1.4 |", "| a | 0.1.3 |", "| b | 0.1.3 |"]->Array.join(
+      "\n",
+    ),
+  )
+  equal(Release.notesOf(manifest, ~body=notes, ~columns), notes)
 })

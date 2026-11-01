@@ -80,17 +80,6 @@ let row = cells => `| ${cells->Array.join(" | ")} |`
 /** The head of a release's notes, the table's columns and the line under them. */
 let header = columns => [row(columns), row(columns->Array.map(_ => "---"))]
 
-/** The notes with a row added at the table's end, unless they hold it, the table's head first. */
-let appended = (notes, ~columns, line) => {
-  let head = header(columns)
-  let rows =
-    notes
-    ->String.split("\n")
-    ->Array.map(String.trim)
-    ->Array.filter(line => line->String.startsWith("| ") && !(head->Array.includes(line)))
-  [...head, ...rows->Array.includes(line) ? rows : [...rows, line]]->Array.join("\n")
-}
-
 /** A cell with the day's release put in for `{release}`, as a download's address names it. */
 let filled = (cell, ~release) => cell->String.replaceAll("{release}", release)
 

@@ -139,20 +139,28 @@ let leading = line =>
   ->Array.slice(~start=1, ~end=3)
   ->Array.map(String.trim)
 
-/** The notes a release's manifest gives, its table's head, then the rows of what it listed before
- * its entries carried their rows, as the notes held them, then one row for each entry carrying its
- * own, so the table is rendered again whole from the manifest by any run. */
+/** The notes a release's manifest gives, its table's head, then a row for each entry carrying its
+ * own, newest first, the entries of one commit keeping their order, then the rows of what it listed
+ * before its entries carried theirs, as the notes held them, so any run renders the table whole. */
 let notesOf = (manifest, ~body, ~columns) => {
   let head = Manifest.header(columns)
-  let rows =
+  let runs =
     manifest
     ->Manifest.artifacts
     ->Array.filterMap(entry =>
       switch entry->Manifest.list("row")->Array.filterMap(JSON.Decode.string) {
       | [] => None
-      | cells => Some(Manifest.row(cells))
+      | cells => Some((entry->Manifest.text("commit"), Manifest.row(cells)))
       }
     )
+    ->Array.reduce([], (runs, (commit, row)) =>
+      switch runs->Array.at(-1) {
+      | Some((last, held)) if last == commit =>
+        [...runs->Array.slice(~start=0, ~end=-1), (commit, [...held, row])]
+      | _ => [...runs, (commit, [row])]
+      }
+    )
+  let rows = runs->Array.toReversed->Array.flatMap(((_, held)) => held)
   let lines = body->String.split("\n")->Array.map(String.trim)
   let earlier =
     lines
@@ -170,7 +178,7 @@ let notesOf = (manifest, ~body, ~columns) => {
     ->Array.reduce([], (kept, line) =>
       kept->Array.some(held => leading(held) == leading(line)) ? kept : [...kept, line]
     )
-  [...head, ...earlier, ...rows]->Array.join("\n")
+  [...head, ...rows, ...earlier]->Array.join("\n")
 }
 
 /** Text as GitHub may give it back, its line ends plain and its ends trimmed. */

@@ -772,7 +772,7 @@ archives, and names each artifact in `built.json` with its `name`, `version`, `c
 the table, where `{release}` stands for the day's tag. `scripts/release/release.res`, run as the
 repository's `release` task, does the rest: a UTC day's release, `2026.10.22`, drafted whole and
 published last when new, or added to when it stands, each file uploaded with `--clobber`, then one
-`manifest.json` merged and uploaded, each entry carrying its row, and the notes' table rendered from
+`manifest.json` merged and uploaded, each entry carrying its row, and the notes' table, newest row first, rendered from
 it last, on every run that touches the day, one with nothing new among them, so notes a failed edit
 left short are made whole by the next run and none is doubled. A failed read of another day's
 manifest skips that day's notes with a warning and leaves the released run green. An artifact counts
