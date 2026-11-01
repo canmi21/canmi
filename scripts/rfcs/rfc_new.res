@@ -24,9 +24,12 @@ let option = (args: array<string>, flag) =>
   switch args->Array.indexOf(flag) {
   | -1 => None
   | at =>
-    let value = args->Array.get(at + 1)
+    let value = switch args->Array.get(at + 1) {
+    | Some(value) if !(value->String.startsWith("--")) => value
+    | _ => usage()
+    }
     args->Array.splice(~start=at, ~remove=2, ~insert=[])
-    value
+    Some(value)
   }
 
 /** `text` quoted as oxfmt quotes a YAML string, in single quotes unless it holds more of them. */
@@ -66,11 +69,16 @@ let main = () => {
   | [name, area] => (name->String.trim, area)
   | _ => usage()
   }
+  if name->String.length > 32 {
+    Console.error(
+      `the name holds ${Int.toString(name->String.length)} characters, more than the 32 allowed`,
+    )
+    usage()
+  }
   let slug = Rfc_name.slugOf(name)
   if (
     !(Rfc_name.area->RegExp.test(area)) ||
     !(Rfc_name.slug->RegExp.test(slug)) ||
-    name->String.length > 32 ||
     !(Planning.statuses->Array.includes(status)) ||
     Rfc_name.parse(`${day}-01-a-aaaaa.md`) == None
   ) {
