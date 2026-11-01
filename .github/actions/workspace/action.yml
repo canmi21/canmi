@@ -20,7 +20,7 @@ inputs:
     description: Other repositories as space separated owner/repo, cloned at main with packages installed
     default: ""
   history:
-    description: Check out the calling repository whole, for a job that runs the workspace's check on it
+    description: Check out the calling repository and the workspace whole, for the workspace's check
     default: "false"
 
 runs:
@@ -30,8 +30,8 @@ runs:
       with:
         repository: canmi21/canmi
         persist-credentials: ${{ inputs.path == '' && inputs.credentials || 'false' }}
-        # The workspace alone is checked whole, its RFCs naming commits of its own history.
-        fetch-depth: ${{ inputs.path == '' && '0' || '1' }}
+        # Checked whole alone or under `history`, as RFCs below name the workspace's commits too.
+        fetch-depth: ${{ (inputs.path == '' || inputs.history == 'true') && '0' || '1' }}
     # A repository's RFCs name commits of its own history, which the workspace's check reads.
     - if: inputs.path != ''
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
