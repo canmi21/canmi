@@ -282,12 +282,6 @@ let items: array<item> = [
     until: Author,
   },
   {
-    id: "tailscale-token",
-    what: "the Tailscale API token in monoflake/cloud's secrets.json, rolled after the exposure of 2026-10-29 and made on 2026-10-30 at 01:07 UTC, expires on 2026-11-29 at 01:07 UTC, the one before it already refused; the author issues the next one before then and the integrator enters it as this one was",
-    repos: ["monoflake/cloud"],
-    until: Author,
-  },
-  {
     id: "runner-token",
     what: "the self-hosted runners' token in monoflake/cloud's runner/secrets.json, shared by ci-raleigh, ci-tokyo and ci-sanjose, the fine-grained token ci-runner whose resource owner is the monoflake organization and whose one permission is the organization's Self-hosted runners, read and write, made on 2026-10-30, expires on 2027-10-30; before then the author makes the next one, enters it with `mise run secret monoflake/cloud/runner runner-token`, and runs `mise run runner update`, RFC obvjb",
     repos: ["monoflake/cloud"],
