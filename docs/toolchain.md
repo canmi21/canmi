@@ -163,7 +163,8 @@ all of it. The two other platforms' credentials are decided at monoflake/cloud's
 for each name in turn, reads what is typed without echoing it, and hands it to `sops set
 --value-stdin`, so the value is in no argument, no process listing, no shell history and no plain
 file but the one `--from` below reads it from. A name already set is replaced only when answered
-`y`; nothing typed leaves it as it was. It reports each value by its length alone, and the file it
+`y`, or without the question under `--replace`, which says the replacement is already decided;
+nothing typed leaves it as it was. It reports each value by its length alone, and the file it
 changed stays encrypted and is committed as it is. It reads one line a value.
 
 **A machine's file and a value of several lines.** A repository path that goes on into
