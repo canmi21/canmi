@@ -312,6 +312,12 @@ let items: array<item> = [
     until: Author,
   },
   {
+    id: "tailnet-after-lease",
+    what: "monoflake/machine's module starts tailscaled before dhcpcd holds an IPv4 lease, so on fog's reboot of 2026-11-01 tailscaled came up on its cached state at +24 s, failed its control and DERP dials and backed off, and registered only at +161 s, about 2 minutes 15 seconds of tailnet absence the machine did not need; tailscaled is ordered after network-online.target with dhcpcd waiting for its lease, or the unit's own wait for the network, and a reboot-time check confirms it on the other machines, after reset B rather than during it, as the advisor asked on 2026-11-01",
+    repos: ["monoflake/machine", "monoflake/cloud"],
+    until: Closes("oej2a"),
+  },
+  {
     id: "console-copy",
     what: "the local copy of console and its registry entry are removed",
     repos: ["console"],
