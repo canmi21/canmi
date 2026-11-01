@@ -174,6 +174,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   an empty `last_used`.
 - **A device is proposed for a role only after its cores, memory and disk are read.** Read the
   figures from fleet documentation, the host, or the author, and include them in the proposal.
+- **Where the author is waiting on an event, the watch runs under Monitor printing a line at each
+  change, and a job's exit notice is not the watch.** An agent says it is watching only while such a
+  Monitor runs.
 - **An estimate comes from a measurement, or says "unmeasured".** A figure is checked before it is passed
   on.
 - **Read the record before speaking to it.** Advice on a machine starts from its deferred item and logs,
