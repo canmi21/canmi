@@ -38,6 +38,9 @@ only on what it truly depends on; each implementer has a lane of its own and a d
 files no other lane touches, so two lanes never own one file. Review, verification and the check
 once per wave stay as they are. How many run at once is `implementersAtOnce` in
 [model/rules/delegation.res](../../model/rules/delegation.res).
+**Where a session has delegated, no seat waits while unblocked work is left**, the author's word of
+2026-11-01 on finding sessions idle: work that does not depend on what is running is pulled out and
+started beside it, on Codex first, and only work that would be redone later waits.
 
 **The command hooks guard against a slip, not against malice**, decided by the author on
 2026-10-24: an implementer works with the integrator, so the hooks cover the common spellings of a

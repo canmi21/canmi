@@ -99,10 +99,11 @@ let releasing = [
 let lanes = "lanes"
 
 /**
- * At most three implementers at once, provisional, chosen by the advisor on 2026-10-24, each in a
- * lane of its own owning files no other lane touches, docs/agents/delegation.md.
+ * At most six implementers at once, raised by the author on 2026-11-01 from the three chosen on
+ * 2026-10-24, each in a lane of its own owning files no other lane touches,
+ * docs/agents/delegation.md.
  */
-let implementersAtOnce = 3
+let implementersAtOnce = 6
 
 /** The most a lane's `target` holds, in gigabytes, before `cargo clean` clears it. */
 let laneTarget = 10
