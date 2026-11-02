@@ -38,6 +38,13 @@ stays in `model/rules/`. See [planning.md](planning.md).
   or, by its path, a script under `scripts/` that each repository runs from its own verify.
 - **`Pending(owed)`** -- decidable, and nothing holds it yet; `owed` says what the check would need.
 
+**A repository's own decidable rules are its `model/rules.json`**, or `model/rules/rules.json` where
+its `model/` is full: a list of name, says, doc and held, held being one of check, hook, gate or
+pending with a text. The rules part reads it beside the repository's plan, prefixes each name with
+the repository, holds a hook or gate to a file in that repository, and lists a pending one in
+`check workspace --pending`. It is plain JSON because a repository's model cannot import the
+workspace's, `model/checks/plan/repo_rules.res`.
+
 **A soft rule is held by a part whose findings are warnings**, which fail only under `audit`: drift
 is the one, as [repos.md](repos.md) gives in "A repository's own rules extend the workspace's".
 **What the workspace holds over every repository runs on each of them**: `mise run check <path>`

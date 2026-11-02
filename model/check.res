@@ -221,26 +221,36 @@ let parts: array<(string, part)> = Array.concat(others, [("plan", Script(planned
 
 let known = parts->Array.map(((name, _)) => name)
 
-let written = path =>
-  ["", ".res", ".py"]->Array.some(suffix => Node.existsSync(Node.join([root, path ++ suffix])))
+let written = (path, ~at=root) =>
+  ["", ".res", ".py"]->Array.some(suffix => Node.existsSync(Node.join([at, path ++ suffix])))
 
-/** Why a rule's holder does not exist, or none where it does. */
-let unheldRule = (rule: Rule.t) =>
+/** Why a rule's holder does not exist, or none where it does; a repository's `at` is its root. */
+let unheldRule = (~at=root, rule: Rule.t) =>
   switch rule.held {
   | Check(part) if part != "rules" && !(known->Array.includes(part)) =>
     Some(`${rule.name} is held by a part ${part}, which this check does not have`)
   | Gate(name) if Rule.gates->Array.includes(name) => None
-  | Hook(path) if !written(path) => Some(`${rule.name} is held by ${path}, which is no file`)
-  | Gate(path) if !written(path) =>
+  | Hook(path) if !written(path, ~at) => Some(`${rule.name} is held by ${path}, which is no file`)
+  | Gate(path) if !written(path, ~at) =>
     Some(`${rule.name} is held by ${path}, which is no file and no gate in Rule.gates`)
   | _ => None
   }
 
-/** Each rule held by a part, a hook or a gate that does not exist. */
-let unheld = (): array<string> => Rules.all->Array.filterMap(unheldRule)
+/** Each rule held by a part, a hook or a gate that does not exist, and each file unreadable. */
+let unheld = (): array<string> => {
+  let (own, errors) = Repo_rules.load()
+  Array.concat(
+    Array.concat(Rules.all->Array.filterMap(rule => unheldRule(rule)), errors),
+    own->Array.filterMap(((path, rule)) => unheldRule(~at=Node.join([Registry.repos, path]), rule)),
+  )
+}
+
+/** The workspace's rules and every repository's own, Repo_rules. */
+let allRules = () =>
+  Array.concat(Rules.all, Repo_rules.load()->Pair.first->Array.map(((_, rule)) => rule))
 
 let pending = () =>
-  Rules.all->Array.filterMap(rule =>
+  allRules()->Array.filterMap(rule =>
     switch rule.held {
     | Pending(owed) => Some(`${rule.name} (${rule.doc}): ${rule.says}; owed: ${owed}`)
     | _ => None
@@ -416,7 +426,7 @@ let run = (named: array<string>): int => {
   )
   let owed = pending()->Array.length
   Console.log(
-    `\n${Int.toString(Rules.all->Array.length)} rules, ${Int.toString(
+    `\n${Int.toString(allRules()->Array.length)} rules, ${Int.toString(
         owed,
       )} pending a check: check workspace --pending`,
   )

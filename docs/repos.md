@@ -452,7 +452,8 @@ a project that rule is narrower: what is written there is the project's own.**
 
 - **A project keeps its rules in `docs/`**, `Layout.rulesHome`. What a program can decide is in a
   model, and what is left is the why and the judgment, which is docs. A repository still holding
-  `spec/` fails the shape part until it is renamed.
+  `spec/` fails the shape part until it is renamed. What a program can decide in a project is
+  declared in its `model/rules.json`, [model.md](model.md).
 - **A project may carry an `AGENTS.md` of its own**, read by both harnesses exactly as this one is.
   It extends this file: it says what is particular to that project and useful there alone, and
   restates nothing the workspace says. Work still begins here, so a project's `AGENTS.md` is read
