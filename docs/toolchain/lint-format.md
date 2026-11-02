@@ -12,14 +12,14 @@ re-triggers the formatter. Deleting the overlap is the only stable arrangement.
 
 ## Assignment
 
-`Format.owners` in [model/rules/format.res](../model/rules/format.res) names the formatter of each
+`Format.owners` in [model/rules/format.res](../../model/rules/format.res) names the formatter of each
 suffix the repositories share, or registers it as formatted by nothing, and `Format.linters` each
 language's linter. **A suffix only one repository uses is registered in that repository's
 `workspace.toml`, under `[format]`**, which the suffixes part reads: a repository's own model would
 not do, since monoflake/machine and monoflake/runtime have no model directory. The same table
 declares a directory of test data, which the suffixes part and the hook pass over. Each formatter is
 versioned by mise or by the package manager whose resolution it takes part in, nixfmt by the
-`flake.lock` of the repository it formats, as [toolchain.md](toolchain.md), "Nix is installed on the
+`flake.lock` of the repository it formats, as [versions.md](versions.md), "Nix is installed on the
 machine, and pins its own tools", has it.
 
 ## A file is formatted as it is written
@@ -47,7 +47,7 @@ repository tracking a suffix the table neither formats nor registers is refused,
 is passed over**, told by its content as git tells it, so an image needs no entry.
 
 **The integrator still runs `mise run fmt` when it merges a wave**, as the net beneath the hook.
-Formatting is therefore no part of the form layer, [agents/checking.md](agents/checking.md).
+Formatting is therefore no part of the form layer, [agents/checking.md](../agents/checking.md).
 
 **An Edit after the hook rewrote its file meets no stale-file error, but text the hook reformatted
 is no longer found**, so the file is Read before such an Edit, `edit-after-format`. The harness does
@@ -145,7 +145,7 @@ rule on would report a problem the formatter has already solved.
 
 **A rule one project turns off is turned off in that project.** A project whose code makes an oxlint
 rule wrong more often than right carries its own `.oxlintrc.json` that `extends` the workspace's and
-states the difference, and nothing else -- see [repos.md](repos.md), "Configuration is inherited by
+states the difference, and nothing else -- see [repos.md](../repos.md), "Configuration is inherited by
 position, not copied". oxlint reads the nearest configuration for each file, and does so whether it
 is run from the workspace or from inside the project. The reason for the rule being off goes in that
 project's `spec/`, because it is about that project's code. The workspace file keeps what is true of

@@ -18,7 +18,7 @@ let cargoItems = (output, major) =>
 
 /**
  * A repository's `update`, its tools, crates and packages within their bounds, and with `--major`
- * across them for what outdated.res calls behind. See docs/toolchain.md.
+ * across them for what outdated.res calls behind. See docs/toolchain/dependencies.md.
  */
 let machine = async () => {
   let root = Node.cwd()

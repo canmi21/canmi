@@ -46,7 +46,7 @@ let linters = [
 /** oxlint rules off because the formatter already rewrites what they report. */
 let overlapping = ["no-irregular-whitespace"]
 
-let doc = "docs/lint-format.md"
+let doc = "docs/toolchain/lint-format.md"
 let rules: array<Rule.t> = [
   {
     name: "overlap-off",

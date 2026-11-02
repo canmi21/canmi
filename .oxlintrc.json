@@ -6,7 +6,7 @@
 		"correctness": "error",
 		"suspicious": "warn",
 		"perf": "warn",
-		// style overlaps oxfmt; pedantic and nursery are opinion. See docs/lint-format.md.
+		// style overlaps oxfmt; pedantic and nursery are opinion. See docs/toolchain/lint-format.md.
 		"style": "off",
 		"pedantic": "off",
 		"nursery": "off"

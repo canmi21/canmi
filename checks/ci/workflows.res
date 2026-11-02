@@ -1,6 +1,6 @@
 /**
  * Every workflow linted by actionlint, and each action pinned against model/rules/toolchain.res,
- * an outside one by commit and the author's own at main. See docs/toolchain.md.
+ * an outside one by commit and the author's own at main. See docs/toolchain/ci.md.
  */
 let step = /^\s*(?:-\s+)?uses:\s+["']?([^\s"'#]+)["']?(\s+#\s+\S+)?\s*$/
 let commit = /^[0-9a-f]{40}$/

@@ -1,4 +1,4 @@
-/** The custom-domains rule, docs/toolchain.md, over every wrangler file. */
+/** The custom-domains rule, docs/toolchain/runtime.md, over every wrangler file. */
 let named = /(^|\/)wrangler\.(jsonc?|toml)$/
 
 /** A test's fixtures are no deployment, so they are passed over. */

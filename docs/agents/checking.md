@@ -16,7 +16,7 @@ check, lint and tests, never a whole repository's check.
 
 **The form layer** is a directory's width and depth, `tree-wide` and `tree-deep` of the shape part
 alone; a file's length; and a comment's lines. **Formatting is in neither layer**: the
-`formatted-on-write` hook formats each file as it is written, [lint-format.md](../lint-format.md),
+`formatted-on-write` hook formats each file as it is written, [toolchain/lint-format.md](../toolchain/lint-format.md),
 "A file is formatted as it is written", and `accept`'s check of formatting always passes in an
 implementer's lane. The hook hangs in the implementer's definition alone, so what anyone else
 writes, a refactorer among them, is still checked by each repository's own check.

@@ -12,7 +12,7 @@ let emit = () =>
 /**
  * The releases a repository's workflows pin, each moved to the newest one a day old within its
  * major unless `--major`, and the branches pinned by a commit, each moved to its head. See
- * docs/toolchain.md.
+ * docs/toolchain/ci.md.
  */
 type release = {
   @as("tag_name") tag: string,

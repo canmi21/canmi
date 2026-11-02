@@ -260,7 +260,7 @@ MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> \
 
 - **The role is what holds it.** Two entries in the author's `~/.codex/hooks.json` act only where
   `MONOFLAKE_ROLE=implementer`: the implementer's commands on `Bash`, and the format of each file an
-  `apply_patch` writes, [lint-format.md](../lint-format.md).
+  `apply_patch` writes, [toolchain/lint-format.md](../toolchain/lint-format.md).
 - **Its brief says first to read `/Users/canmi/workspace/AGENTS.md`**: in a lane Codex loads the
   repository's own `AGENTS.md` alone, a lane being a git worktree whose root stops its search.
 - **It runs without Codex's sandbox, as a Claude implementer does**: the sandbox refuses what a

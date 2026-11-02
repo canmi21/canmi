@@ -44,7 +44,7 @@ let refuse = (payload: Payload.t): int =>
     | Some(why) =>
       Console.error(
         `trash refused by hooks/cache/trash.res: ${why}.\n` ++
-        "A cache a tool writes again is cleared by its own tool's clean, which frees the space trash does not.\n" ++ "The rule: cache-not-trashed in model/rules/delegation.res, and docs/toolchain.md, \"An agent removes what it made with rm, and trashes what it did not\".",
+        "A cache a tool writes again is cleared by its own tool's clean, which frees the space trash does not.\n" ++ "The rule: cache-not-trashed in model/rules/delegation.res, and docs/toolchain/deletion.md, \"An agent removes what it made with rm, and trashes what it did not\".",
       )
       2
     }

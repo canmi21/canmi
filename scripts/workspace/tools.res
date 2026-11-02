@@ -1,6 +1,6 @@
 /**
  * The pinned toolchain against each publisher's stable channel, `tools check|outdated|up`, and the
- * files an outside build reads written from the pins. See docs/toolchain.md.
+ * files an outside build reads written from the pins. See docs/toolchain/versions.md.
  */
 type response
 @val external fetch: (string, {"headers": Dict.t<string>}) => promise<response> = "fetch"

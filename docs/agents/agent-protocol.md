@@ -152,7 +152,7 @@ Ask the user when:
 - The choice is structural: architecture, dependency, data model, public API, naming scope.
 - The choice is expensive or awkward to reverse.
 - A Cloudflare resource is made with a place, which can never be undone; only where the author
-  cannot be asked is it chosen by [toolchain.md](../toolchain.md)'s placement rule.
+  cannot be asked is it chosen by [scripts.md](../toolchain/scripts.md)'s placement rule.
 
 Do not ask when:
 
@@ -351,7 +351,7 @@ catch the failures that class of edit can have, and the user is a faster judge o
 screenshot. They will say when something is wrong.
 
 Chrome DevTools MCP for a page, and the `tauri` MCP server for the CMS window
-([toolchain.md](../toolchain.md)), are for debugging that is genuinely hard without them: a value
+([runtime.md](../toolchain/runtime.md)), are for debugging that is genuinely hard without them: a value
 that renders differently from what the source says and nobody can say why, a layout that only breaks
 at one size, something that misbehaves after hydration and not before. The signal is that a question
 about the running application cannot be answered by reading the code -- not that a change was made

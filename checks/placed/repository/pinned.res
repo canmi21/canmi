@@ -1,4 +1,7 @@
-/** A pnpm repository's release age and each Dockerfile's base images, docs/toolchain.md. */
+/**
+ * A pnpm repository's release age and each Dockerfile's base images,
+ * docs/toolchain/dependencies.md and docs/toolchain/ci.md.
+ */
 let age = /^minimumReleaseAge:\s*(\d+)/m
 
 /** Whether a path lies under a vendored or machine-made directory, which no rule here reads. */

@@ -264,7 +264,7 @@ hold of a rule, and one missing is enough for it to decay without anybody notici
 **Violating it makes something fail.** A rule nothing enforces is a sentence.
 
 **The failure has been demonstrated.** A gate never seen to fail is a name rather than a gate. `mise
-run audit` counts every warning, [lint-format.md](lint-format.md), "Strict mode", and is driven red
+run audit` counts every warning, [toolchain/lint-format.md](toolchain/lint-format.md), "Strict mode", and is driven red
 on all three tools before it is believed.
 
 **The check can see everywhere the rule applies, including its own home.** A checker told which

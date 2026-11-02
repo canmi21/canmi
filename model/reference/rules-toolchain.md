@@ -17,56 +17,56 @@ A GitHub Actions step's name starts with a capital letter, its rest lowercase by
 
 A [tools] pin matches `pin`, or carries a comment naming what would lift it.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/versions.md](../../docs/toolchain/versions.md)
 - held by: check part `pins`
 
 ### outside-copies
 
 .node-version, packageManager and rust-toolchain.toml follow the pins they mirror.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/versions.md](../../docs/toolchain/versions.md)
 - held by: check part `tools`
 
 ### scripts-rescript
 
 A script, hook or task of the workspace's is ReScript, `kept` excepted.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/scripts.md](../../docs/toolchain/scripts.md)
 - held by: check part `settings`
 
 ### task-short
 
 Every mise task in a repository runs `taskLines` lines at most.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/scripts.md](../../docs/toolchain/scripts.md)
 - held by: check part `tasks`
 
 ### task-nested
 
 A mise task is named by one word, an action of it its first argument, never a name joined by a hyphen.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/scripts.md](../../docs/toolchain/scripts.md)
 - held by: check part `tasks`
 
 ### cloudflare-placed
 
 A D1 database or R2 bucket a script or task makes names its place, Western North America or Asia-Pacific alone, never left unset, and a place written in a configuration file is judged too.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/scripts.md](../../docs/toolchain/scripts.md)
 - held by: check part `placed`
 
 ### cloudflare-placed-rest
 
 Any other Cloudflare resource made with a place names it the same way, never left unset.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/scripts.md](../../docs/toolchain/scripts.md)
 - held by: pending, owed: every create by the API, an R2 jurisdiction, a Durable Object's location hint in code and a Worker's placement read, each naming wnam or apac or their equal; a place in a configuration file is held by `placed`
 
 ### tabs
 
 .editorconfig sets tabs at width 2, YAML at two spaces, and rustfmt.toml says it again.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: check part `settings`
 
 ### localhost
@@ -80,84 +80,84 @@ Local development is localhost, never a literal loopback address.
 
 An agent's rm outside the workspace, temp and caches is refused.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/deletion.md](../../docs/toolchain/deletion.md)
 - held by: hook `hooks/bin/rm`
 
 ### secrets-encrypted
 
 Every file .sops.yaml claims is encrypted.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/secrets.md](../../docs/toolchain/secrets.md)
 - held by: gate `scripts/lints/secrets.res`
 
 ### secrets-per-task
 
 A repository's secrets.json is loaded only by the mise tasks that use a credential, each by its own env, never by its global [env].
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/secrets.md](../../docs/toolchain/secrets.md)
 - held by: check part `tasks`
 
 ### release-age
 
 pnpm-workspace.yaml holds a package version back a day before it installs.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/dependencies.md](../../docs/toolchain/dependencies.md)
 - held by: check part `repository`
 
 ### actions-pinned
 
 A workflow pins an outside action by commit, its release beside it, and takes the author's own at main.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/ci.md](../../docs/toolchain/ci.md)
 - held by: check part `workflows`
 
 ### workflows-linted
 
 Every repository's workflows pass actionlint, with shellcheck over each step's shell.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/ci.md](../../docs/toolchain/ci.md)
 - held by: check part `workflows`
 
 ### ci-progress
 
 A task that runs in CI for more than a minute prints its stage and progress, never a silent stretch.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/ci.md](../../docs/toolchain/ci.md)
 - held by: pending, owed: a workflow run's log read for a gap of more than a minute between two lines, which only a run gives
 
 ### actions-age
 
 update moves an action's pin to a release a day old, within its major unless --major.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/ci.md](../../docs/toolchain/ci.md)
 - held by: gate `scripts/deps/actions.res`
 
 ### images-pinned
 
 A Dockerfile pins each base image by its tag and a digest.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/ci.md](../../docs/toolchain/ci.md)
 - held by: check part `repository`
 
 ### images-current
 
 update moves a base image's pin to the digest its tag names now, the tag kept.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/ci.md](../../docs/toolchain/ci.md)
 - held by: gate `scripts/deps/images.res`
 
 ### releases-pinned
 
 update moves what a repository takes from another's releases to the newest version a manifest lists.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/releases.md](../../docs/toolchain/releases.md)
 - held by: gate `scripts/deps/releases.res`
 
 ### ports-strict
 
 Every dev server binds a fixed port and fails when it is taken.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/runtime.md](../../docs/toolchain/runtime.md)
 - held by: check part `repository`
 
 ### test-port-zero
@@ -199,7 +199,7 @@ A workflow under .github/workflows/ that runs on a push is declared under [push]
 
 pull and check report, once a day and silent otherwise, only what the scheduled update cannot take: action pins, majors, missing tools and moves pending past two days.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/versions.md](../../docs/toolchain/versions.md)
 - held by: check part `scripts`
 
 ### push-behind-main
@@ -220,7 +220,7 @@ A public repository's push carries no private identifier, credential, high-entro
 
 An `rm` an agent types writes each variable in its paths as `${name:?}`, so an empty one stops the command rather than removing from the root.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/deletion.md](../../docs/toolchain/deletion.md)
 - held by: hook `hooks/gates/rmvar`
 
 ### push-through-verb
@@ -304,5 +304,5 @@ A scheduled workflow's time is nominal; what depends on it tolerates a late or m
 
 workers_dev and preview_urls are off in every wrangler configuration.
 
-- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- doc: [docs/toolchain/runtime.md](../../docs/toolchain/runtime.md)
 - held by: check part `domains`

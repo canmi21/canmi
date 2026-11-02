@@ -144,7 +144,7 @@ grows by nesting, never by spreading".
 
 **Lint vs format** -- a linter owns semantics, a formatter owns layout. Whatever the formatter
 rewrites, the linter must not report; disable the overlap on the linter side. Holds for every
-language. See [docs/lint-format.md](docs/lint-format.md).
+language. See [docs/toolchain/lint-format.md](docs/toolchain/lint-format.md).
 
 ## Toolchain
 
@@ -169,7 +169,7 @@ or a hook is ReScript**, compiled by `mise run build` and never committed; a mis
 entry, `Toolchain.taskLines` lines at most, and `hooks/bin/rm` with its guard the one thing left in
 Python. Indentation is tabs at
 width 2 in every language, YAML excepted; `.editorconfig` is the source of truth. See
-[docs/toolchain.md](docs/toolchain.md).
+[docs/toolchain/scripts.md](docs/toolchain/scripts.md).
 
 **One verb, the workspace unless told otherwise.** `mise run pull|push|fmt|check|update|clean|audit`
 alone runs on this workspace; add a path from `repos/registry.toml` -- `mise run check apps/rdm` --
@@ -231,7 +231,7 @@ project still works.
 | Topic                                                                            | File                                       |
 | -------------------------------------------------------------------------------- | ------------------------------------------ |
 | Type checking, tests, comments, a UI that only draws                             | [docs/code.md](docs/code.md)               |
-| Linting and formatting                                                           | [docs/lint-format.md](docs/lint-format.md) |
+| Linting and formatting                                                           | [docs/toolchain/lint-format.md](docs/toolchain/lint-format.md) |
 | Shell, addresses, secrets, versions, jj, hooks                                   | [docs/toolchain.md](docs/toolchain.md)     |
 | CI: writing a workflow first (entries, one-shot steps, names, schedules, caches) | [docs/ci.md](docs/ci.md)                   |
 

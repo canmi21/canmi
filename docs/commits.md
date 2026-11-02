@@ -207,7 +207,7 @@ the agent took, which is the whole of the difference and the whole of the reason
 `main` can be ahead of where the task started -- a fetch, the same repository worked on another
 machine, or a wave's merge. The lanes are sibling workspaces, but none of them moves `main`: an
 implementer does not commit, and the integrator joins the lanes in one merge, so the merge is the
-one place they meet; see [toolchain.md](toolchain.md), "Parallel workspaces, superseded by lanes",
+one place they meet; see [jj.md](toolchain/jj.md), "Parallel workspaces, superseded by lanes",
 and [lanes.md](agents/lanes.md). When it has advanced,
 `jj bookmark move` refuses to move it sideways, and that refusal is the synchronization point:
 `jj rebase -d main`, run `mise run verify` again on the rebased result, then move. The order
@@ -337,7 +337,7 @@ nothing afterwards for a tool hook to inspect, so the bookmark half of the rule 
 long as it was remembered.
 
 **It refuses rather than moving the bookmark itself**, and that is the whole point of it. jj
-ships the move as `experimental-advance-branches`, which [toolchain.md](toolchain.md) leaves off
+ships the move as `experimental-advance-branches`, which [jj.md](toolchain/jj.md) leaves off
 so that a bookmark's position stays something somebody claimed. A hook that advanced `main`
 would be that setting again under another name, and would take the claim away while looking
 like enforcement.

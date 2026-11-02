@@ -10,47 +10,47 @@
 
 Every linter rule in `overlapping` is off in .oxlintrc.json.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: check part `settings`
 
 ### overlap-measured
 
 A new linter's overlap with its formatter is found by feeding the formatter a violation.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: check part `overlap`
 
 ### svelte-beside-oxfmt
 
 A package.json declaring oxfmt declares svelte beside it.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: check part `settings`
 
 ### formatted-on-write
 
 After each Edit or Write, a PostToolUse hook formats that file alone by its suffix in `owners`, doing nothing for none or `Unformatted`, and blocking nobody when the formatter fails.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: hook `hooks/agent_commands`
 
 ### suffix-owned
 
 Every suffix a repository tracks has a formatter in `owners`, or is registered `Unformatted` there or in its workspace.toml's [format].
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: check part `suffixes`
 
 ### edit-after-format
 
 An Edit after the hook rewrote its file meets no stale-file error, but text the hook reformatted is no longer found, so the file is Read before such an Edit.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: pending, owed: the harness's own behavior, proven once by a probe in a subagent on 2026-10-24 and rechecked by nothing
 
 ### disable-has-reason
 
 An oxlint disable comment carries its reason on the same line, after --.
 
-- doc: [docs/lint-format.md](../../docs/lint-format.md)
+- doc: [docs/toolchain/lint-format.md](../../docs/toolchain/lint-format.md)
 - held by: check part `comments`

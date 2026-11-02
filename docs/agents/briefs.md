@@ -48,7 +48,7 @@ the advisor have reviewed them.
 
 - Remove what the seat made itself with `rm`, its scratch, test leftovers and build output, and
   send what it did not make to `trash`, which has no recursive flag, as `AGENTS.md` has it, with the
-  reason in [toolchain.md](../toolchain.md). `rm` outside the workspace, temp and caches is refused.
+  reason in [deletion.md](../toolchain/deletion.md). `rm` outside the workspace, temp and caches is refused.
 - **Anything that may run past `foregroundSeconds` runs in the background or under Monitor, and is
   looked at every few seconds to a few tens**, `built` and `accept` among it;
   [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", is the

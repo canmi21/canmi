@@ -1,6 +1,6 @@
 /**
  * What waits beyond a repository's package ranges, by the newest version it holds anywhere,
- * `--names` printing only what `update --major` should move. See docs/toolchain.md.
+ * `--names` printing only what `update --major` should move. See docs/toolchain/dependencies.md.
  */
 let entry = /^("?)([^"=\s]+)\1\s*=\s*"(.*)"$/
 let brackets = /^\[+|\]+$/g

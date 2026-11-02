@@ -11,7 +11,8 @@ let emit = () =>
 
 /**
  * `releases.res.mjs <manifest.toml> [--dry-run]`, each artifact a manifest names locked beside
- * it in manifest.lock at the newest version its source's releases list. See docs/toolchain.md.
+ * it in manifest.lock at the newest version its source's releases list.
+ * See docs/toolchain/releases.md.
  */
 @module("node:fs") external appendFileSync: (string, string) => unit = "appendFileSync"
 

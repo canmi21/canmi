@@ -1,6 +1,6 @@
 /**
  * Refuses a plaintext secrets file, each `.sops.yaml` claims carrying a `sops` block and
- * `ENC[` on every value. A repository's `secrets`, docs/toolchain.md.
+ * `ENC[` on every value. A repository's `secrets`, docs/toolchain/secrets.md.
  */
 let pathRegex = /path_regex:\s*(\S+)/g
 

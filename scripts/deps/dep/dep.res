@@ -2,7 +2,7 @@
  * `dep add|remove <repository> <package> [--dev] [--rust] [--dry-run]`, a dependency put into or
  * taken out of a repository's package.json by pnpm or its Cargo.toml by cargo. A version is added
  * only once it has been public for a day, in the range form the repository already uses.
- * See docs/toolchain.md.
+ * See docs/toolchain/dependencies.md.
  */
 type kind = Npm | Crate
 type release = {version: string, published: string, yanked: bool}

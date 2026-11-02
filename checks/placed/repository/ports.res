@@ -1,4 +1,4 @@
-/** A dev server's strict port and a test's free one, docs/toolchain.md and docs/code.md. */
+/** A dev server's strict port and a test's free one, docs/toolchain/runtime.md and docs/code.md. */
 let vite = /(^|\/)vite\.config\.[cm]?[jt]s$/
 let strict = /\bstrictPort\s*:\s*true\b/
 let named = /(_test|\.test|\.spec)\.[a-z]+$/

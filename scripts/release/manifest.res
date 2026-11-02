@@ -1,6 +1,6 @@
 /**
  * What a release of the author's holds, the UTC day it is named by, the one `manifest.json` that
- * lists each artifact, and the table its notes are. See docs/toolchain.md.
+ * lists each artifact, and the table its notes are. See docs/toolchain/releases.md.
  */
 let field = (json, key) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(key))
 let text = (json, key) => json->field(key)->Option.flatMap(JSON.Decode.string)

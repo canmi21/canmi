@@ -1,7 +1,8 @@
 /**
  * `release.res.mjs [listed | holds <name> <version> | notes] [--dry-run]`, from a repository
  * declaring `[release]`, puts what its `built.json` names into the UTC day's release, prints what
- * is out or whether a version is, or renders each day's notes again. See docs/toolchain.md.
+ * is out or whether a version is, or renders each day's notes again.
+ * See docs/toolchain/releases.md.
  */
 let refuse = why => {
   Console.error(`release: ${why}`)

@@ -1,4 +1,7 @@
-"""The rm an agent's shell finds first; see docs/toolchain.md, "rm is guarded, not banned"."""
+"""The rm an agent's shell finds first.
+
+See docs/toolchain/deletion.md, "rm is guarded, not banned".
+"""
 
 from __future__ import annotations
 
@@ -22,7 +25,7 @@ CACHES = (
 	".cargo/git",
 )
 # Key copies monoflake/cloud's reset makes for a machine, removed with rm once the machine holds
-# them, docs/toolchain.md.
+# them, docs/toolchain/deletion.md.
 KEYS = (".local/share/monoflake/reset",)
 USER_FILES = (
 	"Desktop",

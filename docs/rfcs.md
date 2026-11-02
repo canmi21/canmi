@@ -41,7 +41,7 @@ decides, so a frozen record never changes when the system does -- RFC ejy85.
 starts one in the workspace or in the repository named, making its slug of its name and picking its
 id within its space, and taking an area only once the repository is split, an area of its tree; the `rfcs` part of every check holds each file of a
 space to the format, reading every cloned repository of it. Web's `apps/space/rfcs` draws the
-pages and still checks `canmi/rfcs`. The task is `rfc`, named by one word, docs/toolchain.md, so an
+pages and still checks `canmi/rfcs`. The task is `rfc`, named by one word, docs/toolchain/scripts.md, so an
 RFC landed earlier may call it `new-rfc`.
 
 **An RFC records why, and what is not done is the model's plan** -- RFC 8q1af and

@@ -98,7 +98,7 @@ eye on.
 
 **A project may carry configuration only it can use**, and a setup worth keeping that no project
 uses stays here instead. `.mcp.json` is the workspace's: no project is a Tauri app, and the pinned
-server is kept as the record of what it takes to make one work -- see [toolchain.md](toolchain.md),
+server is kept as the record of what it takes to make one work -- see [runtime.md](toolchain/runtime.md),
 "A Tauri app is inspected through an MCP server pinned to its plugin".
 
 ### A rule that is code inherits the same way, as a module the projects import
@@ -134,7 +134,7 @@ takes, where its own name is format data, `[[names.data]]` of [naming.md](naming
 names the workspace it sits under by that one's `.git` address**, so a reader of the repository
 alone learns where its rules and its linked configuration come from; the declared part holds it to
 this workspace's origin. A repository with nothing else to declare carries that line alone. A shared
-capability is taken by declaring it, as `[update]` takes a mover, [toolchain.md](toolchain.md), and
+capability is taken by declaring it, as `[update]` takes a mover, [dependencies.md](toolchain/dependencies.md), and
 a task of a repository's own that still calls a script reaches it as `node
 {{env.WORKSPACE}}/scripts/....res.mjs`, depending on `//:build`, since what ReScript compiles is
 never committed.
@@ -291,7 +291,7 @@ else underneath. A workspace that carried the implementations would have to be t
 stack, which is the opposite of defining a verb once. **What is the same in every repository stays
 here**: `pull`, `push` and `clone` are jj's, and every repository is a jj repository; so is
 `update`'s revert-on-failure, which reads what changed through jj rather than through a resolver.
-See [toolchain.md](toolchain.md), "Dependency policy".
+See [dependencies.md](toolchain/dependencies.md), "Dependency policy".
 
 **A repository without the task is passed over, and named.** It has said nothing about the verb,
 so it has nothing to fail; the run goes on and ends with a warning listing who was passed over. A
@@ -339,9 +339,9 @@ flag "--major" help="Cross the ranges the manifest declares"
 
 | Verb     | Takes                       | Owes                                                                                                                                                                                                                             |
 | -------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verify` | nothing; reads `AUDIT`      | everything a change has to pass, warnings failing under `AUDIT=1`. See [lint-format.md](lint-format.md)                                                                                                                          |
+| `verify` | nothing; reads `AUDIT`      | everything a change has to pass, warnings failing under `AUDIT=1`. See [toolchain/lint-format.md](toolchain/lint-format.md)                                                                                                                          |
 | `update` | `--dry-run`, `--major` opt. | moves within declared bounds -- ranges, its own `[tools]`, a tag no resolver moves -- and names what waits beyond them; `--major` crosses the ranges or is refused; writes only inside the repository; never verifies or reverts |
-| `clean`  | `--dry-run`                 | removes only what a tool wrote and can write again, never a dependency or local state; see [toolchain.md](toolchain.md), "A cache is what a tool can write again"                                                                |
+| `clean`  | `--dry-run`                 | removes only what a tool wrote and can write again, never a dependency or local state; see [clean.md](toolchain/clean.md), "A cache is what a tool can write again"                                                              |
 | `fmt`    | `--dry-run`                 | formats the files `jujutsu.toml` names for its stack, with the same formatters, so `fmt` and the formatting a commit gets agree; the dry run lists what would change                                                             |
 
 **A dry run writes nothing, and exits 0 when it has reported.** Whatever was found is the answer,

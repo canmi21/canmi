@@ -452,7 +452,7 @@ let settled = (repo, ~code, ~before, ~paths) =>
 
 /**
  * Each repository's own update and the movers its `[update]` declares, kept only where its verify
- * still passes. See docs/toolchain.md.
+ * still passes. See docs/toolchain/dependencies.md.
  */
 let update = async (name, ~dry, ~major, ~everything) => {
   let skipped = []

@@ -11,7 +11,7 @@ let emit = () =>
 
 /**
  * The base images a repository's Dockerfiles pin by digest, each moved to the digest its tag names
- * now, the tag kept. See docs/toolchain.md.
+ * now, the tag kept. See docs/toolchain/ci.md.
  */
 /** A `FROM` pinned by digest, its lead, image, tag, digest and the rest of the line. */
 let from = /^(FROM\s+(?:--platform=\S+\s+)?)([^\s:@]+):([^\s@]+)@(sha256:[0-9a-f]{64})(.*)$/

@@ -1,6 +1,6 @@
 /**
  * A repository's `clean`, what cargo, ReScript and the JavaScript tools built and never a
- * dependency or local state, docs/toolchain.md. Arguments name further caches.
+ * dependency or local state, docs/toolchain/clean.md. Arguments name further caches.
  */
 /** What `find` lists from `root`, a path a line, as the shell's `find` loops read them. */
 let find = (root, findArgs) =>

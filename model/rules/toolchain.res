@@ -121,7 +121,6 @@ let visibilities = ["public", "private"]
 /** The workflows a push to the workspace starts, which has no workspace.toml to declare them. */
 let rootPush = ["verify.yml"]
 
-let doc = "docs/toolchain.md"
 let pushing = "docs/agents/pushing.md"
 let rules: array<Rule.t> = [
   {
@@ -133,43 +132,43 @@ let rules: array<Rule.t> = [
   {
     name: "pin-major",
     says: "A [tools] pin matches `pin`, or carries a comment naming what would lift it",
-    doc,
+    doc: "docs/toolchain/versions.md",
     held: Check("pins"),
   },
   {
     name: "outside-copies",
     says: ".node-version, packageManager and rust-toolchain.toml follow the pins they mirror",
-    doc,
+    doc: "docs/toolchain/versions.md",
     held: Check("tools"),
   },
   {
     name: "scripts-rescript",
     says: "A script, hook or task of the workspace's is ReScript, `kept` excepted",
-    doc,
+    doc: "docs/toolchain/scripts.md",
     held: Check("settings"),
   },
   {
     name: "task-short",
     says: "Every mise task in a repository runs `taskLines` lines at most",
-    doc,
+    doc: "docs/toolchain/scripts.md",
     held: Check("tasks"),
   },
   {
     name: "task-nested",
     says: "A mise task is named by one word, an action of it its first argument, never a name joined by a hyphen",
-    doc,
+    doc: "docs/toolchain/scripts.md",
     held: Check("tasks"),
   },
   {
     name: "cloudflare-placed",
     says: "A D1 database or R2 bucket a script or task makes names its place, Western North America or Asia-Pacific alone, never left unset, and a place written in a configuration file is judged too",
-    doc,
+    doc: "docs/toolchain/scripts.md",
     held: Check("placed"),
   },
   {
     name: "cloudflare-placed-rest",
     says: "Any other Cloudflare resource made with a place names it the same way, never left unset",
-    doc,
+    doc: "docs/toolchain/scripts.md",
     held: Pending(
       "every create by the API, an R2 jurisdiction, a Durable Object's location hint in code and a Worker's placement read, each naming wnam or apac or their equal; a place in a configuration file is held by `placed`",
     ),
@@ -177,56 +176,56 @@ let rules: array<Rule.t> = [
   {
     name: "tabs",
     says: ".editorconfig sets tabs at width 2, YAML at two spaces, and rustfmt.toml says it again",
-    doc: "docs/lint-format.md",
+    doc: "docs/toolchain/lint-format.md",
     held: Check("settings"),
     escape: ByTool,
   },
   {
     name: "localhost",
     says: "Local development is localhost, never a literal loopback address",
-    doc,
+    doc: "docs/toolchain.md",
     held: Check("words"),
   },
   {
     name: "trash-not-rm",
     says: "An agent's rm outside the workspace, temp and caches is refused",
-    doc,
+    doc: "docs/toolchain/deletion.md",
     held: Hook("hooks/bin/rm"),
   },
   {
     name: "secrets-encrypted",
     says: "Every file .sops.yaml claims is encrypted",
-    doc,
+    doc: "docs/toolchain/secrets.md",
     held: Gate("scripts/lints/secrets.res"),
   },
   {
     name: "secrets-per-task",
     says: "A repository's secrets.json is loaded only by the mise tasks that use a credential, each by its own env, never by its global [env]",
-    doc,
+    doc: "docs/toolchain/secrets.md",
     held: Check("tasks"),
   },
   {
     name: "release-age",
     says: "pnpm-workspace.yaml holds a package version back a day before it installs",
-    doc,
+    doc: "docs/toolchain/dependencies.md",
     held: Check("repository"),
   },
   {
     name: "actions-pinned",
     says: "A workflow pins an outside action by commit, its release beside it, and takes the author's own at main",
-    doc,
+    doc: "docs/toolchain/ci.md",
     held: Check("workflows"),
   },
   {
     name: "workflows-linted",
     says: "Every repository's workflows pass actionlint, with shellcheck over each step's shell",
-    doc,
+    doc: "docs/toolchain/ci.md",
     held: Check("workflows"),
   },
   {
     name: "ci-progress",
     says: "A task that runs in CI for more than a minute prints its stage and progress, never a silent stretch",
-    doc,
+    doc: "docs/toolchain/ci.md",
     held: Pending(
       "a workflow run's log read for a gap of more than a minute between two lines, which only a run gives",
     ),
@@ -234,31 +233,31 @@ let rules: array<Rule.t> = [
   {
     name: "actions-age",
     says: "update moves an action's pin to a release a day old, within its major unless --major",
-    doc,
+    doc: "docs/toolchain/ci.md",
     held: Gate("scripts/deps/actions.res"),
   },
   {
     name: "images-pinned",
     says: "A Dockerfile pins each base image by its tag and a digest",
-    doc,
+    doc: "docs/toolchain/ci.md",
     held: Check("repository"),
   },
   {
     name: "images-current",
     says: "update moves a base image's pin to the digest its tag names now, the tag kept",
-    doc,
+    doc: "docs/toolchain/ci.md",
     held: Gate("scripts/deps/images.res"),
   },
   {
     name: "releases-pinned",
     says: "update moves what a repository takes from another's releases to the newest version a manifest lists",
-    doc,
+    doc: "docs/toolchain/releases.md",
     held: Gate("scripts/deps/releases.res"),
   },
   {
     name: "ports-strict",
     says: "Every dev server binds a fixed port and fails when it is taken",
-    doc,
+    doc: "docs/toolchain/runtime.md",
     held: Check("repository"),
   },
   {
@@ -294,7 +293,7 @@ let rules: array<Rule.t> = [
   {
     name: "update-reminder",
     says: "pull and check report, once a day and silent otherwise, only what the scheduled update cannot take: action pins, majors, missing tools and moves pending past two days",
-    doc: "docs/toolchain.md",
+    doc: "docs/toolchain/versions.md",
     held: Check("scripts"),
   },
   {
@@ -314,7 +313,7 @@ let rules: array<Rule.t> = [
   {
     name: "rm-variable-guarded",
     says: "An `rm` an agent types writes each variable in its paths as `${name:?}`, so an empty one stops the command rather than removing from the root",
-    doc,
+    doc: "docs/toolchain/deletion.md",
     held: Hook("hooks/gates/rmvar"),
   },
   {
@@ -393,7 +392,7 @@ let rules: array<Rule.t> = [
   {
     name: "custom-domains",
     says: "workers_dev and preview_urls are off in every wrangler configuration",
-    doc,
+    doc: "docs/toolchain/runtime.md",
     held: Check("domains"),
   },
 ]
