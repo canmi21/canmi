@@ -147,6 +147,7 @@ let others: array<(string, part)> = [
   ("todos", Found(Todos.main)),
   ("names", Found(() => Filenames.main(~root))),
   ("words", Found(() => Words.main(~root))),
+  ("credentials", Found(() => Credentials_check.main(~root))),
   ("docs", Found(() => Docs_force.main(~root))),
   ("generated", Found(() => Reference.found(~root))),
   ("pins", Found(() => Pins.main(~root))),

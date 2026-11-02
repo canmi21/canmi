@@ -238,6 +238,13 @@ Where a repository's Nix runs its tests, it runs them through crane's `cargoNext
 is the workspace's pin in `mise.toml`. A Rust repository not yet on it switches when it is next
 touched.
 
+**A protocol's TLA+ model runs quick by default and whole by hand or once a week.** Every
+repository's `mise run protocol` goes through the workspace's runner, `scripts/protocol/`, which
+caches each result by its inputs and runs the specs and their switches in parallel. Its default is a
+quick model, safety alone, held to about fifteen seconds; `--full` adds the temporal properties and
+the larger constants, and a weekly scheduled workflow, dispatchable by hand, runs it so a liveness
+break is found within a week without slowing every check.
+
 ## Nothing is committed unverified
 
 `mise run verify` -- types, lint, tests -- passes before a commit is made. The commit hook

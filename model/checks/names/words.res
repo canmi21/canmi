@@ -1,6 +1,6 @@
 /** The workspace's own text against model/rules/voice.res, and toolchain.res on loopback. */
 /** The files that state a rule's words, and so quote them. */
-let stating = ["model/rules/voice.res", "model/checks/words.res"]
+let stating = ["model/rules/voice.res", "model/checks/names/words.res"]
 let binary = [".png", ".jpg", ".ico", ".woff2"]
 let skipped = ["pnpm-lock.yaml", "LICENSE"]
 

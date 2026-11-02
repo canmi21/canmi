@@ -92,9 +92,7 @@ let rules: array<Rule.t> = [
     name: "credential-names",
     says: "A credential's variable, display and short forms name the same words, vendor first where it is tied to one, then the platform but never the foundation, then the purpose",
     doc,
-    held: Pending(
-      "a list of each credential's three forms, its variable read against every secrets.json key and workflow secret name, the other two derived from it",
-    ),
+    held: Check("credentials"),
   },
   {
     name: "drawn-ids-once",

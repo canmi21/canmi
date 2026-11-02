@@ -278,7 +278,12 @@ neutral and whose endpoint names the vendor, so it is Systems Write, not a Cloud
 
 **Names planned for a rotation wait for it**: GitHub's `NIX_SIGNING_KEY_TEST` and
 `POINTER_SIGNING_KEY_TEST` become `NIX_TEST_SIGNING_KEY` and `POINTER_TEST_SIGNING_KEY` at the test
-keys' next rotation, as a GitHub secret's value cannot be read back to move it.
+keys' next rotation, as a GitHub secret's value cannot be read back to move it. A secrets.json value
+moves only through `mise run secret`, so `DRIVER_API_TOKEN` becomes `CLOUDFLARE_DRIVER_API_TOKEN`,
+`DRIVER_ACCOUNT_ID` becomes `CLOUDFLARE_DRIVER_ACCOUNT_ID`, `CONTROL_TEST_CLOUDFLARE_TOKEN` becomes
+`CLOUDFLARE_TEST_CONTROL_TOKEN` and `TEST_DRIVER_SIGNING_KEY` becomes `DRIVER_TEST_SIGNING_KEY`, each
+at its own rotation. `Credentials.planned` in [model/rules/credentials.res](../model/rules/credentials.res)
+holds every pair.
 
 ## Inside code
 

@@ -44,6 +44,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **A commit rewritten is followed by `jj st` in every lane standing on it.** Read each lane before
   continuing there; see [lanes.md](agents/lanes.md).
 - **A lane's sibling runs its own `generate` before anything builds against it.**
+- **A seat stops every process it started before it reports, and says so.** Load made to test a
+  flake, `sh -c 'while :; do :; done'` among it, outlives the seat under launchd and slows every
+  check on the Mac; a brief that asks for load says to stop it.
 - **Read Codex's quota before each dispatch, and read each seat's exit.** A seat started with none left
   ends at once, [delegation.md](agents/delegation.md); saying it runs needs its exit read.
 - **An implementer cannot run ssh or git, and a brief asking it to stops it.** Run those yourself and
@@ -88,6 +91,8 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   start in an unquoted `echo` breaks; `cd` carries to the next call, so use absolute paths and a subshell.
 - **`mise run watch` on a log holding file contents gives false ended and failure lines**, and reads
   `failed=0` as a failure. Watch a status file, or print no such word.
+- **A bounded `for ... sleep` loop is still a foreground wait.** Wait on a job's completion notice,
+  or watch its log under Monitor with `mise run watch <log>`; never type the wait in the foreground.
 
 ## Code
 

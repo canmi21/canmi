@@ -2,7 +2,7 @@
 
 # Rules
 
-15 rules, 8 pending a check.
+15 rules, 7 pending a check.
 
 ## Naming
 
@@ -67,7 +67,7 @@ Every resource a platform or an organization makes in a vendor account is named 
 A credential's variable, display and short forms name the same words, vendor first where it is tied to one, then the platform but never the foundation, then the purpose.
 
 - doc: [docs/naming.md](../../docs/naming.md)
-- held by: pending, owed: a list of each credential's three forms, its variable read against every secrets.json key and workflow secret name, the other two derived from it
+- held by: check part `credentials`
 
 ### drawn-ids-once
 
