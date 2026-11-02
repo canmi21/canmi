@@ -36,9 +36,10 @@ after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
 
 These rules apply to every workflow and composite action of this workspace and the `monoflake`
 repositories and are named in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and
-`ci-shell-minimal`. The first two are held by the `ci-steps` part, a warning until the workflows
-that break them are rewritten; `ci-shell-minimal` is held by the `ci-shell` part and is of the form
-layer, so it warns in a lane and refuses a commit onto a main line, docs/agents/checking.md. The
+`ci-shell-minimal`. `ci-native-steps` is held by the `ci-steps` part, a warning until the workflows
+that break it are rewritten; `ci-entries` and `ci-shell-minimal` are held by the `ci-shell` part and
+are of the form layer, so they warn in a lane and refuse a commit onto a main line,
+docs/agents/checking.md. The
 commands an entry or its plumbing may be are `Toolchain.entryCommands` and
 `Toolchain.plumbingCommands`, and a step excused from `ci-shell-minimal` is named, with why, in
 `Toolchain.shellExempt`.
@@ -46,8 +47,13 @@ commands an entry or its plumbing may be are `Toolchain.entryCommands` and
 **A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
 apart, and a published action is taken where one fits rather than written again in a step.
 
-**A step calls an entry the repository already has**, a mise task or a script, so the same entry
-runs on the Mac. The workflow decides the order, the runners, the secrets and the conditions; what a
+**A step calls an entry the repository already has**, one of two kinds: a mise task a person also
+runs, as `mise run verify`, or a CI-only entry under the repository's `.github/`, in a directory
+named for what the workflow does, as `node .github/update/stage.res.mjs`. `pnpm install` and
+`pnpm exec` are plumbing, and `sudo`, `mise exec --` and `nix shell --command` pass when the command
+they wrap does. Any other program, `npx` among them, is a finding, and a step never calls a script
+in `scripts/` by path. The same entry runs on the Mac. The workflow decides the order, the runners,
+the secrets and the conditions; what a
 stage does lives in the entry, where it is tested and run locally before CI ever runs it.
 
 **A step is one shot**: one command, however many lines its flags take, after plain preparation

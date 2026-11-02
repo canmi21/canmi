@@ -60,24 +60,83 @@ let nativeProblems = (documents: array<document>): array<string> =>
       : None
   })
 
-/** ci-entries, a command that is neither an entry nor plumbing, once to a step. */
+/** Where a CI-only entry sits, the repository's `.github/`, however the workflow reaches it. */
+let entryHome = path => {
+  let bare =
+    path
+    ->String.replaceRegExp(
+      /^(?:\$GITHUB_WORKSPACE|\$\{GITHUB_WORKSPACE\}|\$\{\{\s*github\.workspace\s*\}\})\//,
+      "",
+    )
+    ->String.replaceRegExp(/^(?:\.\.?\/)+/, "")
+  bare->String.startsWith(".github/") && bare->String.endsWith(".res.mjs")
+}
+
+/** The scripts a run hands to node, read over its whole text so an expression's string counts. */
+let nodeScripts = run =>
+  run
+  ->String.match(/(?<![\w.\/-])node\s+["']?[^\s"';|&)]+/g)
+  ->Option.getOr([])
+  ->Array.filterMap(call => call)
+  ->Array.map(call => call->String.replaceRegExp(/^node\s+["']?/, ""))
+
+/** What follows the first of `marks` in a wrapper's words, or none where it has no such mark. */
+let after = (words: array<string>, marks) =>
+  words
+  ->Array.findIndex(word => marks->Array.includes(word))
+  ->(at => at < 0 ? None : Some(words->Array.slice(~start=at + 1)))
+
+/**
+ * Whether a command is a mise task, plumbing, `pnpm install` or `pnpm exec`, a structural word, or
+ * a wrapper whose wrapped command passes. A shell inside a wrapper has no pass of its own.
+ */
+let rec passes = (words: array<string>) => {
+  let command = words->Array.getUnsafe(0)
+  let second = words->Array.get(1)
+  let wrapped = inner =>
+    switch inner {
+    | Some(rest) if rest != [] => passes(rest)
+    | _ => false
+    }
+  structure->Array.includes(command) ||
+  undecided(command) ||
+  Toolchain.plumbingCommands->Array.includes(command) ||
+  command == "node" ||
+  command == "mise" && second == Some("run") ||
+  command == "pnpm" && (second == Some("install") || second == Some("exec")) ||
+  command == "sudo" &&
+    wrapped(
+      Some(words->Array.slice(~start=1)->Array.filter(word => !(word->String.startsWith("-")))),
+    ) ||
+  command == "mise" && second == Some("exec") && wrapped(after(words, ["--"])) ||
+  (command == "nix" && second == Some("shell") && wrapped(after(words, ["--command", "-c"])))
+}
+
+/**
+ * ci-entries, a step calls a mise task, plumbing, or a CI-only entry under `.github/`, once to a
+ * step, a form rule refused where a commit lands on a main line.
+ */
+let entryFindings = (documents: array<document>): array<Form_layer.finding> =>
+  runs(documents)->Array.flatMap(((at, run)) => {
+    let others =
+      run
+      ->commands
+      ->Array.map(segment => bare(segment.text)->String.split(" "))
+      ->Array.filter(words => !passes(words))
+      ->Array.map(words => `${at} runs ${words->Array.getUnsafe(0)}, which is no entry`)
+    let places =
+      run
+      ->nodeScripts
+      ->Array.filter(path => !entryHome(path))
+      ->Array.map(path => `${at} runs node ${path}, which is no entry under .github/`)
+    Array.concat(others, places)
+    ->Array.reduce([], (found, says) => found->Array.includes(says) ? found : [...found, says])
+    ->Array.map((says): Form_layer.finding => {rule: "ci-entries", says, onset: () => None})
+  })
+
+/** The same findings as plain lines. */
 let entryProblems = (documents: array<document>): array<string> =>
-  runs(documents)->Array.flatMap(((at, run)) =>
-    run
-    ->commands
-    ->Array.map(head)
-    ->Array.filter(command =>
-      !(structure->Array.includes(command)) &&
-      !undecided(command) &&
-      !(command->String.startsWith("./")) &&
-      !(Toolchain.entryCommands->Array.includes(command)) &&
-      !(Toolchain.plumbingCommands->Array.includes(command))
-    )
-    ->Array.reduce([], (found, command) =>
-      found->Array.includes(command) ? found : [...found, command]
-    )
-    ->Array.map(command => `${at} runs ${command}, which is no entry`)
-  )
+  entryFindings(documents)->Array.map(finding => finding.says)
 
 /** The command substitutions of a run, `$(...)` without arithmetic or nesting. */
 let substitutions = run => run->String.match(/\$\((?!\()[^()]*\)/g)->Option.getOr([])

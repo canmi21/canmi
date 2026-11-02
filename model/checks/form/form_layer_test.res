@@ -30,6 +30,7 @@ let workflow = "jobs:\n  b:\n    runs-on: x\n    steps:\n      - name: Go\n     
 describe("the form layer", () => {
   test("is every rule marked Form, held by the shape, lines and comments parts", () => {
     expect(Form_layer.rules->Array.toSorted(String.compare))->toEqual([
+      "ci-entries",
       "ci-shell-minimal",
       "comment-short",
       "file-short",

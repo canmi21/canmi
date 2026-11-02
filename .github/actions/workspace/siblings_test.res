@@ -68,7 +68,7 @@ describe("the action's clone step", () => {
   test("is one call to the script, after the step that builds the scripts", () => {
     let clone = steps->Array.find(step => step.name == "Clone what the stages read beside it")
     expect(clone->Option.flatMap(step => step.run))->toEqual(
-      Some("node scripts/workspace/ci/siblings.res.mjs"),
+      Some("node .github/actions/workspace/siblings.res.mjs"),
     )
     expect(index(build) < index("Clone what the stages read beside it"))->toBe(true)
   })

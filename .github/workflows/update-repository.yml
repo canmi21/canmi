@@ -60,7 +60,7 @@ jobs:
           beside: ${{ inputs.beside }}
 
       - name: Put jj beside git
-        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" colocate "$REPOSITORY"
+        run: node "$GITHUB_WORKSPACE/.github/update/stage.res.mjs" colocate "$REPOSITORY"
 
       - name: Prepare
         if: inputs.prepare != ''
@@ -72,16 +72,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
-        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" update "$REPOSITORY"
+        run: node "$GITHUB_WORKSPACE/.github/update/stage.res.mjs" update "$REPOSITORY"
 
       - name: See what moved
         id: moved
-        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" moved "$REPOSITORY"
+        run: node "$GITHUB_WORKSPACE/.github/update/stage.res.mjs" moved "$REPOSITORY"
 
       # The message names what the update moved, so it is written before the roll adds its own.
       - name: Write the message
         if: steps.moved.outputs.moved == 'true'
-        run: ${{ inputs.message || 'node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" message "$REPOSITORY" "$RUNNER_TEMP/message"' }}
+        run: ${{ inputs.message || 'node "$GITHUB_WORKSPACE/.github/update/stage.res.mjs" message "$REPOSITORY" "$RUNNER_TEMP/message"' }}
 
       # What the update moved is a landing on main, its versions rolled as a lander rolls them.
       - name: Roll the versions
@@ -96,7 +96,7 @@ jobs:
 
       - name: Commit and push
         if: steps.moved.outputs.moved == 'true'
-        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" commit "$REPOSITORY" "$RUNNER_TEMP/message"
+        run: node "$GITHUB_WORKSPACE/.github/update/stage.res.mjs" commit "$REPOSITORY" "$RUNNER_TEMP/message"
 
       - name: Wake ${{ inputs.wake }}
         if: inputs.wake != ''
@@ -110,4 +110,4 @@ jobs:
         if: ${{ (success() || failure()) && steps.update.outputs.held != '' }}
         env:
           HELD: ${{ steps.update.outputs.held }}
-        run: node "$GITHUB_WORKSPACE/scripts/deps/scheduled.res.mjs" held "$HELD"
+        run: node "$GITHUB_WORKSPACE/.github/update/stage.res.mjs" held "$HELD"

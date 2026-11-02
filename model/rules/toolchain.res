@@ -364,9 +364,10 @@ let rules: array<Rule.t> = [
   },
   {
     name: "ci-entries",
-    says: "A workflow step calls a mise task or a script the repository holds, so the same entry runs locally",
+    says: "A workflow or composite action step calls only a mise task a person also runs, as `mise run verify`, or a CI-only entry under the repository's `.github/<what the workflow does>/`, as `node .github/update/stage.res.mjs`; both call the core in scripts/ or code/, `pnpm install` and `pnpm exec` are plumbing, `sudo`, `mise exec --` and `nix shell --command` are judged by the command they wrap, and a step never calls a script there by path, so any other program is refused at a landing on a main line",
     doc: "docs/ci.md",
-    held: Check("ci-steps"),
+    held: Check("ci-shell"),
+    layer: Form,
   },
   {
     name: "ci-shell-minimal",

@@ -1,32 +1,19 @@
 /**
- * The stages of a repository's scheduled update in CI, one per workflow step, so the same entry
- * runs on the Mac. See docs/ci.md.
+ * The stages of a repository's scheduled update, which the CI entry in .github/update/ calls, so
+ * the same logic runs on the Mac. See docs/ci.md.
  */
-@module("node:fs") external appendFileSync: (string, string) => unit = "appendFileSync"
-
 let root = Node.resolve([Node.dirname(Node.fileURLToPath(Node.importMetaUrl)), "..", ".."])
 
 /** The repository's directory, the workspace itself for an empty path. */
 let place = path => path == "" ? root : Node.join([root, "repos", path])
 
-let usage = "scheduled colocate <path> | update <path> | moved <path> | message <path> <file> | commit <path> <file> | held <names>"
-
-let fail = why => {
-  Console.error(`scheduled: ${why}`)
-  Node.exit(1)
-}
-
-/** A value handed to the next step, where GitHub reads them, or shown on the Mac. */
-let output = (key, value) =>
-  switch Node.env->Dict.get("GITHUB_OUTPUT") {
-  | Some(file) if file != "" => appendFileSync(file, `${key}=${value}\n`)
-  | _ => Console.log(`${key}=${value}`)
-  }
+/** A stage that cannot go on, its reason said by the entry that called it. */
+exception Failed(string)
 
 let ran = (~cwd, command, args) => {
   let status = Node.run(~cwd, command, args)
   if status != 0 {
-    fail(`${command} ${args->Array.join(" ")} exited ${Int.toString(status)}`)
+    throw(Failed(`${command} ${args->Array.join(" ")} exited ${Int.toString(status)}`))
   }
 }
 
@@ -66,17 +53,14 @@ let changedPaths = status => {
   )
 }
 
+/** The update's exit status and the sources whose pins it held back. */
 let update = async path => {
   let (status, out) = await Node.stream(
     ~cwd=root,
     "mise",
     ["run", "update", ...path == "" ? [] : [path]],
   )
-  let held = heldSources(out)
-  output("held", held->Array.join(", "))
-  if status != 0 {
-    fail(`update exited ${Int.toString(status)}, so nothing is committed`)
-  }
+  (status, heldSources(out))
 }
 
 let changed = path =>
@@ -86,7 +70,7 @@ let changed = path =>
     {cwd: place(path), encoding: "utf8"},
   )->changedPaths
 
-let moved = path => output("moved", changed(path) == [] ? "false" : "true")
+let moved = path => changed(path) != []
 
 let message = (path, file) => {
   let dir = place(path)
@@ -111,24 +95,4 @@ let commit = (path, file) => {
   ran(~cwd, "git", ["add", "--all"])
   ran(~cwd, "git", ["commit", "--file", file])
   ran(~cwd, "git", ["push", "origin", "HEAD:main"])
-}
-
-let main = async () =>
-  switch Node.args() {
-  | ["colocate", path] => colocate(path)
-  | ["update", path] => await update(path)
-  | ["moved", path] => moved(path)
-  | ["message", path, file] => message(path, file)
-  | ["commit", path, file] => commit(path, file)
-  | ["held", names] if names != "" =>
-    Console.log(
-      `::error::the releases of ${names} could not be read, so their pins were kept as they were`,
-    )
-    Node.exit(1)
-  | ["held", _] => ()
-  | _ => fail(usage)
-  }
-
-if Node.isMain {
-  await main()
 }

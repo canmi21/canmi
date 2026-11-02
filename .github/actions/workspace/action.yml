@@ -71,4 +71,4 @@ runs:
       env:
         BESIDE: ${{ inputs.beside }}
         CALLER: ${{ inputs.path }}
-      run: node scripts/workspace/ci/siblings.res.mjs
+      run: node .github/actions/workspace/siblings.res.mjs

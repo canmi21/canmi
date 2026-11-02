@@ -118,7 +118,10 @@ that is code has one implementation rather than two that look alike.
 repository's `.github/`**, in a directory named for what the workflow does: machine's
 `.github/update/`, runtime's `.github/publish/`. A repository's `scripts/` keeps what is run by hand
 or by its tasks, and its top level keeps what the repository is for, an image's build or a machine's
-NixOS, so the root shows that before anything that only serves CI.
+NixOS, so the root shows that before anything that only serves CI. **A workflow calls only two kinds
+of entry**, a mise task a person also runs, or a CI-only entry under `.github/`, and the core both
+call lives in `scripts/` or `code/`, written once; `ci-entries` refuses any other program, and a
+`node` path outside `.github/`, at a landing on a main line.
 
 **A task two repositories run is written once, here, in ReScript under `scripts/`** -- RFC 17b3o.
 `scripts/change/` holds what a change reaches -- `graph`, `fingerprint`, `resolved` -- and the two

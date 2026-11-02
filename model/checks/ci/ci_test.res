@@ -84,7 +84,67 @@ describe("the workflow shell rules", () => {
         run(indent("names=$(mise run list)\necho \"$names\" >> \"$GITHUB_OUTPUT\"")),
       ),
     )->toEqual([])
-    expect(Entries.entryProblems(run(indent("(cd ../m && npx rescript build)"))))->toEqual([])
+    expect(Entries.entryProblems(run(indent("(cd ../m && mkdir x)"))))->toEqual([])
+  })
+
+  test("ci-entries allows a mise task and a node entry under .github/", () => {
+    expect(Entries.entryProblems(run(indent("mise run verify"))))->toEqual([])
+    expect(
+      Entries.entryProblems(
+        run(indent("node \"$GITHUB_WORKSPACE/.github/update/stage.res.mjs\" a")),
+      ),
+    )->toEqual([])
+    expect(
+      Entries.entryProblems(run(indent("node .github/actions/w/siblings.res.mjs"))),
+    )->toEqual([])
+  })
+
+  test("ci-entries judges a wrapper by what it wraps", () => {
+    let says = what => [`w.yml: job build step "Go" runs ${what}, which is no entry`]
+    ["pnpm install --frozen-lockfile", "pnpm exec rescript build"]->Array.forEach(
+      line => expect(Entries.entryProblems(run(indent(line))))->toEqual([]),
+    )
+    [
+      "mise exec -- mise run a",
+      "nix shell nixpkgs#jq --command mise run a",
+      "sudo -n mkdir x",
+    ]->Array.forEach(line => expect(Entries.entryProblems(run(indent(line))))->toEqual([]))
+    expect(Entries.entryProblems(run(indent("mise exec -- sh -c 'a; b'"))))->toEqual(says("mise"))
+    expect(Entries.entryProblems(run(indent("sudo grep x f"))))->toEqual(says("sudo"))
+    expect(Entries.entryProblems(run(indent("nix shell n#x --command sh -c a"))))->toEqual(
+      says("nix"),
+    )
+    expect(Entries.entryProblems(run(indent("pnpm run x"))))->toEqual(says("pnpm"))
+    expect(Entries.entryProblems(run(indent("sudo node scripts/a.res.mjs"))))->toEqual([
+      "w.yml: job build step \"Go\" runs node scripts/a.res.mjs, which is no entry under .github/",
+    ])
+    expect(Entries.entryProblems(run(indent("mise exec -- node scripts/a.res.mjs"))))->toEqual([
+      "w.yml: job build step \"Go\" runs node scripts/a.res.mjs, which is no entry under .github/",
+    ])
+  })
+
+  test("ci-entries refuses node outside .github/, in a string too, and other programs", () => {
+    let says = what => [`w.yml: job build step "Go" runs ${what}`]
+    expect(Entries.entryProblems(run(indent("node scripts/deps/scheduled.res.mjs a"))))->toEqual(
+      says("node scripts/deps/scheduled.res.mjs, which is no entry under .github/"),
+    )
+    expect(Entries.entryProblems(run(indent("node .github/update/x.js"))))->toEqual(
+      says("node .github/update/x.js, which is no entry under .github/"),
+    )
+    expect(
+      Entries.entryProblems(
+        run(indent("${{ inputs.message || 'node \"$GITHUB_WORKSPACE/scripts/m.res.mjs\" a' }}")),
+      ),
+    )->toEqual(says("node $GITHUB_WORKSPACE/scripts/m.res.mjs, which is no entry under .github/"))
+    expect(Entries.entryProblems(run(indent("npx rescript build"))))->toEqual(
+      says("npx, which is no entry"),
+    )
+    expect(Entries.entryProblems(run(indent("mise install"))))->toEqual(
+      says("mise, which is no entry"),
+    )
+    expect(Entries.entryProblems(run(indent("./scripts/x.sh"))))->toEqual(
+      says("./scripts/x.sh, which is no entry"),
+    )
   })
 
   test("ci-shell-minimal allows one shot over many lines and plain preparation", () => {
@@ -96,7 +156,7 @@ describe("the workflow shell rules", () => {
     )->toEqual([])
     expect(Entries.shellProblems(run(indent("sudo rm -f /etc/x"))))->toEqual([])
     expect(
-      Entries.shellProblems(run(indent("${{ inputs.message || 'node scripts/m.res.mjs' }}"))),
+      Entries.shellProblems(run(indent("${{ inputs.message || 'node .github/m.res.mjs' }}"))),
     )->toEqual([])
     expect(Entries.shellProblems(run(indent("grep -E 'a|b' f"))))->toEqual([])
     expect(

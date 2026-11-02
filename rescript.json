@@ -12,6 +12,10 @@
 		{
 			"dir": "hooks",
 			"subdirs": true
+		},
+		{
+			"dir": ".github",
+			"subdirs": true
 		}
 	],
 	"dependencies": [],
