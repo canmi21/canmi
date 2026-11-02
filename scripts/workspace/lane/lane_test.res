@@ -1,9 +1,45 @@
 open Testing
 
 let root = "/base"
-let registered = ["monoflake/platform", "monoflake/driver", "canmi/web"]
+let registered = [
+  "monoflake/platform",
+  "monoflake/driver",
+  "monoflake/machine",
+  "monoflake/cloud",
+  "canmi/web",
+]
+let boundaries = Dict.fromArray([
+  (
+    "monoflake/cloud",
+    [
+      ("monoflake/driver", "monoflake/driver:driver-archive"),
+      ("monoflake/driver", "monoflake/driver:driver-install"),
+      ("monoflake/machine", "monoflake/machine:machine-flake"),
+      ("monoflake/platform", "monoflake/platform:operator-tasks"),
+    ],
+  ),
+  ("monoflake/driver", [("monoflake/platform", "monoflake/platform:contracts")]),
+  ("monoflake/machine", [("monoflake/driver", "monoflake/driver:driver-archive")]),
+])
 let open_ = (~exists=_ => false, ~cloned=_ => true, ~hasPackage=_ => false, ~root=root, opened) =>
-  Lane.openPlan(~root, ~registered, ~cloned, ~exists, ~hasPackage, opened)
+  Lane.openPlan(
+    ~root,
+    ~registered,
+    ~cloned,
+    ~exists,
+    ~hasPackage,
+    ~depends=one => boundaries->Dict.get(one)->Option.getOr([]),
+    opened,
+  )
+let repositoriesOf = plan =>
+  plan
+  ->Result.getOr([])
+  ->Array.filterMap(step =>
+    switch step {
+    | Lane.Run({cwd}) => Some(cwd->String.replace("/base/repos/", ""))
+    | _ => None
+    }
+  )
 
 let found = (lane, rel): Lane_state.found => {lane, rel, path: `/base/lanes/${lane}/${rel}`}
 
@@ -84,6 +120,87 @@ describe("opening a lane", () => {
   )
 })
 
+describe("opening a lane with its boundary", () => {
+  test("puts beside cloud the three repositories it depends on", () => {
+    let plan = open_({target: "monoflake/cloud", name: "w", siblings: []})
+    expect(plan->repositoriesOf)->toEqual([
+      "monoflake/cloud",
+      "monoflake/driver",
+      "monoflake/machine",
+      "monoflake/platform",
+    ])
+  })
+
+  test("puts platform beside driver, and generates its libraries after the install", () => {
+    let plan = open_(~hasPackage=_ => true, {target: "monoflake/driver", name: "w", siblings: []})
+    expect(plan->repositoriesOf)->toEqual(["monoflake/driver", "monoflake/platform"])
+    let commands =
+      plan
+      ->Result.getOr([])
+      ->Array.filterMap(
+        step =>
+          switch step {
+          | Lane.Background({cwd, command}) => Some((cwd, command))
+          | _ => None
+          },
+      )
+    expect(commands)->toEqual([
+      ("/base/lanes/w/monoflake/driver", "pnpm install --frozen-lockfile"),
+      (
+        "/base/lanes/w/monoflake/platform",
+        "pnpm install --frozen-lockfile && rescript build && mise run generate",
+      ),
+    ])
+  })
+
+  test("opens a repository with no boundary alone, platform included", () => {
+    expect(open_({target: "canmi/web", name: "w", siblings: []})->repositoriesOf)->toEqual([
+      "canmi/web",
+    ])
+    expect(
+      open_({target: "monoflake/platform", name: "w", siblings: []})->repositoriesOf,
+    )->toEqual(["monoflake/platform"])
+  })
+
+  test("still adds a --with the boundary does not name, without doubling one it does", () => {
+    let plan = open_({
+      target: "monoflake/driver",
+      name: "w",
+      siblings: ["canmi/web", "monoflake/platform"],
+    })
+    expect(plan->repositoriesOf)->toEqual(["monoflake/driver", "canmi/web", "monoflake/platform"])
+  })
+
+  test("still refuses a repository named twice", () => {
+    expect(
+      open_({
+        target: "monoflake/driver",
+        name: "w",
+        siblings: ["canmi/web", "canmi/web"],
+      })->Result.isError,
+    )->toBe(true)
+  })
+
+  test("says in a dry run which depends line each sibling was added for", () => {
+    let said =
+      open_({target: "monoflake/cloud", name: "w", siblings: []})
+      ->Result.getOr([])
+      ->Array.map(Lane.shown)
+      ->Array.filter(line => line->String.startsWith("note: "))
+    expect(said)->toEqual([
+      "note: monoflake/driver beside, as monoflake/cloud's boundary depends names monoflake/driver:driver-archive",
+      "note: monoflake/machine beside, as monoflake/cloud's boundary depends names monoflake/machine:machine-flake",
+      "note: monoflake/platform beside, as monoflake/cloud's boundary depends names monoflake/platform:operator-tasks",
+    ])
+  })
+
+  test("reads the repositories out of a workspace.toml boundary", () => {
+    let text = "[boundary]\nexports = []\ndepends = [\"a/b:x\", \"c/d:y\"]\n"
+    expect(Lane.dependsOf(text))->toEqual([("a/b", "a/b:x"), ("c/d", "c/d:y")])
+    expect(Lane.dependsOf("[format]\nx = 1\n"))->toEqual([])
+  })
+})
+
 describe("closing a lane", () => {
   let two = [found("wave", "monoflake/platform"), found("wave", "monoflake/driver")]
   let plan = Lane.closePlan(~root, ~registered, ~hasCargo=_ => true, ~name="wave", two)
@@ -148,6 +265,13 @@ describe("handing a lane in", () => {
       "(in /base/lanes/wave/monoflake/platform) judge the files changed from main, every rule",
       "(in /base/lanes/wave/monoflake/driver) judge the files changed from main, every rule",
     ])
+  })
+
+  test("finds the base workspace from inside a lane, and a base as itself", () => {
+    expect(Lane.baseOf("/base/lanes/wave/canmi"))->toBe("/base")
+    expect(Lane.baseOf("/base/lanes/wave/monoflake/platform"))->toBe("/base")
+    expect(Lane.baseOf("/base"))->toBe("/base")
+    expect(plan(~root=Lane.baseOf("/base/lanes/wave/canmi"), two)->Result.isOk)->toBe(true)
   })
 
   test("refuses a lane run from a lane, a bad name, none found and a stray path", () => {

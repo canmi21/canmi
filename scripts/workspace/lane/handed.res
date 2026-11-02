@@ -84,6 +84,35 @@ let judge = (~lines, ~own, files) => {
   }
 }
 
+/** Each formatter a changed file is held to, the program, its checking flags and its owner. */
+let formatters = [
+  ("rescript", ["format", "--check"], "rescript format"),
+  ("oxfmt", ["--list-different", "--no-error-on-unmatched-pattern"], "oxfmt"),
+  ("rustfmt", ["--check"], "rustfmt"),
+]
+
+/** The checks to run over `files`, each a program, its arguments and the files it reads. */
+let formatPlan = files =>
+  formatters->Array.filterMap(((program, flags, owner)) => {
+    let suffixes =
+      Format.owners->Array.filterMap(((suffix, formatter)) =>
+        formatter == Format.Formats(owner) ? Some(suffix) : None
+      )
+    let mine =
+      files->Array.filter(file => suffixes->Array.some(suffix => file->String.endsWith(suffix)))
+    mine == [] ? None : Some((program, Array.concat(flags, mine), mine))
+  })
+
+/** The files a formatter would change, `check` giving a run's status and everything it said. */
+let unformatted = (~check, files) =>
+  formatPlan(files)->Array.flatMap(((program, args, mine)) => {
+    let (status, said) = check(program, args)
+    let named = mine->Array.filter(file => said->String.includes(file))
+    status == 0
+      ? []
+      : (named == [] ? mine : named)->Array.map(file => {file, why: `needs formatting, ${program}`})
+  })
+
 let shown = ({file, why}) => `${file}: ${why}`
 
 /** The lines of a file of a working copy, none where it is gone or not text. */
@@ -96,8 +125,28 @@ let linesOf = (~cwd, file) =>
   | _ => None
   }
 
-/** One working copy judged and printed, `all` for every rule of `handed`, else lengths alone. */
-let report = (~cwd, ~dir, ~own, ~all) =>
+/** A formatter run in `cwd`, its status and everything it said. */
+let checkIn = (~cwd, program, args) => {
+  let answer = Node.spawnSync(program, args, {cwd, encoding: "utf8", maxBuffer: 268435456})
+  (
+    answer.status->Nullable.getOr(1),
+    answer.stdout->Nullable.getOr("") ++ answer.stderr->Nullable.getOr(""),
+  )
+}
+
+/** The parts of the form layer finding something over the tree `cwd` would commit, each logged. */
+let formedIn = cwd =>
+  switch Commit_tree.tree(cwd, ~place=cwd, ~filesets=[]) {
+  | Ok(tree) => Commit_tree.refused(cwd, tree)->Array.map(((name, _)) => name)
+  | Error(why) => [why]
+  }
+
+/**
+ * One working copy judged and printed, `all` for every rule of `handed` with formatting and the
+ * form layer, else lengths alone.
+ */
+let report = (~cwd, ~dir, ~own, ~all, ~check=?, ~form=formedIn) => {
+  let check = check->Option.getOr((program, args) => checkIn(~cwd, program, args))
   switch changed(cwd) {
   | Error(why) =>
     Console.error(`${dir} could not be judged: ${why}`)
@@ -105,7 +154,13 @@ let report = (~cwd, ~dir, ~own, ~all) =>
   | Ok(files) =>
     let lines = file => linesOf(~cwd, file)
     let judged = all ? judge(~lines, ~own, files) : sizes(~lines, files)
+    let loose = all
+      ? unformatted(~check, files->Array.filter(file => Node.existsSync(Node.join([cwd, file]))))
+      : []
+    let formed = all ? form(cwd) : []
     judged.listed->Array.forEach(one => Console.log(`${dir}/${shown(one)}`))
-    judged.refused->Array.forEach(one => Console.error(`${dir}/${shown(one)}`))
-    judged.refused == [] ? 0 : 1
+    Array.concat(judged.refused, loose)->Array.forEach(one => Console.error(`${dir}/${shown(one)}`))
+    formed->Array.forEach(name => Console.error(`${dir}: the form layer finds this in ${name}`))
+    judged.refused == [] && loose == [] && formed == [] ? 0 : 1
   }
+}

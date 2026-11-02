@@ -1,5 +1,6 @@
 /**
- * `lane open <repository|workspace> <name> [--with <repository> ...] [--dry-run]` and
+ * `lane open <repository|workspace> <name> [--with <repository> ...] [--dry-run]`, which also
+ * places every repository the target's workspace.toml [boundary] depends names, and
  * `lane close <name> [--dry-run]` and `lane handed <name> [--own <directory> ...]`,
  * docs/agents/lanes.md.
  */
@@ -10,6 +11,7 @@ type step =
   | Handed({cwd: string, dir: string, own: array<string>, all: bool})
   | MakeDir(string)
   | Remove(string)
+  | Say(string)
 
 type opened = {target: string, name: string, siblings: array<string>}
 
@@ -30,6 +32,57 @@ let fromBase = root =>
     ? Error("run lane from the base workspace, not from inside a lane")
     : Ok()
 
+/** The repositories a workspace.toml's [boundary] depends names, each line cut at its colon. */
+let dependsOf = (text: string): array<(string, string)> =>
+  switch Toml.parse(text) {
+  | Object(top) =>
+    switch top->Dict.get("boundary") {
+    | Some(Object(boundary)) =>
+      switch boundary->Dict.get("depends") {
+      | Some(Array(lines)) =>
+        lines->Array.filterMap(line =>
+          switch line {
+          | String(line) => Some((line->String.split(":")->Array.getUnsafe(0), line))
+          | _ => None
+          }
+        )
+      | _ => []
+      }
+    | _ => []
+    }
+  | _ => []
+  }
+
+/**
+ * The repositories `target` depends on, transitively, each as (repository, the one whose
+ * depends names it, that line), in the order met. `depends` gives one repository's direct lines.
+ */
+let boundarySiblings = (~depends: string => array<(string, string)>, target) => {
+  let rec go = (queue, seen, found) =>
+    switch queue {
+    | list{} => found
+    | list{one, ...more} =>
+      let (seen, fresh) =
+        depends(one)->Array.reduce((seen, []), ((seen, fresh), (repo, line)) =>
+          seen->Array.includes(repo)
+            ? (seen, fresh)
+            : (Array.concat(seen, [repo]), Array.concat(fresh, [(repo, one, line)]))
+        )
+      go(
+        List.concat(more, fresh->Array.map(((repo, _, _)) => repo)->List.fromArray),
+        seen,
+        Array.concat(found, fresh),
+      )
+    }
+  go(list{target}, [target], [])
+}
+
+/** The base workspace a root belongs to, the root itself where it is no lane's copy. */
+let baseOf = root => {
+  let marker = `${Node.sep}lanes${Node.sep}`
+  root->String.includes(marker) ? root->String.split(marker)->Array.getUnsafe(0) : root
+}
+
 /** What the steps of an open are, or why they cannot be. */
 let openPlan = (
   ~root,
@@ -37,9 +90,17 @@ let openPlan = (
   ~cloned,
   ~exists,
   ~hasPackage,
+  ~depends=_ => [],
   {target, name, siblings}: opened,
 ) => {
-  let all = Array.concat([target], siblings)
+  let named = Array.concat([target], siblings)
+  let beside =
+    boundarySiblings(~depends, target)->Array.filter(((repo, _, _)) =>
+      !(named->Array.includes(repo))
+    )
+  let reason = repo =>
+    beside->Array.findMap(((one, from, line)) => one == repo ? Some((from, line)) : None)
+  let all = Array.concat(named, beside->Array.map(((repo, _, _)) => repo))
   let unknown = all->Array.find(one => one != "workspace" && !(registered->Array.includes(one)))
   let missing = all->Array.find(one => one != "workspace" && !cloned(one))
   let nested =
@@ -48,7 +109,8 @@ let openPlan = (
   | (Error(why), _, _) => Error(why)
   | _ if !(namePattern->RegExp.test(name)) =>
     Error(`${name} is no lane name, which is lowercase words joined by hyphens`)
-  | _ if all->Array.length != Set.fromArray(all)->Set.size => Error("a repository is named twice")
+  | _ if named->Array.length != Set.fromArray(named)->Set.size =>
+    Error("a repository is named twice")
   | _ if exists(Node.join([Lane_state.lanes(root), name])) => Error(`lanes/${name} exists already`)
   | (_, Some(one), _) => Error(`${one} is no repository of repos/registry.toml`)
   | (_, _, Some(one)) => Error(`${one} is not cloned`)
@@ -58,7 +120,14 @@ let openPlan = (
     Ok(
       all->Array.flatMap(one => {
         let there = destination(~root, ~name, one)
-        Array.concat(
+        let generated = one == "monoflake/platform" && target != one
+        Array.flat([
+          switch reason(one) {
+          | Some((from, line)) => [
+              Say(`${one} beside, as ${from}'s boundary depends names ${line}`),
+            ]
+          | None => []
+          },
           [
             MakeDir(Node.dirname(there)),
             Run({
@@ -71,7 +140,9 @@ let openPlan = (
             ? [
                 Background({
                   cwd: there,
-                  command: "pnpm install --frozen-lockfile",
+                  command: generated
+                    ? "pnpm install --frozen-lockfile && rescript build && mise run generate"
+                    : "pnpm install --frozen-lockfile",
                   log: Node.join([
                     Lane_state.lanes(root),
                     name,
@@ -80,7 +151,7 @@ let openPlan = (
                 }),
               ]
             : [],
-        )
+        ])
       }),
     )
   }
@@ -153,6 +224,7 @@ let shown = step =>
     `(in ${cwd}) judge the files changed from main, ${all ? "every rule" : "lengths"}`
   | MakeDir(dir) => `mkdir -p ${dir}`
   | Remove(path) => `remove ${path}`
+  | Say(text) => `note: ${text}`
   }
 
 /** The stdout lines of a jj command run in `cwd`, or why it failed. */
@@ -231,9 +303,13 @@ let perform = (~root, step) =>
       ? Ok()
       : Error(`${dir} holds a change that is refused above, so it stays open`)
   | Background({cwd, command, log}) =>
-    Node.run("sh", ["-c", `cd '${cwd}' && nohup ${command} > '${log}' 2>&1 &`]) == 0
+    Node.run(
+      "sh",
+      ["-c", `cd '${cwd}' && nohup sh -c '${command}; echo "exit: $?"' > '${log}' 2>&1 &`],
+    ) == 0
       ? Ok()
       : Error(`${command} did not start`)
+  | Say(text) => Ok(Console.log(text))
   | MakeDir(dir) => nothingElse(~root, dir ++ Node.sep) ? Ok(Node.mkdirAll(dir)) : Error(dir)
   | Remove(path) =>
     nothingElse(~root, path)
@@ -299,9 +375,14 @@ let main = (argv: array<string>): int => {
       ~cloned=one => Node.existsSync(Node.join([root, "repos", one])),
       ~exists=Node.existsSync,
       ~hasPackage=one => Node.existsSync(Node.join([source(~root, one), "package.json"])),
+      ~depends=one => {
+        let file = Node.join([source(~root, one), "workspace.toml"])
+        Node.existsSync(file) ? dependsOf(Node.readFileSync(file)) : []
+      },
       {target, name, siblings},
     )->finish(~root, ~dry)
   | ["handed", name] if siblings == [] =>
+    let root = baseOf(root)
     Lane_state.workspacesOf(
       ~root,
       ~subdirs=Lane_state.realSubdirs,
