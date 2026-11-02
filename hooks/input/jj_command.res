@@ -47,6 +47,96 @@ let rec substitutionEnd = (chars: array<string>, start): option<int> => {
   balanced.contents && depth.contents == 0 ? Some(at.contents) : None
 }
 
+/** Heredoc bodies stay data even when their delimiter permits expansion. */
+let withoutHeredocBodies = command => {
+  let chars = command->Node.codePoints
+  let length = chars->Array.length
+  let kept = []
+  let pending = []
+  let at = ref(0)
+  let quote = ref("")
+  while at.contents < length {
+    let start = at.contents
+    let char = chars->Array.getUnsafe(start)
+    if char == "\\" && quote.contents != "'" {
+      at := min(start + 2, length)
+    } else if quote.contents != "" {
+      if char == quote.contents {
+        quote := ""
+      }
+      at := start + 1
+    } else if char == "'" || char == "\"" {
+      quote := char
+      at := start + 1
+    } else if char == "`" || (char == "$" && chars[start + 1] == Some("(")) {
+      at := substitutionEnd(chars, start)->Option.getOr(length)
+    } else if (
+      char == "#" &&
+        (start == 0 ||
+          [Some(" "), Some("\t"), Some("\n"), Some(";"), Some("|")]->Array.includes(
+            chars[start - 1],
+          ))
+    ) {
+      while at.contents < length && chars[at.contents] != Some("\n") {
+        at := at.contents + 1
+      }
+    } else if char == "<" && chars[start + 1] == Some("<") {
+      if chars[start + 2] == Some("<") {
+        at := start + 3
+      } else {
+        let tabs = chars[start + 2] == Some("-")
+        at := start + (tabs ? 3 : 2)
+        while [Some(" "), Some("\t")]->Array.includes(chars[at.contents]) {
+          at := at.contents + 1
+        }
+        let delimiter = ref("")
+        let quoted = ref("")
+        let reading = ref(true)
+        while at.contents < length && reading.contents {
+          let current = chars->Array.getUnsafe(at.contents)
+          if current == "\\" && quoted.contents != "'" {
+            delimiter := delimiter.contents ++ chars[at.contents + 1]->Option.getOr("")
+            at := min(at.contents + 2, length)
+          } else if quoted.contents != "" {
+            current == quoted.contents ? quoted := "" : delimiter := delimiter.contents ++ current
+            at := at.contents + 1
+          } else if current == "'" || current == "\"" {
+            quoted := current
+            at := at.contents + 1
+          } else if (
+            [" ", "\t", "\r", "\n", ";", "|", "&", "<", ">", "(", ")"]->Array.includes(current)
+          ) {
+            reading := false
+          } else {
+            delimiter := delimiter.contents ++ current
+            at := at.contents + 1
+          }
+        }
+        pending->Array.push((delimiter.contents, tabs))
+      }
+    } else {
+      at := start + 1
+    }
+    kept->Array.push(chars->Array.slice(~start, ~end=at.contents)->Array.join(""))
+    if char == "\n" && quote.contents == "" {
+      pending->Array.forEach(((delimiter, tabs)) => {
+        let ended = ref(false)
+        while at.contents < length && !ended.contents {
+          let lineStart = at.contents
+          while at.contents < length && chars[at.contents] != Some("\n") {
+            at := at.contents + 1
+          }
+          let line = chars->Array.slice(~start=lineStart, ~end=at.contents)->Array.join("")
+          ended := (tabs ? line->String.replaceRegExp(/^\t+/, "") : line) == delimiter
+          at := min(at.contents + 1, length)
+        }
+      })
+      pending->Array.splice(~start=0, ~remove=pending->Array.length, ~insert=[])
+    }
+  }
+  kept->Array.join("")
+}
+
 /** The words of a command line, or none where a quote or substitution is left open. */
 let words = (~keepQuotes=false, command: string): option<array<string>> => {
   let found = []

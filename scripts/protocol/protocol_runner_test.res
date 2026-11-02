@@ -190,6 +190,84 @@ describe("the shared TLC runner", () => {
     expect(code)->toBe(0)
   })
 
+  testAsync("checks a full-only invariant and its switch only under --full", async () => {
+    lay(
+      manifest->String.replace(
+        `"full": "roll-full.cfg"`,
+        `"full": ["ABelowB"], "fullConfig": "roll-full.cfg"`,
+      ),
+    )
+    let (calls, _, launch) = fake()
+    let (code, _) = await run(launch)
+    expect(code)->toBe(0)
+    expect(calls->Array.length)->toBe(2)
+    expect((calls->Array.getUnsafe(0)).config->String.includes("ABelowB"))->toBe(false)
+    expect(calls->Array.some(c => c.config->String.includes("SW_A = TRUE")))->toBe(false)
+    let (code, _) = await run(launch, ~full=true)
+    expect(code)->toBe(0)
+    expect(calls->Array.length)->toBe(6)
+    expect((calls->Array.getUnsafe(2)).config)->toContain("ABelowB")
+    expect((calls->Array.getUnsafe(2)).config)->toContain("Top = 5")
+    let flipped = calls->Array.find(c => c.config->String.includes("SW_A = TRUE"))
+    expect(Protocol_tlc.expectedOf((flipped->Option.getOrThrow).config, "ABelowB"))->toEqual(
+      Some(Protocol_tlc.Invariant("ABelowB")),
+    )
+    let (_, _, launch) = fake(~unbreakable="SW_A")
+    let (code, out) = await run(launch, ~full=true)
+    expect(code)->toBe(1)
+    expect(out)->toContain("FAIL roll SW_A: did not break")
+  })
+
+  testAsync("uses the quick cfg for full-only checks without a separate cfg", async () => {
+    lay(manifest->String.replace(`"full": "roll-full.cfg"`, `"full": ["NeverBack"]`))
+    let (calls, _, launch) = fake()
+    let (code, _) = await run(launch)
+    expect(code)->toBe(0)
+    expect(calls->Array.length)->toBe(2)
+    expect((calls->Array.getUnsafe(0)).config->String.includes("NeverBack"))->toBe(false)
+    let (code, _) = await run(launch, ~full=true)
+    expect(code)->toBe(0)
+    expect(calls->Array.length)->toBe(6)
+    expect((calls->Array.getUnsafe(2)).config)->toContain("NeverBack")
+    expect((calls->Array.getUnsafe(2)).config)->toContain("Top = 3")
+  })
+
+  test("refuses a property listed as both full-only and temporal", () => {
+    let why = try {
+      Protocol_manifest.parse(
+        manifest->String.replace(`"full": "roll-full.cfg"`, `"full": ["RerunSafe"]`),
+      )->ignore
+      ""
+    } catch {
+    | Protocol_manifest.Refused(why) => why
+    }
+    expect(why)->toContain(`RerunSafe is listed in both "full" and "temporal"`)
+  })
+
+  test("refuses malformed full-only lists and ambiguous cfg paths", () => {
+    [
+      (`"full": [1]`, `"full" must hold strings`),
+      (`"full": true`, `"full" must be a list of strings`),
+      (`"fullConfig": []`, `"fullConfig" must be a string`),
+      (
+        `"full": "roll-full.cfg", "fullConfig": "other.cfg"`,
+        `"full" cfg and "fullConfig" cannot both be set`,
+      ),
+    ]->Array.forEach(
+      ((replacement, why)) => {
+        let refused = try {
+          Protocol_manifest.parse(
+            manifest->String.replace(`"full": "roll-full.cfg"`, replacement),
+          )->ignore
+          ""
+        } catch {
+        | Protocol_manifest.Refused(why) => why
+        }
+        expect(refused)->toContain(why)
+      },
+    )
+  })
+
   testAsync("leaves a file equal as data untouched on --write", async () => {
     lay(dataExport)
     let (_, _, launch) = fake()

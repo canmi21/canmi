@@ -20,6 +20,7 @@ type spec = {
   modulePath: string,
   quick: string,
   full: option<string>,
+  fullChecks: array<string>,
   inputs: array<string>,
   flips: array<flip>,
   temporal: array<string>,
@@ -94,7 +95,10 @@ let constantsOf = (fields: dict<JSON.t>, where) =>
   | _ => refuse(where, `"constants" must be an object`)
   }
 
-/** The specifications a repository's manifest names. */
+/**
+ * A full list names checks of either kind for full mode and fullConfig selects its cfg.
+ * A full string remains the legacy cfg path.
+ */
 let parse = source => {
   let root = switch JSON.parseOrThrow(source) {
   | Object(fields) => fields
@@ -103,17 +107,36 @@ let parse = source => {
   }
   objects(root, "", "specs")->Array.mapWithIndex((fields, index) => {
     let where = `specs[${Int.toString(index)}]`
+    let fullChecks = switch fields->Dict.get("full") {
+    | None | Some(String(_)) => []
+    | _ => texts(fields, where, "full", ~required=false)
+    }
+    let full = switch fields->Dict.get("full") {
+    | Some(String(config)) =>
+      if fields->Dict.get("fullConfig") != None {
+        refuse(where, `"full" cfg and "fullConfig" cannot both be set`)
+      }
+      Some(config)
+    | _ => fields->Dict.get("fullConfig") == None ? None : Some(text(fields, where, "fullConfig"))
+    }
+    let temporal = texts(fields, where, "temporal", ~required=false)
+    fullChecks->Array.forEach(name => {
+      if temporal->Array.includes(name) {
+        refuse(where, `${name} is listed in both "full" and "temporal"`)
+      }
+    })
     {
       name: text(fields, where, "name"),
       modulePath: text(fields, where, "module"),
       quick: text(fields, where, "quick"),
-      full: fields->Dict.get("full") == None ? None : Some(text(fields, where, "full")),
+      full,
+      fullChecks,
       inputs: texts(fields, where, "inputs", ~required=false),
       flips: objects(fields, where, "switches")->Array.map(flip => {
         name: text(flip, `${where}.switches`, "name"),
         breaks: text(flip, `${where}.switches`, "breaks"),
       }),
-      temporal: texts(fields, where, "temporal", ~required=false),
+      temporal,
       export: exportOf(fields, where),
       constants: constantsOf(fields, where),
     }

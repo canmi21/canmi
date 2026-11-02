@@ -99,6 +99,38 @@ describe("a command that always runs long", () => {
   let refused = command => Background.refuse(payload(command))
   let refusedWith = (~timeout, command) => Background.refuse(payload(~timeout, command))
 
+  ["EOF", "'EOF'", "\"EOF\"", "-EOF"]->Array.forEach(delimiter => {
+    test(
+      `allows compound text writes with <<${delimiter}`,
+      () => {
+        let tab = delimiter == "-EOF" ? "\t" : ""
+        let body = `${tab}$HEAD\n${tab}mise run check\n${tab}mise run protocol\n${tab}EOF`
+        let command =
+          `S=notes; HEAD='text'; cat > $S/a.txt <<${delimiter}\n${body}\n` ++
+          `cat > $S/b.txt <<${delimiter}\n${body}\n`
+        expect(refused(command))->toEqual(0)
+        expect(refused(`${command}; mise run check`))->toEqual(2)
+        expect(refused(`mise run check; ${command}`))->toEqual(2)
+      },
+    )
+  })
+
+  test("keeps every body on a compound command line out of the command scan", () => {
+    let command =
+      "S=notes; cat > $S/a <<EOF; cat > $S/b <<'END'\n" ++ "mise run check\nEOF\nmise run protocol\nEND\n"
+    expect(refused(command))->toEqual(0)
+    expect(refused(`${command}mise run check`))->toEqual(2)
+    expect(refused("cat <<EOF\n' ) & $(mise run check)\nEOF\nmise run check"))->toEqual(2)
+    expect(refused("cat <<EOF\n' ) & $(mise run check)\nEOF\n"))->toEqual(0)
+  })
+
+  test("preserves heredoc lookalikes in arguments and here strings", () => {
+    expect(refused("echo '<<EOF'; mise run check"))->toEqual(2)
+    expect(refused("cat <<< EOF\nmise run check"))->toEqual(2)
+    expect(refused("cat <<EOF\nEOF extra\nmise run check\nEOF"))->toEqual(0)
+    expect(refused("cat <<-EOF\n\tmise run check\n\tEOF\nmise run check"))->toEqual(2)
+  })
+
   ["&>", ">&", "&>>", "|&"]->Array.forEach(operator => {
     test(
       `keeps ${operator} in the foreground`,

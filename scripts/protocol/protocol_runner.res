@@ -99,7 +99,8 @@ let jobsOf = (env, ~full, ~spec: Protocol_manifest.spec) => {
   let dir = file => Node.join([env.root, Protocol_manifest.directory, file])
   let quick = read(dir(spec.quick))
   let base = full ? read(dir(spec.full->Option.getOr(spec.quick))) : quick
-  let base = full ? base : without(base, spec.temporal)
+  let fullOnly = [...spec.temporal, ...spec.fullChecks]
+  let base = full ? base : without(base, fullOnly)
   let values = switch spec.constants {
   | None => []
   | Some(step) => Protocol_constants.run(~spec=spec.name, ~root=env.root, step.command)
@@ -146,7 +147,7 @@ let jobsOf = (env, ~full, ~spec: Protocol_manifest.spec) => {
     workers: 1,
   }
   let flips = spec.flips->Array.filterMap(({name, breaks}) =>
-    switch (expectedOf(base, breaks), spec.temporal->Array.includes(breaks)) {
+    switch (expectedOf(base, breaks), fullOnly->Array.includes(breaks)) {
     | (_, true) if !full => None
     | (None, _) =>
       throw(

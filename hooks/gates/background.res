@@ -21,7 +21,7 @@ let background = (payload: Payload.t) =>
 
 // Keep group boundaries until their background operator is known before splitting commands.
 let foregroundText = (~keepBackground=false, command) => {
-  let chars = command->Node.codePoints
+  let chars = command->Jj_command.withoutHeredocBodies->Node.codePoints
   let length = chars->Array.length
   let boundary = at =>
     [
@@ -124,10 +124,7 @@ let foregroundText = (~keepBackground=false, command) => {
 /** Whether a foreground command waits by polling outside a quoted argument or here-document. */
 let polls = command =>
   pollingLoop->RegExp.test(
-    foregroundText(Push.withoutQuotedBodies(command))->String.replaceRegExp(
-      /'[^']*'|"(?:\\[\s\S]|[^"\\$`])*"/g,
-      "\"\"",
-    ),
+    foregroundText(command)->String.replaceRegExp(/'[^']*'|"(?:\\[\s\S]|[^"\\$`])*"/g, "\"\""),
   )
 
 /** The seconds one literal sleep asks for, or nothing for a word that is not a plain number. */
@@ -146,10 +143,7 @@ let sleepSeconds = (word: string) =>
 
 /** The seconds every literal sleep in a foreground command adds up to. */
 let sleepTotal = command =>
-  Jj_command.segments(foregroundText(Push.withoutQuotedBodies(command)))->Array.reduce(0., (
-    total,
-    piece,
-  ) =>
+  Jj_command.segments(foregroundText(command))->Array.reduce(0., (total, piece) =>
     switch Jj_command.commandAt(piece) {
     | Some(at) if piece[at] == Some("sleep") =>
       total +.
@@ -242,7 +236,7 @@ and commandLong = (words: array<string>) =>
   }
 /** Whether a command line runs an always-long command in the foreground in any segment. */
 and lineLong = (command: string) =>
-  Jj_command.segments(foregroundText(Push.withoutQuotedBodies(command)))->Array.some(piece => {
+  Jj_command.segments(foregroundText(command))->Array.some(piece => {
     switch Jj_command.commandAt(piece) {
     | Some(at) => commandLong(piece->Array.slice(~start=at))
     | None => false
