@@ -2,7 +2,7 @@
 
 # Rules
 
-27 rules, 5 pending a check.
+34 rules, 5 pending a check.
 
 ## Delegation
 
@@ -64,9 +64,9 @@ In a lane, accept runs with --from the wave's base and passes over no other bloc
 
 ### implementer-commands
 
-An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, one part of the workspace's check aside, and --pending always; a task that deploys; and ssh, rsync or wrangler. A task it runs may read its own lane's history.
+An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, a `verify:<part>` among them, one part of the workspace's check and `lane check` of `seatParts` aside, and --pending always; a task that deploys; and ssh, rsync or wrangler, a command given to `job` judged as its own. A task it runs may read its own lane's history.
 
-- doc: [docs/agents/implementer.md](../../docs/agents/implementer.md)
+- doc: [docs/agents/seats/implementer.md](../../docs/agents/seats/implementer.md)
 - held by: hook `hooks/agent_commands`
 
 ### stale-job-looked-at
@@ -75,6 +75,55 @@ A job silent for `stallSeconds` is said at most every five minutes for one hour 
 
 - doc: [docs/agents/agent-protocol.md](../../docs/agents/agent-protocol.md)
 - held by: hook `hooks/gates/stale_jobs`
+
+### seat-parts
+
+A seat checks its lane by `mise run //:lane check` of `seatParts` and the `built` of its own block, naming a part that is not one refused and a stale lane refused.
+
+- doc: [docs/agents/checking.md](../../docs/agents/checking.md)
+- held by: check part `scripts`
+
+### lane-not-stale
+
+A seat is never dispatched into a lane whose working copy is stale, by the Agent tool's prompt or a `codex exec`, and `lane check` and `lane take` refuse one.
+
+- doc: [docs/agents/lanes.md](../../docs/agents/lanes.md)
+- held by: hook `hooks/gates/seat`
+
+### lane-taken-snapshotted
+
+`lane take` snapshots the lane first and restores its changed paths alone, refusing a path main moved since the fork or the main checkout holds an edit to.
+
+- doc: [docs/agents/lanes.md](../../docs/agents/lanes.md)
+- held by: check part `scripts`
+
+### in-work-shown
+
+A check of a repository ends naming what its blocks in work fail, `inWorkFile` carrying it from whichever process listed it, so an exit 0 cannot hide it.
+
+- doc: [docs/agents/checking.md](../../docs/agents/checking.md)
+- held by: check part `scripts`
+
+### run-ledger
+
+`mise run //:job` records who started a long command, its pid, start, output and at its end its status and duration under `runs`; a read after the end is recorded, by `job read`, `watch`, or a hook seeing its output read.
+
+- doc: [docs/agents/runs.md](../../docs/agents/runs.md)
+- held by: check part `scripts`
+
+### watchdog-reports
+
+The watchdog, run by launchd each `watchdogSeconds` with no model in it, writes one event line for a job ended and unread past `runUnreadSeconds`, one died, one silent past `runSilentSeconds`, one past its limit or `runOverP95` times its command's p95 after `runHistory` runs, and a registered role silent past `silentTurns`, each once, and notifies the author of `notifiesAuthor` silent.
+
+- doc: [docs/agents/runs.md](../../docs/agents/runs.md)
+- held by: check part `scripts`
+
+### thread-figures
+
+The watchdog says each thread's seat time and landings since a step last went green and the share of its seat time that is tooling, flagged past `toolingShare`, each `figuresSeconds`, which warn and fail nothing.
+
+- doc: [docs/agents/threads.md](../../docs/agents/threads.md)
+- held by: check part `scripts`
 
 ### codex-quota
 
@@ -108,21 +157,21 @@ A foreground shell command never runs past `foregroundSeconds`: one that waits i
 
 An implementer writes inside its own lane alone, a temporary directory aside, by an Edit, a Write or a Codex patch; a write elsewhere is refused and reported, never worked around.
 
-- doc: [docs/agents/implementer.md](../../docs/agents/implementer.md)
+- doc: [docs/agents/seats/implementer.md](../../docs/agents/seats/implementer.md)
 - held by: hook `hooks/agent_commands`
 
 ### secrets-unprinted
 
 No subagent prints a secret: `printing`, a builtin of `listingBare` given no name or only -p, a subcommand of `printingSubcommands`, and `secretsReaders` given a `secretsFile` are refused to every role, wherever the command is nested.
 
-- doc: [docs/agents/implementer.md](../../docs/agents/implementer.md)
+- doc: [docs/agents/seats/implementer.md](../../docs/agents/seats/implementer.md)
 - held by: hook `hooks/agent_commands`
 
 ### reviewer-commands
 
 A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`, `readers` with `moving` and `labeling` beside them, `moving` and `labeling` given no word holding a `$` or a backquote, printf no `-v`, and `labeling` never inside a substitution: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; each segment's first word is its program, no wrapper and no assignment before it; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own.
 
-- doc: [docs/agents/reviewer.md](../../docs/agents/reviewer.md)
+- doc: [docs/agents/seats/reviewer.md](../../docs/agents/seats/reviewer.md)
 - held by: hook `hooks/agent_commands`
 
 ### subagent-floor
@@ -136,14 +185,14 @@ Every subagent of ours runs as `floorModel` at `floorEffort` or above, nothing o
 
 Each entry path of `areas` exists under repos/, one in a repository not cloned passed over.
 
-- doc: [docs/agents/reader.md](../../docs/agents/reader.md)
+- doc: [docs/agents/seats/reader.md](../../docs/agents/seats/reader.md)
 - held by: check part `settings`
 
 ### scribe-writes-markdown
 
 A scribe writes inside its own lane alone, and only a file ending in `scribeSuffix`; any other write is refused and reported.
 
-- doc: [docs/agents/scribe.md](../../docs/agents/scribe.md)
+- doc: [docs/agents/seats/scribe.md](../../docs/agents/seats/scribe.md)
 - held by: hook `hooks/agent_commands`
 
 ### logic-delivered
@@ -157,7 +206,7 @@ An implementer's work passes the logic layer before it is handed back.
 
 A refactorer is refused the four kinds an implementer is, no part of the workspace's check aside; a task it runs may read its own lane's history.
 
-- doc: [docs/agents/refactorer.md](../../docs/agents/refactorer.md)
+- doc: [docs/agents/seats/refactorer.md](../../docs/agents/seats/refactorer.md)
 - held by: pending, owed: hooks/agent_commands.res, hung in its definition, proven to run in a refactorer; on 2026-10-24 it ran in an implementer and a reviewer, and no refactorer has run since
 
 ### exempts-read

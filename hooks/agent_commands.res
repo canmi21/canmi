@@ -165,18 +165,24 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
     rest[0] == Some("workspace") &&
     rest->Array.length >= 2 &&
     !(flags->Array.includes("--all"))
+  // A repository's verify:<part>, which the colon above reads as a scope.
+  let verifyPart = task->String.split(":")->Array.includes("verify")
   if name == "check" && flags->Array.includes("--pending") {
     Some(`--pending is the integrator's, ${ruleOf(role)} holds it`)
   } else if name == "check" && !aPart {
     Some(
       role == Implementer
-        ? `mise run check is the integrator's, bar parts of the workspace's, ${ruleOf(
+        ? `mise run check is the integrator's, bar parts of the workspace's; a seat runs \`mise run //:lane check <part>\`, ${ruleOf(
               role,
             )} holds it`
         : `mise run check is the integrator's, ${ruleOf(role)} holds it`,
     )
-  } else if name == "verify" {
-    Some(`mise run verify is a whole check, which is the integrator's, ${ruleOf(role)} holds it`)
+  } else if name == "verify" || verifyPart {
+    Some(
+      `mise run verify is a whole check, which is the integrator's; a seat runs \`mise run //:lane check <part>\`, ${ruleOf(
+          role,
+        )} holds it`,
+    )
   } else if name == "audit" {
     Some(`mise run audit is the integrator's, ${ruleOf(role)} holds it`)
   } else if tasks->Array.some(((_, found)) => found->Array.includes(name)) {
@@ -185,6 +191,27 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
     )
   } else {
     None
+  }
+}
+
+/** The command a `job start` or `job run` is given, judged as its own, past the job's flags. */
+let jobLine = (words: array<string>) => {
+  let isJob = word => word == "job" || word->String.endsWith(":job")
+  switch words->Array.findIndex(isJob) {
+  | -1 => None
+  | at =>
+    switch words[at + 1] {
+    | Some("start" | "run") =>
+      let rec past = (rest: list<string>) =>
+        switch rest {
+        | list{"--by" | "--limit", _, ...more} => past(more)
+        | list{"--quiet" | "--wait", ...more} => past(more)
+        | list{"--", ...more} => more
+        | more => more
+        }
+      Some(past(words->Array.slice(~start=at + 2)->List.fromArray)->List.toArray->Array.join(" "))
+    | _ => None
+    }
   }
 }
 
@@ -275,9 +302,11 @@ let rec segmentReason = (~directory=?, ~cwd=Registry.root, role, segment: array<
   | (_, Some("mise", words)) =>
     let given = givenOf(words)
     let given = {...given, directory: given.directory->Option.orElse(directory)}
-    tasksOf(given)->Array.findMap(found =>
+    tasksOf(given)
+    ->Array.findMap(found =>
       found->Option.flatMap(found => taskReason(role, found, ~flags=given.flags, ~cwd))
     )
+    ->Option.orElse(jobLine(words)->Option.flatMap(line => reason(~cwd, role, line)))
   | (_, Some("jj", _)) => Some("jj is not typed here")
   | (_, Some(program, _)) if Delegation.remote->Array.includes(program) =>
     Some(`${program} is the integrator's`)
@@ -456,7 +485,7 @@ let scribed = (payload: Payload.t): int =>
         `Write refused by hooks/agent_commands.res: a scribe writes only ` ++
         `${Delegation.scribeSuffix} files, and ${files->Array.join(
             ", ",
-          )} is not one. ` ++ `Stop and report to the integrator, docs/agents/scribe.md.`,
+          )} is not one. ` ++ `Stop and report to the integrator, docs/agents/seats/scribe.md.`,
       )
       2
     }

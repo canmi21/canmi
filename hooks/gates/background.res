@@ -199,10 +199,15 @@ let rec miseLong = (words: array<string>) => {
     | None => false
     | Some(task) =>
       let head = task->String.split(":")->Array.getUnsafe(0)
+      // What follows `--` is the command a task is given, as `job start -- mise run check`.
+      let own = switch rest->Array.findIndex(word => word == "--") {
+      | -1 => rest
+      | dash => rest->Array.slice(~start=0, ~end=dash)
+      }
       !(rest->Array.some(word => Delegation.shortFlags->Array.includes(word))) &&
       (Delegation.longTasks->Array.includes(head) ||
         Delegation.longTaskFlags->Array.some(((name, flag)) =>
-          name == head && rest->Array.includes(flag)
+          name == head && own->Array.includes(flag)
         ))
     }
   | Some("exec") | Some("x") =>
@@ -281,9 +286,9 @@ let refuse = (payload: Payload.t): int =>
     Console.error(
       `Command refused by hooks/gates/background.res: ${why}, which holds the conversation.\n` ++
       `It judged ${judged(payload)}.\n` ++
-      "Run it with run_in_background, or under Monitor with `mise run watch <file>`.\n" ++
-      "Without either, use `(cmd > file 2>&1; echo $? > file.status) &`, with nothing long after the `&`.\n" ++
-      "Read its output every few seconds.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
+      "Start it with `mise run //:job start -- <command>`, which returns at once and records it, then run `mise run //:watch <id>` under Monitor.\n" ++
+      "`mise run //:job run -- <command>` with run_in_background waits and exits with its status.\n" ++
+      "Read the result with `mise run //:job read <id>`.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
     )
     2
   }

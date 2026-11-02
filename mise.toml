@@ -112,9 +112,21 @@ run = "node scripts/workspace/each.res.mjs"
 
 # For Monitor, a line for each progress or failure line a job's output gains and one for a stall.
 [tasks.watch]
-description = "Watch a job's output file for Monitor: `watch <file> [--stall <seconds>]`"
+description = "Watch a job or its output file for Monitor: `watch <job id | file> [--stall <seconds>]`"
 depends = ["build"]
-run = "node scripts/workspace/watch.res.mjs"
+run = "node scripts/workspace/runs/watch.res.mjs"
+
+# The run ledger and the watchdog reading it, docs/agents/runs.md.
+[tasks.job]
+description = "Start a long command in the ledger, or read it: `job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command> | read <id> | stop <id> | list | table [--since <date>] | events | register <role> <name> [--transcript <file>] | unregister <name> | watchdog | install [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/runs/job.res.mjs"
+
+# A thread's charter, decision queue, ledger and status, docs/agents/threads.md.
+[tasks.thread]
+description = "Start a thread's files, or say where they are: `thread new <name> [--dry-run] | where <name> | list | audit <name> | green <name> <step> | seat <name> <seat> [--tooling] | seated <name> <seat> | landed <name> <repository> <commit> <subject>`"
+depends = ["build"]
+run = "node scripts/workspace/runs/thread.res.mjs"
 
 [tasks.dep]
 description = "Add or remove a dependency, a version a day old: `dep add|remove <repository> <package> [--in <path>] [--dev] [--rust] [--dry-run]`"
@@ -170,7 +182,7 @@ run = "pnpm exec vitest run"
 
 # A lane of an implementer, opened and closed with its jj workspaces, docs/agents/lanes.md.
 [tasks.lane]
-description = "Open, close or judge a lane: `lane open <repository|workspace> <name> [--with <repository>] | close <name> | handed <name> [--own <directory>] [--dry-run]`"
+description = "Open, close, judge, check or take a lane: `lane open <repository|workspace> <name> [--with <repository>] | close <name> | handed <name> [--own <directory>] | check <part> ... | take <name> [--in <repository>] [--dry-run]`"
 depends = ["build"]
 run = "node scripts/workspace/lane/lane.res.mjs"
 

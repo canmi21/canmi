@@ -312,3 +312,12 @@ describe("the task roots mise reads", () => {
     expect(paths)->toEqual(listed)
   })
 })
+
+describe("what a check's blocks in work fail", () => {
+  test("is named once each at the end, and nothing where none fail", () => {
+    let lines = Repos.inWorkOf("a fails\nb fails\na fails\n")
+    expect(lines)->toEqual(["a fails", "b fails"])
+    expect(Repos.inWorkSaid(lines)->Array.length)->toEqual(3)
+    expect(Repos.inWorkSaid([]))->toEqual([])
+  })
+})

@@ -354,3 +354,15 @@ describe("a command that always runs long", () => {
     )
   })
 })
+
+describe("the run ledger's entry", () => {
+  test("returns at once, whatever it is given; waiting on it runs long", () => {
+    expect(Background.long("mise run job start -- mise run check monoflake/platform"))->toEqual(
+      false,
+    )
+    expect(Background.long("mise run job run -- mise run check"))->toEqual(true)
+    expect(Background.long("mise run job start --wait -- ls"))->toEqual(true)
+    expect(Background.long("mise run //:lane check compile"))->toEqual(true)
+    expect(Background.long("mise run //:job start -- mise run check"))->toEqual(false)
+  })
+})

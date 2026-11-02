@@ -1,8 +1,8 @@
 /**
  * `lane open <repository|workspace> <name> [--with <repository> ...] [--dry-run]`, which also
  * places every repository the target's workspace.toml [boundary] depends names, and
- * `lane close <name> [--dry-run]` and `lane handed <name> [--own <directory> ...]`,
- * docs/agents/lanes.md.
+ * `lane close <name> [--dry-run]`, `lane handed <name> [--own <directory> ...]`, and `lane check`
+ * and `lane take`, each in a file of its own, docs/agents/lanes.md.
  */
 type step =
   | Run({cwd: string, program: string, args: array<string>})
@@ -349,7 +349,7 @@ let parse = (argv: array<string>) => {
   let rec go = (rest: list<string>, words, siblings, own) =>
     switch rest {
     | list{"--with", one, ...more} => go(more, words, Array.concat(siblings, [one]), own)
-    | list{"--own", one, ...more} => go(more, words, siblings, Array.concat(own, [one]))
+    | list{"--own" | "--in", one, ...more} => go(more, words, siblings, Array.concat(own, [one]))
     | list{"-n" | "--dry-run", ...more} => go(more, words, siblings, own)
     | list{word, ...more} => go(more, Array.concat(words, [word]), siblings, own)
     | list{} => (words, siblings, own)
@@ -361,13 +361,16 @@ let parse = (argv: array<string>) => {
 let usage =
   "usage: mise run lane open <repository|workspace> <name> " ++
   "[--with <repository> ...] [--dry-run]\n" ++
-  "       mise run lane close <name> [--dry-run]\n" ++ "       mise run lane handed <name> [--own <directory> ...] [--dry-run]"
+  "       mise run lane close <name> [--dry-run]\n" ++
+  "       mise run //:lane handed <name> [--own <directory> ...] [--dry-run]\n" ++
+  "       mise run //:lane check <part> ... [--dry-run], from inside the lane\n" ++ "       mise run //:lane take <name> [--in <repository>] [--dry-run]"
 
 let main = (argv: array<string>): int => {
   let root = Registry.root
   let (words, siblings, own, dry) = parse(argv)
   let registered = Registry.paths()
   switch words {
+  | _ if words[0] == Some("check") => Lane_check.main(words->Array.slice(~start=1), ~dry)
   | ["open", target, name] =>
     openPlan(
       ~root,
@@ -381,6 +384,15 @@ let main = (argv: array<string>): int => {
       },
       {target, name, siblings},
     )->finish(~root, ~dry)
+  | ["take", name] if siblings == [] =>
+    Lane_state.workspacesOf(
+      ~root,
+      ~subdirs=Lane_state.realSubdirs,
+      ~isWorkspace=Lane_state.realIsWorkspace,
+      name,
+    )
+    ->Array.filter(one => own == [] || own->Array.includes(one.rel))
+    ->Lane_take.main(~root, ~registered, ~name, ~dry)
   | ["handed", name] if siblings == [] =>
     let root = baseOf(root)
     Lane_state.workspacesOf(

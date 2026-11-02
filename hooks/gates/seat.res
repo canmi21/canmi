@@ -42,6 +42,34 @@ let promptFaults = (prompt: string): array<string> =>
   | _ => faults(prompt)
   }
 
+/** The lanes a text names by their directory, each once, none that is not on disk. */
+let lanesIn = (text: string, ~exists=Node.existsSync) =>
+  text
+  ->String.split(`${Delegation.lanes}/`)
+  ->Array.slice(~start=1)
+  ->Array.filterMap(rest =>
+    rest
+    ->String.match(/^[a-z][a-z0-9-]*/)
+    ->Option.flatMap(found => found[0]->Option.flatMap(x => x))
+  )
+  ->Array.filter(name => exists(Node.join([Lane_state.lanes(Lane.baseOf(Registry.root)), name])))
+  ->Set.fromArray
+  ->Set.values
+  ->Array.fromIterator
+
+/** A lane a brief names that is stale, `lane-not-stale`, its seat otherwise on the old tree. */
+let staleFaults = (text: string, ~exists=Node.existsSync, ~stale=Lane_check.stale) =>
+  lanesIn(text, ~exists)->Array.flatMap(name =>
+    Lane_state.workspacesOf(
+      ~root=Lane.baseOf(Registry.root),
+      ~subdirs=Lane_state.realSubdirs,
+      ~isWorkspace=Lane_state.realIsWorkspace,
+      name,
+    )
+    ->Array.filter(one => stale(one.path))
+    ->Array.map(one => `lanes/${name}/${one.rel} is stale, so open a fresh lane`)
+  )
+
 /** The file a segment's stdin is redirected from, `< path` or `<path`. */
 let redirected = (words: array<string>) =>
   words
@@ -99,8 +127,9 @@ and segmentFaults = (segment: array<string>, ~cwd): array<string> =>
         | None => ["it has no brief file redirected to stdin, as `- < <path>`"]
         | Some(file) =>
           let path = Node.resolve([cwd, file])
+          let stale = staleFaults(segment->Array.join(" "))
           switch readFile(path) {
-          | Some(brief) => faults(brief)
+          | Some(brief) => Array.concat(faults(brief), Array.concat(stale, staleFaults(brief)))
           | None => unreadable(path, ~why="cannot be read")
           }
         }
@@ -138,7 +167,7 @@ let refuse = (payload: Payload.t): int => {
         ->Payload.object("tool_input")
         ->Option.flatMap(input => input->Payload.text("prompt"))
         ->Option.getOr("")
-        ->promptFaults,
+        ->(prompt => Array.concat(promptFaults(prompt), staleFaults(prompt))),
       )
     | _ => None
     }
@@ -148,7 +177,7 @@ let refuse = (payload: Payload.t): int => {
   | Some(faults) if faults != [] =>
     Console.error(
       `Dispatch refused by hooks/gates/seat.res: ${faults->Array.join("; ")}.\n` ++
-      "A brief holds exactly one line starting `Result:` and exactly one starting `Verify:`; two results are two seats, so split them and dispatch each.\n" ++ "The rule: seat-one-result in model/rules/delegation.res, and docs/agents/delegation.md, \"The integrator schedules the queue itself\"",
+      "A brief holds exactly one line starting `Result:` and exactly one starting `Verify:`; two results are two seats, so split them and dispatch each. A stale lane is left for a fresh one.\n" ++ "The rules: seat-one-result and lane-not-stale in model/rules/delegation.res, and docs/agents/delegation.md, \"The integrator schedules the queue itself\"",
     )
     2
   | _ => 0

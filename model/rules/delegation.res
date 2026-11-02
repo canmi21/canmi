@@ -165,7 +165,7 @@ let longTasks = [
   "prepare",
   "generate",
 ]
-let longTaskFlags = [("nudge", "--wait")]
+let longTaskFlags = [("nudge", "--wait"), ("job", "--wait"), ("job", "run"), ("lane", "check")]
 let longCommands = [
   ["vitest"],
   ["cargo", "build"],
@@ -189,6 +189,60 @@ let watchBoundSeconds = 1800
 let watchProgress = "\\b(?:passed|ok|done|finished|built|compiling|running)\\b"
 let watchFailure = "\\b(?:error|errors|failed|failure|fatal|panic|refused|timed out)\\b"
 let watchEnd = "^(?:exit|status|ended)[: =]"
+
+/** Where the run ledger, its outputs and the watchdog's event file live, in no repository. */
+let runs = "~/.local/state/workspace/runs/"
+
+/** Where a thread's private files live, one directory each, docs/agents/threads.md. */
+let threads = "~/.local/share/monoflake/threads/"
+
+/**
+ * Why each starting value, to be tuned: the watchdog ticks each minute and a report is owed within
+ * two, so a job's silence and an unread end are both reported at one minute.
+ */
+let watchdogSeconds = 60
+let runSilentSeconds = 60
+let runUnreadSeconds = 60
+
+/** A job past this many times its command's p95, once that many ended well, `runHistory`. */
+let runOverP95 = 2
+let runHistory = 5
+
+/**
+ * A role's turn silent this long goes to its superior. An integrator works in minutes, so ten; a
+ * supervisor waits on integrators, so three times that, and past it the author is notified.
+ */
+let silentTurns = [
+  ("seat", 600, "integrator"),
+  ("integrator", 600, "supervisor"),
+  ("supervisor", 1800, "advisor"),
+]
+let notifiesAuthor = "supervisor"
+
+/**
+ * The share of a thread's seat time that is tooling past which its figures warn, about a fifth by
+ * the author's word, and how often the figures are said. They warn and never block.
+ */
+let toolingShare = 0.2
+let figuresSeconds = 3600
+
+/** The launchd label the watchdog runs under. */
+let watchdogLabel = "icu.canmi.workspace-watchdog"
+
+/**
+ * The fast parts of a repository's check a seat runs in its lane, `lane check`, each by what it
+ * catches; the whole check stays the landing's.
+ */
+let seatParts = [
+  ("format", "a file its formatter would change"),
+  ("names", "a file or directory misnamed, and the repository's own name misused"),
+  ("wire", "the wire's names: the model's check, its Contracts and Names among it"),
+  ("compile", "what does not compile, ReScript and Rust"),
+  ("tests", "a failing test: the block's `built`, or the repository's `test`"),
+]
+
+/** The file a check's blocks in work are listed to, read at the end of `check`, `in-work-shown`. */
+let inWorkFile = "IN_WORK_FILE"
 
 /** The models and efforts of a subagent of ours, each from the least to the most. */
 let models = ["haiku", "sonnet", "opus"]
@@ -321,8 +375,8 @@ let rules: array<Rule.t> = [
   },
   {
     name: "implementer-commands",
-    says: "An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, one part of the workspace's check aside, and --pending always; a task that deploys; and ssh, rsync or wrangler. A task it runs may read its own lane's history",
-    doc: "docs/agents/implementer.md",
+    says: "An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, a `verify:<part>` among them, one part of the workspace's check and `lane check` of `seatParts` aside, and --pending always; a task that deploys; and ssh, rsync or wrangler, a command given to `job` judged as its own. A task it runs may read its own lane's history",
+    doc: "docs/agents/seats/implementer.md",
     held: Hook("hooks/agent_commands"),
   },
   {
@@ -330,6 +384,48 @@ let rules: array<Rule.t> = [
     says: "A job silent for `stallSeconds` is said at most every five minutes for one hour of silence and held once at a stop per job and silence, a TaskStop ending it as a notice does, a description holding `quietMark` exempt, an unreadable transcript letting the stop through, named",
     doc: "docs/agents/agent-protocol.md",
     held: Hook("hooks/gates/stale_jobs"),
+  },
+  {
+    name: "seat-parts",
+    says: "A seat checks its lane by `mise run //:lane check` of `seatParts` and the `built` of its own block, naming a part that is not one refused and a stale lane refused",
+    doc: "docs/agents/checking.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "lane-not-stale",
+    says: "A seat is never dispatched into a lane whose working copy is stale, by the Agent tool's prompt or a `codex exec`, and `lane check` and `lane take` refuse one",
+    doc,
+    held: Hook("hooks/gates/seat"),
+  },
+  {
+    name: "lane-taken-snapshotted",
+    says: "`lane take` snapshots the lane first and restores its changed paths alone, refusing a path main moved since the fork or the main checkout holds an edit to",
+    doc,
+    held: Check("scripts"),
+  },
+  {
+    name: "in-work-shown",
+    says: "A check of a repository ends naming what its blocks in work fail, `inWorkFile` carrying it from whichever process listed it, so an exit 0 cannot hide it",
+    doc: checking,
+    held: Check("scripts"),
+  },
+  {
+    name: "run-ledger",
+    says: "`mise run //:job` records who started a long command, its pid, start, output and at its end its status and duration under `runs`; a read after the end is recorded, by `job read`, `watch`, or a hook seeing its output read",
+    doc: "docs/agents/runs.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "watchdog-reports",
+    says: "The watchdog, run by launchd each `watchdogSeconds` with no model in it, writes one event line for a job ended and unread past `runUnreadSeconds`, one died, one silent past `runSilentSeconds`, one past its limit or `runOverP95` times its command's p95 after `runHistory` runs, and a registered role silent past `silentTurns`, each once, and notifies the author of `notifiesAuthor` silent",
+    doc: "docs/agents/runs.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "thread-figures",
+    says: "The watchdog says each thread's seat time and landings since a step last went green and the share of its seat time that is tooling, flagged past `toolingShare`, each `figuresSeconds`, which warn and fail nothing",
+    doc: "docs/agents/threads.md",
+    held: Check("scripts"),
   },
   {
     name: "codex-quota",
@@ -358,19 +454,19 @@ let rules: array<Rule.t> = [
   {
     name: "implementer-lane",
     says: "An implementer writes inside its own lane alone, a temporary directory aside, by an Edit, a Write or a Codex patch; a write elsewhere is refused and reported, never worked around",
-    doc: "docs/agents/implementer.md",
+    doc: "docs/agents/seats/implementer.md",
     held: Hook("hooks/agent_commands"),
   },
   {
     name: "secrets-unprinted",
     says: "No subagent prints a secret: `printing`, a builtin of `listingBare` given no name or only -p, a subcommand of `printingSubcommands`, and `secretsReaders` given a `secretsFile` are refused to every role, wherever the command is nested",
-    doc: "docs/agents/implementer.md",
+    doc: "docs/agents/seats/implementer.md",
     held: Hook("hooks/agent_commands"),
   },
   {
     name: "reviewer-commands",
     says: "A reviewer runs only jj's `reading` and `file` with `readingFile`, never given `jjRunning`, and the programs in `inspecting`, `readers` with `moving` and `labeling` beside them, `moving` and `labeling` given no word holding a `$` or a backquote, printf no `-v`, and `labeling` never inside a substitution: sed quiet, never in place and with no command in `sedWriting`, find given nothing in `findWriting`, and rg nothing in `rgRunning`; output is redirected only to `redirectedTo`; each segment's first word is its program, no wrapper and no assignment before it; every other command is refused, every mise task among them, and one run by `&`, a substitution or a pipe is judged as a command of its own",
-    doc: "docs/agents/reviewer.md",
+    doc: "docs/agents/seats/reviewer.md",
     held: Hook("hooks/agent_commands"),
   },
   {
@@ -382,13 +478,13 @@ let rules: array<Rule.t> = [
   {
     name: "areas-exist",
     says: "Each entry path of `areas` exists under repos/, one in a repository not cloned passed over",
-    doc: "docs/agents/reader.md",
+    doc: "docs/agents/seats/reader.md",
     held: Check("settings"),
   },
   {
     name: "scribe-writes-markdown",
     says: "A scribe writes inside its own lane alone, and only a file ending in `scribeSuffix`; any other write is refused and reported",
-    doc: "docs/agents/scribe.md",
+    doc: "docs/agents/seats/scribe.md",
     held: Hook("hooks/agent_commands"),
   },
   {
@@ -401,7 +497,7 @@ let rules: array<Rule.t> = [
   {
     name: "refactorer-commands",
     says: "A refactorer is refused the four kinds an implementer is, no part of the workspace's check aside; a task it runs may read its own lane's history",
-    doc: "docs/agents/refactorer.md",
+    doc: "docs/agents/seats/refactorer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a refactorer; on 2026-10-24 it ran in an implementer and a reviewer, and no refactorer has run since",
     ),

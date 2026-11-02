@@ -108,3 +108,16 @@ describe("any other command", () => {
     expect(Seat.refuse(bash("ls")))->toBe(0)
   })
 })
+
+describe("a brief naming a lane", () => {
+  test("is refused where the lane is stale, and an absent lane is passed over", () => {
+    let base = Lane.baseOf(Registry.root)
+    let there = Node.join([Lane_state.lanes(base), "stale-probe-test"])
+    let exists = path => path == there
+    expect(Seat.lanesIn("in lanes/stale-probe-test/monoflake/platform", ~exists))->toEqual([
+      "stale-probe-test",
+    ])
+    expect(Seat.lanesIn("in lanes/other/monoflake/platform", ~exists))->toEqual([])
+    expect(Seat.staleFaults("in lanes/other/x", ~exists, ~stale=_ => true))->toEqual([])
+  })
+})

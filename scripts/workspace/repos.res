@@ -270,8 +270,27 @@ let refresh = async (~dry, ~major) => {
   }
 }
 
-let summary = (verb, skipped, failed, ~paused=[]) =>
-  if skipped != [] || failed != [] || paused != [] {
+/** Each line a check's blocks in work failed, once, as they were listed, `in-work-shown`. */
+let inWorkOf = text =>
+  text
+  ->String.split("\n")
+  ->Array.filter(line => line != "")
+  ->Set.fromArray
+  ->Set.values
+  ->Array.fromIterator
+
+let inWorkSaid = (lines: array<string>) =>
+  lines == []
+    ? []
+    : [
+        `in work, failing and not counted until accepted, ${Int.toString(
+            lines->Array.length,
+          )}: read these before landing`,
+        ...lines->Array.map(line => `  ! ${line->String.slice(~start=0, ~end=96)}`),
+      ]
+
+let summary = (verb, skipped, failed, ~paused=[], ~inWork=[]) =>
+  if skipped != [] || failed != [] || paused != [] || inWork != [] {
     Console.log("\n" ++ String.repeat("-", 72))
     if skipped != [] {
       Console.log(
@@ -281,6 +300,7 @@ let summary = (verb, skipped, failed, ~paused=[]) =>
     if paused != [] {
       Console.log(`paused, so passed over: ${paused->Array.join(", ")}`)
     }
+    inWorkSaid(inWork)->Array.forEach(line => Console.log(line))
     if failed != [] {
       Console.log(`failed: ${failed->Array.join(", ")}`)
     }
@@ -359,6 +379,8 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
   let skipped = []
   let failed = []
   let paused = []
+  let listed = Node.join([Node.mkdtempSync(Node.join([Node.tmpdir(), "in-work-"])), "listed"])
+  Node.env->Dict.set(Delegation.inWorkFile, listed)
   active(name, ~everything, paused)->Array.forEach(repo => {
     let place = Registry.label(repo)
     let shared = repo != root && verb == "verify" ? checkParts(repo, parts) : []
@@ -414,7 +436,9 @@ let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
       Stamp.write(repo, before)
     }
   })
-  summary(verb, skipped, failed, ~paused)
+  let inWork = Node.existsSync(listed) ? inWorkOf(Node.readFileSync(listed)) : []
+  Node.rmSync(Node.dirname(listed), {recursive: true, force: true})
+  summary(verb, skipped, failed, ~paused, ~inWork)
   failed == [] ? 0 : 1
 }
 

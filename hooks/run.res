@@ -108,6 +108,10 @@ let handle = (payload: Payload.t): int =>
     | refused => refused
     }
   | Some("PostToolUse") =>
+    // A ledger's fault never touches the work the call did.
+    try Run_ledger.observe(payload) catch {
+    | _ => ()
+    }
     combined([
       Decision.context(payload),
       Delta.context(payload),

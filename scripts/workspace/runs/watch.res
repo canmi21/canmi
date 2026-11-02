@@ -1,4 +1,4 @@
-/** `watch <file> [--stall <seconds>]` for Monitor, docs/agents/agent-protocol.md. */
+/** `watch <job id | file> [--stall <seconds>]` for Monitor, docs/agents/runs.md. */
 type state = {offset: int, lastGrowth: float, nextStall: float, ended: bool}
 
 let start = (~now, ~stall) => {offset: 0, lastGrowth: now, nextStall: now +. stall, ended: false}
@@ -44,9 +44,16 @@ let step = (state, ~text, ~now, ~stall) => {
 let main = (argv: array<string>) =>
   switch argv[0] {
   | None =>
-    Console.error("usage: mise run watch <file> [--stall <seconds>]")
+    Console.error("usage: mise run //:watch <job id | file> [--stall <seconds>]")
     2
-  | Some(file) =>
+  | Some(named) =>
+    // A job of the ledger is named by its id, and reaching its end is reading its result.
+    let job = Ledger.find(named)
+    let file = job->Option.mapOr(named, job => job.output)
+    let id = job->Option.map(job => job.id)->Option.orElse(Ledger.idOfOutput(file))
+    if id == None {
+      Console.log(`note: ${file} has no job in the ledger; start one by mise run //:job start`)
+    }
     let stall =
       1000. *.
       switch argv->Array.findIndex(arg => arg == "--stall") {
@@ -67,6 +74,7 @@ let main = (argv: array<string>) =>
       state := next
       events->Array.forEach(Console.log)
       if next.ended {
+        id->Option.forEach(id => Ledger.markRead(~id, ~at=Date.now()))
         Node.exit(0)
       } else if now -. began > Int.toFloat(Delegation.watchBoundSeconds) *. 1000. {
         Console.log(

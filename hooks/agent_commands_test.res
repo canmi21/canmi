@@ -24,6 +24,11 @@ describe("an implementer's commands", () => {
       "mise run check workspace words --all",
       "mise run check workspace rules names",
       "mise run verify",
+      "mise run verify:model",
+      "mise run //repos/monoflake/cloud:verify:model",
+      "mise run job start -- mise run check",
+      "mise run //:job start --by seat -- jj st",
+      "mise run job run --quiet -- ssh host",
       "mise -C repos/monoflake/platform run verify",
       "mise run //repos/apps/rdm:verify",
       "mise run //repos/apps/rdm:check workspace words",
@@ -567,3 +572,14 @@ test(
     expect(refused(Implementer, "mise run check workspace"))->toBe(true)
   },
 )
+
+describe("a seat's own check", () => {
+  test("is let through", () =>
+    [
+      "mise run //:lane check format names wire compile",
+      "mise run //:lane check tests gateway",
+      "mise run built gateway",
+      "mise run //:job start --by seat -- mise run built gateway",
+    ]->Array.forEach(command => expect(refused(Implementer, command))->toEqual(false))
+  )
+})
