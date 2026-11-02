@@ -73,7 +73,8 @@ builds of a dependency into the dependency's own directory, so through a link th
 checkout would meet on one lock. The integrator opens one with `mise run lane open
 <repository|workspace> <name> [--with <repository> ...]` and closes it with `mise run lane close
 <name>`, each taking
-`--dry-run`; `lane-task` in [model/rules/delegation.res](../../model/rules/delegation.res). **Open**
+`--dry-run`; `lane-task` in [model/rules/delegation.res](../../model/rules/delegation.res). **Lanes
+are opened one at a time**, as several `lane open` run at once fail together. **Open**
 adds a jj workspace on `main` at `lanes/<name>/<repository path>`, or `lanes/<name>/canmi` for the
 workspace, one for each repository its `workspace.toml` `[boundary]` depends on, transitively, and
 for each `--with` sibling the boundary does not name, and starts `pnpm install` in the background

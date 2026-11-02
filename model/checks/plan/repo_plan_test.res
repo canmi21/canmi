@@ -19,6 +19,7 @@ let parsed = (owner, text) =>
 
 let platform = (~plan=platformPlan, ~exports=["contracts"], ~depends=[]): Repo_plan.source => {
   owner: "fixture/platform",
+  file: "model/plan.json",
   isPrivate: false,
   text: plan,
   items: parsed("fixture/platform", plan),
@@ -32,6 +33,7 @@ let cloud = (
   ~depends=["fixture/platform:contracts"],
 ): Repo_plan.source => {
   owner: "fixture/cloud",
+  file: "model/plan.json",
   isPrivate,
   text: plan,
   items: parsed("fixture/cloud", plan),
@@ -40,6 +42,7 @@ let cloud = (
 
 let workspace: Repo_plan.source = {
   owner: "workspace",
+  file: "model/plan/work.res",
   isPrivate: false,
   text: "",
   items: [],
@@ -63,6 +66,17 @@ let own = (source, ~listed=None) =>
 let joined = (sources, ~skipped=_ => None) => Repo_plan.joinProblems(sources, ~repos, ~skipped)
 
 describe("a repository's own plan", () => {
+  test("is model/plan.json, or model/plan/plan.json where only that one is present", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "plan-"]))
+    expect(Repo_plan.fileAt(root))->toBe("model/plan.json")
+    Node.mkdirAll(Node.join([root, "model", "plan"]))
+    Node.writeFileSync(Node.join([root, "model", "plan", "plan.json"]), `{"items": []}`)
+    expect(Repo_plan.fileAt(root))->toBe("model/plan/plan.json")
+    Node.writeFileSync(Node.join([root, "model", "plan.json"]), `{"items": []}`)
+    expect(Repo_plan.fileAt(root))->toBe("model/plan.json")
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+
   test("reads its items, defaulting the repository to its owner", () => {
     let items = cloud().items
     expect(items->Array.length)->toBe(3)

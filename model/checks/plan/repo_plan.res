@@ -1,8 +1,9 @@
 /**
- * A repository's own plan, `model/plan.json`, and the total that joins every repository's. RFC
- * 8q1af. It is plain JSON because a repository's model cannot import the workspace's, and any
- * language reads it. A repository declares only what it depends on and exports, in its
- * workspace.toml's `[boundary]`, and proves only that; the total alone sees them all.
+ * A repository's own plan, `model/plan.json` or `model/plan/plan.json`, and the total that joins
+ * every repository's. RFC 8q1af. It is plain JSON because a repository's model cannot import the
+ * workspace's, and any language reads it. A repository declares only what it depends on and
+ * exports, in its workspace.toml's `[boundary]`, and proves only that; the total alone sees them
+ * all.
  */
 open Work
 
@@ -11,9 +12,18 @@ let bad = why => throw(Bad(why))
 
 let file = "model/plan.json"
 
+/** Where a repository keeps its plan, `file` or, where model/ is full, `model/plan/plan.json`. */
+let fileAt = root => {
+  let nested = "model/plan/plan.json"
+  !Node.existsSync(Node.join([root, file])) && Node.existsSync(Node.join([root, nested]))
+    ? nested
+    : file
+}
+
 /** One plan with the boundary its repository declares, its owner `workspace` or a registry path. */
 type source = {
   owner: string,
+  file: string,
   isPrivate: bool,
   text: string,
   items: array<item>,
@@ -152,6 +162,7 @@ let parse = (json: string, ~owner): result<array<item>, string> =>
 /** The workspace's own plan, which declares no boundary. */
 let workspace = (): source => {
   owner: "workspace",
+  file: "model/plan/work.res",
   isPrivate: false,
   text: "",
   items: Work.items,
@@ -163,6 +174,7 @@ let load = (): (array<source>, array<string>) => {
   let errors = []
   let found = Waiting.active()->Array.filterMap(path => {
     let root = Node.join([Registry.repos, path])
+    let file = fileAt(root)
     let at = Node.join([root, file])
     let planned = Node.existsSync(at)
     if !Node.existsSync(Node.join([root, "workspace.toml"])) {
@@ -181,11 +193,11 @@ let load = (): (array<source>, array<string>) => {
         let json = planned ? Node.readFileSync(at) : ""
         let isPrivate = declared.push.visibility != "public"
         if !planned {
-          Some({owner: path, isPrivate, text: json, items: [], boundary: declared.boundary})
+          Some({owner: path, file, isPrivate, text: json, items: [], boundary: declared.boundary})
         } else {
           switch parse(json, ~owner=path) {
           | Ok(items) =>
-            Some({owner: path, isPrivate, text: json, items, boundary: declared.boundary})
+            Some({owner: path, file, isPrivate, text: json, items, boundary: declared.boundary})
           | Error(why) =>
             errors->Array.push(`plan ${path}: ${file}: ${why}`)
             None
@@ -268,7 +280,7 @@ let leaks = (source: source, ~listed): array<string> =>
       hits == []
         ? None
         : Some(
-            `plan ${source.owner}: ${file}:${Int.toString(
+            `plan ${source.owner}: ${source.file}:${Int.toString(
                 number,
               )}: a public plan holds a private identifier`,
           )
@@ -361,6 +373,7 @@ let patterns = () => Scan.identifiers()->Option.map(Scan.patterns)
 /** One repository's own findings from its files alone, as its own check reads them. */
 let ownAt = (~root): array<string> => {
   let path = Registry.label(root)
+  let file = fileAt(root)
   let at = Node.join([root, file])
   if !Node.existsSync(at) {
     []
@@ -375,6 +388,7 @@ let ownAt = (~root): array<string> => {
         ownProblems(
           {
             owner: path,
+            file,
             isPrivate: declared.push.visibility != "public",
             text: json,
             items,

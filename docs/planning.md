@@ -45,7 +45,8 @@ what is under way, what is ready because nothing before it is undone, and what w
 `mise run plan --done` lists what is done. A pending rule appears there by name. The RFCs it prints
 after are the drafts and the older accepted ones, history not yet read against the code.
 
-**A repository holds its own plan in `model/plan.json` and declares its boundary in `workspace.toml`.**
+**A repository holds its own plan in `model/plan.json`, or `model/plan/plan.json` where its `model/` is
+full, and declares its boundary in `workspace.toml`.**
 The plan is plain JSON of the item shape, its `after` naming its own items alone. `[boundary]` lists
 what it `exports`, artifacts such as `contracts`, and what it `depends` on, `repository:name`; an
 item that waits on a dependency says `needs`, and one that delivers an export says `delivers`. A
