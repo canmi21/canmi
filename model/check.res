@@ -158,6 +158,7 @@ let others: array<(string, part)> = [
   ("ci-shell", Waivable(Registry.label(root), () => Ci_check.tagged(~root))),
   ("domains", Soft(() => Wrangler.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
+  ("description", Found(Description.main)),
   ("repository", Script(() => reported(Conduct.found(~root)))),
   ("suffixes", Found(() => Suffix_owned.main(~root, ~label="workspace"))),
   ("shape", Waivable("workspace", () => Shape.tagged(~root))),

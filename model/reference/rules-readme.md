@@ -2,7 +2,7 @@
 
 # Rules
 
-2 rules, 1 pending a check.
+2 rules, 0 pending a check.
 
 ## Readme
 
@@ -18,4 +18,4 @@ The workspace keeps one LICENSE, at its root.
 A repository's description is one sentence of four to eight words, ending in a full stop.
 
 - doc: [docs/readme.md](../../docs/readme.md)
-- held by: pending, owed: each repository's description read from the forge
+- held by: check part `description`
