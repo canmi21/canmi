@@ -71,8 +71,8 @@ alone; B and A build only when a roll asks, so their objects expire between roll
 queue behind one whole job and its own run. An object left is younger than T, so through a late run
 its age stays under the lifecycle. **That covers a late run alone**: a dropped or failed run takes a
 left object to about 36 h, past the lifecycle, so surviving it rests on R2's deletion window and not
-on this inequality. A narinfo within a job's time of the lifecycle is uploaded rather than copied,
-since a copy of what R2 deleted matches nothing and exits 0.
+on this inequality. A nar or narinfo within a job's time of the lifecycle is uploaded rather than
+copied, since a copy of what R2 deleted matches nothing and exits 0.
 `scripts/tests/systems/bucket/renewal_test.res` there holds T positive, the lifecycle at least twice
 the interval, a left object's worst age under the lifecycle, and systems.yml's crons and each job's
 `timeout-minutes` against the model; the worst delay is the seven-hour measurement used by

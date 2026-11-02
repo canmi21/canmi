@@ -152,7 +152,15 @@ let report = (~cwd, ~dir, ~own, ~all, ~check=?, ~form=formedIn) => {
     Console.error(`${dir} could not be judged: ${why}`)
     1
   | Ok(files) =>
-    let lines = file => linesOf(~cwd, file)
+    // A generated or vendored file is not ours to size, as the lines part of the check has it.
+    let marks = Lines.attributes(cwd, files)
+    let theirs = file => {
+      let mark = marks->Dict.get(file)->Option.getOr(Dict.make())
+      ["linguist-generated", "linguist-vendored"]->Array.some(name =>
+        mark->Dict.get(name) == Some("true")
+      )
+    }
+    let lines = file => theirs(file) ? None : linesOf(~cwd, file)
     let judged = all ? judge(~lines, ~own, files) : sizes(~lines, files)
     let loose = all
       ? unformatted(~check, files->Array.filter(file => Node.existsSync(Node.join([cwd, file]))))
