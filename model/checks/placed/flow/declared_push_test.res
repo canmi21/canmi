@@ -31,6 +31,22 @@ describe("a repository's workflows against its [push]", () => {
     )->toEqual([])
   })
 
+  test("the workspace declares its own push workflows by the model, with no workspace.toml", () => {
+    expect(Toolchain.rootPush)->toEqual(["verify.yml"])
+    expect(
+      Declared_push.problems(~push=Declared_push.bare, ~workflows=[("verify.yml", true)]),
+    )->toEqual([])
+    expect(
+      Declared_push.problems(
+        ~push=Declared_push.bare,
+        ~workflows=[("verify.yml", true), ("other.yml", true)],
+      ),
+    )->toEqual(["other.yml runs on a push and is not declared under [push]"])
+    expect(Declared_push.problems(~push=Declared_push.bare, ~workflows=[]))->toEqual([
+      "[push] names verify.yml, which is no workflow",
+    ])
+  })
+
   test("takes a release workflow as declared", () => {
     expect(
       Declared_push.problems(

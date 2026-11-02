@@ -118,6 +118,9 @@ let privateIdentifiers = "~/.config/workspace/private-identifiers"
 /** What a repository's [push] declares as its visibility, public where it declares none. */
 let visibilities = ["public", "private"]
 
+/** The workflows a push to the workspace starts, which has no workspace.toml to declare them. */
+let rootPush = ["verify.yml"]
+
 let doc = "docs/toolchain.md"
 let pushing = "docs/agents/pushing.md"
 let rules: array<Rule.t> = [

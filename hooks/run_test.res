@@ -1,5 +1,7 @@
 open Testing
 
+@module("node:fs") external symlinkSync: (string, string) => unit = "symlinkSync"
+
 let root = Registry.root
 let entry = Node.join([root, "hooks", "run.res.mjs"])
 
@@ -141,11 +143,11 @@ describe("the shared entrypoint", () => {
       Node.mkdirAll(Node.join([lane, "hooks"]))
       Node.mkdirAll(Node.join([lane, ".jj"]))
       Node.writeFileSync(Node.join([lane, "hooks", "run.res"]), "")
-      // The repository a lane points at, this checkout's own or the one a lane's pointer names.
-      let pointer = Node.join([root, ".jj", "repo"])
-      let repository = Node.existsSync(Node.join([pointer, "store"]))
-        ? pointer
-        : Node.realpathSync(Node.join([root, ".jj", Node.readFileSync(pointer)->String.trim]))
+      // A main checkout of its own, its hooks this tree's, so no real .jj is read.
+      let main = Node.mkdtempSync(Node.join([Node.tmpdir(), "hook-main-"]))
+      Node.mkdirAll(Node.join([main, ".jj", "repo"]))
+      symlinkSync(Node.join([root, "hooks"]), Node.join([main, "hooks"]))
+      let repository = Node.join([main, ".jj", "repo"])
       Node.writeFileSync(Node.join([lane, ".jj", "repo"]), repository)
       let rejected = JSON.stringifyAny({
         "cwd": root,
@@ -165,6 +167,7 @@ describe("the shared entrypoint", () => {
       let (status, _, _) = invoke(~cwd=lane, ~through=true, ~fail="1", "{}")
       expect(status)->toBe(1)
       Node.rmSync(lane, {recursive: true, force: true})
+      Node.rmSync(main, {recursive: true, force: true})
     },
   )
 
@@ -178,6 +181,41 @@ describe("the shared entrypoint", () => {
         })->Option.getOr("{}"),
       ),
     )->toEqual((0, "", ""))
+  })
+
+  test("each event shape exits as designed, never throws and prints only valid JSON", () => {
+    let cwd = JSON.stringifyAny(root)->Option.getOr("\"\"")
+    let event = (name, rest) => `{"cwd": ${cwd}, "hook_event_name": "${name}"${rest}}`
+    let bash = `, "tool_name": "Bash", "tool_input": {"command": "echo hello"}`
+    let shapes = [
+      ("a pre-tool Bash call", event("PreToolUse", bash)),
+      ("a post-tool call", event("PostToolUse", bash)),
+      ("a stop", event("Stop", "")),
+      ("a session start", event("SessionStart", `, "source": "startup"`)),
+      ("an unknown event", event("Unheard", "")),
+      ("an empty payload", ""),
+      ("an empty object", "{}"),
+      ("a malformed payload", "{not json"),
+      ("a payload that is no object", "[1, 2]"),
+    ]
+    let valid = text =>
+      try {
+        JSON.parseOrThrow(text)->ignore
+        true
+      } catch {
+      | _ => false
+      }
+    shapes->Array.forEach(
+      ((shape, payload)) => {
+        let (status, stdout, stderr) = invoke(payload)
+        expect((shape, status))->toEqual((shape, 0))
+        expect((shape, stderr->String.includes("Error")))->toEqual((shape, false))
+        expect((shape, stdout == "" || valid(stdout)))->toEqual((shape, true))
+      },
+    )
+    // Where it should speak it does: a compaction is told what to read again.
+    let (_, spoken, _) = invoke(event("SessionStart", `, "source": "compact"`))
+    expect(spoken != "" && valid(spoken))->toBe(true)
   })
 
   test("post-tool observations are one context", () => {

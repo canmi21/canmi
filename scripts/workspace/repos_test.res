@@ -88,7 +88,9 @@ describe("what a verb was asked", () => {
 })
 
 describe("a repository's check parts", () => {
-  let repo = Node.join([Registry.repos, "monoflake", "machine"])
+  // A fixture repository of its own, as no clone of a real one is there to read.
+  let repo = Node.mkdtempSync(Node.join([Node.tmpdir(), "repos-fixture-"]))
+  tree(repo, [("mise.toml", `[tasks."verify:rust"]\nrun = "true"\n`)])
   let names = parts => Repos.checkParts(repo, parts)->Array.map(((name, _)) => name)
   let every = Check.over(repo)->Array.map(((name, _)) => name)
   let refusedParts = parts =>
@@ -175,7 +177,7 @@ describe("a repository's check parts", () => {
   test("a name that is no part is refused, listing the valid ones", () => {
     let valid = ["own", ...Repos.verifyParts(repo), ...every]->Array.join(", ")
     expect(refusedParts(["own", "invalid"]))->toEqual(
-      Some(`monoflake/machine's check has no part invalid; the parts are ${valid}`),
+      Some(`${Registry.label(repo)}'s check has no part invalid; the parts are ${valid}`),
     )
     expect(refusedParts(["own", "names"]))->toEqual(None)
   })

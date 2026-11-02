@@ -44,8 +44,15 @@ let problems = (~push: Project.push, ~workflows: array<(string, bool)>): array<s
   )
 }
 
-/** The workspace's, which has no workspace.toml, declares nothing and needs no push CI. */
-let bare: Project.push = {visibility: Project.public, stated: true, ci: Some([]), release: []}
+/**
+ * The workspace's, which has no workspace.toml, declares `Toolchain.rootPush` and releases none.
+ */
+let bare: Project.push = {
+  visibility: Project.public,
+  stated: true,
+  ci: Some(Toolchain.rootPush),
+  release: [],
+}
 
 /** The workflows of the tree at `root`, each by its file name with whether it runs on a push. */
 let workflows = (~root) =>
