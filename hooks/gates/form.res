@@ -8,6 +8,8 @@ let ours = repo => repo == Registry.root || repo->String.startsWith(Registry.rep
 
 /** The words of a commit that name files, past the flags and the values they take. */
 let valued = ["-m", "--message", "--author", "-T", "--template", "--config", "--config-file"]
+let redirection = /^(\d+|&)?(>>?|<)/
+let redirectionTarget = /^(\d+|&)?(>>?|<)$/
 let filesets = (arguments: array<string>) => {
   let kept = []
   let at = ref(0)
@@ -15,6 +17,9 @@ let filesets = (arguments: array<string>) => {
     let word = arguments->Array.getUnsafe(at.contents)
     if valued->Array.includes(word) {
       at := at.contents + 2
+    } else if RegExp.test(redirection, word) {
+      // A redirection is the shell's, and its target is the next word unless it is attached.
+      at := at.contents + (RegExp.test(redirectionTarget, word) ? 2 : 1)
     } else {
       word->String.startsWith("-") ? () : kept->Array.push(word)
       at := at.contents + 1

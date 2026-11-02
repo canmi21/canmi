@@ -18,6 +18,15 @@ describe("the words of a commit that name files", () => {
     ])
     expect(Form.filesets(["--message=x"]))->toEqual([])
   })
+
+  test("stop short of a redirection and its target", () => {
+    expect(Form.filesets(["a.md", "2>&1"]))->toEqual(["a.md"])
+    expect(Form.filesets(["a.md", ">", "out.log", "b.md"]))->toEqual(["a.md", "b.md"])
+    expect(Form.filesets(["a.md", ">>out.log"]))->toEqual(["a.md"])
+    expect(Form.filesets(["a.md", "2>", "err.log"]))->toEqual(["a.md"])
+    expect(Form.filesets(["a.md", "<", "in.txt"]))->toEqual(["a.md"])
+    expect(Form.filesets(["a.md", "&>", "all.log"]))->toEqual(["a.md"])
+  })
 })
 
 describe("the form gate", () => {
@@ -133,6 +142,62 @@ describe("the form gate over a main that already carries a finding", () => {
         tree(repo, found)
         expect(Form.handle(payload(repo, commit), ~owned=everywhere))->toBe(2)
       },
+    )
+  })
+})
+
+describe("the form gate over filesets the shell has unquoted", () => {
+  let root = temporaryRoot("form-gate-filesets-")
+  let commit = "jj commit -m 'chore: a'"
+  let start = () => {
+    let repo = root.contents
+    jj(repo, ["git", "init", "--quiet"])
+    tree(repo, [("ok.md", "one\n"), (".github/a.yml", long)])
+    jj(repo, ["commit", "-m", "chore: parent"])
+    tree(repo, [(".github/a.yml", "short\n"), ("ok.md", "two\n")])
+    Node.realpathSync(repo)
+  }
+
+  [
+    `root:".github/a.yml"`,
+    `'root:".github/a.yml"'`,
+    ".github/a.yml",
+    `root:.github/a.yml`,
+  ]->Array.forEach(fileset =>
+    test(
+      `judges ${fileset} at the working copy's version`,
+      () => {
+        let repo = start()
+        expect(Form.handle(payload(repo, `${commit} ${fileset}`), ~owned=everywhere))->toBe(0)
+      },
+    )
+  )
+
+  test("ignores a redirection, a pipe and a second commit when judging the first", () => {
+    let repo = start()
+    let line = `${commit} .github/a.yml 2>&1 | tail -1`
+    expect(Form.handle(payload(repo, line), ~owned=everywhere))->toBe(0)
+    expect(
+      Form.handle(payload(repo, `${commit} .github/a.yml > out.log`), ~owned=everywhere),
+    )->toBe(0)
+    expect(
+      Form.handle(
+        payload(repo, `${commit} .github/a.yml ok.md && ${commit} ok.md .github/a.yml; ls`),
+        ~owned=everywhere,
+      ),
+    )->toBe(0)
+  })
+
+  test("refuses a fileset jj cannot parse rather than judging the parent's version", () => {
+    let repo = root.contents
+    jj(repo, ["git", "init", "--quiet"])
+    tree(repo, [("ok.md", "one\n")])
+    jj(repo, ["commit", "-m", "chore: parent"])
+    tree(repo, [("big.txt", long)])
+    let repo = Node.realpathSync(repo)
+    expect(Form.handle(payload(repo, `${commit} root:"a (1).md"`), ~owned=everywhere))->toBe(2)
+    expect(Form.handle(payload(repo, `${commit} root:"a (1).md" ok.md`), ~owned=everywhere))->toBe(
+      2,
     )
   })
 })

@@ -9,36 +9,55 @@ let asked = (~place, args) =>
   Node.output(~cwd=place, "jj", ["--ignore-working-copy", ...args])->lines
 
 /** The files `filesets` change in the working copy, as paths from `repo`; every file with none. */
-let changed = (repo, ~place, filesets) =>
-  asked(~place, ["diff", "-r", "@", "--name-only", ...filesets])->Array.map(path =>
-    Node.relative(repo, Node.resolve([place, path]))
+let changed = (repo, ~place, filesets) => {
+  let answer = Node.spawnSync(
+    "jj",
+    ["--ignore-working-copy", "diff", "-r", "@", "--name-only", ...filesets],
+    {cwd: place, encoding: "utf8", maxBuffer: 268435456},
   )
+  switch answer.status->Nullable.toOption {
+  | Some(0) =>
+    Ok(
+      answer.stdout
+      ->Nullable.getOr("")
+      ->lines
+      ->Array.map(path => Node.relative(repo, Node.resolve([place, path]))),
+    )
+  | _ =>
+    let said = answer.stderr->Nullable.getOr("")->lines->Array.get(0)->Option.getOr("no message")
+    Error(`jj could not read the filesets ${filesets->Array.join(" ")}, ${said}`)
+  }
+}
 
 /**
  * The tree the commit leaves behind. With filesets it is the working copy where they name a file
- * and the parent's version elsewhere; onto a merge it is the whole working copy.
+ * and the parent's version elsewhere; onto a merge it is the whole working copy. A fileset jj
+ * cannot read is an error, never the parent's version.
  */
-let tree = (repo, ~place, ~filesets): option<Lines.tree> =>
+let tree = (repo, ~place, ~filesets): result<Lines.tree, string> =>
   switch Stamp.snapshot(repo) {
-  | "" => None
+  | "" => Error("the working copy could not be snapshotted")
   | at =>
     let whole = Lines.committed(repo, at)
     let parents = asked(~place, ["log", "--no-graph", "-r", "@-", "-T", `commit_id ++ "\\n"`])
     switch (filesets, parents) {
-    | ([], _) => Some(whole)
+    | ([], _) => Ok(whole)
     | (_, [parent]) =>
-      let included = changed(repo, ~place, filesets)
-      let left = changed(repo, ~place, [])->Array.filter(path => !(included->Array.includes(path)))
-      let before = Lines.committed(repo, parent)
-      Some({
-        ...whole,
-        paths: Array.concat(
-          whole.paths->Array.filter(path => !(left->Array.includes(path))),
-          before.paths->Array.filter(path => left->Array.includes(path)),
-        ),
-        bytes: path => left->Array.includes(path) ? before.bytes(path) : whole.bytes(path),
-      })
-    | _ => Some(whole)
+      switch (changed(repo, ~place, filesets), changed(repo, ~place, [])) {
+      | (Ok(included), Ok(every)) =>
+        let left = every->Array.filter(path => !(included->Array.includes(path)))
+        let before = Lines.committed(repo, parent)
+        Ok({
+          ...whole,
+          paths: Array.concat(
+            whole.paths->Array.filter(path => !(left->Array.includes(path))),
+            before.paths->Array.filter(path => left->Array.includes(path)),
+          ),
+          bytes: path => left->Array.includes(path) ? before.bytes(path) : whole.bytes(path),
+        })
+      | (Error(why), _) | (_, Error(why)) => Error(why)
+      }
+    | _ => Ok(whole)
     }
   }
 
@@ -69,9 +88,9 @@ if Node.isMain {
       let repo = args->Array.getUnsafe(0)
       let place = args->Array.getUnsafe(1)
       switch tree(repo, ~place, ~filesets=args->Array.slice(~start=2)) {
-      | Some(found) => refused(repo, found)->Array.length > 0 ? 1 : 0
-      | None =>
-        Console.log("refused: the working copy could not be snapshotted, so no tree was judged")
+      | Ok(found) => refused(repo, found)->Array.length > 0 ? 1 : 0
+      | Error(why) =>
+        Console.log(`refused: ${why}, so no tree was judged`)
         1
       }
     | _ => 2
