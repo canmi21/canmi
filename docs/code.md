@@ -243,7 +243,9 @@ repository's `mise run protocol` goes through the workspace's runner, `scripts/p
 caches each result by its inputs and runs the specs and their switches in parallel. Its default is a
 quick model, safety alone, held to about fifteen seconds; `--full` adds the temporal properties and
 the larger constants, and a weekly scheduled workflow, dispatchable by hand, runs it so a liveness
-break is found within a week without slowing every check.
+break is found within a week without slowing every check. A spec's `full` lists the safety checks
+too costly for the quick model, run under `--full` alone, and its `constants` names a command whose
+output gives the constants the design fixes, read from the model rather than written in a cfg.
 
 ## Nothing is committed unverified
 

@@ -264,6 +264,15 @@ let items: array<item> = [
     waives: ["rules-in-docs"],
   },
   {
+    id: "ci-shell-stricter",
+    says: "ci-shell-minimal holds a workflow step's shell to its kinds, refusing command substitution, and names the preparation commands, the parsers always allowed and the steps exempt, each in model/rules/toolchain.res",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes(
+      "the stricter check stands in lanes/wfstrict, unlanded: checks/ci/entries.res's shellKinds, substitutions and shellFindings, the three names in model/rules/toolchain.res, its docs/ci.md, ci_check.res, runs.res and form_layer_test.res edits, written before checks/ moved out of model/",
+    ),
+  },
+  {
     id: "docs-drained",
     says: "Every doc of the workspace and monoflake keeps only the rules in force, drained one repository at a time, monoflake/cloud first, the history moving into RFCs, and the `docs-in-force` check holds the whole",
     repos: [
