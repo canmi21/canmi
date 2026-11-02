@@ -124,7 +124,7 @@ let rules: array<Rule.t> = [
     name: "verified-before-commit",
     says: "A `committing` command waits until verify passed at the working copy, `skip` aside",
     doc,
-    held: Hook("hooks/gates/verified"),
+    held: Hook("hooks/gates/commit/verified"),
   },
   {
     name: "main-covers-work",
@@ -136,7 +136,7 @@ let rules: array<Rule.t> = [
     name: "work-not-lost",
     says: "An agent's `jj restore` with no path, and `jj abandon` of a commit holding changes main does not have, are refused where they would lose work; named paths and an empty or landed commit pass, `SKIP=restore` naming the escape",
     doc: "docs/lessons.md",
-    held: Hook("hooks/gates/lose"),
+    held: Hook("hooks/gates/commit/lose"),
   },
   {
     name: "versions-rolled",

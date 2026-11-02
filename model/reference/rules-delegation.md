@@ -2,7 +2,7 @@
 
 # Rules
 
-27 rules, 7 pending a check.
+27 rules, 5 pending a check.
 
 ## Delegation
 
@@ -53,7 +53,7 @@ A lane's target holds `laneTarget` gigabytes at most.
 A cache that can be written again is cleared by its own tool's clean, never trash, nor the pnpm global store touched.
 
 - doc: [docs/agents/lanes.md](../../docs/agents/lanes.md)
-- held by: pending, owed: the rm guard telling a cache from other files as trash is called
+- held by: hook `hooks/cache/trash`
 
 ### accept-in-lane
 
@@ -95,7 +95,7 @@ An implementer or refactorer is dispatched only with a brief holding exactly one
 A landing that changes the hooks under `.codex/` is followed at once by a reminder to the author to trust Codex by hand.
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
-- held by: pending, owed: a check firing at the landing of a commit that touches .codex/
+- held by: hook `hooks/gates/commit/codex_trust`
 
 ### long-command-background
 
@@ -193,4 +193,4 @@ The merge of a wave runs mise run fmt, then the logic layer's check.
 A commit in a lane only warns of the form layer; a commit onto a repository's main line, made in its main checkout, is refused on any form finding in the tree it would leave, each repository alone, a paused one passed over, and `SKIP=form` the escape.
 
 - doc: [docs/agents/checking.md](../../docs/agents/checking.md)
-- held by: hook `hooks/gates/form`
+- held by: hook `hooks/gates/commit/form`

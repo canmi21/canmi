@@ -81,8 +81,12 @@ let handle = (payload: Payload.t): int =>
                 | 0 =>
                   switch Lose.handle(payload) {
                   | 0 =>
-                    Commit.fix(payload)
-                    0
+                    switch Trash.refuse(payload) {
+                    | 0 =>
+                      Commit.fix(payload)
+                      0
+                    | refused => refused
+                    }
                   | refused => refused
                   }
                 | refused => refused
@@ -104,6 +108,7 @@ let handle = (payload: Payload.t): int =>
       Decision.context(payload),
       Delta.context(payload),
       Stale_jobs.context(payload),
+      Codex_trust.context(payload),
     ])->Option.forEach(message => say(post(message)))
     0
   | Some("Stop") =>

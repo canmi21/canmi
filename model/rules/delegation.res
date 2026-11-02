@@ -121,6 +121,9 @@ let miseCommands = [
   "latest",
 ]
 
+/** The directory of the hooks Codex reads, whose change the author trusts by hand. */
+let codexHooksDir = ".codex/"
+
 /** A background job's description holding this word may go silent, `stale-job-looked-at`. */
 let quietMark = "quiet"
 
@@ -245,6 +248,18 @@ let implementersAtOnce = 10
 /** The most a lane's `target` holds, in gigabytes, before `cargo clean` clears it. */
 let laneTarget = 10
 
+/** The caches a tool writes again by path, each with the clean `cache-not-trashed` names. */
+let caches = [
+  ("target", "cargo clean"),
+  ("node_modules", "rm inside the workspace, as it has no clean"),
+  ("lib/bs", "pnpm exec rescript clean"),
+  (".rescript", "pnpm exec rescript clean"),
+  ("dist", "the repository's own `mise run clean`"),
+]
+
+/** Where the pnpm global store sits, which nothing touches. */
+let stores = ["Library/pnpm/store", ".pnpm-store"]
+
 /** Where the records of friction live, one file each by date and rule id, in no repository. */
 let friction = "~/.local/state/workspace/friction/"
 
@@ -293,7 +308,7 @@ let rules: array<Rule.t> = [
     name: "cache-not-trashed",
     says: "A cache that can be written again is cleared by its own tool's clean, never trash, nor the pnpm global store touched",
     doc,
-    held: Pending("the rm guard telling a cache from other files as trash is called"),
+    held: Hook("hooks/cache/trash"),
   },
   {
     name: "accept-in-lane",
@@ -332,7 +347,7 @@ let rules: array<Rule.t> = [
     name: "codex-trust-reminded",
     says: "A landing that changes the hooks under `.codex/` is followed at once by a reminder to the author to trust Codex by hand",
     doc: "docs/agents/delegation.md",
-    held: Pending("a check firing at the landing of a commit that touches .codex/"),
+    held: Hook("hooks/gates/commit/codex_trust"),
   },
   {
     name: "long-command-background",
@@ -419,7 +434,7 @@ let rules: array<Rule.t> = [
     name: "form-at-commit",
     says: "A commit in a lane only warns of the form layer; a commit onto a repository's main line, made in its main checkout, is refused on any form finding in the tree it would leave, each repository alone, a paused one passed over, and `SKIP=form` the escape",
     doc: checking,
-    held: Hook("hooks/gates/form"),
+    held: Hook("hooks/gates/commit/form"),
     layer: Form,
   },
 ]

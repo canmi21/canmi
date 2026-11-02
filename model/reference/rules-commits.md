@@ -88,7 +88,7 @@ Every repository the registry lists has its `since`.
 A `committing` command waits until verify passed at the working copy, `skip` aside.
 
 - doc: [docs/commits.md](../../docs/commits.md)
-- held by: hook `hooks/gates/verified`
+- held by: hook `hooks/gates/commit/verified`
 
 ### main-covers-work
 
@@ -102,7 +102,7 @@ A turn ends with main covering every described, non-empty commit.
 An agent's `jj restore` with no path, and `jj abandon` of a commit holding changes main does not have, are refused where they would lose work; named paths and an empty or landed commit pass, `SKIP=restore` naming the escape.
 
 - doc: [docs/lessons.md](../../docs/lessons.md)
-- held by: hook `hooks/gates/lose`
+- held by: hook `hooks/gates/commit/lose`
 
 ### versions-rolled
 
