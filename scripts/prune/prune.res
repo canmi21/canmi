@@ -1,6 +1,6 @@
 /**
  * A build's leftovers, each `.res.mjs` whose `.res` no longer stands beside it, as after a move,
- * under the directories rescript.json compiles. Run from the root, `node scripts/prune.res.mjs`.
+ * under the directories rescript.json compiles, run as `node scripts/prune/prune.res.mjs`.
  */
 /** The directories a rescript.json compiles, each with whether its subdirectories are included. */
 let sources = (root): array<(string, bool)> => {

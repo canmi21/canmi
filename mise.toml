@@ -153,7 +153,7 @@ run = "node scripts/workspace/push/scan.res.mjs"
 # What the scripts compile to, never committed, which every task running one depends on.
 [tasks.build]
 description = "Compile the scripts, the model, the hooks and the CI entries, and remove what no source compiles to"
-run = "rescript build && node scripts/prune.res.mjs"
+run = "rescript build && node scripts/prune/prune.res.mjs"
 sources = ["scripts/**/*.res", "model/**/*.res", "hooks/**/*.res", ".github/**/*.res", "rescript.json"]
 outputs = { auto = true }
 
