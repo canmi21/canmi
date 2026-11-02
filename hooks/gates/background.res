@@ -246,8 +246,12 @@ and lineLong = (command: string) =>
 /** Whether a command line runs an always-long command in the foreground. */
 let long = lineLong
 
-/** Whether the call is to Monitor, which waits on a loop without holding the conversation. */
-let monitored = (payload: Payload.t) => payload->Payload.text("tool_name") == Some("Monitor")
+/** Monitor may arrive as Bash but carries timeout_ms instead of Bash's timeout. */
+let monitored = (payload: Payload.t) =>
+  payload->Payload.text("tool_name") == Some("Monitor") ||
+    payload
+    ->Payload.object("tool_input")
+    ->Option.mapOr(false, input => input->Dict.get("timeout_ms")->Option.isSome)
 
 /** Why a foreground call would hold the conversation, or nothing where it would not. */
 let held = (payload: Payload.t) =>

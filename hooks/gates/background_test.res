@@ -42,6 +42,19 @@ describe("a command that holds the conversation", () => {
     expect(Background.refuse(payload(command)))->toEqual(2)
   })
 
+  test("recognizes Monitor arriving as Bash by its timeout_ms field", () => {
+    let call = payload(~tool="Bash", "while true; do cat out.log; sleep 60; done")
+    let input = call->Payload.object("tool_input")->Option.getOrThrow
+    input->Dict.set("description", JSON.String("Watch the job output"))
+    expect(Background.refuse(call))->toEqual(2)
+    input->Dict.set("timeout_ms", JSON.Number(1800000.))
+    expect(Background.refuse(call))->toEqual(0)
+  })
+
+  test("keeps Bash's timeout subject to the foreground seconds", () => {
+    expect(Background.refuse(payload(~tool="Bash", ~timeout=1800000., "cat out.log")))->toEqual(2)
+  })
+
   test("is a foreground call asking for more than the foreground seconds", () => {
     expect(Background.refuse(payload(~timeout=600000., "curl localhost")))->toEqual(2)
     expect(Background.refuse(payload(~timeout=120000., "curl localhost")))->toEqual(2)
