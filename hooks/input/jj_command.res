@@ -48,7 +48,7 @@ let rec substitutionEnd = (chars: array<string>, start): option<int> => {
 }
 
 /** The words of a command line, or none where a quote or substitution is left open. */
-let words = (command: string): option<array<string>> => {
+let words = (~keepQuotes=false, command: string): option<array<string>> => {
   let found = []
   let word = ref("")
   let open_ = ref(false)
@@ -76,10 +76,13 @@ let words = (command: string): option<array<string>> => {
       // Inside double quotes a backslash escapes only a quote or itself, as shlex has it.
       word :=
         word.contents ++
-        (quote.contents == "\"" && char != "\"" && char != "\\" ? "\\" : "") ++
+        (keepQuotes || (quote.contents == "\"" && char != "\"" && char != "\\") ? "\\" : "") ++
         char
       escaped := false
     } else if quote.contents == "'" {
+      if keepQuotes && char == "'" {
+        word := word.contents ++ char
+      }
       char == "'" ? quote := "" : word := word.contents ++ char
     } else if char == "`" || (char == "$" && next == Some("(")) {
       switch substitutionEnd(chars, at) {
@@ -91,6 +94,9 @@ let words = (command: string): option<array<string>> => {
       }
     } else if quote.contents == "\"" {
       if char == "\"" {
+        if keepQuotes {
+          word := word.contents ++ char
+        }
         quote := ""
       } else if char == "\\" {
         escaped := true
@@ -108,6 +114,9 @@ let words = (command: string): option<array<string>> => {
     } else {
       open_ := true
       if char == "'" || char == "\"" {
+        if keepQuotes {
+          word := word.contents ++ char
+        }
         quote := char
       } else if char == "\\" {
         escaped := true
@@ -161,8 +170,8 @@ let substitutions = (command: string): array<string> => {
 }
 
 /** The command line cut at each separator, then each command substitution's own segments. */
-let rec segments = command =>
-  switch words(command) {
+let rec segments = (~keepQuotes=false, command) =>
+  switch words(~keepQuotes, command) {
   | None => []
   | Some(all) =>
     let cut = [[]]
@@ -173,7 +182,7 @@ let rec segments = command =>
     )
     cut
     ->Array.filter(segment => segment != [])
-    ->Array.concat(substitutions(command)->Array.flatMap(segments))
+    ->Array.concat(substitutions(command)->Array.flatMap(inner => segments(~keepQuotes, inner)))
   }
 
 /** Where the program of a segment sits, past assignments and the wrappers that run what follows. */

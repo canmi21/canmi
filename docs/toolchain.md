@@ -39,6 +39,10 @@ private key that can be put back is a private key that is still there. It is mad
 scratchpad, inside the temp directories the guard allows, so the `rm` is never one the guard
 refuses.
 
+**An `rm` never takes a bare variable path**: each variable is written `"${S:?}"/name`, or the path
+is written out, so an empty variable stops the command rather than removing from the root,
+`rm-variable-guarded` in [model/rules/toolchain.res](../model/rules/toolchain.res).
+
 Where the point is only to get something out of the way, moving it to a temporary directory answers
 just as well and reads more honestly than a deletion.
 

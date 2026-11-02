@@ -20,7 +20,7 @@ let background = (payload: Payload.t) =>
   ->Option.mapOr(false, input => input->Payload.flag("run_in_background"))
 
 // Keep group boundaries until their background operator is known before splitting commands.
-let foregroundText = command => {
+let foregroundText = (~keepBackground=false, command) => {
   let chars = command->Node.codePoints
   let length = chars->Array.length
   let rec scan = start => {
@@ -67,6 +67,7 @@ let foregroundText = command => {
           after := after.contents + 1
         }
         if (
+          !keepBackground &&
           balanced &&
           chars[after.contents] == Some("&") &&
           !([Some("&"), Some(">")]->Array.includes(chars[after.contents + 1]))
@@ -101,7 +102,7 @@ let foregroundText = command => {
         append(char)
         at := at.contents + 1
       } else if char == "&" {
-        piece := ";"
+        keepBackground ? append(";") : piece := ";"
         flush()
         at := at.contents + 1
       } else {

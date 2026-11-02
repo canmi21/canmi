@@ -2,7 +2,7 @@
 
 # Rules
 
-42 rules, 5 pending a check.
+43 rules, 5 pending a check.
 
 ## Toolchain
 
@@ -215,6 +215,13 @@ A public repository's push carries no private identifier, credential, high-entro
 
 - doc: [docs/agents/pushing.md](../../docs/agents/pushing.md)
 - held by: pending, owed: push refuses a private identifier in the lines and messages a public repository sends since 2026-10-24; credentials, high-entropy strings and addresses wait
+
+### rm-variable-guarded
+
+An `rm` an agent types writes each variable in its paths as `${name:?}`, so an empty one stops the command rather than removing from the root.
+
+- doc: [docs/toolchain.md](../../docs/toolchain.md)
+- held by: hook `hooks/gates/rmvar`
 
 ### push-through-verb
 

@@ -312,6 +312,12 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "rm-variable-guarded",
+    says: "An `rm` an agent types writes each variable in its paths as `${name:?}`, so an empty one stops the command rather than removing from the root",
+    doc,
+    held: Hook("hooks/gates/rmvar"),
+  },
+  {
     name: "push-through-verb",
     says: "An agent pushes only by `mise run push`, never by `jj git push` or `git push` typed directly",
     doc: pushing,
