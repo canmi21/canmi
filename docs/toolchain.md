@@ -2,6 +2,9 @@
 
 ## Shell
 
+**Shell is fit as a workflow's entry and for an operation of one or two lines, and anything that
+orchestrates is ReScript.**
+
 The user's interactive shell is **fish**, configured in `~/.config/fish/config.fish`.
 
 This matters in two directions, and they are opposite:

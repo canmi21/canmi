@@ -78,7 +78,9 @@ let items: array<item> = [
     says: "`mise run roll` takes one owner to a checkpoint from cloud main, moving its locks to the checkpoint's machine, run once by hand before any timer does it, RFC stc9g",
     repos: ["monoflake/cloud"],
     after: ["schedule-c-alone", "checkpoint-record"],
-    holds: Owes("the roll task, run once by hand"),
+    holds: Owes(
+      "writing a bucket's objects back from nothing: run once by hand on 2026-11-02, canmi at candidate one, proving the path and an equal id alone; candidate two's roll to canmi, after they expire, proves the rest",
+    ),
   },
   {
     id: "compat-versions",
