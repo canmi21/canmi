@@ -168,6 +168,47 @@ describe("a command that always runs long", () => {
     ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, 2)))
   })
 
+  test("keeps redirected groups together through their background operator", () => {
+    // Redirections after a closing group used to separate its work from the background operator.
+    [
+      "(a && b) > f 2>&1 &",
+      "cmd > f 2>&1 &",
+      "{ a; b; } > f &",
+      "(a) 2>/dev/null >f &",
+    ]->Array.forEach(
+      command => {
+        expect(Background.foregroundText(command)->String.trim)->toEqual(";")
+        expect(refused(command))->toEqual(0)
+      },
+    )
+    [
+      "(cargo test && rescript build) > f 2>&1 &",
+      "cargo test > f 2>&1 &",
+      "{ cargo test; rescript build; } > f &",
+      "(cargo test) 2>/dev/null >f &",
+      "(cargo test) > 'quoted & file' 2>&1 &; echo $!",
+      "(cargo test) > f 2>&1 & echo started",
+      "{ (cargo test); rescript build; } > f &",
+      "(pnpm exec rescript format ... && pnpm exec rescript build) > /tmp/ctrla-build.log 2>&1 & echo $!",
+      "(pnpm exec rescript format ... && pnpm exec rescript build) > /tmp/ctrla-build.log 2>&1 &",
+    ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, 0)))
+  })
+
+  test("still refuses foreground work beside redirected background groups", () => {
+    [
+      "for i in 1 2 3; do sleep 8; done",
+      "mise run build",
+      "echo ready & mise run build",
+      "(cargo test) > f 2>&1",
+      "{ cargo test; rescript build; } > f",
+      "(cargo test) > f 2>&1 & rescript build",
+      "{ cargo test; } > f & mise run build",
+      "mise run build; (cargo test) > f &",
+      "(cargo test) > f && echo done",
+      "(cargo test) > f \\&",
+    ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, 2)))
+  })
+
   test("is refused in the foreground whatever its timeout, or none", () => {
     [
       "mise run check",

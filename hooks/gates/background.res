@@ -23,7 +23,18 @@ let background = (payload: Payload.t) =>
 let foregroundText = (~keepBackground=false, command) => {
   let chars = command->Node.codePoints
   let length = chars->Array.length
-  let rec scan = start => {
+  let boundary = at =>
+    [
+      None,
+      Some(" "),
+      Some("\t"),
+      Some("\r"),
+      Some("\n"),
+      Some(";"),
+      Some("|"),
+      Some("&"),
+    ]->Array.includes(chars[at])
+  let rec scan = (start, closing) => {
     let at = ref(start)
     let quote = ref("")
     let output = ref("")
@@ -60,27 +71,17 @@ let foregroundText = (~keepBackground=false, command) => {
         quote := char
         append(char)
         at := at.contents + 1
-      } else if char == "(" {
-        let (inner, stop, balanced) = scan(at.contents + 1)
-        let after = ref(stop)
-        while [Some(" "), Some("\t"), Some("\r")]->Array.includes(chars[after.contents]) {
-          after := after.contents + 1
-        }
-        if (
-          !keepBackground &&
-          balanced &&
-          chars[after.contents] == Some("&") &&
-          !([Some("&"), Some(">")]->Array.includes(chars[after.contents + 1]))
-        ) {
-          append(";")
+      } else if (
+        char == "(" || (char == "{" && boundary(at.contents - 1) && boundary(at.contents + 1))
+      ) {
+        flush()
+        let (inner, stop, balanced) = scan(at.contents + 1, char == "(" ? ")" : "}")
+        append(";" ++ inner ++ ";")
+        if !balanced {
           flush()
-          at := after.contents + 1
-        } else {
-          append(";" ++ inner ++ ";")
-          flush()
-          at := stop
         }
-      } else if char == ")" && start > 0 {
+        at := stop
+      } else if char == closing && (char == ")" || boundary(at.contents - 1)) {
         closed := true
         at := at.contents + 1
       } else if char == "&" && next == Some("&") {
@@ -116,7 +117,7 @@ let foregroundText = (~keepBackground=false, command) => {
     flush()
     (output.contents, at.contents, closed.contents)
   }
-  let (text, _, _) = scan(0)
+  let (text, _, _) = scan(0, "")
   text
 }
 
@@ -282,7 +283,9 @@ let refuse = (payload: Payload.t): int =>
     Console.error(
       `Command refused by hooks/gates/background.res: ${why}, which holds the conversation.\n` ++
       `It judged ${judged(payload)}.\n` ++
-      "Run it with run_in_background, or under Monitor with `mise run watch <file>`, and read its output every few seconds.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
+      "Run it with run_in_background, or under Monitor with `mise run watch <file>`.\n" ++
+      "Without either, use `(cmd > file 2>&1; echo $? > file.status) &`, with nothing long after the `&`.\n" ++
+      "Read its output every few seconds.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
     )
     2
   }
