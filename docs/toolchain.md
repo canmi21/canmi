@@ -2,8 +2,8 @@
 
 ## Shell
 
-**Shell is fit as a workflow's entry and for an operation of one or two lines, and anything that
-orchestrates is ReScript.**
+**Shell is for what one shot does, one command however many lines its flags take; what has an order,
+a conditional, a loop or a retry, an orchestration, is ReScript.**
 
 The user's interactive shell is **fish**, configured in `~/.config/fish/config.fish`.
 
