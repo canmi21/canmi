@@ -56,6 +56,7 @@ let table = [
   vendor("DOCKERHUB_TOKEN", "DOCKERHUB", Foundation, "TOKEN"),
   neutral("CONTROL_OPERATOR", "CONTROL", Foundation, "OPERATOR"),
   neutral("CONTROL_SEALING_KEY", "CONTROL", Foundation, "SEALING_KEY"),
+  neutral("CONTROL_HEALTH", "CONTROL", Foundation, "HEALTH"),
   neutral("CONTROL_ORGANIZATION_MONOFLAKE", "CONTROL", Foundation, "ORGANIZATION_MONOFLAKE"),
   neutral("CONTROL_TEST_OPERATOR", "CONTROL", Test, "OPERATOR"),
   neutral("CONTROL_TEST_SEALING_KEY", "CONTROL", Test, "SEALING_KEY"),
