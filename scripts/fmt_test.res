@@ -2,7 +2,7 @@ open Testing
 
 let root = ref("")
 beforeEach(() => root := Node.mkdtempSync(Node.join([Node.tmpdir(), "fmt-test-"])))
-afterEach(() => Node.run("trash", [root.contents])->ignore)
+afterEach(() => Node.rmSync(root.contents, {recursive: true, force: true}))
 
 let write = files => tree(root.contents, files)
 let names = commands => commands->Array.map(({Fmt.program: program}) => program)

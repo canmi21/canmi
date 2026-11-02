@@ -42,7 +42,9 @@ Where the point is only to get something out of the way, moving it to a temporar
 just as well and reads more honestly than a deletion.
 
 The rule covers commands an agent types. What a tool does inside itself is the tool's -- `mise run
-clean` removing what a build wrote is that task's business, and nothing here reaches into it.
+clean` removing what a build wrote is that task's business, and nothing here reaches into it. **A
+program removes the temporary files it made itself, with `Node.rmSync`**, never by calling `trash`,
+which a runner does not have.
 
 The cost is small and worth stating so nobody is surprised by it: the bytes go to the Finder's trash
 instead of being unlinked, so the space is not returned until the trash is emptied, and what was

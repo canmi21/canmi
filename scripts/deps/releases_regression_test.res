@@ -89,5 +89,5 @@ images = ["healthy"]
     )
     equal(Releases.items->Array.slice(~start=before)->Array.length, 1)
   }
-  equal(Node.run("trash", [root]), 0)
+  Node.rmSync(root, {recursive: true, force: true})
 })

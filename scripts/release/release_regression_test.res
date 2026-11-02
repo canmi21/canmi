@@ -97,7 +97,7 @@ assert.equal((await repaired([standing('2000.01.01', 'https://example.com/bad')]
   let warning = result.stderr->Nullable.getOr("")
   equal(warning->String.includes("warning: 2000.01.01, notes not repaired"), true)
   equal(warning->String.includes("answered 503"), true)
-  equal(Node.run("trash", [root]), 0)
+  Node.rmSync(root, {recursive: true, force: true})
 }
 
 test("an unreadable older manifest warns after publication and other notes are repaired", () => {

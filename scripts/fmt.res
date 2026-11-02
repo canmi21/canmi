@@ -94,10 +94,10 @@ let formatNix = (~dry, ~run, job) => {
       })
     } catch {
     | error =>
-      Node.run("trash", [copy])->ignore
+      Node.rmSync(copy, {recursive: true, force: true})
       throw(error)
     }
-    Node.run("trash", [copy])->ignore
+    Node.rmSync(copy, {recursive: true, force: true})
     status
   }
 }
