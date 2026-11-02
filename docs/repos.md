@@ -313,7 +313,7 @@ to mean all of them, and the one holding the others is the easiest to forget.
 **Its own half of a verb is the dispatcher's.** The workspace's `fmt`, `clean`, `update` and
 `verify` cannot be tasks of those names -- those are the loops -- so they are functions in
 `scripts/workspace/repos.res`, the loop over verbs, rather than hidden tasks beside it. Its verify
-is `check workspace`, `model/check.res`, whose parts are named after the name: `mise run check
+is `check workspace`, `checks/check.res`, whose parts are named after the name: `mise run check
 workspace words names` runs those two, and `--pending` lists the rules no check holds yet.
 
 **Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after

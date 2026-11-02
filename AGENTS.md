@@ -37,7 +37,8 @@ they care about and have a complete environment without copying everything else.
 ```
 AGENTS.md      this file, the only entry point
 mise.toml      monorepo root, task roots, the shared toolchain, the verbs
-model/         every rule a program can decide, its values and its check, in ReScript
+model/         every rule a program can decide, its values and plan, in ReScript
+checks/        the programs that check the model's rules, in ReScript
 docs/          the why behind the rules, and the rules only judgment keeps
 scripts/       the tasks two repositories share, and the verbs' dispatcher, in ReScript
 hooks/         the agent hook entrypoint both vendors call, and the rm guard
@@ -179,7 +180,7 @@ but `pull` and `push`, and `--dry-run` to any of them to be told what it would d
 naming it. `check` then runs the workspace's rules over the repository, and its pass is what a
 commit there waits on. What such a task owes the verb, `--dry-run` first, is in [docs/repos.md](docs/repos.md).
 The workspace's own half runs in the dispatcher, `scripts/workspace/repos.res`: its check is
-`model/check.res`, and `mise run check workspace words names` runs only the parts named. `audit`
+`checks/check.res`, and `mise run check workspace words names` runs only the parts named. `audit`
 is `check` with every warning counted as a failure, which is not what routine work runs. `update`
 moves within declared bounds and keeps a repository's move only where its own verify still passes;
 crossing a range is `update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes

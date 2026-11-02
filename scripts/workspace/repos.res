@@ -504,7 +504,7 @@ let update = async (name, ~dry, ~major, ~everything) => {
             Console.log(`\n${place} has no verify, so what moved is kept unchecked`)
           } else {
             let (command, commandArgs) = own
-              ? ("node", [Node.join([root, "model", "check.res.mjs"]), ...updateParts()])
+              ? ("node", [Node.join([root, "checks", "check.res.mjs"]), ...updateParts()])
               : ("mise", ["run", task(repo, "verify")])
             Console.log(`\n=== ${own ? "check workspace" : task(repo, "verify")} ===`)
             let (status, out) = await Node.stream(~cwd=root, command, commandArgs)

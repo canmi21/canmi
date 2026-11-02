@@ -10,6 +10,7 @@ export default defineConfig({
 		include: [
 			'scripts/**/*_test.res.mjs',
 			'model/**/*_test.res.mjs',
+			'checks/**/*_test.res.mjs',
 			'hooks/**/*_test.res.mjs',
 			'.github/**/*_test.res.mjs',
 		],

@@ -10,6 +10,10 @@
 			"subdirs": true
 		},
 		{
+			"dir": "checks",
+			"subdirs": true
+		},
+		{
 			"dir": "hooks",
 			"subdirs": true
 		},

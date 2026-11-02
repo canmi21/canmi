@@ -7,13 +7,13 @@ and its why is an RFC, [rfcs.md](rfcs.md). A sentence nothing enforces decays wi
 
 ## The shape
 
-| Path              | Holds                                                                  |
-| ----------------- | ---------------------------------------------------------------------- |
-| `model/rule.res`  | what a rule is: a name, what it says, the doc naming it, what holds it |
-| `model/rules/`    | one file per topic: the values, and the rules over them                |
-| `model/checks/`   | the checks that read those values and answer with violations           |
-| `model/check.res` | `check workspace [part ...]`, every part or those named                |
-| `model/plan/`     | `work.res`, the plan: what is to be done and what each item waits on   |
+| Path               | Holds                                                                  |
+| ------------------ | ---------------------------------------------------------------------- |
+| `model/rule.res`   | what a rule is: a name, what it says, the doc naming it, what holds it |
+| `model/rules/`     | one file per topic: the values, and the rules over them                |
+| `checks/`          | the checks that read those values and answer with violations           |
+| `checks/check.res` | `check workspace [part ...]`, every part or those named                |
+| `model/plan/`      | `work.res`, the plan: what is to be done and what each item waits on   |
 
 [model/reference/rules.md](../model/reference/rules.md) indexes the rules, a page per topic, written out by `mise run docs`, never by hand.
 
@@ -43,7 +43,7 @@ its `model/` is full: a list of name, says, doc and held, held being one of chec
 pending with a text. The rules part reads it beside the repository's plan, prefixes each name with
 the repository, holds a hook or gate to a file in that repository, and lists a pending one in
 `check workspace --pending`. It is plain JSON because a repository's model cannot import the
-workspace's, `model/checks/plan/repo_rules.res`.
+workspace's, `checks/plan/repo_rules.res`.
 
 **A soft rule is held by a part whose findings are warnings**, which fail only under `audit`: drift
 is the one, as [repos.md](repos.md) gives in "A repository's own rules extend the workspace's".

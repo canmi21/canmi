@@ -9,7 +9,8 @@ In other words, the outer repository owns the workspace; the inner repositories 
 ```text
 workspace/
 ├── repos/        # independent repositories, ignored here
-├── model/        # the rules a program can decide, and their checks
+├── model/        # the rules a program can decide
+├── checks/       # the programs that check them
 ├── docs/         # the reasoning, and the rules only judgment keeps
 ├── scripts/      # shared tasks, in ReScript
 ├── hooks/        # shared hooks

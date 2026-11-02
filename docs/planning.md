@@ -55,7 +55,7 @@ of the workspace's check are the total, which joins every cloned, unpaused repos
 dependency has an exporter listing it, an item waits while what it needs is undelivered, and a cycle
 across repositories is a finding. An item of a private repository is marked `[private]` and is
 withheld by id when `CI` is set. `Repo_plan` in
-[model/checks/plan/repo_plan.res](../model/checks/plan/repo_plan.res) reads it.
+[checks/plan/repo_plan.res](../checks/plan/repo_plan.res) reads it.
 
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain

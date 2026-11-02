@@ -266,7 +266,7 @@ holds the why.
 
 **What reached `main` is checked again, by the commits part of `check`**: every described commit
 after the repository's own `Commits.since` against the same rules the hook applies, from one
-function in `model/checks/landed/history.res`. What came before a repository's `since` is left as it was
+function in `checks/landed/history.res`. What came before a repository's `since` is left as it was
 written, and every repository the registry lists has one. The hook sees only what an agent types
 with `-m`; the history sees everything, an editor's message and a human's included, after the fact.
 

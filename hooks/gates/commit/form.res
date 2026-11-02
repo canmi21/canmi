@@ -39,7 +39,7 @@ let findings = (log: string) =>
   )
 
 /** The program that judges the tree, built beside the hooks. */
-let program = Node.join([Registry.root, "model", "checks", "form", "commit_tree.res.mjs"])
+let program = Node.join([Registry.root, "checks", "form", "commit_tree.res.mjs"])
 
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let handle = (

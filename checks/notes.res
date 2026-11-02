@@ -1,7 +1,7 @@
 /** Finds a divider comment and an oxlint directive that gives no reason. */
 let directive = /oxlint-disable(?:-next-line|-line)?\s+[\w\/@-]+/
 let reasoned = /oxlint-disable[^\n]*\s--\s\S/
-let stating = ["model/rules/code.res", "model/checks/notes.res"]
+let stating = ["model/rules/code.res", "checks/notes.res"]
 
 let main = (~root): array<string> =>
   References.tracked(root, ~skipFiles=["pnpm-lock.yaml"])
