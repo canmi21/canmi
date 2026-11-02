@@ -1,5 +1,83 @@
 # CI
 
+## Writing a workflow
+
+A workflow follows these, each a rule in `model/rules/toolchain.res`.
+
+- A workflow is native steps, one stage a step, and a published action where one fits:
+  `ci-native-steps`.
+- A step calls only a mise task a person also runs, or a CI-only entry under `.github/<purpose>/`
+  in ReScript: `ci-entries`.
+- `pnpm install` and `pnpm exec` are plumbing, and `sudo`, `mise exec --` and `nix shell --command`
+  are judged by what they wrap: `ci-entries`.
+- A step never calls a script in `scripts/` by path, and never `npx` or `sh -c`: `ci-entries`.
+- A step is one shot, with its orchestration in the entry: `ci-shell-minimal`.
+- A step's `name:` capitalizes its first word only: `step-name-capital`.
+- A schedule is nominal, and `workflow_dispatch` is how to run now: `schedule-nominal`.
+- Caches go by runner kind, crane for Nix builds, `Swatinem/rust-cache` on a hosted runner and the
+  runner's own disk on a self-hosted one: `ci-crane`, `ci-rust-cache`, `ci-runner-local`.
+
+`ci-native-steps` is held by the `ci-steps` part, a warning until the workflows that break it are
+rewritten. `ci-entries` and `ci-shell-minimal` are held by the `ci-shell` part and are of the form
+layer, so they warn in a lane and refuse a commit onto a main line,
+[agents/checking.md](agents/checking.md). The commands an entry or its plumbing may be are
+`Toolchain.entryCommands` and `Toolchain.plumbingCommands`, and a step excused from
+`ci-shell-minimal` is named, with why, in `Toolchain.shellExempt`.
+
+## CI orchestrates, the scripts do the work
+
+These rules apply to every workflow and composite action of this workspace and the `monoflake`
+repositories and are named in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and
+`ci-shell-minimal`.
+
+**A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
+apart, and a published action is taken where one fits rather than written again in a step.
+
+**A step calls an entry the repository already has**, one of two kinds: a mise task a person also
+runs, as `mise run verify`, or a CI-only entry under the repository's `.github/`, in a directory
+named for what the workflow does, as `node .github/update/stage.res.mjs`. `pnpm install` and
+`pnpm exec` are plumbing, and `sudo`, `mise exec --` and `nix shell --command` pass when the command
+they wrap does. Any other program, `npx` among them, is a finding, and a step never calls a script
+in `scripts/` by path. The same entry runs on the Mac. The workflow decides the order, the runners,
+the secrets and the conditions; what a stage does lives in the entry, where it is tested and run
+locally before CI ever runs it.
+
+**A step is one shot**: one command, however many lines its flags take, after plain preparation
+such as `mkdir -p` or an `export`, and passing outputs between steps. An order of commands that
+depend on each other, a conditional, a loop, a retry, a parse of output, or a value carried from one
+command to the next is orchestration and goes in the entry, in ReScript, which is type-checked,
+tested, and runs the same on the Mac as on a runner.
+
+## Step names
+
+**A step's `name:` starts with a capital letter**, as "List the machines" and "Install cloud's
+packages": only the first letter, never title case. Job names, workflow names and inputs stay
+lowercase. The `step-name-capital` rule holds it,
+[model/rules/toolchain.res](../model/rules/toolchain.res). A test or script matching a step by its
+name changes with it.
+
+## A schedule's time is nominal
+
+The rule is `schedule-nominal` in `model/rules/toolchain.res`. **GitHub runs a scheduled workflow
+hours late, or drops it**, and moving a cron off the hour does not help. monoflake/cloud's systems
+run every 12 hours, and a dropped run is made up within about a day. Anything that depends on a
+schedule tolerates a late or a missing run, and urgent work is dispatched by hand: the systems
+bucket's lifecycle, `expire_days` times 24 hours, is at least twice systems.yml's interval, so one
+dropped run is survived within R2's one-to-two-day deletion window. The schedule holds monoflake/cloud's C
+alone; B and A build only when a roll asks, so their objects expire between rolls.
+
+**A held object is renewed only from an age T**, `renewAfterHours` in monoflake/cloud's
+`model/pipeline.res`, T being the lifecycle less the interval, the worst delay and a job's time, its
+queue behind one whole job and its own run. An object left is younger than T, so through a late run
+its age stays under the lifecycle. **That covers a late run alone**: a dropped or failed run takes a
+left object to about 36 h, past the lifecycle, so surviving it rests on R2's deletion window and not
+on this inequality. A narinfo within a job's time of the lifecycle is uploaded rather than copied,
+since a copy of what R2 deleted matches nothing and exits 0.
+`scripts/tests/systems/bucket/renewal_test.res` there holds T positive, the lifecycle at least twice
+the interval, a left object's worst age under the lifecycle, and systems.yml's crons and each job's
+`timeout-minutes` against the model; the worst delay is the seven-hour measurement used by
+`scheduleLateHours`, which no test reads.
+
 ## A build's cache follows where it builds
 
 These rules apply to this workspace and the `monoflake` repositories and are named in
@@ -31,66 +109,6 @@ repositories reach those runners.
 when the disk runs short, at the free space each runner's configuration names. A compiler cache or a
 target directory put on a runner gets a size cap of its own, such as `SCCACHE_CACHE_SIZE`, or an age
 after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
-
-## CI orchestrates, the scripts do the work
-
-These rules apply to every workflow and composite action of this workspace and the `monoflake`
-repositories and are named in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and
-`ci-shell-minimal`. `ci-native-steps` is held by the `ci-steps` part, a warning until the workflows
-that break it are rewritten; `ci-entries` and `ci-shell-minimal` are held by the `ci-shell` part and
-are of the form layer, so they warn in a lane and refuse a commit onto a main line,
-docs/agents/checking.md. The
-commands an entry or its plumbing may be are `Toolchain.entryCommands` and
-`Toolchain.plumbingCommands`, and a step excused from `ci-shell-minimal` is named, with why, in
-`Toolchain.shellExempt`.
-
-**A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
-apart, and a published action is taken where one fits rather than written again in a step.
-
-**A step calls an entry the repository already has**, one of two kinds: a mise task a person also
-runs, as `mise run verify`, or a CI-only entry under the repository's `.github/`, in a directory
-named for what the workflow does, as `node .github/update/stage.res.mjs`. `pnpm install` and
-`pnpm exec` are plumbing, and `sudo`, `mise exec --` and `nix shell --command` pass when the command
-they wrap does. Any other program, `npx` among them, is a finding, and a step never calls a script
-in `scripts/` by path. The same entry runs on the Mac. The workflow decides the order, the runners,
-the secrets and the conditions; what a
-stage does lives in the entry, where it is tested and run locally before CI ever runs it.
-
-**A step is one shot**: one command, however many lines its flags take, after plain preparation
-such as `mkdir -p` or an `export`, and passing outputs between steps. An order of commands that
-depend on each other, a conditional, a loop, a retry, a parse of output, or a value carried from one
-command to the next is orchestration and goes in the entry, in ReScript, which is type-checked,
-tested, and runs the same on the Mac as on a runner.
-
-## A schedule's time is nominal
-
-The rule is `schedule-nominal` in `model/rules/toolchain.res`. **GitHub runs a scheduled workflow
-hours late, or drops it**, and moving a cron off the hour does not help. monoflake/cloud's systems
-run every 12 hours, and a dropped run is made up within about a day. Anything that depends on a
-schedule tolerates a late or a missing run, and urgent work is dispatched by hand: the systems
-bucket's lifecycle, `expire_days` times 24 hours, is at least twice systems.yml's interval, so one
-dropped run is survived within R2's one-to-two-day deletion window. The schedule holds monoflake/cloud's C
-alone; B and A build only when a roll asks, so their objects expire between rolls.
-
-**A held object is renewed only from an age T**, `renewAfterHours` in monoflake/cloud's
-`model/pipeline.res`, T being the lifecycle less the interval, the worst delay and a job's time, its
-queue behind one whole job and its own run. An object left is younger than T, so through a late run
-its age stays under the lifecycle. **That covers a late run alone**: a dropped or failed run takes a
-left object to about 36 h, past the lifecycle, so surviving it rests on R2's deletion window and not
-on this inequality. A narinfo within a job's time of the lifecycle is uploaded rather than copied,
-since a copy of what R2 deleted matches nothing and exits 0.
-`scripts/tests/systems/bucket/renewal_test.res` there holds T positive, the lifecycle at least twice
-the interval, a left object's worst age under the lifecycle, and systems.yml's crons and each job's
-`timeout-minutes` against the model; the worst delay is the seven-hour measurement used by
-`scheduleLateHours`, which no test reads.
-
-## Step names
-
-**A step's `name:` starts with a capital letter**, as "List the machines" and "Install cloud's
-packages": only the first letter, never title case. Job names, workflow names and inputs stay
-lowercase. The `step-name-capital` rule holds it,
-[model/rules/toolchain.res](../model/rules/toolchain.res). A test or script matching a step by its
-name changes with it.
 
 ## Scheduled updates
 
