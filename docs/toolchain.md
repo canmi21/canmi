@@ -22,15 +22,16 @@ versions. And **there is no `timeout`**: it is GNU coreutils, `gtimeout` is not 
 [agent-protocol.md](agents/agent-protocol.md) asks every command of unknown duration to carry a
 ceiling. `perl -e 'alarm N; exec @ARGV' <command>` is the one that is always present.
 
-### An agent deletes with `trash`, and a cache with its tool's clean
+### An agent removes what it made with rm, and trashes what it did not
 
-`/usr/bin/trash` takes files and directories alike, so every deletion an agent types goes through
-it, but for three kinds, as `AGENTS.md` has it: **a cache that can be written again is cleared by
-its own tool's clean**, as `cargo clean`, since `trash` frees no space; and **a cache with no clean,
-as `node_modules`, and a lane's directory being closed are removed with `rm` inside the workspace**.
-The reason is recovery: what `trash` removes can be put back, and what `rm` removes cannot. `rm` is
-caught when an agent reaches for it anyway -- see "rm is guarded, not banned" below -- but the guard
-is the net, not the method.
+**What an agent made itself it removes with `rm`**: its files in the scratchpad and temp, a test's
+leftovers, a lane it opened, build output and caches, **a cache with a clean of its own by that
+clean**, as `cargo clean`. **What it did not make goes to `/usr/bin/trash`**, files and directories
+alike: the author's files and untracked files that were already in a repository, since those may be
+wanted back. The line is who made it, not where it lies: an agent detouring to `trash` for its own
+scratch costs turns and fills `~/.Trash`, and one using `rm` on the author's file loses what cannot
+be put back. `rm` meets a guard that allows it only inside the workspace, temp and caches -- see "rm
+is guarded, not banned" below.
 
 **Key material a program generated is the one deletion that must not be recoverable**, and is
 removed with `rm` once it has been entered as a secret: `trash` keeps a copy in `~/.Trash`, and a
@@ -169,7 +170,8 @@ relative path is read from where the command was typed, and a file that is not U
 refused. It is for a value made by a program, as a key or an environment file, and is reported by
 its size alone; a value of one line is typed, so no editor's newline joins it. A key a program
 generates for it is made in a 0700 directory under the scratchpad and removed with `rm` once
-entered, as "An agent deletes with `trash`" has it, and only its public half is kept.
+entered, as "An agent removes what it made with rm, and trashes what it did not" has it, and only
+its public half is kept.
 
 ```
 $ mise run secret platform BACKUP_S3_ENDPOINT BACKUP_S3_REGION

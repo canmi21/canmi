@@ -151,13 +151,13 @@ language. See [docs/lint-format.md](docs/lint-format.md).
 `set -gx X y`, not `export X=y`; `$(cmd)` is not fish. Commands an agent runs through its own tool
 go through that tool's shell instead, which is usually not fish, so the two are written differently
 on purpose.
-**An agent deletes with `trash`** -- files and directories alike, because what `trash` removes can
-be put back. `trash old.log`, `trash dist/`, `trash a b c` -- no recursive flag exists or is needed.
-**A cache that can be written again is cleared by its own tool's clean**, as `cargo clean`; one with
-no clean, as `node_modules`, and a lane's directory being closed are removed with `rm` inside the
-workspace; **a key a program generated in the scratchpad is removed with `rm` once entered as a
-secret**, since `trash` would keep it. An `rm` typed anyway meets a guard that allows it only inside
-the workspace, temp and caches, and refuses the rest.
+**What an agent made itself it removes with `rm`; what it did not make goes to `trash`.** Its own
+files in the scratchpad and temp, test leftovers, a lane it opened, build output and caches go with
+`rm`, a cache with a clean of its own by that clean, as `cargo clean`; **a key a program generated is
+removed with `rm` once entered as a secret**, since `trash` would keep it. The author's files and
+untracked files already in a repository go to `trash`, files and directories alike, as `trash a b`
+with no recursive flag, since those may be wanted back. A guard allows `rm` only inside the
+workspace, temp and caches, and refuses the rest.
 
 Local development is `localhost`, everywhere it is written down; a literal IP is only for
 reaching another machine across the network. Version control is jj (Jujutsu), colocated with git

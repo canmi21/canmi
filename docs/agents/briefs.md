@@ -46,11 +46,9 @@ the advisor have reviewed them.
 
 **Every brief carries these, because a spawned agent starts cold.**
 
-- Delete with `trash`, as `AGENTS.md` has it, and there is no recursive flag -- a directory goes as
-  it is. It is in [toolchain.md](../toolchain.md) with the reason, and an agent that has not read it
-  reaches for `rm` and, outside the whitelist, gets a refusal it has to recover from. Carry the flag
-  fact into the brief: the rule survives being paraphrased and that one detail does not, so an agent
-  holding `rm -rf` habits goes looking for the switch and falls back when it finds none.
+- Remove what the seat made itself with `rm`, its scratch, test leftovers and build output, and
+  send what it did not make to `trash`, which has no recursive flag, as `AGENTS.md` has it, with the
+  reason in [toolchain.md](../toolchain.md). `rm` outside the workspace, temp and caches is refused.
 - **Anything that may run past `foregroundSeconds` runs in the background or under Monitor, and is
   looked at every few seconds to a few tens**, `built` and `accept` among it;
   [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", is the
