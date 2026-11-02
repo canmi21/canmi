@@ -95,6 +95,32 @@ let releasing = [
   ("machine", ["builder", "local"]),
 ]
 
+/** mise's own commands, which `mise <name>` runs before any task of that name. */
+let miseCommands = [
+  "install",
+  "use",
+  "ls",
+  "exec",
+  "x",
+  "trust",
+  "which",
+  "where",
+  "prune",
+  "upgrade",
+  "outdated",
+  "env",
+  "doctor",
+  "plugins",
+  "cache",
+  "settings",
+  "watch",
+  "version",
+  "self-update",
+  "uninstall",
+  "reshim",
+  "latest",
+]
+
 /** A background job's description holding this word may go silent, `stale-job-looked-at`. */
 let quietMark = "quiet"
 

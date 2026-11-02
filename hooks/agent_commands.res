@@ -73,6 +73,7 @@ let taskOf = (given: given) => {
   | (Some("run" | "r"), task, _) => (task, 2)
   | (Some("tasks"), Some("run"), task) => (task, 3)
   | (Some("tasks"), _, _) => (None, 0)
+  | (Some(command), _, _) if Delegation.miseCommands->Array.includes(command) => (None, 0)
   | (task, _, _) => (task, 1)
   }
   task->Option.map(task => (
@@ -157,12 +158,12 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
     Delegation.releasing->Array.filter(((known, _)) => known == repo)
   | _ => Delegation.releasing
   }
-  // A part is one part of the workspace's own check, docs/agents/checking.md.
+  // Parts are named parts of the workspace's own check, docs/agents/checking.md.
   let aPart =
     role == Implementer &&
     workspaceCheck(scope, ~cwd) &&
     rest[0] == Some("workspace") &&
-    rest->Array.length == 2 &&
+    rest->Array.length >= 2 &&
     !(flags->Array.includes("--all"))
   if name == "check" && flags->Array.includes("--pending") {
     Some(`--pending is the integrator's, ${ruleOf(role)} holds it`)

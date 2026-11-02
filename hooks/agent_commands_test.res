@@ -557,3 +557,13 @@ describe("a scribe's writes", () => {
     expect(status(Node.join([Node.tmpdir(), "scribe-test.res"])))->toEqual(Some(2))
   })
 })
+
+test(
+  "an implementer runs several named parts of the workspace's check, and mise's own install",
+  () => {
+    expect(refused(Implementer, "mise run check workspace rfcs docs"))->toBe(false)
+    expect(refused(Implementer, "mise install"))->toBe(false)
+    expect(refused(Implementer, "mise run install"))->toBe(true)
+    expect(refused(Implementer, "mise run check workspace"))->toBe(true)
+  },
+)

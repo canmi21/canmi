@@ -48,6 +48,8 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   ends at once, [delegation.md](agents/delegation.md); saying it runs needs its exit read.
 - **An implementer cannot run ssh or git, and a brief asking it to stops it.** Run those yourself and
   hand it the result, or leave them out of the brief.
+- **`jj restore --from <lane>@` with no paths replaces the whole working copy**, dropping what was
+  uncommitted there; with work in the checkout, name the lane's paths, or commit first.
 
 ## Shell
 

@@ -254,6 +254,10 @@ Where a project's whole design rests on an upstream's behavior, that project's `
 names the files. See [repos/seam/spec/references.md](../../repos/seam/spec/references.md) for the
 shape of that.
 
+**A hook's refusal is judged by the agent it stops**, corrected where right and reported upward where
+wrong, and one refusing more than once in a session is reported with how its message would change,
+[escapes.md](escapes.md), "An escape asks for the model to change".
+
 ## A long command never holds the conversation
 
 **A job gone silent is named and held**, `stale-job-looked-at` in

@@ -11,6 +11,12 @@ same end another way. The refusal is the friction the escape below records. An i
 name `SKIP=<gate>` on a command, [commits.md](../commits.md), "The escape is named on the command";
 it reports the gate to the integrator.
 
+**A hook's refusal is judged by the agent it stops.** Where the refusal is right, the agent corrects
+itself and carries on; where it judges it wrong, it reports it upward and does not work around it.
+**An agent stopped by the same hook more than once in a session reports that hook's message upward
+with how it would change it**, since a repeated refusal usually means the message was not
+understood. Each such report is a record of friction, [friction.md](friction.md).
+
 **An escape is a request that the model be changed, never a way past a rule.** While it waits, every
 rule still holds: the part of the work it stopped waits for the decision, and the rest goes on.
 **The decision has one of three outcomes**:
