@@ -12,6 +12,9 @@ type export = {
   config: string,
 }
 
+/** The command whose output gives a spec the constants that are facts of the design. */
+type constants = {command: array<string>, inputs: array<string>}
+
 type spec = {
   name: string,
   modulePath: string,
@@ -21,6 +24,7 @@ type spec = {
   flips: array<flip>,
   temporal: array<string>,
   export: option<export>,
+  constants: option<constants>,
 }
 
 let directory = "model/protocol"
@@ -78,6 +82,18 @@ let exportOf = (fields: dict<JSON.t>, where) =>
   | _ => refuse(where, `"export" must be an object`)
   }
 
+let constantsOf = (fields: dict<JSON.t>, where) =>
+  switch fields->Dict.get("constants") {
+  | None => None
+  | Some(Object(inner)) =>
+    let here = `${where}.constants`
+    Some({
+      command: texts(inner, here, "command", ~required=true),
+      inputs: texts(inner, here, "inputs", ~required=false),
+    })
+  | _ => refuse(where, `"constants" must be an object`)
+  }
+
 /** The specifications a repository's manifest names. */
 let parse = source => {
   let root = switch JSON.parseOrThrow(source) {
@@ -99,6 +115,7 @@ let parse = source => {
       }),
       temporal: texts(fields, where, "temporal", ~required=false),
       export: exportOf(fields, where),
+      constants: constantsOf(fields, where),
     }
   })
 }

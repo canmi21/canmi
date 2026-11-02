@@ -100,6 +100,16 @@ let jobsOf = (env, ~full, ~spec: Protocol_manifest.spec) => {
   let quick = read(dir(spec.quick))
   let base = full ? read(dir(spec.full->Option.getOr(spec.quick))) : quick
   let base = full ? base : without(base, spec.temporal)
+  let values = switch spec.constants {
+  | None => []
+  | Some(step) => Protocol_constants.run(~spec=spec.name, ~root=env.root, step.command)
+  }
+  let given = config => Protocol_constants.apply(~spec=spec.name, config, values)
+  let base = given(base)
+  let fromModel = switch spec.constants {
+  | None => []
+  | Some(step) => [("constants", step.command->Array.join(" ")), ...filesOf(env.root, step.inputs)]
+  }
   let inputs = [
     (spec.modulePath, read(dir(spec.modulePath))),
     ...filesOf(env.root, spec.inputs)->Array.map(((file, text)) => (file, text)),
@@ -118,6 +128,7 @@ let jobsOf = (env, ~full, ~spec: Protocol_manifest.spec) => {
         env.javaVersion,
       ],
       inputs->Array.flatMap(((file, text)) => [file, text]),
+      fromModel->Array.flatMap(((file, text)) => [file, text]),
       extra,
     ]
     ->Array.flat
@@ -159,7 +170,9 @@ let jobsOf = (env, ~full, ~spec: Protocol_manifest.spec) => {
   let export = switch spec.export {
   | None => []
   | Some(step) =>
-    let config = read(dir(step.config == "full" ? spec.full->Option.getOr(spec.quick) : spec.quick))
+    let config = given(
+      read(dir(step.config == "full" ? spec.full->Option.getOr(spec.quick) : spec.quick)),
+    )
     let asked = asking(config, ~invariants=step.checks, ~properties=[])
     let extra = [
       step.command->Array.join(" "),

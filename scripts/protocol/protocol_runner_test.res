@@ -20,6 +20,13 @@ let dataExport = `{"specs": [{"name": "roll", "module": "roll.tla", "quick": "ro
   "inputs": ["model/protocol/roll.tla"], "switches": [],
   "export": {"command": ["node", "-e", "process.stdout.write('[1,2]')"], "file": "model/protocol/roll-table.json", "checks": ["ABelowB"]}}]}`
 
+let withConstants = (script, ~inputs="") =>
+  `{"specs": [{"name": "roll", "module": "roll.tla", "quick": "roll.cfg",
+  "inputs": ["model/protocol/roll.tla"], "switches": [],
+  "constants": {"command": ["node", "-e", ${JSON.stringifyAny(script)->Option.getOr(
+      "",
+    )}], "inputs": [${inputs}]}}]}`
+
 let repo = () => Node.join([root.contents, "repo"])
 
 let formatted = []
@@ -196,5 +203,66 @@ describe("the shared TLC runner", () => {
     let (_, out) = await run(launch, ~write=true)
     expect(out)->toContain("roll-table.json written")
     expect(Node.readFileSync(table))->toBe("[1,2]")
+  })
+
+  testAsync("writes the command's values of each kind into the cfg it runs", async () => {
+    lay(
+      withConstants(`process.stdout.write('{"Top": 7, "SW_L": false, "Names": ["a","b"], "Ids": [1,2], "Mode": "x", "Yes": false}')`),
+    )
+    let path = Node.join([repo(), "model/protocol/roll.cfg"])
+    Node.writeFileSync(
+      path,
+      Node.readFileSync(path) ++ "CONSTANT Names = {}\nIds = {}\nMode = \"\"\nYes = 1\n",
+    )
+    let (calls, _, launch) = fake()
+    let (code, _) = await run(launch)
+    expect(code)->toBe(0)
+    let config = (calls->Array.getUnsafe(0)).config
+    expect(config)->toContain("\tTop = 7\n")
+    expect(config)->toContain("\tSW_L = FALSE\n")
+    expect(config)->toContain("Names = {\"a\", \"b\"}")
+    expect(config)->toContain("Ids = {1, 2}")
+    expect(config)->toContain("Mode = \"x\"")
+    expect(config)->toContain("Yes = FALSE")
+    expect(config->String.includes("Top = 3"))->toBe(false)
+  })
+
+  testAsync("refuses a name the cfg lacks and a command that fails", async () => {
+    lay(withConstants(`process.stdout.write('{"Missing": 1}')`))
+    let (_, _, launch) = fake()
+    let refused = async script => {
+      lay(withConstants(script))
+      try {
+        let _ = await run(launch)
+        ""
+      } catch {
+      | Protocol_manifest.Refused(why) => why
+      }
+    }
+    expect(await refused(`process.stdout.write('{"Missing": 1}')`))->toContain("Missing")
+    expect(await refused(`process.exit(3)`))->toContain("exited 3")
+    expect(await refused(`process.stdout.write('{"Top": 1.5}')`))->toContain("Top")
+    expect(await refused(`process.stdout.write('nope')`))->toContain("did not print JSON")
+  })
+
+  testAsync("misses the cache when a constants input changed", async () => {
+    let script = `process.stdout.write('{"Top": 2}')`
+    lay(withConstants(script, ~inputs=`"model/in.txt"`))
+    Node.writeFileSync(Node.join([repo(), "model/in.txt"]), "one")
+    let (calls, _, launch) = fake()
+    let _ = await run(launch)
+    let _ = await run(launch)
+    expect(calls->Array.length)->toBe(1)
+    Node.writeFileSync(Node.join([repo(), "model/in.txt"]), "two")
+    let _ = await run(launch)
+    expect(calls->Array.length)->toBe(2)
+  })
+
+  testAsync("runs a spec without constants as it does today", async () => {
+    lay(manifest)
+    let (calls, _, launch) = fake()
+    let (code, _) = await run(launch)
+    expect(code)->toBe(0)
+    expect((calls->Array.getUnsafe(0)).config)->toContain("Top = 3")
   })
 })
