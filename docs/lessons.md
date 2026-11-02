@@ -193,3 +193,8 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 ## Planning
 
 - For closing, timing, and improving loops, see [planning.md](planning.md).
+- **A protocol spec, the code it guards and the harness tying them are three seats, each verifiable
+  alone.** The spec and its switches answer to TLC's counts, the code fix to its unit tests, and the
+  harness and parity test to an agreed fixture shape; the three start together once the fixture's
+  keys are fixed. One seat for all three was too coarse, and a split finer than three costs more in
+  learning the project than it saves.
