@@ -201,8 +201,8 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
   }
 }
 
-/** The command a `job start` or `job run` is given, judged as its own, past the job's flags. */
-let jobLine = (words: array<string>) => {
+/** The command a `job start` or `job run` is given, past the job's flags, as `line` writes it. */
+let jobLine = (words: array<string>, ~line=Job.lineOf) => {
   let isJob = word => word == "job" || word->String.endsWith(":job")
   switch words->Array.findIndex(isJob) {
   | -1 => None
@@ -216,7 +216,7 @@ let jobLine = (words: array<string>) => {
         | list{"--", ...more} => more
         | more => more
         }
-      Some(Job.lineOf(past(words->Array.slice(~start=at + 2)->List.fromArray)->List.toArray))
+      Some(line(past(words->Array.slice(~start=at + 2)->List.fromArray)->List.toArray))
     | _ => None
     }
   }

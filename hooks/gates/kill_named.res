@@ -3,11 +3,51 @@
 let byName = ["pkill", "killall"]
 
 /** The options of sudo and ssh that take a value, so their program can be found. */
-let sudoValued = ["-u", "-g", "-h", "-p", "-C", "-T", "-U", "-r", "-t"]
-let sshValued = ["-o", "-i", "-p", "-J", "-l", "-F", "-b", "-c", "-D", "-E", "-e", "-L", "-R", "-S"]
-
-/** A killing line piped to a shell, which judges nothing word by word. */
-let pipedToShell = /\bkill\b[^|]*\|\s*(?:\/[^\s]*\/)?(?:sh|bash|zsh|fish)\b/
+let sudoValued = [
+  "-u",
+  "-g",
+  "-h",
+  "-p",
+  "-C",
+  "-T",
+  "-U",
+  "-r",
+  "-t",
+  "--user",
+  "--group",
+  "--host",
+  "--prompt",
+  "--chdir",
+  "--role",
+  "--type",
+  "--close-from",
+  "--other-user",
+  "--command-timeout",
+]
+let sshValued = [
+  "-o",
+  "-i",
+  "-p",
+  "-J",
+  "-l",
+  "-F",
+  "-b",
+  "-c",
+  "-D",
+  "-E",
+  "-e",
+  "-L",
+  "-R",
+  "-S",
+  "-m",
+  "-O",
+  "-W",
+  "-Q",
+  "-B",
+  "-I",
+  "-P",
+  "-w",
+]
 
 /** What follows a program's options, those of `valued` taking the next word. */
 let rec pastOptions = (words: list<string>, ~valued) =>
@@ -62,13 +102,52 @@ let operandsOf = (words: array<string>) => {
   operands(plain(words->List.fromArray), ~signalled=false)->List.toArray
 }
 
-let rec why = command => {
-  let captured = capturedIn(command)
-  let shown = Background.foregroundText(~keepBackground=true, Push.withoutQuotedBodies(command))
+/** Words as a line: one is a line as written, several keep their quoting. */
+let lineOf = (words: array<string>) =>
+  words->Array.length == 1 ? words->Array.getUnsafe(0)->Rmvar.decoded : words->Array.join(" ")
 
-  (
-    pipedToShell->RegExp.test(shown) ? Some("a killing line is piped to a shell") : None
-  )->Option.orElse(segmentsWhy(shown, ~captured))
+/** A pipeline's last stage being a shell given no line, what an earlier stage prints being run. */
+let pipedToShell = (words: array<string>) => {
+  let isShell = stage =>
+    switch Jj_command.commandAt(stage) {
+    | Some(at) =>
+      let rest = stage->Array.slice(~start=at + 1)
+      Delegation.shells->Array.includes(
+        stage[at]->Option.mapOr("", word => Node.basename(Rmvar.decoded(word))),
+      ) && !(rest->Array.some(word => /^-[A-Za-z]*c[A-Za-z]*$/->RegExp.test(word)))
+    | None => false
+    }
+  let names = stage => stage->Array.some(word => /\bkill\b/->RegExp.test(word))
+  let judged = (stages: array<array<string>>) =>
+    switch stages[stages->Array.length - 1] {
+    | Some(last) if stages->Array.length > 1 && isShell(last) =>
+      stages->Array.slice(~start=0, ~end=-1)->Array.some(names)
+    | _ => false
+    }
+  let found = ref(false)
+  let stages = ref([[]])
+  words->Array.forEach(word =>
+    if word == "|" {
+      stages := [...stages.contents, []]
+    } else if Jj_command.separators->Array.includes(word) {
+      found := found.contents || judged(stages.contents)
+      stages := [[]]
+    } else {
+      stages.contents[stages.contents->Array.length - 1]->Option.forEach(stage =>
+        stage->Array.push(word)
+      )
+    }
+  )
+  found.contents || judged(stages.contents)
+}
+
+let rec why = (~captured=[], command) => {
+  let captured = Array.concat(captured, capturedIn(command))
+  let shown = Background.foregroundText(~keepBackground=true, Push.withoutQuotedBodies(command))
+  let piped = Jj_command.words(~keepQuotes=true, shown)->Option.mapOr(false, pipedToShell)
+  (piped ? Some("a killing line is piped to a shell") : None)->Option.orElse(
+    segmentsWhy(shown, ~captured),
+  )
 }
 and segmentsWhy = (shown, ~captured) =>
   Jj_command.segments(~keepQuotes=true, shown)->Array.findMap(segment => {
@@ -77,15 +156,14 @@ and segmentsWhy = (shown, ~captured) =>
     switch Jj_command.commandAt(words) {
     | None => None
     | Some(at) =>
-      let rest = words->Array.slice(~start=at + 1)
+      // What follows keeps its quoting, so a quoted pattern is not read as shell.
+      let rest = raw->Array.slice(~start=at + 1)
       let program = words[at]->Option.map(Node.basename)->Option.getOr("")
+      let inner = line => why(~captured, line)
       if byName->Array.includes(program) {
         Some(`${program} finds its targets by name`)
       } else if program == "kill" {
-        let operands =
-          raw
-          ->Array.slice(~start=at + 1)
-          ->operandsOf
+        let operands = rest->operandsOf
         // No operand is what xargs fills in from what it found.
         operands == [] && rest->Array.includes("-l")
           ? None
@@ -95,39 +173,39 @@ and segmentsWhy = (shown, ~captured) =>
             ->Array.find(word => !recorded(word, ~captured))
             ->Option.map(word => `kill is given ${word}, which this command did not record`)
       } else if program == "sudo" {
-        why(rest->List.fromArray->pastOptions(~valued=sudoValued)->List.toArray->Array.join(" "))
+        inner(rest->List.fromArray->pastOptions(~valued=sudoValued)->List.toArray->lineOf)
       } else if program == "builtin" {
-        why(rest->Array.join(" "))
+        inner(lineOf(rest))
       } else if program == "mise" {
         switch rest->Array.findIndex(word => word == "--") {
         | -1 => None
-        | dash => why(rest->Array.slice(~start=dash + 1)->Array.join(" "))
+        | dash => inner(rest->Array.slice(~start=dash + 1)->lineOf)
         }
       } else if program == "ssh" {
         // The first word past its options is the host, and the rest runs there.
         switch rest->List.fromArray->pastOptions(~valued=sshValued) {
-        | list{_, ...line} => why(line->List.toArray->Array.join(" "))
+        | list{_, ...line} => inner(line->List.toArray->lineOf)
         | list{} => None
         }
       } else if program == "find" {
         switch rest->Array.findIndex(word => word == "-exec" || word == "-execdir") {
         | -1 => None
-        | flag => why(rest->Array.slice(~start=flag + 1)->Array.join(" "))
+        | flag => inner(rest->Array.slice(~start=flag + 1)->lineOf)
         }
       } else if Delegation.shells->Array.includes(program) {
-        shellLine(rest)
+        shellLine(rest, ~captured)
       } else if program == "eval" {
-        why(rest->Array.join(" "))
+        inner(lineOf(rest))
       } else {
         None
       }
     }
   })
 // A shell given -c runs a line of its own, which is judged as one.
-and shellLine = (rest: array<string>) =>
+and shellLine = (rest: array<string>, ~captured) =>
   switch rest->Array.findIndex(word => /^-[A-Za-z]*c[A-Za-z]*$/->RegExp.test(word)) {
   | -1 => None
-  | flag => rest[flag + 1]->Option.flatMap(why)
+  | flag => rest[flag + 1]->Option.flatMap(line => why(~captured, Rmvar.decoded(line)))
   }
 
 let refuse = (payload: Payload.t): int =>

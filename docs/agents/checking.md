@@ -74,11 +74,11 @@ the integrator wrote is tidied by the integrator itself, with no refactorer disp
 - **A wave has one full review.**
 - **The fixes made for that review are verified once**, and the verification reads only the items
   its report listed; it is no second full review.
-- **What a verification finds beside them**: a defect of high severity stops the work and goes to
-  the user; any other blocks no push and is written as a record of friction,
+- **What a verification finds beside them**: a defect of high severity stops the work and is copied to
+  the advisor; any other blocks no push and is written as a record of friction,
   [friction.md](friction.md).
-- **What is still not fixed after the verification goes to the user.** Once the integrator has fixed
-  it, the advisor or the user confirms it by reading those changes directly, and no reviewer is
+- **What is still not fixed after the verification goes up to the advisor.** Once the integrator has
+  fixed it, the advisor or the user confirms it by reading those changes directly, and no reviewer is
   dispatched again.
 - **A commit that changes the review's own procedure is approved by the procedure in force before
   it**, never by the one it brings in.

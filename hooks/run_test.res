@@ -367,6 +367,9 @@ describe("a command a job is given", () => {
       "FOO=1 mise run //:job start -- pkill node",
       "(mise run //:job start -- pkill node)",
       "timeout 60 mise run //:job start -- jj git push",
+      "mise run //:job start -- rm -rf $D/x",
+      "KEY='a b' mise run //:job start pkill x",
+      "KEY='a b' mise run //:job start jj git push",
     ]->Array.forEach(
       command =>
         expect((command, Run.refusedInJob(payload(command)) != 0))->toEqual((command, true)),

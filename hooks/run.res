@@ -68,18 +68,24 @@ let lineGates = [
 /** What each command `mise run //:job start` is given would meet, typed by itself. */
 let refusedInJob = (payload: Payload.t) =>
   Jj_command.segments(
+    ~keepQuotes=true,
     Background.foregroundText(
       ~keepBackground=true,
       Push.withoutQuotedBodies(Payload.command(payload)),
     ),
   )
   ->Array.filterMap(segment =>
-    switch Jj_command.programOf(segment) {
-    | Some(("mise", words)) =>
+    switch (Jj_command.programOf(segment), Jj_command.commandAt(segment)) {
+    | (Some(("mise", words)), Some(at)) =>
       // An assignment before the job reaches the command, as SKIP does.
       let assigned =
-        segment->Array.filter(word => /^[A-Z_][A-Z0-9_]*=/->RegExp.test(word))->Array.join(" ")
-      Agent_commands.jobLine(words)->Option.map(line => `${assigned} ${line}`->String.trim)
+        segment
+        ->Array.slice(~start=0, ~end=at)
+        ->Array.filter(word => /^[A-Z_][A-Z0-9_]*=/->RegExp.test(word))
+        ->Array.join(" ")
+      Agent_commands.jobLine(words, ~line=Kill_named.lineOf)->Option.map(line =>
+        `${assigned} ${line}`->String.trim
+      )
     | _ => None
     }
   )

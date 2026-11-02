@@ -508,7 +508,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "refactorer-commands",
-    says: "A refactorer is refused the four kinds an implementer is, no part of the workspace's check aside; a task it runs may read its own lane's history",
+    says: "A refactorer is refused the kinds an implementer is, no part of the workspace's check aside; a task it runs may read its own lane's history",
     doc: "docs/agents/seats/refactorer.md",
     held: Pending(
       "hooks/agent_commands.res, hung in its definition, proven to run in a refactorer; on 2026-10-24 it ran in an implementer and a reviewer, and no refactorer has run since",
