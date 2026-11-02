@@ -6,10 +6,11 @@ let start = (~now, ~stall) => {offset: 0, lastGrowth: now, nextStall: now +. sta
 let progress = RegExp.fromString(Delegation.watchProgress, ~flags="i")
 let failure = RegExp.fromString(Delegation.watchFailure, ~flags="i")
 let ending = RegExp.fromString(Delegation.watchEnd, ~flags="i")
+let exited = RegExp.fromString("^\\[exited with code -?\\d+\\]$")
 
 /** The event a new line is, an end before a failure before progress, or none for a quiet one. */
 let classify = line =>
-  if ending->RegExp.test(line) {
+  if ending->RegExp.test(line) || exited->RegExp.test(line) {
     Some(`ended: ${line}`)
   } else if failure->RegExp.test(line) {
     Some(`failure: ${line}`)

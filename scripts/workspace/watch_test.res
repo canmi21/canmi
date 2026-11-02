@@ -9,6 +9,7 @@ describe("the watcher", () => {
       Some("failure: error[E0425]: cannot find"),
     )
     expect(Watch.classify("exit: 0"))->toEqual(Some("ended: exit: 0"))
+    expect(Watch.classify("[exited with code 0]"))->toEqual(Some("ended: [exited with code 0]"))
     expect(Watch.classify("   some detail"))->toEqual(None)
   })
 
@@ -29,6 +30,17 @@ describe("the watcher", () => {
       ~stall,
     )
     expect(done)->toEqual(["progress: running b", "ended: exit: 1"])
+    expect(last.ended)->toEqual(true)
+  })
+
+  test("ends on the exit line a background job writes last", () => {
+    let (last, told) = Watch.step(
+      Watch.start(~now=0., ~stall),
+      ~text="built a\n[exited with code 0]\n",
+      ~now=1000.,
+      ~stall,
+    )
+    expect(told)->toEqual(["progress: built a", "ended: [exited with code 0]"])
     expect(last.ended)->toEqual(true)
   })
 

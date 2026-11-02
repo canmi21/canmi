@@ -155,10 +155,35 @@ let shown = step =>
   | Remove(path) => `remove ${path}`
   }
 
-/** The changes of a working copy that main lacks, one per line, or the failure to read them. */
-let unlandedIn = cwd => {
-  let answer = Node.spawnSync(
-    "jj",
+/** The stdout lines of a jj command run in `cwd`, or why it failed. */
+let jjLines = (cwd, args) => {
+  let answer = Node.spawnSync("jj", args, {cwd, encoding: "utf8", maxBuffer: 268435456})
+  answer.status->Nullable.toOption == Some(0)
+    ? Ok(
+        answer.stdout
+        ->Nullable.getOr("")
+        ->String.split("\n")
+        ->Array.map(String.trim)
+        ->Array.filter(line => line != ""),
+      )
+    : Error(answer.stderr->Nullable.getOr("jj failed")->String.trim)
+}
+
+/** Paths the lane's own change touches that main neither equals nor has moved on since the fork. */
+let notHeld = (~touched, ~differ, ~moved) =>
+  touched->Array.filter(path => differ->Array.includes(path) && !(moved->Array.includes(path)))
+
+let fileset = path =>
+  `root-file:"${path->String.replaceAll("\\", "\\\\")->String.replaceAll("\"", "\\\"")}"`
+
+/**
+ * The changes of a working copy that main lacks, one per line, or the failure to read them. A
+ * change counts as held when each path the lane touched equals main's or main changed it after the
+ * fork. That misses a path main changed for another reason without taking the lane's edit.
+ */
+let unlandedIn = cwd =>
+  switch jjLines(
+    cwd,
     [
       "log",
       "-r",
@@ -167,12 +192,26 @@ let unlandedIn = cwd => {
       "-T",
       `change_id.short() ++ " " ++ description.first_line() ++ "\\n"`,
     ],
-    {cwd, encoding: "utf8", maxBuffer: 268435456},
-  )
-  answer.status->Nullable.toOption == Some(0)
-    ? Ok(answer.stdout->Nullable.getOr("")->String.trim)
-    : Error(answer.stderr->Nullable.getOr("jj log failed")->String.trim)
-}
+  ) {
+  | Error(why) => Error(why)
+  | Ok([]) => Ok("")
+  | Ok(changes) =>
+    let fork = "fork_point(main | @)"
+    switch jjLines(cwd, ["diff", "--from", fork, "--to", "@", "--name-only"]) {
+    | Error(why) => Error(why)
+    | Ok([]) => Ok("")
+    | Ok(touched) =>
+      let only = touched->Array.map(fileset)
+      switch (
+        jjLines(cwd, Array.concat(["diff", "--from", "main", "--to", "@", "--name-only"], only)),
+        jjLines(cwd, Array.concat(["diff", "--from", fork, "--to", "main", "--name-only"], only)),
+      ) {
+      | (Ok(differ), Ok(moved)) =>
+        notHeld(~touched, ~differ, ~moved) == [] ? Ok("") : Ok(changes->Array.join("\n"))
+      | (Error(why), _) | (_, Error(why)) => Error(why)
+      }
+    }
+  }
 
 let nothingElse = (~root, path) => path->String.startsWith(Lane_state.lanes(root) ++ Node.sep)
 
