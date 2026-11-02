@@ -75,17 +75,21 @@ checkout would meet on one lock. The integrator opens one with `mise run lane op
 <name>`, each taking
 `--dry-run`; `lane-task` in [model/rules/delegation.res](../../model/rules/delegation.res). **Open**
 adds a jj workspace on `main` at `lanes/<name>/<repository path>`, or `lanes/<name>/canmi` for the
-workspace, one for each `--with` sibling too, and starts `pnpm install` in the background where a
-`package.json` is. **A lane is closed once its change is in the main line**: close runs `jj st` in
+workspace, one for each repository its `workspace.toml` `[boundary]` depends on, transitively, and
+for each `--with` sibling the boundary does not name, and starts `pnpm install` in the background
+where a `package.json` is, a platform sibling also building and generating. **A lane is closed once its change is in the main line**: close runs `jj st` in
 each of the lane's workspaces, so an edit is snapshotted, and refuses, leaving the lane as it is,
 where any working copy holds a change `main` lacks; otherwise the jj workspaces are forgotten,
 `cargo clean` runs, `node_modules` is removed, and then the directory. **A lane's workspace is
 forgotten only after a jj command run in the lane**: jj snapshots a working copy only when a command
-runs in it, so an edit never snapshotted would go with the lane's directory. The task runs from the
-base workspace, never from inside a lane. **A lane is judged by its diff before it is handed back**: `mise run lane handed <name> [--own
+runs in it, so an edit never snapshotted would go with the lane's directory. Open and close run from
+the base workspace, never from inside a lane. **A lane is judged by its diff before it is handed
+back**, and `handed` runs from inside the lane too: `mise run lane handed <name> [--own
 <directory> ...]` reads the files each of the lane's workspaces changed from where it forked from
 `main`, and refuses one past `hardLines`, one in `singleWriter`, a lockfile, and, where `--own`
-names the block's directories, a file outside them; a file past `splitBeforeLines` is listed.
+names the block's directories, a file outside them; a file past `splitBeforeLines` is listed. It
+also reports what the form layer would refuse at landing, a file its formatter would change, a
+directory past `Layout.widest`, a comment past its columns, so a seat runs it before it reports.
 `split-before-work` in [model/rules/code.res](../../model/rules/code.res) and `single-writer`, `own-directory` and
 `lockfile-derived` in [model/rules/delegation.res](../../model/rules/delegation.res) are held there;
 close refuses the same lengths. The `lanes` part of the check holds the task declared and

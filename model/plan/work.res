@@ -376,6 +376,13 @@ let items: array<item> = [
     waits: Author,
   },
   {
+    id: "token-pushes-start-ci",
+    says: "A commit the scheduled update pushes with GITHUB_TOKEN starts no workflow, so it lands with no verify or build run; the update pushes by a token that starts them, or runs verify itself before it pushes",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("an update push that starts verify, or verify run before the push"),
+  },
+  {
     id: "console-copy",
     says: "the local copy of console and its registry entry are removed",
     repos: ["console"],
