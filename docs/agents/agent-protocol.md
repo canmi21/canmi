@@ -304,6 +304,11 @@ Four consequences:
 - **A job that will take minutes -- a full route scan, a corpus rebuild -- is started in the
   background and left there.** The next check is a read of its output file, and if the job writes
   nothing until it finishes, the job is changed to write progress, not the wait made longer.
+- **A process is killed only by a pid its agent recorded when it started it**, `kill-by-recorded-pid`
+  in [model/rules/toolchain.res](../../model/rules/toolchain.res): `cmd & P=$!` then `kill $P`, a
+  literal pid, or `mise run //:job stop <id>`. Killing by name reaches what somebody else started, on
+  a machine the author and other sessions share, so `pkill`, `killall` and `kill $(pgrep ...)` are
+  refused by `hooks/gates/kill_named.res`.
 - **What the agent starts, the agent stops.** A watcher, a dev loop or a server put in the
   background outlives the session that started it: the process is reparented to launchd, its output
   goes on being written to a scratchpad nobody will open again, and it keeps acting on the machine.

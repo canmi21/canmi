@@ -84,7 +84,7 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **A jump host goes in `~/.ssh/config` for its one machine, never as `-J` in `NIX_SSHOPTS`.**
 - **A secret reaches a remote script only on the stdin of a script already copied there.** Copy the
   script with `scp` first, then pipe the secret to `ssh host 'sh /root/script'`. Stop BusyBox
-  processes by pid when `pkill -x` would match their shared binary name.
+  processes by pid, as every process is, [agents/agent-protocol.md](agents/agent-protocol.md).
 - **Set PATH in a script started by `systemd-run`, or name tools by their store paths.**
 - **A remote step carries a keepalive and a timeout.** Every scripted `ssh` sets `-o
   ServerAliveInterval=15 -o ServerAliveCountMax=4`, under a timeout longer than the step's own.

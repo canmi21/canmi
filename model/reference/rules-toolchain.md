@@ -2,7 +2,7 @@
 
 # Rules
 
-43 rules, 5 pending a check.
+44 rules, 5 pending a check.
 
 ## Toolchain
 
@@ -215,6 +215,13 @@ A public repository's push carries no private identifier, credential, high-entro
 
 - doc: [docs/agents/pushing.md](../../docs/agents/pushing.md)
 - held by: pending, owed: push refuses a private identifier in the lines and messages a public repository sends since 2026-10-24; credentials, high-entropy strings and addresses wait
+
+### kill-by-recorded-pid
+
+A process is killed only by a pid its agent recorded: a literal pid, `$!` or a variable the command itself set from it, or `mise run //:job stop`; `pkill`, `killall`, `kill` of a substitution, and `xargs` or `find` running `kill` are refused, for Claude and Codex alike, at any depth of a shell or subshell.
+
+- doc: [docs/agents/agent-protocol.md](../../docs/agents/agent-protocol.md)
+- held by: hook `hooks/gates/kill_named`
 
 ### rm-variable-guarded
 

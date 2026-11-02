@@ -311,6 +311,12 @@ let rules: array<Rule.t> = [
     ),
   },
   {
+    name: "kill-by-recorded-pid",
+    says: "A process is killed only by a pid its agent recorded: a literal pid, `$!` or a variable the command itself set from it, or `mise run //:job stop`; `pkill`, `killall`, `kill` of a substitution, and `xargs` or `find` running `kill` are refused, for Claude and Codex alike, at any depth of a shell or subshell",
+    doc: "docs/agents/agent-protocol.md",
+    held: Hook("hooks/gates/kill_named"),
+  },
+  {
     name: "rm-variable-guarded",
     says: "An `rm` an agent types writes each variable in its paths as `${name:?}`, so an empty one stops the command rather than removing from the root",
     doc: "docs/toolchain/deletion.md",

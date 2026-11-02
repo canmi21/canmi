@@ -73,20 +73,24 @@ let handle = (payload: Payload.t): int =>
         | 0 =>
           switch Rmvar.refuse(payload) {
           | 0 =>
-            switch Seat.refuse(payload) {
+            switch Kill_named.refuse(payload) {
             | 0 =>
-              switch Codex_usage.refuse(payload) {
+              switch Seat.refuse(payload) {
               | 0 =>
-                switch Verified.handle(payload) {
+                switch Codex_usage.refuse(payload) {
                 | 0 =>
-                  switch Form.handle(payload) {
+                  switch Verified.handle(payload) {
                   | 0 =>
-                    switch Lose.handle(payload) {
+                    switch Form.handle(payload) {
                     | 0 =>
-                      switch Trash.refuse(payload) {
+                      switch Lose.handle(payload) {
                       | 0 =>
-                        Commit.fix(payload)
-                        0
+                        switch Trash.refuse(payload) {
+                        | 0 =>
+                          Commit.fix(payload)
+                          0
+                        | refused => refused
+                        }
                       | refused => refused
                       }
                     | refused => refused
