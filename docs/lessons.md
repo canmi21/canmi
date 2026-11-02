@@ -123,6 +123,10 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   its own call and read its result before the next; use neither a loop nor `--all`. See
   [commits.md](commits.md).
 - **A repository is pushed only once what it compiles against from a sibling is pushed too.**
+- **A path another repository calls moves with every caller changed in the same hour.** A caller
+  whose CI pins the moved repository also moves its pin by its update's actions step, or its next
+  run fails on the old tree while the Mac passes on the new one; cloud's whole model and driver's
+  tasks both broke after platform moved its check entry on 2026-11-02.
 - **Stop a timer held for a step again after every NixOS switch.** Read `systemctl list-timers`
   before restoring it; a missed calendar slot can fire immediately, with or without `Persistent`.
 - **Start required preparation units explicitly after a switch when their socket-activated daemon
