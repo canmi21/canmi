@@ -264,6 +264,20 @@ let items: array<item> = [
     waives: ["rules-in-docs"],
   },
   {
+    id: "docs-drained",
+    says: "Every doc of the workspace and monoflake keeps only the rules in force, drained one repository at a time, monoflake/cloud first, the history moving into RFCs, and the `docs-in-force` check holds the whole",
+    repos: [
+      "workspace",
+      "monoflake/cloud",
+      "monoflake/platform",
+      "monoflake/driver",
+      "monoflake/machine",
+    ],
+    after: [],
+    holds: Owes("the drain of each repository's docs"),
+    why: "prm4e",
+  },
+  {
     id: "held-back",
     says: "local commits stay unpushed; a push of canmi/lib publishes packages, so it is asked first",
     repos: ["canmi/web", "canmi/lib", "apps/cue"],

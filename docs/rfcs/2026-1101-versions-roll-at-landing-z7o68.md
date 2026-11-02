@@ -1,10 +1,8 @@
 ---
 name: 'Versions Roll At Landing'
 title: Every package holds a major, a minor and a patch that the landing rolls, the minor following its interface and the patch what counts
-status: accepted
+status: decided
 supersedes: []
-blocked-by: []
-commits: []
 references: []
 ---
 
@@ -53,4 +51,4 @@ This outranks RFC 8c0rg on what raises a version and platform's `0.0.0` while un
 
 ## State
 
-Decided and landing. Held by `versions-rolled` and `versions-at-push`, `model/rules/commits.res`.
+Held by `versions-rolled` and `versions-at-push`, `model/rules/commits.res`.
