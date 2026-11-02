@@ -18,6 +18,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   update `Cargo.lock`.
 - **An implementer sent a message is working again until it says it is idle.** Wait for its latest
   idle report before committing its repository.
+- **A seat never ends its turn to wait for a background job's notice.** No notice wakes it, so it
+  watches the job's output itself under Monitor with `mise run watch` until the job ends; its
+  dispatcher reads the seat's last transcript entry at each follow-up, never ListAgents' idle.
 - **Each commit is its own call, alone in its message, opened by `jj root &&`.** Stop if the root
   names the wrong repository.
 - **`jj st` is read after every commit by path.** Include both sides of a rename, quote fileset
