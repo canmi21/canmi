@@ -65,6 +65,12 @@ type versions = {
   pin: option<string>,
 }
 
+/**
+ * What a repository exports and what it depends on, each name an artifact and never an item. An
+ * export is `name`, a dependency `repository:name`, the repository as repos/registry.toml has it.
+ */
+type boundary = {exports: array<string>, depends: array<string>}
+
 type declared = {
   /** The workspace it sits under, as that one's `.git` address. */
   base: option<string>,
@@ -80,6 +86,7 @@ type declared = {
   format: format,
   push: push,
   versions: versions,
+  boundary: boundary,
 }
 
 exception Malformed(string)
@@ -318,6 +325,26 @@ let versionsOf = (table: table): versions => {
   }
 }
 
+let artifact = /^[a-z0-9]+(-[a-z0-9]+)*$/
+let dependency = /^[\w.-]+(\/[\w.-]+)*:[a-z0-9]+(-[a-z0-9]+)*$/
+
+let boundaryOf = (table: table): boundary => {
+  only(table, "boundary", ["exports", "depends"])
+  let exports = texts(table, "exports", "boundary")
+  let depends = texts(table, "depends", "boundary")
+  exports->Array.forEach(name =>
+    if !(artifact->RegExp.test(name)) {
+      fail(`boundary.exports: ${name} is not lowercase words joined by hyphens`)
+    }
+  )
+  depends->Array.forEach(name =>
+    if !(dependency->RegExp.test(name)) {
+      fail(`boundary.depends: ${name} is not repository:name`)
+    }
+  )
+  {exports, depends}
+}
+
 /** What the repository at `root` declares, or why it cannot be read. */
 let read = (root: string): result<declared, string> => {
   let path = Node.join([root, "workspace.toml"])
@@ -343,6 +370,7 @@ let read = (root: string): result<declared, string> => {
             "format",
             "push",
             "versions",
+            "boundary",
           ],
         )
         Ok({
@@ -366,6 +394,9 @@ let read = (root: string): result<declared, string> => {
           push: pushOf(tableAt(top, "push", "workspace.toml")->Option.getOr(Dict.make())),
           versions: versionsOf(
             tableAt(top, "versions", "workspace.toml")->Option.getOr(Dict.make()),
+          ),
+          boundary: boundaryOf(
+            tableAt(top, "boundary", "workspace.toml")->Option.getOr(Dict.make()),
           ),
         })
       | _ => Error(`${path}: not a table`)

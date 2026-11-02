@@ -45,6 +45,17 @@ what is under way, what is ready because nothing before it is undone, and what w
 `mise run plan --done` lists what is done. A pending rule appears there by name. The RFCs it prints
 after are the drafts and the older accepted ones, history not yet read against the code.
 
+**A repository holds its own plan in `model/plan.json` and declares its boundary in `workspace.toml`.**
+The plan is plain JSON of the item shape, its `after` naming its own items alone. `[boundary]` lists
+what it `exports`, artifacts such as `contracts`, and what it `depends` on, `repository:name`; an
+item that waits on a dependency says `needs`, and one that delivers an export says `delivers`. A
+repository's own check reads those two files and nothing else. `mise run plan` and the `plan` part
+of the workspace's check are the total, which joins every cloned, unpaused repository: each
+dependency has an exporter listing it, an item waits while what it needs is undelivered, and a cycle
+across repositories is a finding. An item of a private repository is marked `[private]` and is
+withheld by id when `CI` is set. `Repo_plan` in
+[model/checks/plan/repo_plan.res](../model/checks/plan/repo_plan.res) reads it.
+
 **A reader who reads the roadmap and runs the plan knows where the work stands.** The roadmap says
 where it is going; the plan lists what nothing open blocks, then each of the rest behind the chain
 it waits on. Neither carries an argument, which lives in the RFC. **The plan's last line says how

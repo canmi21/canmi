@@ -78,13 +78,27 @@ let brief = (text, ~width=96) =>
     `${cut->String.slice(~start=0, ~end=at > 0 ? at : width)} ...`
   }
 
-/** The work of model/plan/work.res by where it stands, and what is done on request. */
+/**
+ * The plans of the workspace and of every repository by where they stand, and what is done on
+ * request.
+ */
 let work = (~done): array<string> => {
-  let items = Work.items
+  let (sources, errors) = Repo_plan.load()
+  let merged = Repo_plan.merge(sources)
+  let items = merged->Array.map(({item}) => item)
+  let entryOf = (item: Work.item) => merged->Array.find(entry => entry.item.id == item.id)
+  let hidden = (item: Work.item) =>
+    Repo_plan.leaves() && entryOf(item)->Option.mapOr(false, entry => entry.isPrivate)
+  let mark = (item: Work.item) =>
+    entryOf(item)->Option.mapOr("", entry => entry.isPrivate ? " [private]" : "")
+  let name = (item: Work.item) => Repo_plan.label(item.id)
   let committed = Plan.onMain
   let state = item => Plan.stateOf(items, item, ~committed)
   let in_ = pick => items->Array.filter(item => pick(state(item)))
-  let line = (item: Work.item, ~extra="") => `  ${item.id}  ${brief(item.says)}${extra}`
+  let line = (item: Work.item, ~extra="") =>
+    hidden(item)
+      ? `  ${name(item)}${mark(item)}  withheld`
+      : `  ${name(item)}${mark(item)}  ${brief(item.says)}${extra}`
   let section = (title, lines) =>
     Array.flat([[`${title} (${Int.toString(lines->Array.length)}):`], lines, [""]])
   let under = in_(s => s == Plan.Under)
@@ -104,7 +118,7 @@ let work = (~done): array<string> => {
   let finished = in_(s => s == Plan.Done)
   let why = (item: Work.item) =>
     switch state(item) {
-    | Plan.Behind(ids) => `; after ${ids->Array.join(", ")}`
+    | Plan.Behind(ids) => `; after ${ids->Array.map(Repo_plan.label)->Array.join(", ")}`
     | Plan.Awaits(Author) => "; waits on the author"
     | Plan.Awaits(Closes(id)) => `; waits on ${id}`
     | _ => ""
@@ -118,31 +132,41 @@ let work = (~done): array<string> => {
     | Work.Owes(_) | Work.Landing(_) => ""
     }
   let owed = Plan.pendingRules(Rules.all)
-  done
-    ? section(
-        "plan, done",
-        finished->Array.map(item => `  ${item.id}  ${held(item)}`),
-      )
-    : Array.flat([
-        section("plan, under way, its check warning", under->Array.map(item => line(item))),
-        section("plan, ready, nothing before it undone", ready->Array.map(item => line(item))),
-        section(
-          "plan, waiting on the items before them",
-          behind->Array.map(item => line(item, ~extra=why(item))),
-        ),
-        section(
-          "plan, waiting on a moment",
-          awaits->Array.map(item => line(item, ~extra=why(item))),
-        ),
-        section(
-          "plan, pending rules, ready, each owed a check",
-          owed->Array.map(((name, needs)) => `  ${name}  owed: ${brief(needs)}`),
-        ),
-        [
-          `plan, done: ${Int.toString(finished->Array.length)}; mise run plan --done lists them`,
-          "",
-        ],
-      ])
+  let passed = Repo_plan.passedOver(sources, ~skipped=Waiting.skipped)
+  let aside = Array.concat(errors, passed->Array.map(line => `  ${line}`))
+  let local =
+    merged->Array.some(entry => entry.isPrivate)
+      ? ["plan, items marked [private] are local, never copied into anything public", ""]
+      : []
+  Array.concat(aside == [] ? [] : section("plan, passed over", aside), local)->Array.concat(
+    done
+      ? section(
+          "plan, done",
+          finished->Array.map(item =>
+            `  ${name(item)}${mark(item)}  ${hidden(item) ? "withheld" : held(item)}`
+          ),
+        )
+      : Array.flat([
+          section("plan, under way, its check warning", under->Array.map(item => line(item))),
+          section("plan, ready, nothing before it undone", ready->Array.map(item => line(item))),
+          section(
+            "plan, waiting on the items before them",
+            behind->Array.map(item => line(item, ~extra=why(item))),
+          ),
+          section(
+            "plan, waiting on a moment",
+            awaits->Array.map(item => line(item, ~extra=why(item))),
+          ),
+          section(
+            "plan, pending rules, ready, each owed a check",
+            owed->Array.map(((name, needs)) => `  ${name}  owed: ${brief(needs)}`),
+          ),
+          [
+            `plan, done: ${Int.toString(finished->Array.length)}; mise run plan --done lists them`,
+            "",
+          ],
+        ]),
+  )
 }
 
 let main = () => {

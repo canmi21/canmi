@@ -36,6 +36,10 @@ type item = {
   waives?: array<string>,
   /** `check --all` and `audit --all` pass over `repos` while the item waits. */
   pauses?: bool,
+  /** What the item waits on from another repository, each `repository:name` of its `depends`. */
+  needs?: array<string>,
+  /** What the item delivers to others, each a name of its repository's `exports`. */
+  delivers?: array<string>,
 }
 
 let items: array<item> = [

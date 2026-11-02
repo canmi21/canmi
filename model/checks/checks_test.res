@@ -498,38 +498,47 @@ describe("the plan", () => {
 
   test("holds an item that names what is there", () => {
     expect(
-      found([
-        owes,
-        {...owes, id: "second", repos: ["seam"], after: ["first"], why: "8q1af"},
-        {...owes, id: "third", holds: Holds("drift")},
-        {...owes, id: "fourth", holds: Landing("drift"), after: ["third"]},
-        {...owes, id: "fifth", holds: Committed({repo: "seam", commit: "ea6e2288"})},
-        {...owes, id: "sixth", holds: Observed({at: "2026-11-01", what: "seen"})},
-      ], ~passes=_ => Some(false)),
+      found(
+        [
+          owes,
+          {...owes, id: "second", repos: ["seam"], after: ["first"], why: "8q1af"},
+          {...owes, id: "third", holds: Holds("drift")},
+          {...owes, id: "fourth", holds: Landing("drift"), after: ["third"]},
+          {...owes, id: "fifth", holds: Committed({repo: "seam", commit: "ea6e2288"})},
+          {...owes, id: "sixth", holds: Observed({at: "2026-11-01", what: "seen"})},
+        ],
+        ~passes=_ => Some(false),
+      ),
     )->toEqual([])
   })
 
-  test("refuses an id used twice, an after that is no item or loops, and a pending rule copied", () => {
-    expect(
-      found([
-        owes,
-        {...owes, repos: [], after: ["gone"], why: "zzzzz"},
-        {...owes, id: "owed", repos: ["elsewhere"], after: ["owed"]},
-        {...owes, id: "loop-a", after: ["loop-b"]},
-        {...owes, id: "loop-b", after: ["loop-a"]},
-      ], ~rfc=(_, id) => id != "zzzzz"),
-    )->toEqual([
-      "plan first: its id is taken by another item",
-      "plan first: names no repository",
-      "plan first: is after gone, which is no item",
-      "plan first: names zzzzz, which is no RFC",
-      "plan owed: is a pending rule, which stays in model/rules and is listed here by name",
-      "plan owed: elsewhere is not in repos/registry.toml",
-      "plan owed: is after itself",
-      "plan loop-a: is after itself through the items it follows",
-      "plan loop-b: is after itself through the items it follows",
-    ])
-  })
+  test(
+    "refuses an id used twice, an after that is no item or loops, and a pending rule copied",
+    () => {
+      expect(
+        found(
+          [
+            owes,
+            {...owes, repos: [], after: ["gone"], why: "zzzzz"},
+            {...owes, id: "owed", repos: ["elsewhere"], after: ["owed"]},
+            {...owes, id: "loop-a", after: ["loop-b"]},
+            {...owes, id: "loop-b", after: ["loop-a"]},
+          ],
+          ~rfc=(_, id) => id != "zzzzz",
+        ),
+      )->toEqual([
+        "plan first: its id is taken by another item",
+        "plan first: names no repository",
+        "plan first: is after gone, which is no item",
+        "plan first: names zzzzz, which is no RFC",
+        "plan owed: is a pending rule, which stays in model/rules and is listed here by name",
+        "plan owed: elsewhere is not in repos/registry.toml",
+        "plan owed: is after itself",
+        "plan loop-a: is after itself through the items it follows",
+        "plan loop-b: is after itself through the items it follows",
+      ])
+    },
+  )
 
   test("refuses a part that is missing, and a landing whose part passes", () => {
     let has = name => name != "gone"

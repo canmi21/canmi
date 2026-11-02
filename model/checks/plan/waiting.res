@@ -112,8 +112,7 @@ let waiverIn = (items: array<item>, ~repo, ~rule) =>
 
 let waiver = (~repo, ~rule) => waiverIn(items, ~repo, ~rule)
 
-let problems = () =>
-  problemsIn(items, ~rules=Rules.all, ~statuses=statuses(), ~readable)
+let problems = () => problemsIn(items, ~rules=Rules.all, ~statuses=statuses(), ~readable)
 
 let red = text => Node.envOn("NO_COLOR") ? text : `\u001b[31m${text}\u001b[0m`
 

@@ -41,3 +41,27 @@ describe("a repository's [push]", () => {
     expect(declared("[push]\nci = true\n")->Result.isError)->toBe(true)
   })
 })
+
+describe("a repository's [boundary]", () => {
+  let boundary = toml => {
+    tree(root.contents, [("workspace.toml", toml)])
+    Project.read(root.contents)->Result.map(declared => declared.boundary)
+  }
+
+  test("declares none by default", () => {
+    expect(boundary("[rules]\nlines = true\n"))->toEqual(Ok({exports: [], depends: []}))
+  })
+
+  test("reads what it exports and what it depends on", () => {
+    let toml = "[boundary]\nexports = [\"contracts\"]\ndepends = [\"monoflake/platform:contracts\"]\n"
+    expect(boundary(toml))->toEqual(
+      Ok({exports: ["contracts"], depends: ["monoflake/platform:contracts"]}),
+    )
+  })
+
+  test("refuses an item-like name, a bare dependency and an unknown key", () => {
+    expect(boundary("[boundary]\nexports = [\"Some Item\"]\n")->Result.isError)->toBe(true)
+    expect(boundary("[boundary]\ndepends = [\"contracts\"]\n")->Result.isError)->toBe(true)
+    expect(boundary("[boundary]\nneeds = []\n")->Result.isError)->toBe(true)
+  })
+})

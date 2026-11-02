@@ -184,15 +184,31 @@ let passes = name =>
 let planned = () => {
   let statuses = Waiting.statuses()
   Plan.passedOver(Work.items)->Array.forEach(line => Console.log(`  passed over: ${line}`))
+  let (sources, _) = Repo_plan.load()
+  Repo_plan.passedOver(sources, ~skipped=Waiting.skipped)->Array.forEach(line =>
+    Console.log(`  passed over: ${line}`)
+  )
+  let has = name => name == "plan" || others->Array.some(((other, _)) => other == name)
+  let rfc = (item, id) => !Waiting.readable(item) || statuses(item)->Dict.get(id)->Option.isSome
   report(
-    Plan.problemsIn(
-      Work.items,
-      ~repos=Registry.paths(),
-      ~rules=Rules.all,
-      ~has=name => name == "plan" || others->Array.some(((other, _)) => other == name),
-      ~passes,
-      ~rfc=(item, id) => !Waiting.readable(item) || statuses(item)->Dict.get(id)->Option.isSome,
-      ~committed=Plan.onMain,
+    Array.concat(
+      Plan.problemsIn(
+        Work.items,
+        ~repos=Registry.paths(),
+        ~rules=Rules.all,
+        ~has,
+        ~passes,
+        ~rfc,
+        ~committed=Plan.onMain,
+      ),
+      Repo_plan.found(
+        ~repos=Registry.paths(),
+        ~rules=Rules.all,
+        ~has,
+        ~passes,
+        ~rfc,
+        ~committed=Plan.onMain,
+      ),
     ),
   )
 }
@@ -252,7 +268,7 @@ let outcome = (part, ~pushing=false) =>
 
 /** What the workspace holds over every repository below it, each part by its name. */
 let over = (repo): array<(string, part)> =>
-  Array.concat(
+  Array.flat([
     [
       ("shape", Waivable(Registry.label(repo), () => Shape.tagged(~root=repo))),
       ("tasks", Script(() => reported(Tasks.found(~root=repo)))),
@@ -276,7 +292,10 @@ let over = (repo): array<(string, part)> =>
     | Some(_) => [("rfcs", Found(() => rfcs(Registry.label(repo))))]
     | None => []
     },
-  )
+    Node.existsSync(Node.join([repo, Repo_plan.file]))
+      ? [("plan", Found(() => Repo_plan.ownAt(~root=repo)))]
+      : [],
+  ])
 
 /** The workspace's rules over one repository below it, each part logged, on past a failure. */
 let repository = (repo): int => {
@@ -284,7 +303,10 @@ let repository = (repo): int => {
     Console.log(`\n=== ${Registry.label(repo)} ${name}, the workspace's ===`)
     outcome(part) != 0
   })
-  let waiting = Waiting.shown(~repo=Some(Registry.label(repo)))
+  let waiting = Array.concat(
+    Waiting.shown(~repo=Some(Registry.label(repo))),
+    Repo_plan.waiting(~repo=Some(Registry.label(repo))),
+  )
   if waiting != [] {
     Console.log("")
     waiting->Array.forEach(line => Console.log(line))
@@ -392,7 +414,9 @@ let run = (named: array<string>): int => {
         owed,
       )} pending a check: check workspace --pending`,
   )
-  Waiting.shown(~repo=None)->Array.forEach(line => Console.log(line))
+  Array.concat(Waiting.shown(~repo=None), Repo_plan.waiting(~repo=None))->Array.forEach(line =>
+    Console.log(line)
+  )
   if failed->Array.length > 0 {
     Console.log(`failed: ${failed->Array.join(", ")}`)
   }
