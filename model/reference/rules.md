@@ -602,10 +602,10 @@ A workflow step calls a mise task or a script the repository holds, so the same 
 
 ### ci-shell-minimal
 
-A workflow step's shell holds the call and its plumbing alone; a loop, a parse or a retry lives in the entry, in ReScript.
+A workflow step or composite action step is one shot, one command however many lines its flags take, after plain preparation such as mkdir or an export; an order of commands, a conditional, a loop, a retry, a parse of output or a value carried between commands lives in the entry, in ReScript, and a landing on a main line is refused otherwise.
 
 - doc: [docs/ci.md](../../docs/ci.md)
-- held by: check part `ci-steps`
+- held by: check part `ci-shell`
 
 ### schedule-nominal
 

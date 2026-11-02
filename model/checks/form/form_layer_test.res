@@ -24,9 +24,13 @@ let behind = (root, back) =>
 let numbered = count =>
   Array.fromInitializer(~length=count, at => Int.toString(at))->Array.join("\n")
 
+let looping = ".github/workflows/w.yml"
+let workflow = "jobs:\n  b:\n    runs-on: x\n    steps:\n      - name: Go\n        run: |\n          for a in b; do mise run a; done\n"
+
 describe("the form layer", () => {
   test("is every rule marked Form, held by the shape, lines and comments parts", () => {
     expect(Form_layer.rules->Array.toSorted(String.compare))->toEqual([
+      "ci-shell-minimal",
       "comment-short",
       "file-short",
       "form-at-commit",
@@ -35,6 +39,7 @@ describe("the form layer", () => {
       "tree-wide",
     ])
     expect(Form_layer.parts->Array.toSorted(String.compare))->toEqual([
+      "ci-shell",
       "comments",
       "lines",
       "shape",
@@ -144,6 +149,7 @@ describe("the gate before a push", () => {
           [
             ("long.txt", numbered(Code.hardLines + 1)),
             ("f.res", block ++ "\nlet x = 1\n"),
+            (looping, workflow),
             ...wide,
           ],
         ),
@@ -151,8 +157,8 @@ describe("the gate before a push", () => {
     )
     jj(root, ["bookmark", "set", "main", "-r", "@-"])->ignore
     tree(root, [("long.txt", numbered(2)), ("f.res", "let x = 1\n")])
-    wide->Array.forEach(
-      ((path, _)) => Node.rmSync(Node.join([root, path]), {recursive: true, force: true}),
+    [looping, ...wide->Array.map(((path, _)) => path)]->Array.forEach(
+      path => Node.rmSync(Node.join([root, path]), {recursive: true, force: true}),
     )
     expect(Lines.main(~given=[root], ~pushing=true))->toBe(0)
     expect(Comments.main(~root, ~given=[], ~pushing=true))->toBe(0)

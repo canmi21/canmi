@@ -153,6 +153,7 @@ let others: array<(string, part)> = [
   ("step-names", Found(() => Step_names.main(~root))),
   ("ci", Found(() => Ci_check.held(~root))),
   ("ci-steps", Soft(() => Ci_check.steps(~root))),
+  ("ci-shell", Waivable(Registry.label(root), () => Ci_check.tagged(~root))),
   ("domains", Soft(() => Wrangler.main(~root))),
   ("settings", Found(() => Settings.main(~root))),
   ("repository", Script(() => reported(Conduct.found(~root)))),
@@ -281,6 +282,7 @@ let over = (repo): array<(string, part)> =>
       ("step-names", Found(() => Step_names.main(~root=repo))),
       ("ci", Found(() => Ci_check.held(~root=repo))),
       ("ci-steps", Soft(() => Ci_check.steps(~root=repo))),
+      ("ci-shell", Waivable(Registry.label(repo), () => Ci_check.tagged(~root=repo))),
       ("domains", Soft(() => Wrangler.main(~root=repo))),
       ("suffixes", Found(() => Suffix_owned.main(~root=repo, ~label=Registry.label(repo)))),
       ("plain", Soft(() => Comments.plain(~root=repo))),
@@ -334,6 +336,7 @@ let formed = (repo, tree: Lines.tree): array<(string, part)> =>
     ),
     ("lines", Formed(pushing => keepsLines(repo) ? Lines.judged([tree], ~pushing) : 0)),
     ("comments", Formed(pushing => Comments.measured(tree, ~pushing))),
+    ("ci-shell", Waivable(Registry.label(repo), () => Ci_check.shell(tree))),
   ]->Array.filter(((name, _)) => Form_layer.parts->Array.includes(name))
 
 /** The commits `bookmarks` point to in `repo`, each once. */

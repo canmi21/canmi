@@ -50,12 +50,11 @@ let stateOf = (items: array<item>, item: item, ~committed): state =>
   | Landing(_) => Under
   | _ if isDone(item, ~committed) => Done
   | _ =>
-    let undone =
-      item.after->Array.filter(id =>
-        items
-        ->Array.find(other => other.id == id)
-        ->Option.mapOr(true, other => !isDone(other, ~committed))
-      )
+    let undone = item.after->Array.filter(id =>
+      items
+      ->Array.find(other => other.id == id)
+      ->Option.mapOr(true, other => !isDone(other, ~committed))
+    )
     switch (undone, item.waits) {
     | ([], None) => Ready
     | ([], Some(until)) => Awaits(until)

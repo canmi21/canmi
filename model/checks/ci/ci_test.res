@@ -87,29 +87,63 @@ describe("the workflow shell rules", () => {
     expect(Entries.entryProblems(run(indent("(cd ../m && npx rescript build)"))))->toEqual([])
   })
 
+  test("ci-shell-minimal allows one shot over many lines and plain preparation", () => {
+    expect(
+      Entries.shellProblems(run(indent("mise run build \\\n  --flag a \\\n  --flag b"))),
+    )->toEqual([])
+    expect(
+      Entries.shellProblems(run(indent("mkdir -p out\nexport A=1\nmise run build"))),
+    )->toEqual([])
+    expect(Entries.shellProblems(run(indent("sudo rm -f /etc/x"))))->toEqual([])
+    expect(
+      Entries.shellProblems(run(indent("${{ inputs.message || 'node scripts/m.res.mjs' }}"))),
+    )->toEqual([])
+    expect(Entries.shellProblems(run(indent("grep -E 'a|b' f"))))->toEqual([])
+    expect(
+      Entries.shellProblems(
+        run(indent("names=$(mise run list)\necho \"$names\" >> \"$GITHUB_OUTPUT\"")),
+      ),
+    )->toEqual([])
+  })
+
   test(
-    "ci-shell-minimal refuses a loop, a parse and a retry, and a branch that passes outputs",
+    "ci-shell-minimal refuses orchestration, a loop, a branch, a parse, a value, a sequence",
     () => {
-      expect(
-        Entries.shellProblems(run(indent("for a in $LIST; do\n  mise run a\ndone"))),
-      )->toEqual(["w.yml: job build step \"Go\" holds a loop in its shell"])
-      expect(Entries.shellProblems(run(indent("mise run list | grep x"))))->toEqual([
-        "w.yml: job build step \"Go\" holds a parse in its shell",
-      ])
-      expect(Entries.shellProblems(run(indent("sleep 5"))))->toEqual([
-        "w.yml: job build step \"Go\" holds a retry in its shell",
-      ])
-      expect(Entries.shellProblems(run(indent("if a; then mise run a; fi"))))->toEqual([
-        "w.yml: job build step \"Go\" holds a branch in its shell",
-      ])
+      let says = kind => [`w.yml: job build step "Go" holds ${kind} in its shell`]
+      expect(Entries.shellProblems(run(indent("for a in $LIST; do\n  mise run a\ndone"))))->toEqual(
+        says("a loop"),
+      )
+      expect(Entries.shellProblems(run(indent("if a; then mise run a; fi"))))->toEqual(
+        says("a branch"),
+      )
+      expect(Entries.shellProblems(run(indent("mise run list | grep x"))))->toEqual(says("a parse"))
+      expect(Entries.shellProblems(run(indent("sed -i s/a/b/ f"))))->toEqual(says("a parse"))
+      expect(Entries.shellProblems(run(indent("sleep 5"))))->toEqual(says("a retry"))
+      expect(Entries.shellProblems(run(indent("x=$(mise run a)\nmise run b \"$x\""))))->toEqual(
+        says("a value carried between commands"),
+      )
+      expect(Entries.shellProblems(run(indent("mise run a\nmise run b"))))->toEqual(
+        says("several commands in sequence"),
+      )
       expect(
         Entries.shellProblems(
           run(indent("if [ -n \"$n\" ]; then echo a=1; else echo a=0; fi >> \"$GITHUB_OUTPUT\"")),
         ),
-      )->toEqual([])
-      expect(Entries.shellProblems(run(indent("grep -E 'a|b' f"))))->toEqual([])
+      )->toEqual(says("a branch"))
     },
   )
+
+  test("ci-shell-minimal reads composite actions", () => {
+    let source = "runs:\n  steps:\n    - name: Go\n      run: |\n        mise run a\n        mise run b\n"
+    let doc: Runs.document = {
+      file: "a/action.yml",
+      action: true,
+      jobs: Runs.read(source, ~action=true),
+    }
+    expect(Entries.shellProblems([doc]))->toEqual([
+      "a/action.yml: job action step \"Go\" holds several commands in sequence in its shell",
+    ])
+  })
 })
 
 describe("the crane rule", () => {

@@ -54,18 +54,21 @@ let read = (source, ~action) =>
 let workflow = /^\.github\/workflows\/[^\/]+\.ya?ml$/
 let composite = /^\.github\/actions\/.+\/action\.ya?ml$/
 
-/** Every workflow and composite action of the repository at `root`. */
-let documents = (~root): array<document> =>
-  Lines.tracked(root)->Array.filterMap(path => {
+/** Every workflow and composite action of a tree. */
+let documentsOf = (tree: Lines.tree): array<document> =>
+  tree.paths->Array.filterMap(path => {
     let action = composite->RegExp.test(path)
     action || workflow->RegExp.test(path)
-      ? Some({
+      ? tree.bytes(path)->Option.map(bytes => {
           file: path,
           action,
-          jobs: read(Node.readFileSync(Node.join([root, path])), ~action),
+          jobs: read(Node.chunkText(bytes), ~action),
         })
       : None
   })
+
+/** Every workflow and composite action of the repository at `root`. */
+let documents = (~root): array<document> => documentsOf(Lines.disk(root))
 
 /** One piece of a command line, and whether a pipe fed it. */
 type segment = {text: string, piped: bool}

@@ -18,11 +18,21 @@ let taskLines = 5
 /** Minutes a package version is public before pnpm installs it. */
 let releaseAge = 1440
 
+/** What a step may do before its one command, which is preparation and not orchestration. */
+let preparationCommands = ["mkdir", "export", "cd", "set", "true"]
+
+/**
+ * A step allowed more shell than ci-shell-minimal gives, each its file, step name and why. None
+ * today.
+ */
+let shellExempt: array<(string, string, string)> = []
+
 /** A workflow step's commands, its entries, their plumbing and the parsers a pipe feeds. */
 let entryCommands = ["mise", "node", "pnpm", "npx"]
 let plumbingCommands = [
   "echo",
   "printf",
+  "mkdir",
   "cd",
   "[",
   "[[",
@@ -34,6 +44,7 @@ let plumbingCommands = [
   "exit",
   "gh",
 ]
+let parserAlways = ["sed", "awk", "jq", "perl"]
 let parserCommands = [
   "grep",
   "sed",
@@ -356,9 +367,10 @@ let rules: array<Rule.t> = [
   },
   {
     name: "ci-shell-minimal",
-    says: "A workflow step's shell holds the call and its plumbing alone; a loop, a parse or a retry lives in the entry, in ReScript",
+    says: "A workflow step or composite action step is one shot, one command however many lines its flags take, after plain preparation such as mkdir or an export; an order of commands, a conditional, a loop, a retry, a parse of output or a value carried between commands lives in the entry, in ReScript, and a landing on a main line is refused otherwise",
     doc: "docs/ci.md",
-    held: Check("ci-steps"),
+    held: Check("ci-shell"),
+    layer: Form,
   },
   {
     name: "schedule-nominal",

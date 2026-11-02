@@ -11,7 +11,7 @@ inputs:
     description: Keep the token in the repository's checkout, for a job that pushes to it
     default: "false"
   scripts:
-    description: Install the workspace's packages and compile its scripts, for a job that runs one
+    description: Install the workspace's packages and compile its scripts, for a job that runs one; a job with beside gets them too
     default: "false"
   nix:
     description: Install Nix for a repository whose stages need it
@@ -53,11 +53,11 @@ runs:
         working_directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
         cache: ${{ runner.environment == 'github-hosted' }}
     - name: Install the workspace's packages
-      if: inputs.scripts == 'true'
+      if: inputs.scripts == 'true' || inputs.beside != ''
       shell: bash
       run: pnpm install --frozen-lockfile
     - name: Compile the workspace's scripts
-      if: inputs.scripts == 'true'
+      if: inputs.scripts == 'true' || inputs.beside != ''
       shell: bash
       run: mise run build
     - name: Install nix
@@ -71,23 +71,4 @@ runs:
       env:
         BESIDE: ${{ inputs.beside }}
         CALLER: ${{ inputs.path }}
-        SCRIPTS: ${{ inputs.scripts }}
-      run: |
-        ready="$SCRIPTS"
-        for repository in $BESIDE; do
-          into="$GITHUB_WORKSPACE/repos/$repository"
-          [ -d "$into" ] || git clone --depth 1 --branch main "https://github.com/$repository" "$into"
-          if grep -q '^pin =' "$GITHUB_WORKSPACE/repos/$CALLER/workspace.toml" 2>/dev/null; then
-            if [ "$ready" != true ]; then
-              pnpm install --frozen-lockfile
-              mise run build
-              ready=true
-            fi
-            ref="$(node scripts/release/versions/beside.res.mjs "$GITHUB_WORKSPACE/repos/$CALLER" "$into")"
-            if [ "$ref" != main ]; then
-              git -C "$into" fetch --depth 1 origin "$ref"
-              git -C "$into" checkout --detach FETCH_HEAD
-            fi
-          fi
-          [ ! -f "$into/package.json" ] || (cd "$into" && pnpm install --frozen-lockfile)
-        done
+      run: node scripts/workspace/ci/siblings.res.mjs

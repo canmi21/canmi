@@ -79,35 +79,80 @@ let entryProblems = (documents: array<document>): array<string> =>
     ->Array.map(command => `${at} runs ${command}, which is no entry`)
   )
 
-/** ci-shell-minimal, a loop, a parse, a retry or a branch beyond passing outputs. */
+/** The command substitutions of a run, `$(...)` without arithmetic or nesting. */
+let substitutions = run => run->String.match(/\$\((?!\()[^()]*\)/g)->Option.getOr([])
+
+/** Whether a segment only prepares or passes an output, which is no command of the step's own. */
+let preparation = segment =>
+  Toolchain.preparationCommands->Array.includes(head(segment)) ||
+    ["GITHUB_OUTPUT", "GITHUB_ENV", "GITHUB_PATH"]->Array.some(name =>
+      segment.text->String.includes(name)
+    )
+
+/** The kinds of orchestration a run holds, none for one command and its preparation. */
+let shellKinds = run => {
+  let run = run->String.replaceRegExp(/\$\{\{[^}]*\}\}/g, "EXPRESSION")
+  let segments = run->commands
+  let passes = run->String.includes("GITHUB_OUTPUT") || run->String.includes("GITHUB_ENV")
+  let opens = names => segments->Array.some(segment => names->Array.includes(opening(segment)))
+  let shots =
+    segments->Array.filter(segment =>
+      !segment.piped &&
+      !(structure->Array.includes(head(segment))) &&
+      head(segment) != "" &&
+      !preparation(segment)
+    )
+  [
+    (opens(["for", "while", "until"]), "a loop"),
+    (opens(["case"]), "a case"),
+    (opens(["if", "elif"]), "a branch"),
+    (
+      segments->Array.some(segment =>
+        Toolchain.parserAlways->Array.includes(head(segment)) ||
+          (segment.piped && Toolchain.parserCommands->Array.includes(head(segment)))
+      ),
+      "a parse",
+    ),
+    (!passes && run->substitutions->Array.length > 0, "a value carried between commands"),
+    (
+      opens(["sleep", "retry"]) || segments->Array.some(segment => head(segment) == "sleep"),
+      "a retry",
+    ),
+    (
+      !opens(["for", "while", "until", "case", "if", "elif"]) && shots->Array.length > 1,
+      "several commands in sequence",
+    ),
+  ]->Array.filterMap(((found, kind)) => found ? Some(kind) : None)
+}
+
+/** Whether a step is named in `Toolchain.shellExempt`, which says why. */
+let exempt = (document: document, ~name) =>
+  Toolchain.shellExempt->Array.some(((file, step, _)) => document.file == file && step == name)
+
+/** ci-shell-minimal, one finding for each kind of shell a step holds beyond its call. */
+let shellFindings = (documents: array<document>): array<Form_layer.finding> =>
+  documents->Array.flatMap(document =>
+    document.jobs->Array.flatMap(job =>
+      job.steps->Array.flatMap(
+        step =>
+          switch step.run {
+          | Some(run) if !exempt(document, ~name=step.name) =>
+            let at = `${document.file}: job ${job.id} step "${step.name}"`
+            run
+            ->shellKinds
+            ->Array.map(
+              (kind): Form_layer.finding => {
+                rule: "ci-shell-minimal",
+                says: `${at} holds ${kind} in its shell`,
+                onset: () => None,
+              },
+            )
+          | _ => []
+          },
+      )
+    )
+  )
+
+/** The same findings as plain lines. */
 let shellProblems = (documents: array<document>): array<string> =>
-  runs(documents)->Array.flatMap(((at, run)) => {
-    let segments = run->commands
-    let passes = run->String.includes("GITHUB_OUTPUT") || run->String.includes("GITHUB_ENV")
-    let kinds =
-      [
-        (
-          segments->Array.some(segment =>
-            ["for", "while", "until"]->Array.includes(opening(segment))
-          ),
-          "a loop",
-        ),
-        (segments->Array.some(segment => opening(segment) == "case"), "a case"),
-        (
-          !passes &&
-          segments->Array.some(segment => ["if", "elif"]->Array.includes(opening(segment))),
-          "a branch",
-        ),
-        (
-          segments->Array.some(segment =>
-            segment.piped && Toolchain.parserCommands->Array.includes(head(segment))
-          ),
-          "a parse",
-        ),
-        (
-          segments->Array.some(segment => ["sleep", "retry"]->Array.includes(head(segment))),
-          "a retry",
-        ),
-      ]->Array.filterMap(((found, kind)) => found ? Some(kind) : None)
-    kinds->Array.map(kind => `${at} holds ${kind} in its shell`)
-  })
+  shellFindings(documents)->Array.map(finding => finding.says)

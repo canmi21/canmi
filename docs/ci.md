@@ -34,10 +34,14 @@ after which systemd-tmpfiles removes it. The Arm runners' disks are 50 GB.
 
 ## CI orchestrates, the scripts do the work
 
-These rules apply to every workflow of this workspace and the `monoflake` repositories and are named
-in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and `ci-shell-minimal`, held by the
-`ci-steps` part, a warning until the workflows that break them are rewritten. The commands an entry
-or its plumbing may be are `Toolchain.entryCommands` and `Toolchain.plumbingCommands`.
+These rules apply to every workflow and composite action of this workspace and the `monoflake`
+repositories and are named in `model/rules/toolchain.res`, `ci-native-steps`, `ci-entries` and
+`ci-shell-minimal`. The first two are held by the `ci-steps` part, a warning until the workflows
+that break them are rewritten; `ci-shell-minimal` is held by the `ci-shell` part and is of the form
+layer, so it warns in a lane and refuses a commit onto a main line, docs/agents/checking.md. The
+commands an entry or its plumbing may be are `Toolchain.entryCommands` and
+`Toolchain.plumbingCommands`, and a step excused from `ci-shell-minimal` is named, with why, in
+`Toolchain.shellExempt`.
 
 **A workflow is built from native steps, one stage a step**, so GitHub times and shows each stage
 apart, and a published action is taken where one fits rather than written again in a step.
@@ -46,9 +50,11 @@ apart, and a published action is taken where one fits rather than written again 
 runs on the Mac. The workflow decides the order, the runners, the secrets and the conditions; what a
 stage does lives in the entry, where it is tested and run locally before CI ever runs it.
 
-**A step's shell is the call and its plumbing alone**: the entry's name, its arguments, and passing
-outputs between steps. Logic, a loop, a parse, a retry, goes in the entry, in ReScript, which is
-type-checked, tested, and runs the same on the Mac as on a runner.
+**A step is one shot**: one command, however many lines its flags take, after plain preparation
+such as `mkdir -p` or an `export`, and passing outputs between steps. An order of commands that
+depend on each other, a conditional, a loop, a retry, a parse of output, or a value carried from one
+command to the next is orchestration and goes in the entry, in ReScript, which is type-checked,
+tested, and runs the same on the Mac as on a runner.
 
 ## A schedule's time is nominal
 
