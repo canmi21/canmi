@@ -49,6 +49,8 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   failures alone before treating them as defects.
 - **A commit rewritten is followed by `jj st` in every lane standing on it.** Read each lane before
   continuing there; see [lanes.md](agents/lanes.md).
+- **A lane a seat will use is never rebased from outside; open a fresh one.** A lane rebased from
+  outside goes stale, and its seat then works on the old tree without knowing.
 - **A lane's sibling runs its own `generate` before anything builds against it.**
 - **A seat stops every process it started before it reports, and says so.** Load made to test a
   flake, `sh -c 'while :; do :; done'` among it, outlives the seat under launchd and slows every
@@ -182,8 +184,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   Select only needed fields, as `jq '{organization, relayed, address, origin: (.origin != null)}'`.
 - **A directory holding secrets is listed by names and sizes alone.** Never select files to read by
   excluding secret-looking names.
-- **A lane is taken only after a jj command has run in it.** Run `jj st` there before duplicating or
-  restoring from its snapshot.
+- **A lane is taken only after a jj command has run in it.** `jj restore --from <lane>@` reads the
+  lane's last snapshot, so a hand edit there is lost unless a jj command ran after it; run `jj st`
+  in the lane before duplicating or restoring from it.
 - **A check's exit 0 is read with its red list.** Read failures listed after the check, including
   `task failed`; blocks in progress can report failures without failing the exit code.
 - **A command handed to the author is first run in a form that changes nothing.** Rehearse from the
