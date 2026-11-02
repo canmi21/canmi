@@ -28,6 +28,9 @@ let owners = [
   (".py", Unformatted),
   (".lock", Unformatted),
   (".txt", Unformatted),
+  // TLA+ has no formatter mise pins, and .cfg here is TLC's configuration, TLC's parser its form.
+  (".tla", Unformatted),
+  (".cfg", Unformatted),
   (".nix", Formats("nixfmt")),
   (".sh", Formats("shfmt")),
 ]
