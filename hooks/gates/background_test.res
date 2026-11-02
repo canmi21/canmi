@@ -52,6 +52,49 @@ describe("a command that holds the conversation", () => {
   })
 })
 
+describe("a command that sleeps in the foreground", () => {
+  let loop = "for i in 1 2 3; do grep -q x f && break; sleep 8; done"
+  let refused = (~background=false, ~tool=?, command) =>
+    Background.refuse(payload(~background, ~tool?, command))
+
+  test("is refused as a for loop, and passed in the background or under Monitor", () => {
+    expect(refused(loop))->toEqual(2)
+    expect(refused(~background=true, loop))->toEqual(0)
+    expect(refused(~tool="Monitor", loop))->toEqual(0)
+    expect(refused("select x in a b; do sleep 1; break; done"))->toEqual(2)
+  })
+
+  test("is passed as a for loop without a sleep, or one only in a here-document", () => {
+    expect(refused("for f in a b; do echo $f; done"))->toEqual(0)
+    expect(refused(`cat <<'EOF'\n${loop}\nEOF`))->toEqual(0)
+  })
+
+  test("is not a loop when its words sit inside a quoted argument", () => {
+    ["while :; do :; done", "until :; do :; done", "for i in 1 2; do :; done"]->Array.forEach(
+      body => {
+        expect(refused(`pkill -f 'sh -c ${body}'; sleep 1; pgrep sh`))->toEqual(0)
+        expect(refused(`pkill -f "sh -c ${body}"; sleep 1; pgrep sh`))->toEqual(0)
+      },
+    )
+    expect(refused("while grep -q 'x' f; do sleep 1; done"))->toEqual(2)
+  })
+
+  test("is refused when its sleeps add up past the foreground seconds", () => {
+    expect(refused("sleep 6; sleep 5; sleep 5; echo done"))->toEqual(2)
+    expect(refused("sleep 1"))->toEqual(0)
+    expect(refused("sleep 5; sleep 5; sleep 5"))->toEqual(0)
+    expect(refused(~background=true, "sleep 6; sleep 5; sleep 5"))->toEqual(0)
+    expect(refused(~tool="Monitor", "sleep 6; sleep 5; sleep 5"))->toEqual(0)
+  })
+})
+
+describe("a refusal", () => {
+  test("names the tool and the field it judged", () => {
+    expect(Background.judged(payload(~tool="Bash", "ls")))->toEqual("tool_name Bash, field command")
+    expect(Background.judged(payload("ls")))->toEqual("tool_name (none), field command")
+  })
+})
+
 describe("a command that always runs long", () => {
   let refused = command => Background.refuse(payload(command))
   let refusedWith = (~timeout, command) => Background.refuse(payload(~timeout, command))

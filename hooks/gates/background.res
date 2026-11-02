@@ -1,6 +1,6 @@
 /** Refuses a shell command that would hold the conversation, long-command-background. */
 /** A loop that sleeps between its tests, the shape of a wait typed in the foreground. */
-let pollingLoop = /\b(?:until|while)\b[\s\S]*?\bdo\b[\s\S]*?\bsleep\b[\s\S]*?\bdone\b/
+let pollingLoop = /\b(?:until|while|for|select)\b[\s\S]*?\bdo\b[\s\S]*?\bsleep\b[\s\S]*?\bdone\b/
 
 /** The longest foreground timeout a call may ask for, in milliseconds. */
 let longest =
@@ -119,8 +119,44 @@ let foregroundText = command => {
   text
 }
 
-/** Whether a foreground command waits by polling outside a quoted here-document. */
-let polls = command => pollingLoop->RegExp.test(foregroundText(Push.withoutQuotedBodies(command)))
+/** Whether a foreground command waits by polling outside a quoted argument or here-document. */
+let polls = command =>
+  pollingLoop->RegExp.test(
+    foregroundText(Push.withoutQuotedBodies(command))->String.replaceRegExp(
+      /'[^']*'|"(?:\\[\s\S]|[^"\\$`])*"/g,
+      "\"\"",
+    ),
+  )
+
+/** The seconds one literal sleep asks for, or nothing for a word that is not a plain number. */
+let sleepSeconds = (word: string) =>
+  switch word->String.match(/^(\d+(?:\.\d+)?)([smhd]?)$/) {
+  | Some([_, Some(number), unit]) =>
+    let scale = switch unit {
+    | Some("m") => 60.
+    | Some("h") => 3600.
+    | Some("d") => 86400.
+    | _ => 1.
+    }
+    Float.fromString(number)->Option.map(value => value *. scale)
+  | _ => None
+  }
+
+/** The seconds every literal sleep in a foreground command adds up to. */
+let sleepTotal = command =>
+  Jj_command.segments(foregroundText(Push.withoutQuotedBodies(command)))->Array.reduce(0., (
+    total,
+    piece,
+  ) =>
+    switch Jj_command.commandAt(piece) {
+    | Some(at) if piece[at] == Some("sleep") =>
+      total +.
+      piece
+      ->Array.slice(~start=at + 1)
+      ->Array.reduce(0., (sum, word) => sum +. sleepSeconds(word)->Option.getOr(0.))
+    | _ => total
+    }
+  )
 
 let startsWith = (words, prefix) =>
   prefix->Array.everyWithIndex((word, at) => words[at] == Some(word))
@@ -223,6 +259,8 @@ let held = (payload: Payload.t) =>
     None
   } else if polls(Payload.command(payload)) {
     Some("it waits in a loop that sleeps")
+  } else if sleepTotal(Payload.command(payload)) > Delegation.foregroundSeconds->Int.toFloat {
+    Some("it sleeps for longer than the foreground seconds")
   } else {
     switch timeout(payload) {
     | Some(milliseconds) if milliseconds > longest =>
@@ -231,6 +269,10 @@ let held = (payload: Payload.t) =>
     }
   }
 
+/** The tool name and field the gate judged, so a refusal shows the payload's shape. */
+let judged = (payload: Payload.t) =>
+  `tool_name ${payload->Payload.text("tool_name")->Option.getOr("(none)")}, field command`
+
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let refuse = (payload: Payload.t): int =>
   switch held(payload) {
@@ -238,6 +280,7 @@ let refuse = (payload: Payload.t): int =>
   | Some(why) =>
     Console.error(
       `Command refused by hooks/gates/background.res: ${why}, which holds the conversation.\n` ++
+      `It judged ${judged(payload)}.\n` ++
       "Run it with run_in_background, or under Monitor with `mise run watch <file>`, and read its output every few seconds.\n" ++ "The rule: long-command-background in model/rules/delegation.res, and docs/agents/agent-protocol.md",
     )
     2
