@@ -348,8 +348,10 @@ let items: array<item> = [
     says: "pine hung in the board's final reset on its old firmware, cold in 2 of 3 reboots and warm in 1 of 4 on 2026-11-01, the journal ending at journald's stop after systemd-shutdown synced; its hardware watchdog did not reset it in 20 minutes on one. It boots from its SPI flash, not the UFS boot LUN. Its SPI image was replaced on 2026-11-01 by U-Boot v2026.10, DDR v1.13 and BL31 v1.25, and 8 of 8 reboots then returned in 38 to 47 s, 5 warm by `reboot=warm` alone and 3 cold set by hand, a small sample with no cause proved. Every reboot of pine is watched until it answers, and one that hangs is power-cycled by the author at once rather than waited out on the watchdog, as monoflake/cloud's fleet rules have it for every single-board machine. A power cut on 2026-11-01 came back unattended and rejoined the tailnet in 42 s but booted generation 17, not the 18 its extlinux.conf defaulted to, written 40 s earlier; inferred and unproved, U-Boot reads ext4 without replaying the journal, so a cut soon after a switch boots the previous generation; a clean reboot then booted 18 in 48 s, and the old generation had advertised the route again, cleared once more. A power cut on 2026-11-02, minutes after candidate two's switch with machine's /boot freeze, booted the newest generation, 19, read as /run/booted-system and /run/current-system, and answered ssh in about 2 to 3 minutes. The rescue is a TF card with rescue-sd.img from ~/.local/share/monoflake/pine-fw-2026-11-01 and the switch at UFS/SD, unproved; next would be a USB-TTL serial at 1500000 baud or a smart plug",
     repos: ["monoflake/cloud", "monoflake/machine"],
     after: [],
-    holds: Owes("the author's word"),
-    waits: Author,
+    holds: Observed({
+      at: "2026-11-02",
+      what: "after candidate two, machine 9b9ddea5 with its /boot freeze, a power cut at about 03:02 UTC booted generation 19, candidate two's, and answered ssh in about 3 minutes, the first boot after the update; a soft reboot at 03:06:12 UTC answered ssh in 40 s on generation 19 again, uptime 26 s; the author marked pine done and back in the fleet as normal",
+    }),
   },
   {
     id: "driver-check-higher",
