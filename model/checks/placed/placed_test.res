@@ -406,7 +406,7 @@ describe("the reference page generated from the model", () => {
   test("is the same bytes on a second run, and a finding names the task when it is not", () => {
     expect(Reference.pages())->toEqual(Reference.pages())
     let dir = root.contents
-    expect(Reference.found(~root=dir)->Array.length)->toBe(1)
+    expect(Reference.found(~root=dir)->Array.length)->toBe(Reference.pages()->Array.length)
     Reference.write(~root=dir)
     expect(Reference.found(~root=dir))->toEqual([])
     Node.writeFileSync(Node.join([dir, Reference.directory, "rules.md"]), "edited\n")

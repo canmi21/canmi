@@ -15,7 +15,7 @@ and its why is an RFC, [rfcs.md](rfcs.md). A sentence nothing enforces decays wi
 | `model/check.res` | `check workspace [part ...]`, every part or those named                |
 | `model/plan/`     | `work.res`, the plan: what is to be done and what each item waits on   |
 
-[model/reference/rules.md](../model/reference/rules.md) is the rules written out by `mise run docs`, never by hand.
+[model/reference/rules.md](../model/reference/rules.md) indexes the rules, a page per topic, written out by `mise run docs`, never by hand.
 
 It is ReScript, as every script here is, compiled by `mise run build` and never committed. A hook or
 a script that needs a value imports it from the model rather than writing it again: the commit hook

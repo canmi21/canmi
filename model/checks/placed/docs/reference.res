@@ -71,7 +71,23 @@ let rules = (topics: array<(string, array<Rule.t>)>): string => {
 }
 
 /** Each page's path under the directory with the text the model gives it. */
-let pages = (): array<(string, string)> => [("rules.md", rules(topics))]
+/** A topic's page name, its title lowercased. */
+let pageOf = title => `rules-${title->String.toLowerCase}.md`
+
+/** The index, each topic linked to its own page with its count, each under the line limit. */
+let index = (topics: array<(string, array<Rule.t>)>): string =>
+  Array.flat([
+    [opening("model/rules"), "", "# Rules", ""],
+    topics->Array.map(((title, rules)) =>
+      `- [${title}](${pageOf(title)}), ${Int.toString(rules->Array.length)} rules`
+    ),
+  ])->Array.join("\n") ++ "\n"
+
+let pages = (): array<(string, string)> =>
+  [
+    ("rules.md", index(topics)),
+    ...topics->Array.map(((title, listed)) => (pageOf(title), rules([(title, listed)]))),
+  ]
 
 let write = (~root) => {
   Node.mkdirAll(Node.join([root, directory]))
