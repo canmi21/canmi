@@ -103,6 +103,8 @@ Co-Authored-By: Claude Opus-5 <noreply@anthropic.com>
 Co-Authored-By: Codex GPT-5 <codex@openai.com>
 ```
 
+A commit two models wrote carries both trailers, the one who did more first.
+
 Each vendor and its one address is `Commits.trailers`. Fill in the actual model short name rather
 than copying the example -- the point of the trailer is to record which
 model, so a stale version defeats it. A new vendor needs a decision here first, which is one entry

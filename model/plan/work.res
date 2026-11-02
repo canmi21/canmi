@@ -268,9 +268,7 @@ let items: array<item> = [
     says: "ci-shell-minimal holds a workflow step's shell to its kinds, refusing command substitution, and names the preparation commands, the parsers always allowed and the steps exempt, each in model/rules/toolchain.res",
     repos: ["workspace"],
     after: [],
-    holds: Owes(
-      "the stricter check stands in lanes/wfstrict, unlanded: checks/ci/entries.res's shellKinds, substitutions and shellFindings, the three names in model/rules/toolchain.res, its docs/ci.md, ci_check.res, runs.res and form_layer_test.res edits, written before checks/ moved out of model/",
-    ),
+    holds: Committed({repo: "workspace", commit: "3ea2f55d"}),
   },
   {
     id: "docs-drained",
