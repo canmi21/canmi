@@ -2,7 +2,7 @@
 
 # Rules
 
-139 rules, 24 pending a check.
+140 rules, 24 pending a check.
 
 ## Commits
 
@@ -96,6 +96,13 @@ A turn ends with main covering every described, non-empty commit.
 
 - doc: [docs/commits.md](../../docs/commits.md)
 - held by: hook `hooks/bookmark`
+
+### work-not-lost
+
+An agent's `jj restore` with no path, and `jj abandon` of a commit holding changes, are refused where they would lose uncommitted work; named paths and an empty commit pass, `SKIP=restore` naming the escape.
+
+- doc: [docs/lessons.md](../../docs/lessons.md)
+- held by: hook `hooks/gates/lose`
 
 ### versions-rolled
 

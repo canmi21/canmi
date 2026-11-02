@@ -56,10 +56,11 @@ let committing = ["commit", "ci"]
 
 /**
  * The escape a command names to pass a gate, `verify` and `form` a commit's, `scan` a push's, and
- * `major` the author's move of a major.
+ * `major` the author's move of a major, and `restore` a jj restore or abandon that would lose
+ * work.
  */
 let skip = "SKIP"
-let skippable = ["verify", "form", "scan", "major"]
+let skippable = ["verify", "form", "scan", "major", "restore"]
 
 let doc = "docs/commits.md"
 let rules: array<Rule.t> = [
@@ -130,6 +131,12 @@ let rules: array<Rule.t> = [
     says: "A turn ends with main covering every described, non-empty commit",
     doc,
     held: Hook("hooks/bookmark"),
+  },
+  {
+    name: "work-not-lost",
+    says: "An agent's `jj restore` with no path, and `jj abandon` of a commit holding changes, are refused where they would lose uncommitted work; named paths and an empty commit pass, `SKIP=restore` naming the escape",
+    doc: "docs/lessons.md",
+    held: Hook("hooks/gates/lose"),
   },
   {
     name: "versions-rolled",
