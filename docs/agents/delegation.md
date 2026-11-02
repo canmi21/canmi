@@ -39,9 +39,18 @@ many run at once is `implementersAtOnce` in
 [model/rules/delegation.res](../../model/rules/delegation.res). **Where a session has delegated, the
 seats are filled first**: work that does not depend on what is running is pulled out and started
 beside it, on Codex first. A seat stays empty for one reason, that what is left must run in order,
-so work is parallel unless a dependency says otherwise. A seat holds one result that can be verified by itself. A seat
-holding several is split; one so small its agent spends more on learning the project than on the
-work is merged. **A reviewer is called once for a set of
+so work is parallel unless a dependency says otherwise. **A seat holds one result that can be
+verified by itself, and that is tested at dispatch**: list each verification the work needs, and two
+verifications over disjoint files are two seats, started together once the interface between them,
+a fixture's keys or a function's signature, is fixed. A seat whose learning outweighs its work is
+merged into another. The brief names its one result on a line starting `Result:` and its one
+verification on a line starting `Verify:`, `seat-one-result` in
+[model/rules/delegation.res](../../model/rules/delegation.res) refusing a dispatch without exactly
+one of each. **Three dimensions run at once and are kept full where sensible**: cloud CI, local compiles and
+checks, and coding agents. One is left idle only where an order forces it; the default is to fill
+it. Within each the order is planned: when a change is committed and pushed, so the landing path
+never jams, a repository's landings that are ready together going through one check, and the CI
+runs they start. The local agent seats matter most and CI's order least. **A reviewer is called once for a set of
 changes**: where A, B and C are changed together, one review comes after all three, never one after
 each.
 
@@ -234,6 +243,11 @@ has quota, and on Claude only while it has none.
   about when the full window resets.
 - **Around that time it reads the quota again**; once Codex has quota back, the next dispatch goes
   to Codex, and nothing in flight moves back.
+
+**After a change to the hooks Codex reads, under `.codex/`, the author trusts Codex by hand**, so
+whoever lands that change reminds the author directly right after the landing, never waiting for the
+next Codex seat or for quota, which decides only when Codex is next used, `codex-trust-reminded` in
+[model/rules/delegation.res](../../model/rules/delegation.res).
 
 **A Codex implementer is started from its lane's repository with its role in the environment**:
 

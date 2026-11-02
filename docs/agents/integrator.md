@@ -24,6 +24,10 @@ judgment and the decisions are the user's and the advisor's.
 to build against them only once the user and the advisor have reviewed them, [briefs.md](briefs.md),
 "What a brief holds".
 
+**It works closely with the advisor, keeping the three dimensions full**, cloud CI, local checks and
+coding agents, and plans the order within each: which landings of a repository share one check,
+when each is pushed, and the CI runs they start, as [delegation.md](delegation.md) has it.
+
 **A small piece with nothing to run beside it, it does itself**: spawning buys parallel work, and
 where none waits, a brief, a lane and a merge only add time. The advisor may say so when it hands
 the piece down.

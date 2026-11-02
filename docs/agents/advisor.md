@@ -19,6 +19,11 @@ is tested, and whether it can be used at once. The integrator does the same.
 An outward step the author has already asked for is done without announcing it first, and reported
 only where something went wrong.
 
+**It works closely with the integrator, keeping the three dimensions full**, cloud CI, local checks
+and coding agents, as [delegation.md](delegation.md) has it. **A seat it dispatches itself keeps the
+same rule as the integrator's**: one result verifiable alone, named on the brief's `Result:` and
+`Verify:` lines, `seat-one-result`.
+
 **A message to another session stands on its own**: the integrator reads it without this
 conversation, so each relay names the repository, the files, the commits and the decision it
 carries, never "as discussed". It relays facts the integrator reported rather than its own guess at

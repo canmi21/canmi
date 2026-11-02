@@ -307,7 +307,8 @@ the workspace's.
 **The escape is named on the command: `SKIP=verify jj commit ...`.** It is pre-commit's spelling --
 `SKIP=<hook id>`, ids comma-separated -- since it reads at a glance and survives being copied;
 `Commits.skippable` lists what it may name, `verify` and `form` for a commit, `scan` for a push and
-`major` for a major moved by the author, [agents/checking.md](agents/checking.md),
+`major` for a major moved by the author, `restore` for a jj restore or abandon that would lose work
+and `seat` for a `codex exec` whose brief lacks its `Result:` or `Verify:` line, [agents/checking.md](agents/checking.md),
 [agents/pushing.md](agents/pushing.md), "A package's version rolls at landing" above. Each use is a
 record of friction, [agents/friction.md](agents/friction.md), and is allowed for a gate's first
 passage and where a rule names it, [planning.md](planning.md), "A gate's first passage may warn

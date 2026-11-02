@@ -55,12 +55,12 @@ let imperativeInS = ["alias", "bias", "canvas", "gas", "bypass"]
 let committing = ["commit", "ci"]
 
 /**
- * The escape a command names to pass a gate, `verify` and `form` a commit's, `scan` a push's, and
- * `major` the author's move of a major, and `restore` a jj restore or abandon that would lose
- * work.
+ * The escape a command names to pass a gate, `verify` and `form` a commit's, `scan` a push's,
+ * `major` the author's move of a major, `restore` a jj restore or abandon that would lose work, and
+ * `seat` a codex exec whose brief lacks its one result or verification.
  */
 let skip = "SKIP"
-let skippable = ["verify", "form", "scan", "major", "restore"]
+let skippable = ["verify", "form", "scan", "major", "restore", "seat"]
 
 let doc = "docs/commits.md"
 let rules: array<Rule.t> = [

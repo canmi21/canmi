@@ -36,6 +36,10 @@ the completion protocol, `built` while writing and `accept <name> --from <base>`
 files stand, [lanes.md](lanes.md). **A reader's brief names the four things**
 [reading.md](reading.md), "Reading is delegated; the judgment on what comes back is not", gives.
 
+**An implementer's brief names its one result and its one verification**, on a line starting
+`Result:` and a line starting `Verify:`; a dispatch without exactly one of each is refused,
+`seat-one-result`, [delegation.md](delegation.md).
+
 **Samples come before an implementer.** The integrator writes a block's samples from the contract
 the author decided, and an implementer is dispatched to build against them only once the user and
 the advisor have reviewed them.

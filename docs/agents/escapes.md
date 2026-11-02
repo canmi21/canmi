@@ -9,7 +9,8 @@ What an agent does when a rule stands in the way of the work. How the work is sp
 write stops that piece of work, and the agent reports it to its superior rather than reaching the
 same end another way. The refusal is the friction the escape below records. An implementer does not
 name `SKIP=<gate>` on a command, [commits.md](../commits.md), "The escape is named on the command";
-it reports the gate to the integrator.
+it reports the gate to the integrator. `SKIP=seat` passes the seat gate for a `codex exec` alone,
+since an Agent call has no command to carry it.
 
 **A hook's refusal is judged by the agent it stops.** Where the refusal is right, the agent corrects
 itself and carries on; where it judges it wrong, it reports it upward and does not work around it.

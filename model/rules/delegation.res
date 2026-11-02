@@ -323,6 +323,18 @@ let rules: array<Rule.t> = [
     held: Hook("hooks/gates/codex_usage"),
   },
   {
+    name: "seat-one-result",
+    says: "An implementer or refactorer is dispatched only with a brief holding exactly one line starting `Result:` and exactly one starting `Verify:`, by the Agent tool's prompt or the file it points at, or the file a `codex exec` of `MONOFLAKE_ROLE` is given on stdin; none, several or an unreadable file is refused, because two results are two seats",
+    doc: "docs/agents/delegation.md",
+    held: Hook("hooks/gates/seat"),
+  },
+  {
+    name: "codex-trust-reminded",
+    says: "A landing that changes the hooks under `.codex/` is followed at once by a reminder to the author to trust Codex by hand",
+    doc: "docs/agents/delegation.md",
+    held: Pending("a check firing at the landing of a commit that touches .codex/"),
+  },
+  {
     name: "long-command-background",
     says: "A foreground shell command never runs past `foregroundSeconds`: one that waits in a loop that sleeps, asks for a timeout past it, or runs a task of `longTasks`, a task given a flag of `longTaskFlags` or a command of `longCommands`, the plan a flag of `shortFlags` asks aside, is refused; it runs in the background or under Monitor and is looked at again every few seconds to a few tens, the watcher's stall of `stallSeconds` naming a hang",
     doc: "docs/agents/agent-protocol.md",

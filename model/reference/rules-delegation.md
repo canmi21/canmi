@@ -2,7 +2,7 @@
 
 # Rules
 
-25 rules, 6 pending a check.
+27 rules, 7 pending a check.
 
 ## Delegation
 
@@ -82,6 +82,20 @@ A job silent for `stallSeconds` is said at most every five minutes for one hour 
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
 - held by: hook `hooks/gates/codex_usage`
+
+### seat-one-result
+
+An implementer or refactorer is dispatched only with a brief holding exactly one line starting `Result:` and exactly one starting `Verify:`, by the Agent tool's prompt or the file it points at, or the file a `codex exec` of `MONOFLAKE_ROLE` is given on stdin; none, several or an unreadable file is refused, because two results are two seats.
+
+- doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
+- held by: hook `hooks/gates/seat`
+
+### codex-trust-reminded
+
+A landing that changes the hooks under `.codex/` is followed at once by a reminder to the author to trust Codex by hand.
+
+- doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
+- held by: pending, owed: a check firing at the landing of a commit that touches .codex/
 
 ### long-command-background
 
