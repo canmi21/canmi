@@ -9,11 +9,31 @@ type tools = {
 
 let pinned = path => Node.existsSync(path) && /^pin =/m->RegExp.test(Node.readFileSync(path))
 
-/** Each repository cloned if absent, moved to the pinned commit, its packages installed. */
+/** Every repository after the ones it depends on, `direct` giving each one's own dependencies. */
+let dependenciesFirst = (~direct: dict<array<string>>, repositories) => {
+  let rec visit = (order, trail, one) =>
+    order->Array.includes(one) || trail->Array.includes(one)
+      ? order
+      : Array.concat(
+          direct
+          ->Dict.get(one)
+          ->Option.getOr([])
+          ->Array.reduce(order, (order, dependency) =>
+            visit(order, Array.concat(trail, [one]), dependency)
+          ),
+          [one],
+        )
+  repositories->Array.reduce([], (order, one) => visit(order, [], one))
+}
+
+/**
+ * The caller's [boundary] depends, transitively, then the named ones, each cloned if absent and
+ * moved to the pinned commit as it is met, then every package installed dependencies first.
+ */
 let prepare = (~workspace, ~caller, ~beside, tools) => {
   let root = Node.join([workspace, "repos", caller])
   let declared = pinned(Node.join([root, "workspace.toml"]))
-  let steps = (repository, into) => {
+  let place = (repository, into) => {
     let clone = Node.existsSync(into)
       ? []
       : [
@@ -31,19 +51,41 @@ let prepare = (~workspace, ~caller, ~beside, tools) => {
             (Some(into), "git", ["fetch", "--depth", "1", "origin", ref]),
             (Some(into), "git", ["checkout", "--detach", "FETCH_HEAD"]),
           ]
-    (clone, move)
+    Array.concat(clone, move)->Array.reduce(0, (status, (cwd, command, args)) =>
+      status == 0 ? tools.run(~cwd, command, args) : status
+    )
   }
-  Spawn.words(Some(beside))->Array.reduce(0, (status, repository) => {
-    let into = Node.join([workspace, "repos", repository])
-    let (clone, move) = steps(repository, into)
-    let ran =
-      Array.concat(clone, move)->Array.reduce(status, (status, (cwd, command, args)) =>
-        status == 0 ? tools.run(~cwd, command, args) : status
-      )
-    ran == 0 && Node.existsSync(Node.join([into, "package.json"]))
-      ? tools.run(~cwd=Some(into), "pnpm", ["install", "--frozen-lockfile"])
-      : ran
-  })
+  let where = repository => Node.join([workspace, "repos", repository])
+  let status = ref(0)
+  let direct = Dict.make()
+  let placed = ref([])
+  let ensure = repository =>
+    if status.contents == 0 && !(placed.contents->Array.includes(repository)) {
+      placed := Array.concat(placed.contents, [repository])
+      status := place(repository, where(repository))
+    }
+  let depends = one => {
+    let file = Node.join([one == caller ? root : where(one), "workspace.toml"])
+    let lines = switch (status.contents == 0, Node.existsSync(file)) {
+    | (true, true) => Lane.dependsOf(Node.readFileSync(file))
+    | _ => []
+    }
+    direct->Dict.set(one, lines->Array.map(((repository, _)) => repository))
+    lines->Array.forEach(((repository, _)) => ensure(repository))
+    lines
+  }
+  let boundary =
+    caller == "" ? [] : Lane.boundarySiblings(~depends, caller)->Array.map(((r, _, _)) => r)
+  let named = Spawn.words(Some(beside))->Array.filter(one => one != caller)
+  named->Array.forEach(ensure)
+  let all = Array.concat(boundary, named)
+  dependenciesFirst(~direct, all)
+  ->Array.filter(one => all->Array.includes(one))
+  ->Array.reduce(status.contents, (status, repository) =>
+    status == 0 && Node.existsSync(Node.join([where(repository), "package.json"]))
+      ? tools.run(~cwd=Some(where(repository)), "pnpm", ["install", "--frozen-lockfile"])
+      : status
+  )
 }
 
 if Node.isMain {

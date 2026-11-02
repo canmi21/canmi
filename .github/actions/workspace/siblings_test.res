@@ -33,8 +33,8 @@ describe("cloning what the stages read beside the caller", () => {
     let (status, calls) = exercise(~root=root.contents)
     expect(status)->toBe(0)
     expect(calls)->toEqual([
-      "one> pnpm install --frozen-lockfile",
       "> git clone --depth 1 --branch main https://github.com/owner/two W/repos/owner/two",
+      "one> pnpm install --frozen-lockfile",
     ])
   })
 
@@ -57,7 +57,7 @@ describe("cloning what the stages read beside the caller", () => {
   test("a failed command stops the run with its status", () => {
     let (status, calls) = exercise(~root=root.contents, ~failing="clone")
     expect(status)->toBe(1)
-    expect(calls->Array.length)->toBe(2)
+    expect(calls->Array.length)->toBe(1)
   })
 })
 
@@ -73,15 +73,13 @@ describe("the action's clone step", () => {
     expect(index(build) < index("Clone what the stages read beside it"))->toBe(true)
   })
 
-  test("the preparation steps run for scripts or for siblings", () => {
+  test("the preparation steps run for scripts or for a caller with a path", () => {
     [build, "Install the workspace's packages"]->Array.forEach(
       name =>
         expect(
           steps->Array.find(step => step.name == name)->Option.map(step => step.condition),
         )->toEqual(
-          Some(
-            JSON.stringify(JSON.Encode.string("inputs.scripts == 'true' || inputs.beside != ''")),
-          ),
+          Some(JSON.stringify(JSON.Encode.string("inputs.scripts == 'true' || inputs.path != ''"))),
         ),
     )
   })

@@ -11,13 +11,13 @@ inputs:
     description: Keep the token in the repository's checkout, for a job that pushes to it
     default: "false"
   scripts:
-    description: Install the workspace's packages and compile its scripts, for a job that runs one; a job with beside gets them too
+    description: Install the workspace's packages and compile its scripts, for a job that runs one; a caller with a path gets them too, for its boundary's siblings
     default: "false"
   nix:
     description: Install Nix for a repository whose stages need it
     default: "false"
   beside:
-    description: Other repositories as space separated owner/repo, cloned at the declared pin or main
+    description: Other repositories as space separated owner/repo, cloned at the declared pin or main and added to the ones the caller's workspace.toml boundary depends names
     default: ""
   history:
     description: Check out the calling repository and the workspace whole, for the workspace's check
@@ -53,11 +53,11 @@ runs:
         working_directory: ${{ inputs.path == '' && '.' || format('repos/{0}', inputs.path) }}
         cache: ${{ runner.environment == 'github-hosted' }}
     - name: Install the workspace's packages
-      if: inputs.scripts == 'true' || inputs.beside != ''
+      if: inputs.scripts == 'true' || inputs.path != ''
       shell: bash
       run: pnpm install --frozen-lockfile
     - name: Compile the workspace's scripts
-      if: inputs.scripts == 'true' || inputs.beside != ''
+      if: inputs.scripts == 'true' || inputs.path != ''
       shell: bash
       run: mise run build
     - name: Install nix
@@ -65,8 +65,9 @@ runs:
       uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
       with:
         installer-version: 2.35.3 # The installer only bootstraps.
+    # The caller's workspace.toml [boundary] depends is cloned too, siblings.res.
     - name: Clone what the stages read beside it
-      if: inputs.beside != ''
+      if: inputs.path != ''
       shell: bash
       env:
         BESIDE: ${{ inputs.beside }}
