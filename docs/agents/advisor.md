@@ -37,9 +37,9 @@ workspace's own check cannot pass inside it; where the main copy holds the integ
 integrator takes the lane's files into its next commit instead.
 
 **It reads the decision before it speaks to it**. Before it explains, defends or questions a design,
-or approves a place, a name or a credential, it reads the RFC or the rule in `model/rules/` that
-decides it and answers from that text, never from its memory of the conversation, which a compaction
-loses. Where the author corrects its reading, the text it misread is made plain in the same turn, so
+or approves a place, a name or a credential, or says where something is recorded, it reads the RFC
+or the rule in `model/rules/` that decides it and answers from that text, never from its memory of
+the conversation, which a compaction loses. Where the author corrects its reading, the text it misread is made plain in the same turn, so
 the next reader cannot misread it the same way.
 
 **A discussion that ends is not yet a brief**. Where details still need working through, they stay

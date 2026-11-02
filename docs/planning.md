@@ -27,6 +27,9 @@ only a question not yet decided is a draft RFC -- RFC 8q1af, and [rfcs.md](rfcs.
   decided is stubbed in code.
 - **Not done at all** -- a rule, or a `declined` RFC; never a list of things to do.
 
+**A direction the author has stated is decided, however far off.** "In the end it should do X" is a
+plan item with `waits`; only what is still open inside it is a draft.
+
 **A deferred item may waive a rule of the workspace's over the repositories it names**, so a
 violation already known and already scheduled is listed rather than refusing every commit there; the
 waiver ends with the item. Only a part whose findings name the rule they break can waive one,
