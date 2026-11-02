@@ -715,6 +715,17 @@ found and yanked inside that window. `release-age` in
 `minimumReleaseAgeExclude` holds the exemptions. Keep the list short: every entry is an accepted
 risk, justified only when the wait costs more than it protects.
 
+### A dependency is added and removed by `mise run dep`, never by hand
+
+`mise run dep add <repository> <package> [--dev] [--rust] [--in <member>] [--dry-run]` adds a
+dependency to a repository's `package.json` through pnpm, or with `--rust` to its `Cargo.toml`
+through cargo, `--dev` choosing the dev section. It writes the newest stable version that has been
+public for a day, the wait above, in the form most of the repository's ranges take: `^`, `~`, an
+exact pin, and for a crate bare or `=`. A package the repository already has is refused, naming
+`mise run update`. Where a repository gathers several members, `--in` names the member, and one
+outside the repository is refused. `dep remove` takes one out, finding its section itself, and
+`--dry-run` prints the command and writes nothing. The task is `scripts/deps/dep/dep.res`.
+
 ### An outside action is pinned by commit, the author's own taken at `main`
 
 A workflow names each action from outside by the commit a release tag points at, with the release

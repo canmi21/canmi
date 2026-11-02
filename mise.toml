@@ -116,6 +116,11 @@ description = "Watch a job's output file for Monitor: `watch <file> [--stall <se
 depends = ["build"]
 run = "node scripts/workspace/watch.res.mjs"
 
+[tasks.dep]
+description = "Add or remove a dependency, a version a day old: `dep add|remove <repository> <package> [--in <path>] [--dev] [--rust] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/deps/dep/dep.res.mjs"
+
 # Versions roll at a landing on a main line and never in a lane.
 [tasks.bump]
 description = "Raise what a landing on a main line changes: `bump [name | --all] [--dry-run] [--minor <package>]`"
