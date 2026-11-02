@@ -85,6 +85,9 @@ The same text is saved beside the agent's memory note of work in progress.
 from thirty seconds to five minutes by how hard the step is, by a timer it starts as it hands over.
 At the time it asks for progress or redeploys the seats, so a stuck step is found by it, never by the
 author. It passes no `notify_when_idle`, and it never just waits.
+While work handed to the integrator is unreported, a timer stays running; when it fires the
+advisor reads the repositories' main heads and the integrator's last message, and asks at once if
+nothing moved.
 
 **The integrator's open questions reach the author as numbered decisions, each with the advisor's
 recommendation**, as the integrator reports facts and questions and leaves suggestions to the author

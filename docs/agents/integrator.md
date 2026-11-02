@@ -54,6 +54,9 @@ has it, at the gate [pushing.md](pushing.md) gives, and keeps the list of privat
 is scanned for. **It alone writes the records of friction**, [friction.md](friction.md). **It
 escapes to the user and the advisor**, [escapes.md](escapes.md).
 
+**A passed check is landed in the turn it passes**: the commit, the push and the one-line report
+follow it before the turn ends, or a report says why not, so no landing waits for someone to ask.
+
 **A wait is worked through, and a push waits for the run it would land under**. While a CI run or
 another long wait goes on, the integrator works on the next item and commits locally; a push to the
 repository the run builds waits until the run ends, then goes out with its dry run first, and a push

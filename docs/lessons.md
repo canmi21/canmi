@@ -18,6 +18,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   update `Cargo.lock`.
 - **An implementer sent a message is working again until it says it is idle.** Wait for its latest
   idle report before committing its repository.
+- **A turn never ends with a passed check not yet committed.** The check's end is followed in the
+  same turn by the commit, the push and the one-line report, or by a report of why not; on
+  2026-11-02 a passed check sat uncommitted for 29 minutes until the advisor asked.
 - **A seat never ends its turn to wait for a background job's notice.** No notice wakes it, so it
   watches the job's output itself under Monitor with `mise run watch` until the job ends; its
   dispatcher reads the seat's last transcript entry at each follow-up, never ListAgents' idle.
