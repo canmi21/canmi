@@ -23,6 +23,7 @@ CACHES = (
 	".bun/install/cache",
 	".cargo/registry",
 	".cargo/git",
+	".cargo/build",
 )
 # Key copies monoflake/cloud's reset makes for a machine, removed with rm once the machine holds
 # them, docs/toolchain/deletion.md.

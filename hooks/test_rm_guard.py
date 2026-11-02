@@ -27,6 +27,7 @@ class VerdictTest(unittest.TestCase):
 			"/tmp/claude-501/scratch/out.json",
 			"/Users/me/Library/Caches/mise",
 			"/Users/me/.cargo/registry/cache",
+			"/Users/me/.cargo/build/ac/59072de23bed0c/tmp/containers",
 			"/Users/me/.local/share/monoflake/reset/mint/tailnet-key",
 		):
 			with self.subTest(operand=operand):

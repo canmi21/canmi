@@ -43,7 +43,8 @@ could have seen.
 - **Inside the whitelist it is the real `/bin/rm`, with no question asked**: the workspace and every
   repository under it, `/tmp` (where the harness scratchpad lives) and `$TMPDIR`, and the caches --
   `~/Library/Caches`, `~/.cache`, `~/.npm`, `~/.bun/install/cache`, `~/.cargo/registry`,
-  `~/.cargo/git`, `~/Library/pnpm/store`, Xcode's `DerivedData`; and
+  `~/.cargo/git`, Cargo's shared build directory `~/.cargo/build`, `~/Library/pnpm/store`, Xcode's
+  `DerivedData`; and
   `~/.local/share/monoflake/reset`, where monoflake/cloud's reset keeps the key copies it makes for
   a machine and removes with `rm` once the machine holds them, its docs/upgrades.md.
 - **Refused outright**, with a hint that a variable is probably empty: an empty operand, `/`,
