@@ -1,6 +1,6 @@
 # Threads
 
-A thread is one goal carried to its target test. What a thread is in the record is its RFC,
+A thread is one goal carried to its target test, RFC ml1m6. What a thread is in the record is its RFC,
 [agent-protocol.md](agent-protocol.md), "A thread runs on its own between a charter and a ledger".
 What it is day to day is four files in one place, a message being only a nudge.
 
@@ -8,7 +8,7 @@ What it is day to day is four files in one place, a message being only a nudge.
 
 **`mise run //:thread new <name>` writes them under `Delegation.threads`**, in
 [model/rules/delegation.res](../../model/rules/delegation.res), private and in no repository: its
-`charter.md`, `decisions.md`, `ledger.md` and `status.md`, each starting from the small template
+`charter.md`, `decisions.md`, `buffer.md`, `ledger.md` and `status.md`, each starting from the small template
 [scripts/workspace/runs/thread.res](../../scripts/workspace/runs/thread.res) holds. **The thread's
 RFC keeps what is the record**, its goal and its `### Ledger` at the end. The advisor answers "where
 are we" from these files alone.
@@ -17,6 +17,8 @@ are we" from these files alone.
 - **`decisions.md`**: the queue, each decision carrying the step of the path it stands on, a
   recommended default and whether it can be undone, [delegation.md](delegation.md), "Decision
   rights".
+- **`buffer.md`**: what waits to reach the author, the advisor's, [advisor.md](advisor.md), "Decisions
+  reach the author one at a time".
 - **`ledger.md`**: what any layer chose under its right, one line each, the working copy of the RFC's
   `### Ledger`, into which the supervisor gathers it at the thread's end.
 - **`status.md`**: where the thread stands, kept by the supervisor.

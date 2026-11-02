@@ -103,8 +103,19 @@ let read = id =>
     0
   }
 
+/** The harness session calling, read from what each vendor sets, none where it sets nothing. */
+let sessionNames = ["CLAUDE_CODE_SESSION_ID", "CODEX_THREAD_ID", "CODEX_SESSION_ID"]
+let currentSession = () =>
+  sessionNames->Array.findMap(name => Node.env->Dict.get(name))->Option.getOr("")
+
+/** Whose a job is where the caller is not its owner, `job-stop-own`, none where it may stop it. */
+let notOwn = (job: Ledger.job, ~session, ~by) =>
+  job.by == by && job.session == session
+    ? None
+    : Some(`${job.by}${job.session == "" ? "" : ` in session ${job.session}`}`)
+
 /** A job's process group ended, its end written since its owner dies with it. */
-let stop = id =>
+let stop = (id, ~by) =>
   switch Ledger.find(id) {
   | None =>
     Console.error(`${id} is no job of the ledger`)
@@ -112,6 +123,12 @@ let stop = id =>
   | Some({ended: Some(_)}) =>
     Console.log(`${id} ended already`)
     0
+  | Some(job) if notOwn(job, ~session=currentSession(), ~by) != None =>
+    let whose = notOwn(job, ~session=currentSession(), ~by)->Option.getOr("")
+    Console.error(
+      `${id} is not yours to stop: it is ${whose}'s, and you are ${by}. Ask that session or seat, or pass --by if you started it under another name, job-stop-own.`,
+    )
+    1
   | Some(job) =>
     try signal(-job.pid, "SIGTERM") catch {
     | _ => ()
@@ -128,12 +145,13 @@ let stop = id =>
 
 let usage =
   "usage: mise run //:job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command>\n" ++
-  "       mise run //:job read <id> | stop <id> | list | table [--since <yyyy-mm-dd>] | events\n" ++
+  "       mise run //:job read <id> | stop <id> [--by <who>] | list | table [--since <yyyy-mm-dd>] | events\n" ++
   "       mise run //:job register <role> <name> [--transcript <file>] | unregister <name>\n" ++ "       mise run //:job watchdog | install [--dry-run]"
 
+let defaultBy = () => Node.env->Dict.get("MONOFLAKE_ROLE")->Option.getOr("session")
+
 let begin = (argv, ~wait) => {
-  let defaultBy = Node.env->Dict.get("MONOFLAKE_ROLE")->Option.getOr("session")
-  let given = parseGiven(argv, ~defaultBy)
+  let given = parseGiven(argv, ~defaultBy=defaultBy())
   if given.command == [] {
     Console.error(usage)
     2
@@ -146,6 +164,7 @@ let begin = (argv, ~wait) => {
     let opening = Ledger.startLine({
       id,
       by: given.by,
+      session: currentSession(),
       command: lineOf(given.command),
       cwd,
       pid: 0,
@@ -303,7 +322,8 @@ let main = (argv: array<string>) =>
   switch argv {
   | ["supervise", text] => supervise(text)
   | ["read", id] => read(id)
-  | ["stop", id] => stop(id)
+  | ["stop", id] => stop(id, ~by=defaultBy())
+  | ["stop", id, "--by", by] => stop(id, ~by)
   | ["list"] => listed()
   | ["table"] => tabled(None)
   | ["table", "--since", day] => tabled(Some(day))

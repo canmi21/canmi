@@ -74,7 +74,15 @@ The same text is saved beside the agent's memory note of work in progress.
 past its limit reaches the advisor, and the author by a notification. It never just waits on what it
 handed down: it reads the thread's status and the repositories' main heads, and asks if nothing moved.
 
-**The integrator's open questions reach the author as numbered decisions, each with the advisor's
+## Decisions reach the author one at a time
+
+**The advisor holds a buffer, `buffer.md` in the thread's place**, [threads.md](threads.md), RFC ml1m6. **A
+decision arriving while the author is free is taken at once; one arriving while they are occupied is
+written to the buffer, and the buffer is brought one at a time by priority.** The author asks for more
+context where they cannot judge one. **Only what is truly urgent cuts in**: production down, a
+credential leaked or data lost.
+
+**The integrator's open questions reach the author as decisions, each with the advisor's
 recommendation**, as the integrator reports facts and questions and leaves suggestions to the author
 and the advisor. A small reading of a decision already made the advisor answers at once, to keep the
 work moving, and tells the author after; a new decision waits for the author.

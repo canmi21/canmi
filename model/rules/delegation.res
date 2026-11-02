@@ -428,6 +428,12 @@ let rules: array<Rule.t> = [
     held: Check("scripts"),
   },
   {
+    name: "job-stop-own",
+    says: "`job stop` stops only a job of the session and the `--by` name that started it, refusing any other and saying whose it is, as `kill-by-recorded-pid` has it",
+    doc: "docs/agents/runs.md",
+    held: Check("scripts"),
+  },
+  {
     name: "thread-figures",
     says: "The watchdog says each thread's seat time and landings since a step last went green and the share of its seat time that is tooling, flagged past `toolingShare`, each `figuresSeconds`, which warn and fail nothing",
     doc: "docs/agents/threads.md",

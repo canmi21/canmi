@@ -118,7 +118,7 @@ run = "test -f scripts/workspace/runs/watch.res.mjs || mise run build; node scri
 # The run ledger and the watchdog reading it, docs/agents/runs.md. Neither waits on a build, since
 # what it starts is often the build of a tree that does not compile yet.
 [tasks.job]
-description = "Start a long command in the ledger, or read it: `job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command> | read <id> | stop <id> | list | table [--since <date>] | events | register <role> <name> [--transcript <file>] | unregister <name> | watchdog | install [--dry-run]`"
+description = "Start a long command in the ledger, or read it: `job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command> | read <id> | stop <id> [--by <who>] | list | table [--since <date>] | events | register <role> <name> [--transcript <file>] | unregister <name> | watchdog | install [--dry-run]`"
 run = "test -f scripts/workspace/runs/job.res.mjs || mise run build; node scripts/workspace/runs/job.res.mjs"
 
 # A thread's charter, decision queue, ledger and status, docs/agents/threads.md.

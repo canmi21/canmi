@@ -196,10 +196,11 @@ mechanisms keep the rest.
 
 ### The questions of one block are asked together
 
-**When a piece of work leaves several decisions open, they are gathered first and brought in one
-round**: everything the block still needs is looked for before anything is asked, each question
-numbered and in plain words -- what it is, its choices and what each costs, a recommendation -- so
-the author answers them all at once, and the changes they settle are then made together. A block is
+**When a piece of work leaves several decisions open, they are gathered first**: everything the block
+still needs is looked for before anything is asked, each question in plain words -- what it is, its
+choices and what each costs, a recommendation. **They reach the author one at a time**, from the
+advisor's buffer, [advisor.md](advisor.md), "Decisions reach the author one at a time", and the changes
+they settle are then made together. A block is
 the work in hand, such as a boundary being drawn; what belongs to the next one waits for it.
 
 ### Working a backlog: one item, proposed and accepted, then done

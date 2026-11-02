@@ -15,6 +15,10 @@ let shape = [
     "# Decision queue\n\nOne block each, the oldest open first; an answered one stays, marked.\n\n## <short name>\nStep: the step of the current path it stands on.\nAsk: the question, in plain words.\nDefault: what happens if nobody answers.\nUndone by: how it can be undone, or `irreversible`, which blocks its branch alone.\nFound in: the RFC, plan or ledger line already read, or `none`.\nAnswer: open.\n",
   ),
   (
+    "buffer.md",
+    "# Buffer\n\nThe advisor's. One block each, the most urgent first, brought to the author one at a time.\n\n## <short name>\nPriority: why it comes before the next.\nDecision: a pointer into decisions.md, or the question itself.\nBrought: not yet.\n",
+  ),
+  (
     "ledger.md",
     "# Ledger\n\nOne line each: time in UTC, layer, what was chosen, why it may be undone.\n",
   ),

@@ -2,7 +2,7 @@
 
 # Rules
 
-34 rules, 5 pending a check.
+35 rules, 5 pending a check.
 
 ## Delegation
 
@@ -114,6 +114,13 @@ A check of a repository ends naming what its blocks in work fail, `inWorkFile` c
 ### watchdog-reports
 
 The watchdog, run by launchd each `watchdogSeconds` with no model in it, writes one event line for a job ended and unread past `runUnreadSeconds`, one died, one silent past `runSilentSeconds`, one past its limit or `runOverP95` times its command's p95 after `runHistory` runs, and a registered role silent past `silentTurns`, each once, and notifies the author of `notifiesAuthor` silent.
+
+- doc: [docs/agents/runs.md](../../docs/agents/runs.md)
+- held by: check part `scripts`
+
+### job-stop-own
+
+`job stop` stops only a job of the session and the `--by` name that started it, refusing any other and saying whose it is, as `kill-by-recorded-pid` has it.
 
 - doc: [docs/agents/runs.md](../../docs/agents/runs.md)
 - held by: check part `scripts`

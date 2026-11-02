@@ -17,8 +17,8 @@ its own result and files.
   //:job read <id>`, [runs.md](../runs.md). Never wait in a foreground loop, bounded or not.
 - **A seat never ends its turn to wait for a background job's notice**; no notice wakes it.
 - Any process you start for load or as a helper, you stop before you report, and you say so. **Kill
-  only by a pid you recorded**: `cmd & P=$!` then `kill $P`, or `mise run //:job stop <id>`; killing by
-  name is refused, `kill-by-recorded-pid`.
+  only by a pid you recorded**: `cmd & P=$!` then `kill $P`, or `mise run //:job stop <id> --by <your lane>`, your own jobs alone;
+  killing by name is refused, `kill-by-recorded-pid`.
 - Tests that write files use their own temporary directory, removed with `Node.rmSync`.
 - What you made yourself, scratch files, temp output, test leftovers, build output, you remove with
   `rm`; `trash` is only for what you did not make. An `rm` never takes a bare variable path: write a

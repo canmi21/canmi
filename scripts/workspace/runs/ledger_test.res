@@ -93,3 +93,28 @@ describe("the job's command", () => {
     expect(Ledger.idOfOutput("/elsewhere/a.log"))->toEqual(None)
   })
 })
+
+describe("stopping a job", () => {
+  let job: Ledger.job = {
+    id: "a",
+    by: "seat-a",
+    session: "one",
+    command: "c",
+    cwd: "/",
+    pid: 1,
+    started: 0.,
+    output: "/o",
+    limit: None,
+    quiet: false,
+    ended: None,
+    status: None,
+    read: None,
+  }
+
+  test("is its starter's alone, and the refusal says whose it is", () => {
+    expect(Job.notOwn(job, ~session="one", ~by="seat-a"))->toEqual(None)
+    expect(Job.notOwn(job, ~session="one", ~by="seat-b"))->toEqual(Some("seat-a in session one"))
+    expect(Job.notOwn(job, ~session="two", ~by="seat-a"))->toEqual(Some("seat-a in session one"))
+    expect(Job.notOwn({...job, session: ""}, ~session="", ~by="other"))->toEqual(Some("seat-a"))
+  })
+})

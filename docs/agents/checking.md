@@ -104,8 +104,7 @@ checker would have said for free.
 
 **An implementer runs its own block's build, type check, lint and tests, the logic layer, and never
 a whole repository's check**. Checking the whole is a question only the party that sees the whole
-wave can ask. **What a seat could catch it catches in its lane**: on 2026-11-02 about six rounds of a
-check on main found faults a seat could have, so **`mise run //:lane check <part> ...`, from inside the
+wave can ask. **What a seat could catch it catches in its lane**, RFC ml1m6, so **`mise run //:lane check <part> ...`, from inside the
 lane, runs the fast parts by what they catch**, `format`, `names`, `wire`, the wire's names in the
 model's check, `compile`, and `tests`, the repository's `test` or, given a block, its `built`,
 `Delegation.seatParts`. **Where what it writes is one part of the workspace's check, it may run that

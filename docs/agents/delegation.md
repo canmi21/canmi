@@ -71,7 +71,7 @@ refused these kinds of command alone**, `implementer-commands`:
 - **a task that deploys or releases**, `Delegation.releasing`;
 - **`ssh`, `rsync` and `wrangler`**;
 - **`Delegation.notSeats`**: opening, closing or taking a lane, installing the watchdog, marking a step
-  green. `mise run //:job stop` names any job, and a seat stops only its own by the brief's word.
+  green. Of `mise run //:job stop`, its own jobs alone, `job-stop-own`.
 
 **A refactorer is refused the same**, being a role that writes code as an implementer does,
 with no part of the workspace's check excepted, `refactorer-commands`. A command given to `mise run
@@ -116,7 +116,7 @@ supervisor's would, and the advisor still dispatches nothing.
 
 ## Decision rights
 
-**Each layer decides only what is its own.**
+**Each layer decides only what is its own**, RFC ml1m6.
 
 - **A seat**: implementation, names and tests inside one result.
 - **An integrator**: landing its repositories, fixing a check, a crate's internal interface.

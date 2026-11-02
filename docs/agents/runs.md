@@ -2,8 +2,8 @@
 
 Two programs with no model in them, in [scripts/workspace/runs/](../../scripts/workspace/runs/),
 `run-ledger`, `watchdog-reports` in [model/rules/delegation.res](../../model/rules/delegation.res),
-which holds every limit here with its why. They exist because a job nobody is reading looks exactly
-like a job going well, and on 2026-11-02 a passed check sat 29 minutes unread.
+which holds every limit here; why they exist is RFC ml1m6. A job nobody is reading looks exactly like a
+job going well.
 
 ## One entry starts a long command
 
@@ -20,7 +20,9 @@ silent. **`mise run //:job run -- <command>` waits and exits with its status**, 
 - **`mise run //:watch <id>` under Monitor** follows it, and reaching its end records the read.
 - **`mise run //:job read <id>`** prints its status and the end of its output, and records the read. A
   Read or a shell command naming its output file records it too, by a hook.
-- **`mise run //:job stop <id>`** ends its process group, and a watch of it. `list` shows the last ones.
+- **`mise run //:job stop <id> [--by <who>]`** ends its process group, and a watch of it: only a job
+  of the session and the `--by` name that started it, `job-stop-own`, as a process is killed only by
+  a pid its agent recorded. A seat starts its jobs `--by <its lane>` and stops them the same way. `list` shows the last ones.
 - **`mise run //:job table [--since <yyyy-mm-dd>]`** is duration times count by command, the top one the
   bottleneck. Timing comes free of the ledger, and nothing else is timed specially.
 

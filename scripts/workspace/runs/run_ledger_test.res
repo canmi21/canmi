@@ -25,6 +25,7 @@ let payload = (~transcript="/t.jsonl", ~file=?, command): Payload.t =>
 let job = (id): Ledger.job => {
   id,
   by: "b",
+  session: "s",
   command: "c",
   cwd: "/",
   pid: 1,

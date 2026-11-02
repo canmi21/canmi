@@ -5,6 +5,7 @@
 type job = {
   id: string,
   by: string,
+  session: string,
   command: string,
   cwd: string,
   pid: int,
@@ -60,6 +61,7 @@ let fold = (text: string): array<job> => {
           {
             id,
             by: textOf(fields, "by"),
+            session: textOf(fields, "session"),
             command: textOf(fields, "command"),
             cwd: textOf(fields, "cwd"),
             pid: numberOf(fields, "pid")->Option.mapOr(0, Float.toInt),
@@ -114,6 +116,7 @@ let startLine = (job: job) =>
       ("kind", JSON.String("start")),
       ("id", JSON.String(job.id)),
       ("by", JSON.String(job.by)),
+      ("session", JSON.String(job.session)),
       ("command", JSON.String(job.command)),
       ("cwd", JSON.String(job.cwd)),
       ("pid", JSON.Number(job.pid->Int.toFloat)),

@@ -13,6 +13,7 @@ let job = (
 ): Ledger.job => {
   id,
   by: "b",
+  session: "s",
   command: "c",
   cwd: "/",
   pid,
