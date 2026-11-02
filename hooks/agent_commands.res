@@ -216,7 +216,7 @@ let jobLine = (words: array<string>) => {
         | list{"--", ...more} => more
         | more => more
         }
-      Some(past(words->Array.slice(~start=at + 2)->List.fromArray)->List.toArray->Array.join(" "))
+      Some(Job.lineOf(past(words->Array.slice(~start=at + 2)->List.fromArray)->List.toArray))
     | _ => None
     }
   }

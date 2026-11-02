@@ -43,10 +43,11 @@ the piece down.
 **It spawns the implementers, picks each one's model in its brief, and integrates what they wrote**,
 a wave at a time, in the order [checking.md](checking.md), "A wave runs in one order", gives. **It
 runs the logic layer's check when it merges a wave, and the full check at the push gate.** It
-dispatches the refactorer and the reviewer: one full review for each wave, and one verification of
-the fixes made for it. What is still not fixed after the verification it hands to the user, and once
-it has fixed it, the advisor or the user reads those changes to confirm them, with no reviewer
-dispatched again, [checking.md](checking.md), "A wave is reviewed once, and its fixes verified
+dispatches the refactorer, and calls the reviewer, who is on call and whom it does not direct: one
+full review for each wave, and one verification of the fixes made for it. The findings go to the
+supervisor, who decides which are fixed. What is still not fixed after the verification goes up to
+the advisor, and once it is fixed, the advisor or the user reads those changes to confirm them, with
+no reviewer dispatched again, [checking.md](checking.md), "A wave is reviewed once, and its fixes verified
 once".
 
 **Deploying and rehearsing are its alone.** What has no interface to click it accepts by running the

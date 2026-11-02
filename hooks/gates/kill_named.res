@@ -1,18 +1,21 @@
 /** Refuses killing a process by name or by anything but a recorded pid, `kill-by-recorded-pid`. */
-/** What finds its targets by a name, and what runs another program later in its own words. */
+/** What finds its targets by a name. */
 let byName = ["pkill", "killall"]
-let wrappers = [
-  "env",
-  "sudo",
-  "command",
-  "exec",
-  "nohup",
-  "timeout",
-  "time",
-  "nice",
-  "xargs",
-  "find",
-]
+
+/** The options of sudo and ssh that take a value, so their program can be found. */
+let sudoValued = ["-u", "-g", "-h", "-p", "-C", "-T", "-U", "-r", "-t"]
+let sshValued = ["-o", "-i", "-p", "-J", "-l", "-F", "-b", "-c", "-D", "-E", "-e", "-L", "-R", "-S"]
+
+/** A killing line piped to a shell, which judges nothing word by word. */
+let pipedToShell = /\bkill\b[^|]*\|\s*(?:\/[^\s]*\/)?(?:sh|bash|zsh|fish)\b/
+
+/** What follows a program's options, those of `valued` taking the next word. */
+let rec pastOptions = (words: list<string>, ~valued) =>
+  switch words {
+  | list{word, _, ...more} if valued->Array.includes(word) => pastOptions(more, ~valued)
+  | list{word, ...more} if word->String.startsWith("-") => pastOptions(more, ~valued)
+  | more => more
+  }
 
 /** The variables a command itself set from `$!`. */
 let capturedIn = (command: string) =>
@@ -39,24 +42,36 @@ let recorded = (word: string, ~captured) => {
   }
 }
 
-/** The operands of a kill, past its signal and options. */
+/** The operands of a kill, past its one signal, its options and any redirection. */
 let operandsOf = (words: array<string>) => {
-  let rec go = (rest: list<string>) =>
+  let rec plain = (rest: list<string>) =>
     switch rest {
-    | list{"-s" | "-n", _, ...more} => go(more)
+    | list{word, _, ...more} if /^(?:[0-9]*|&)[<>]+&?$/->RegExp.test(word) => plain(more)
+    | list{word, ...more} if /^(?:[0-9]*|&)[<>]/->RegExp.test(word) => plain(more)
+    | list{word, ...more} => list{word, ...plain(more)}
+    | list{} => list{}
+    }
+  let rec operands = (rest: list<string>, ~signalled) =>
+    switch rest {
+    | list{"-s" | "-n", _, ...more} => operands(more, ~signalled=true)
     | list{"--", ...more} => more
-    | list{word, ...more} if /^-(?:[A-Za-z]+|[0-9]+)$/->RegExp.test(word) => go(more)
+    | list{word, ...more} if !signalled && /^-(?:[A-Za-z]+|[0-9]+)$/->RegExp.test(word) =>
+      operands(more, ~signalled=true)
     | more => more
     }
-  go(words->List.fromArray)->List.toArray
+  operands(plain(words->List.fromArray), ~signalled=false)->List.toArray
 }
 
 let rec why = command => {
   let captured = capturedIn(command)
-  Jj_command.segments(
-    ~keepQuotes=true,
-    Background.foregroundText(~keepBackground=true, Push.withoutQuotedBodies(command)),
-  )->Array.findMap(segment => {
+  let shown = Background.foregroundText(~keepBackground=true, Push.withoutQuotedBodies(command))
+
+  (
+    pipedToShell->RegExp.test(shown) ? Some("a killing line is piped to a shell") : None
+  )->Option.orElse(segmentsWhy(shown, ~captured))
+}
+and segmentsWhy = (shown, ~captured) =>
+  Jj_command.segments(~keepQuotes=true, shown)->Array.findMap(segment => {
     let raw = Codex_usage.dropOpeners(segment)
     let words = raw->Array.map(Rmvar.decoded)
     switch Jj_command.commandAt(words) {
@@ -71,7 +86,6 @@ let rec why = command => {
           raw
           ->Array.slice(~start=at + 1)
           ->operandsOf
-          ->Array.filter(word => !(/^[0-9]*[<>]/->RegExp.test(word)))
         // No operand is what xargs fills in from what it found.
         operands == [] && rest->Array.includes("-l")
           ? None
@@ -81,7 +95,20 @@ let rec why = command => {
             ->Array.find(word => !recorded(word, ~captured))
             ->Option.map(word => `kill is given ${word}, which this command did not record`)
       } else if program == "sudo" {
-        why(rest->Array.filter(word => !(word->String.startsWith("-")))->Array.join(" "))
+        why(rest->List.fromArray->pastOptions(~valued=sudoValued)->List.toArray->Array.join(" "))
+      } else if program == "builtin" {
+        why(rest->Array.join(" "))
+      } else if program == "mise" {
+        switch rest->Array.findIndex(word => word == "--") {
+        | -1 => None
+        | dash => why(rest->Array.slice(~start=dash + 1)->Array.join(" "))
+        }
+      } else if program == "ssh" {
+        // The first word past its options is the host, and the rest runs there.
+        switch rest->List.fromArray->pastOptions(~valued=sshValued) {
+        | list{_, ...line} => why(line->List.toArray->Array.join(" "))
+        | list{} => None
+        }
       } else if program == "find" {
         switch rest->Array.findIndex(word => word == "-exec" || word == "-execdir") {
         | -1 => None
@@ -96,7 +123,6 @@ let rec why = command => {
       }
     }
   })
-}
 // A shell given -c runs a line of its own, which is judged as one.
 and shellLine = (rest: array<string>) =>
   switch rest->Array.findIndex(word => /^-[A-Za-z]*c[A-Za-z]*$/->RegExp.test(word)) {

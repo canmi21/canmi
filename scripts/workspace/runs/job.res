@@ -169,6 +169,7 @@ let begin = (argv, ~wait) => {
     Console.log(`read its result: mise run //:job read ${id}`)
     if wait || given.wait {
       let finished = ref(None)
+      let waited = ref(0)
       while finished.contents == None {
         Node.spawnSync("sleep", ["1"], {stdio: "ignore"})->ignore
         finished :=
@@ -176,7 +177,11 @@ let begin = (argv, ~wait) => {
           | Some({status: Some(status)}) => Some(status)
           // Its owner gone with no end written is the end of the wait.
           | Some({pid}) if pid > 0 && !Watchdog.alive(pid) => Some(1)
-          | _ => None
+          | Some(_) => None
+          // No owner ever wrote its start, so nothing will write its end.
+          | None =>
+            waited := waited.contents + 1
+            waited.contents > 30 ? Some(1) : None
           }
       }
       finished.contents->Option.getOr(1)

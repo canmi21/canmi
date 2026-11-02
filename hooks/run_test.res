@@ -353,3 +353,34 @@ describe("a jj command inside a shell line", () => {
     )
   })
 })
+
+describe("a command a job is given", () => {
+  let payload = command =>
+    Dict.fromArray([
+      ("tool_name", JSON.String("Bash")),
+      ("tool_input", JSON.Object(Dict.fromArray([("command", JSON.String(command))]))),
+    ])
+
+  test("meets the gates it would meet typed by itself, in any prefixed form", () => {
+    [
+      "mise run //:job start -- pkill node",
+      "FOO=1 mise run //:job start -- pkill node",
+      "(mise run //:job start -- pkill node)",
+      "timeout 60 mise run //:job start -- jj git push",
+    ]->Array.forEach(
+      command =>
+        expect((command, Run.refusedInJob(payload(command)) != 0))->toEqual((command, true)),
+    )
+  })
+
+  test("keeps its quoting, so what only names a thing passes", () => {
+    [
+      "mise run //:job start -- rg 'a; pkill b' docs",
+      "mise run //:job start -- mise run check",
+      "mise run //:job start -- 'sleep 9 & P=$!; kill $P'",
+      "ls",
+    ]->Array.forEach(
+      command => expect((command, Run.refusedInJob(payload(command))))->toEqual((command, 0)),
+    )
+  })
+})

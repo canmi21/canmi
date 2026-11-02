@@ -80,14 +80,14 @@ let aboutSession = (session: session, ~now, ~moved): array<finding> =>
         notify,
       },
     ]
-  | (Some(_), None) if session.transcript == None => [
+  | (Some(_), None) => [
       {
         key: `unwatched:${session.name}`,
         says: `unwatched to=${Delegation.silentTurns
           ->Array.find(((role, _, _)) => role == session.role)
           ->Option.mapOr("advisor", ((_, _, superior)) =>
             superior
-          )} ${session.role} ${session.name} is registered with no transcript, so its turn cannot be read`,
+          )} ${session.role} ${session.name} has no transcript to read, so its turn cannot be read`,
         notify: false,
       },
     ]

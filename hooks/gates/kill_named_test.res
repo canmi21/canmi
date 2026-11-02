@@ -32,6 +32,13 @@ describe("killing a process", () => {
       "kill $P",
       "kill \"$SOMETHING\"",
       "kill $(cat pidfile)",
+      "mise exec -- pkill node",
+      "mise x -- kill $(pgrep node)",
+      "sudo -u root pkill node",
+      "builtin kill $(pgrep x)",
+      "ssh host pkill -f x",
+      "ssh -o ConnectTimeout=5 root@host 'pkill -f x'",
+      "ps | awk '{print \"kill \" $1}' | sh",
     ]->Array.forEach(command => expect((command, refused(command)))->toEqual((command, true)))
   })
 
@@ -43,6 +50,13 @@ describe("killing a process", () => {
       "kill -s TERM 12345",
       "kill -- -12345",
       "kill %1",
+      "kill -TERM -12345",
+      "sleep 9 & P=$!; kill $P 2> /dev/null",
+      "sleep 9 & P=$!; kill $P > /dev/null",
+      "sleep 9 & P=$!; kill $P 2>/dev/null",
+      "sleep 9 & P=$!; kill $P &>/dev/null",
+      "ssh host kill 12345",
+      "ssh host uptime",
       "sleep 9 & kill $!",
       "sleep 9 & P=$!; kill $P",
       "sleep 9 & P=$!; sleep 1; kill -9 \"$P\"",

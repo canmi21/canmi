@@ -27,7 +27,7 @@ the RFCs alone, **never an implementer's reasoning or report.** **Its commands a
 **Every other command is refused, every mise task among them**: a check writes what it builds, which
 a role that only reads must not, and what a check concludes is the integrator's.
 
-**A way around the whitelist is a known limit**, as a way around the implementer's four kinds is,
+**A way around the whitelist is a known limit**, as a way around what the implementer is refused is,
 [delegation.md](../delegation.md), and a review does not count it a defect. The hook guards a
 well-meaning agent against a slip, not against an adversary, and a reviewer is no adversary; the
 mechanism is not polished further.
@@ -44,7 +44,7 @@ that report is its escape, [escapes.md](../escapes.md). It proposes nothing of t
 
 **A wave has one full review, and the fixes made for it one verification**, which reads only the
 items the review listed and says of each whether it is fixed. What a verification finds beside them
-is reported with its severity: a high one stops the work for the user, any other is a record of
-friction and blocks no push. What is still not fixed after it goes to the user; the advisor or the
-user confirms the integrator's fix by reading it, and no reviewer is dispatched again,
+is reported with its severity: a high one stops the work and is copied to the advisor, any other is
+a record of friction and blocks no push. What is still not fixed after it goes up to the advisor; the
+advisor or the user confirms the integrator's fix by reading it, and no reviewer is dispatched again,
 [checking.md](../checking.md), "A wave is reviewed once, and its fixes verified once".

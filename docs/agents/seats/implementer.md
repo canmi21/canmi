@@ -45,7 +45,7 @@ operations several workspaces make at once by itself. It does not deploy, does n
 `mise run check` and spawns no agent; **where what it writes is one part of the workspace's check,
 it may run that part alone**, `mise run check workspace <part>`, and in any other repository it runs
 its block's `built` and `accept`, [checking.md](../checking.md); it does not use Agent, SendMessage,
-Workflow or Artifact. A hook in its definition holds its commands, four kinds alone,
+Workflow or Artifact. A hook in its definition holds its commands, a few kinds alone,
 `implementer-commands` in [model/rules/delegation.res](../../../model/rules/delegation.res) and
 [delegation.md](../delegation.md). Beside it, `secrets-unprinted` refuses every role a command that
 prints the environment or a decrypted secret, [briefs.md](../briefs.md), "Every brief carries these".

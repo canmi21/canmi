@@ -62,22 +62,24 @@ before it hands in, `mise run //:lane handed`, [lanes.md](lanes.md).
 
 **The command hooks guard against a slip, not against malice**: an implementer works with the
 integrator, so the hooks cover the common spellings of a command and no more. **An implementer is
-refused four kinds of command alone**, `implementer-commands`:
+refused these kinds of command alone**, `implementer-commands`:
 
 - **version control**, jj and git alike;
 - **the machinery of a whole repository's check**: `check`, `verify`, a `verify:<part>`, `audit`, and
   `--pending` even beside one part, the exceptions being a single part of the workspace's own check
   and `mise run //:lane check`, [checking.md](checking.md), its parts `seat-parts`;
 - **a task that deploys or releases**, `Delegation.releasing`;
-- **`ssh`, `rsync` and `wrangler`.**
+- **`ssh`, `rsync` and `wrangler`**;
+- **`Delegation.notSeats`**: opening, closing or taking a lane, installing the watchdog, marking a step
+  green. `mise run //:job stop` names any job, and a seat stops only its own by the brief's word.
 
-**A refactorer is refused the same four**, being a role that writes code as an implementer does,
+**A refactorer is refused the same**, being a role that writes code as an implementer does,
 with no part of the workspace's check excepted, `refactorer-commands`. A command given to `mise run
 //:job` is judged as its own.
 
 A list of what to refuse is never complete, and the completion protocol,
 [implementer.md](seats/implementer.md), leaves an implementer no reason to go around it. **Every other way
-around the four is a known limit, and a review does not count it a defect.** Known to pass unseen:
+around them is a known limit, and a review does not count it a defect.** Known to pass unseen:
 `pnpm --filter <name> exec <command>`, an option before `exec`; a backtick span inside double
 quotes, judged as a command where the shell would run it; and any spelling the hooks do not parse.
 
@@ -171,7 +173,8 @@ saying nothing more. **No subagent is given a `memory` field.**
 **Work done live with the user, as a look tuned beside them, takes no role**: one session with no
 role named does it directly.
 
-**Who reads the code.** The advisor reads it itself or sends a reader; the integrator, where it
+**Who reads the code.** The advisor reads it itself or sends a reader, who holds no lane and changes
+nothing, so is no seat; the integrator, where it
 needs the code read to integrate, may send a reader too.
 
 ## The point is the user testing while the top level builds

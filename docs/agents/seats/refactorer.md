@@ -14,7 +14,7 @@ and `accept`, [implementer.md](implementer.md). **It changes no contract and no 
 a split shows that a new block or component belongs there, it reports that, and creates nothing.
 
 **It runs alone, never beside another agent.** It is held exactly as the implementer is: it does not
-use Agent, SendMessage, Workflow or Artifact, and is refused the implementer's four kinds of
+use Agent, SendMessage, Workflow or Artifact, and is refused what the implementer is refused of
 command, with no part of the workspace's check excepted, `refactorer-commands` in
 [model/rules/delegation.res](../../../model/rules/delegation.res) and [delegation.md](../delegation.md).
 

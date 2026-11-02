@@ -121,3 +121,13 @@ describe("a brief naming a lane", () => {
     expect(Seat.staleFaults("in lanes/other/x", ~exists, ~stale=_ => true))->toEqual([])
   })
 })
+
+describe("a prompt pointing at a brief", () => {
+  test("is judged by what the brief names", () => {
+    let path = write("pointed.md", "Result: x\nVerify: y\nin lanes/somewhere/x\n")
+    expect(
+      Seat.withPointed(`brief is the file ${path}`)->String.includes("lanes/somewhere"),
+    )->toEqual(true)
+    expect(Seat.withPointed("no pointer"))->toEqual("no pointer")
+  })
+})
