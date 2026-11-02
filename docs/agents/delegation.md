@@ -241,6 +241,8 @@ has quota, and on Claude only while it has none.
   is only as fresh as the last Codex turn. Codex is limited while either window reads 100.
 - **While Codex is limited, new work goes to Claude** rather than waiting, and the integrator notes
   about when the full window resets.
+- **Codex's quota is a supplement and never holds work back.** A seat never waits for Codex's
+  reset, and no work is planned around it.
 - **Around that time it reads the quota again**; once Codex has quota back, the next dispatch goes
   to Codex, and nothing in flight moves back.
 

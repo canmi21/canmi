@@ -70,6 +70,10 @@ each stage is worked.
 **A step outside the plan the advisor cleared is said before it is taken**, in one line to the
 advisor, as moving `main` back to push a cleared range alone.
 
+**The author's word relayed by the advisor is the author's word**: a release, a roll or any step the
+advisor says the author approved is taken without asking the author again. Only a change to the
+harness's permission settings or configuration waits for the author's own word in this session.
+
 **It messages the advisor directly and settles with it what they can without going through the
 author**, [agent-protocol.md](agent-protocol.md), "Working beside other agents"; it does the same
 with the implementers it spawns, and with no other session.
