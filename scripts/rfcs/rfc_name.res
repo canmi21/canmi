@@ -1,8 +1,9 @@
 /**
- * An RFC's file name, `<yyyy>-<mmdd>-<nn>-<slug>-<id>.md`, the day it was written, its place in
- * that day, a slug for people and an id for machines. RFC 2ut6h.
+ * An RFC's file name, `<yyyy>-<mmdd>-<slug>-<id>.md`, the day it was written, a slug for people and
+ * an id for machines. No sequence number stands in it, so two RFCs of one day are ordered by
+ * nothing the name holds. RFC 2ut6h.
  */
-type t = {day: string, order: int, slug: string, id: string}
+type t = {day: string, slug: string, id: string}
 
 /** An area's directory. */
 let area = /^[a-z][a-z0-9-]*$/
@@ -22,25 +23,23 @@ let isDay = (year, month, date) => {
 
 /** A file's name read, or None where it is not one; `day` is `yyyy-mmdd`. */
 let parse = (file): option<t> =>
-  switch /^(\d{4})-(\d{2})(\d{2})-(\d{2})-([a-z0-9]+(?:-[a-z0-9]+)*)-([a-z0-9]{5})\.md$/->RegExp.exec(
+  switch /^(\d{4})-(\d{2})(\d{2})-([a-z0-9]+(?:-[a-z0-9]+)*)-([a-z0-9]{5})\.md$/->RegExp.exec(
     file,
   ) {
   | Some(result) =>
     switch result->RegExp.Result.matches {
-    | [Some(year), Some(month), Some(date), Some(order), Some(slug), Some(id)] =>
+    | [Some(year), Some(month), Some(date), Some(slug), Some(id)] =>
       let number = text => text->Int.fromString->Option.getOr(0)
-      isDay(number(year), number(month), number(date)) && number(order) >= 1
-        ? Some({day: `${year}-${month}${date}`, order: number(order), slug, id})
+      // A slug opening on two digits and a hyphen is the old sequence number left in the name.
+      isDay(number(year), number(month), number(date)) && !(/^\d{2}-/->RegExp.test(slug))
+        ? Some({day: `${year}-${month}${date}`, slug, id})
         : None
     | _ => None
     }
   | None => None
   }
 
-let format = ({day, order, slug, id}: t) => `${day}-${pad(order)}-${slug}-${id}.md`
-
-/** Where a name stands among every other, `yyyy-mmdd-nn`. */
-let place = (day, order) => `${day}-${pad(order)}`
+let format = ({day, slug, id}: t) => `${day}-${slug}-${id}.md`
 
 /** A name's words in lowercase, joined by hyphens, `RFC Format` being `rfc-format`. */
 let slugOf = name =>

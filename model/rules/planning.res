@@ -7,17 +7,17 @@ let workspaceSpace = "workspace"
 /** Repositories retired, a commit in one kept as written in an RFC and never checked. */
 let retired = ["platform", "infra"]
 
-/** Where a repository keeps its RFCs, one directory deep in areas. */
+/** Where a repository keeps its RFCs, flat to `Layout.widest` of them and then in areas. */
 let rfcDirectory = "docs/rfcs"
 
 /** Where an RFC stands, in the order it moves. Accepted and landed are history. RFC 8q1af. */
 let statuses = ["draft", "decided", "accepted", "landed", "declined"]
 
-/** The place, `yyyy-mmdd-nn`, from which an RFC is of the new form. RFC 8q1af. */
-let newFormFrom = "2026-1101-02"
+/** The day, `yyyy-mmdd`, from which an RFC is of the new form. RFC 8q1af. */
+let newFormFrom = "2026-1101"
 
-/** RFCs placed on that day in other repositories before the form was set, history as they stand. */
-let oldForm = ["stc9g", "jq7tx", "42a5w", "fds59", "okz12"]
+/** RFCs written on that day before the form was set, history as they stand. */
+let oldForm = ["z7o68", "79bz5", "stc9g", "jq7tx", "42a5w", "fds59", "okz12"]
 
 /** The only statuses an RFC of the new form may have. */
 let newStatuses = ["draft", "decided", "declined"]
@@ -73,7 +73,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "rfc-form",
-    says: "An RFC is named, placed and written as RFC 2ut6h has it, its id and place unique in its id space",
+    says: "An RFC is named, placed and written as RFC 2ut6h has it, its id unique in its id space and its place flat or in an area of its tree",
     doc: "docs/rfcs.md",
     held: Check("rfcs"),
   },

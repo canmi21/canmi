@@ -77,6 +77,7 @@ let rfcs = repo =>
         repo != Planning.workspaceSpace && Waiting.skipped(repo)->Option.isSome
           ? None
           : Rfc_check.exists(repo, hash),
+      ~inTree=(repo, area) => Rfc_spaces.tree(repo)->Array.includes(area),
     )
     ->Array.filter(problem =>
       problem.concerns == [] ||

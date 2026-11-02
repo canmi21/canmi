@@ -1,13 +1,20 @@
 /**
- * `rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`, an RFC started
- * from its name, its slug, id and place in the day drawn so nobody picks them. RFC 2ut6h.
+ * `rfc new <name> [<area>] [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]`, an RFC
+ * started from its name, its slug and id drawn so nobody picks them. It stands flat in docs/rfcs
+ * while the repository holds at most `Layout.widest`, and in an area of its own tree past that.
+ * RFC 2ut6h.
  */
 let usage = () => {
   Console.error(
-    "usage: mise run rfc new <name> <area> [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]",
+    "usage: mise run rfc new <name> [<area>] [--in <path>] [--status S] [--day yyyy-mmdd] [--dry-run]",
   )
   Console.error(
-    "  the name in title case, at most 32 characters; the area a directory of docs/rfcs;",
+    "  the name in title case, at most 32 characters; the area a directory of the repository's",
+  )
+  Console.error(
+    `  own tree, given once it holds more than ${Int.toString(
+        Layout.widest,
+      )} RFCs and never before;`,
   )
   Console.error(
     "  --in a repository repos/registry.toml lists that declares [rfcs], the workspace's",
@@ -15,7 +22,7 @@ let usage = () => {
   Console.error(
     `  own unless given; the status one of ${Planning.newStatuses->Array.join(", ")}, draft`,
   )
-  Console.error(`  unless given; e.g. mise run rfc new "Hue Pairs" design --in monoflake/platform`)
+  Console.error(`  unless given; e.g. mise run rfc new "Hue Pairs" libs --in monoflake/platform`)
   Node.exit(2)
 }
 
@@ -55,6 +62,33 @@ references: []
 ## Options
 ${status == "draft" ? "" : "\n## Decision\n"}`
 
+/**
+ * Where an RFC goes among a repository's `count`: `Ok("")` flat, `Ok(area)` in an area of its tree,
+ * or why it can go nowhere.
+ */
+let placement = (~repo, ~count, ~area: option<string>, ~inTree: string => bool) => {
+  let widest = Int.toString(Layout.widest)
+  switch (count > Layout.widest, area) {
+  | (false, Some(_)) =>
+    Error(
+      `${repo} holds ${Int.toString(
+          count,
+        )} RFCs, at most ${widest}, so they stand flat: give no area`,
+    )
+  | (false, None) if count == Layout.widest =>
+    Error(
+      `${repo} holds ${widest} RFCs, the most that stand flat: split them into areas of its tree first`,
+    )
+  | (false, None) => Ok("")
+  | (true, None) =>
+    Error(`${repo} holds more than ${widest} RFCs, so a new one needs an area of its tree`)
+  | (true, Some(area)) if !(Rfc_name.area->RegExp.test(area)) =>
+    Error(`${area} is not lowercase words and hyphens`)
+  | (true, Some(area)) if !inTree(area) => Error(`${area} is no directory of ${repo}'s own tree`)
+  | (true, Some(area)) => Ok(area)
+  }
+}
+
 let main = () => {
   let given = Node.args()
   if given[0] != Some("new") {
@@ -66,7 +100,8 @@ let main = () => {
   let day = option(args, "--day")->Option.getOr(Rfc_name.today())
   let dry = args->Array.includes("--dry-run")
   let (name, area) = switch args->Array.filter(arg => !(arg->String.startsWith("--"))) {
-  | [name, area] => (name->String.trim, area)
+  | [name] => (name->String.trim, None)
+  | [name, area] => (name->String.trim, Some(area))
   | _ => usage()
   }
   if name->String.length > 32 {
@@ -77,10 +112,9 @@ let main = () => {
   }
   let slug = Rfc_name.slugOf(name)
   if (
-    !(Rfc_name.area->RegExp.test(area)) ||
     !(Rfc_name.slug->RegExp.test(slug)) ||
     !(Planning.newStatuses->Array.includes(status)) ||
-    Rfc_name.parse(`${day}-01-a-aaaaa.md`) == None
+    Rfc_name.parse(`${day}-a-aaaaa.md`) == None
   ) {
     usage()
   }
@@ -92,22 +126,27 @@ let main = () => {
   }
   let {files, areas}: Rfc_spaces.read = Rfc_spaces.read(space)
   let ids = files->Array.map(file => file.id)
-  if ids->Array.includes(area) {
-    Console.error(`${area} is an RFC's id in ${space}, so it cannot name an area`)
+  let count = files->Array.filter(file => file.repo == into)->Array.length
+  let inside = switch placement(~repo=into, ~count, ~area, ~inTree=area =>
+    Rfc_spaces.tree(into)->Array.includes(area)
+  ) {
+  | Ok(inside) => inside
+  | Error(says) =>
+    Console.error(says)
     Node.exit(2)
   }
-  let order =
-    files->Array.reduce(0, (most, file) =>
-      file.day == day ? Math.Int.max(most, file.order) : most
-    ) + 1
-  if order > 99 {
-    Console.error(`${day} holds 99 RFCs in ${space} already, the most two digits can place`)
-    Node.exit(1)
+  if ids->Array.includes(inside) {
+    Console.error(`${inside} is an RFC's id in ${space}, so it cannot name an area`)
+    Node.exit(2)
   }
   // An area's name is kept from the ids, since an id stands where an area's name does in a path.
   let id = Rfc_name.fresh(Array.concat(ids, areas))
-  let directory = Node.join([Rfc_spaces.checkout(into), Planning.rfcDirectory, area])
-  let path = Node.join([directory, Rfc_name.format({day, order, slug, id})])
+  let directory = Node.join(
+    inside == ""
+      ? [Rfc_spaces.checkout(into), Planning.rfcDirectory]
+      : [Rfc_spaces.checkout(into), Planning.rfcDirectory, inside],
+  )
+  let path = Node.join([directory, Rfc_name.format({day, slug, id})])
   if dry {
     Console.log(`would write ${Rfc_spaces.relative(path)}`)
   } else {

@@ -43,7 +43,7 @@ A doc under docs/ and an AGENTS.md hold only the rules in force, no rule's date,
 
 ### rfc-form
 
-An RFC is named, placed and written as RFC 2ut6h has it, its id and place unique in its id space.
+An RFC is named, placed and written as RFC 2ut6h has it, its id unique in its id space and its place flat or in an area of its tree.
 
 - doc: [docs/rfcs.md](../../docs/rfcs.md)
 - held by: check part `rfcs`

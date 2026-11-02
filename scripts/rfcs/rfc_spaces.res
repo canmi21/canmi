@@ -7,6 +7,7 @@ type file = {
   space: string,
   /** The repository holding it, `workspace` or its path under repos/. */
   repo: string,
+  /** The directory of docs/rfcs it stands in, empty where the repository's RFCs sit flat. */
   area: string,
   path: string,
   /** Its path from the workspace's root, as a problem names it. */
@@ -44,7 +45,34 @@ let names = () =>
 
 let relative = path => Node.relative(root, path)->String.split(Node.sep)->Array.join("/")
 
-/** One repository's docs/rfcs, each area one level of directories. */
+/**
+ * The directories of a repository's own tree, to three levels, an area being named for one of them;
+ * dot directories, dependencies, build output and docs/rfcs itself are not the tree.
+ */
+let tree = repo => {
+  let skipped = ["node_modules", "target", "dist"]
+  let found = []
+  let rec walk = (directory, depth) =>
+    if depth < 3 && Node.existsSync(directory) {
+      Node.entries(directory)->Array.forEach(entry => {
+        let name = entry->Node.name
+        let path = Node.join([directory, name])
+        if (
+          entry->Node.isDirectory &&
+          !(name->String.startsWith(".")) &&
+          !(skipped->Array.includes(name)) &&
+          path != Node.join([checkout(repo), Planning.rfcDirectory])
+        ) {
+          found->Array.push(name)
+          walk(path, depth + 1)
+        }
+      })
+    }
+  walk(checkout(repo), 0)
+  found
+}
+
+/** One repository's docs/rfcs, flat or in areas one level of directories deep. */
 let inRepository = (~space, ~repo): read => {
   let directory = Node.join([checkout(repo), Planning.rfcDirectory])
   let files = []
@@ -59,7 +87,20 @@ let inRepository = (~space, ~repo): read => {
       if area->String.startsWith(".") {
         ()
       } else if !(entry->Node.isDirectory) {
-        strays->Array.push(folder)
+        switch entry->Node.isFile ? Rfc_name.parse(area) : None {
+        | Some({day, slug, id}) =>
+          files->Array.push({
+            day,
+            slug,
+            id,
+            space,
+            repo,
+            area: "",
+            path: folder,
+            where: relative(folder),
+          })
+        | None => strays->Array.push(folder)
+        }
       } else {
         areas->Array.push(area)
         Node.entries(folder)
@@ -67,10 +108,9 @@ let inRepository = (~space, ~repo): read => {
         ->Array.forEach(inside => {
           let path = Node.join([folder, inside->Node.name])
           switch inside->Node.isFile ? Rfc_name.parse(inside->Node.name) : None {
-          | Some({day, order, slug, id}) =>
+          | Some({day, slug, id}) =>
             files->Array.push({
               day,
-              order,
               slug,
               id,
               space,

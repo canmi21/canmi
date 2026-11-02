@@ -1,8 +1,15 @@
 # RFCs: why, kept apart from what
 
 **A rule in any repository's rules says what is done now; the reasons it was decided that way are an RFC**,
-one file in the repository nearest what it decides, `docs/rfcs/<area>/` there -- RFC 1dj2c. Its
-format, and why there is one, is RFC 2ut6h. They are read as files, found by id, until their pages
+one file in the repository nearest what it decides, in its `docs/rfcs/` -- RFC 1dj2c. Its
+format, and why there is one, is RFC 2ut6h.
+
+**A repository's RFCs sit flat in `docs/rfcs/` while they number at most `Layout.widest`**, and past
+that they split into directories named for the area of the repository's own tree each decides, as a
+`libs/` or a `control/`, never a category chosen apart from the tree. **A file is named
+`<yyyy>-<mmdd>-<slug>-<id>.md`**: the date orders the files, the id cites them, and no sequence
+number stands between, so two RFCs of one day are ordered by nothing the name holds. The `rfcs` part
+holds both, [model/rules/planning.res](../model/rules/planning.res). They are read as files, found by id, until their pages
 are drawn by the settled design system, which no address reaches before then -- RFC ggry5.
 
 **An id is unique within an id space, which a repository declares**, `[rfcs] ids` in its
@@ -16,7 +23,7 @@ A commit an RFC names is `<repo>@<hash>`, `<repo>` being `workspace` or a path f
 written and not checked.
 
 **A rule cites the RFC behind it by its id alone**, `RFC 2ut6h`, and the RFC is found by it,
-`docs/rfcs/*/*-2ut6h.md` in a repository of its space, whatever its area and slug became. An RFC names no page and no spec, so
+`docs/rfcs/**/*-2ut6h.md` in a repository of its space, whatever its area and slug became. An RFC names no page and no spec, so
 which rules it settled is read off the citations.
 
 **`docs/` and an `AGENTS.md` hold only the rules in force; how a rule came to be, its date, who
@@ -30,15 +37,15 @@ with its check, [model.md](model.md), and the doc names it.
 **An RFC is plain Markdown**, CommonMark with GFM, and calls no component of the design system it
 decides, so a frozen record never changes when the system does -- RFC ejy85.
 
-**The tools are the workspace's, `scripts/rfcs/`.** `mise run rfc new <name> <area> [--in <path>]`
+**The tools are the workspace's, `scripts/rfcs/`.** `mise run rfc new <name> [<area>] [--in <path>]`
 starts one in the workspace or in the repository named, making its slug of its name and picking its
-id and its place in the day within its space; the `rfcs` part of every check holds each file of a
+id within its space, and taking an area only once the repository is split, an area of its tree; the `rfcs` part of every check holds each file of a
 space to the format, reading every cloned repository of it. Web's `apps/space/rfcs` draws the
 pages and still checks `canmi/rfcs`. The task is `rfc`, named by one word, docs/toolchain.md, so an
 RFC landed earlier may call it `new-rfc`.
 
 **An RFC records why, and what is not done is the model's plan** -- RFC 8q1af and
-[planning.md](planning.md). From 2026-1101-02 on (`Planning.newFormFrom`) an RFC is a `draft`, a
+[planning.md](planning.md). From 2026-1101 on (`Planning.newFormFrom`) an RFC is a `draft`, a
 question with its options and no decision, a `decided` one holding a Decision, or `declined`; it
 has no `blocked-by`, `underway` or `commits`, and no Steps, Plan, Order, Next, Roadmap or Phase
 heading, all held by the `rfcs` part of check. Older RFCs keep `accepted` and `landed` as history,

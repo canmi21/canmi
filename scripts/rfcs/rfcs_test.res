@@ -17,20 +17,23 @@ Why pairs?
 `
 
 describe("an RFC's name", () => {
-  test("reads its day, place, slug and id", () => {
-    expect(Rfc_name.parse("2026-1022-03-hue-pairs-ab3x9.md"))->toEqual(
-      Some({day: "2026-1022", order: 3, slug: "hue-pairs", id: "ab3x9"}),
+  test("reads its day, slug and id", () => {
+    expect(Rfc_name.parse("2026-1022-hue-pairs-ab3x9.md"))->toEqual(
+      Some({day: "2026-1022", slug: "hue-pairs", id: "ab3x9"}),
     )
-    expect(Rfc_name.format({day: "2026-1022", order: 3, slug: "hue-pairs", id: "ab3x9"}))->toBe(
-      "2026-1022-03-hue-pairs-ab3x9.md",
+    expect(Rfc_name.format({day: "2026-1022", slug: "hue-pairs", id: "ab3x9"}))->toBe(
+      "2026-1022-hue-pairs-ab3x9.md",
     )
   })
 
-  test("is refused for a day that does not exist, place zero or a short id", () => {
-    expect(Rfc_name.parse("2026-0230-01-x-ab3x9.md"))->toEqual(None)
-    expect(Rfc_name.parse("2026-1022-00-x-ab3x9.md"))->toEqual(None)
-    expect(Rfc_name.parse("2026-1022-01-x-ab3x.md"))->toEqual(None)
-    expect(Rfc_name.parse("2026-1022-01-Hue-ab3x9.md"))->toEqual(None)
+  test("refuses the old sequence number left in front of a slug", () => {
+    expect(Rfc_name.parse("2026-1022-03-hue-pairs-ab3x9.md"))->toEqual(None)
+  })
+
+  test("is refused for a day that does not exist or a short id", () => {
+    expect(Rfc_name.parse("2026-0230-x-ab3x9.md"))->toEqual(None)
+    expect(Rfc_name.parse("2026-1022-x-ab3x.md"))->toEqual(None)
+    expect(Rfc_name.parse("2026-1022-Hue-ab3x9.md"))->toEqual(None)
   })
 
   test("takes its slug from the name's words", () => {
@@ -166,22 +169,21 @@ references: []${extra}
 ---
 
 ${sections}`
-  let file = (~order=3, ~day="2026-1101"): Rfc_spaces.file => {
+  let file = (~day="2026-1101"): Rfc_spaces.file => {
     day,
-    order,
     slug: "x",
     id: "aaaaa",
     space: "workspace",
     repo: "workspace",
-    area: "design",
-    path: "/w/lanes/rfcs/design/x.md",
-    where: "lanes/rfcs/design/x.md",
+    area: "",
+    path: "/w/lanes/rfcs/x.md",
+    where: "lanes/rfcs/x.md",
   }
-  let held = (~day="2026-1101", ~order=3, text) =>
+  let held = (~day="2026-1101", text) =>
     Rfc_check.held(
-      [{Rfc_check.file: file(~order, ~day), text}],
+      [{Rfc_check.file: file(~day), text}],
       ~strays=[],
-      ~areas=["design"],
+      ~areas=[],
       ~repos=["workspace"],
       ~exists=(_, _) => Some(true),
     )->Array.map(problem => problem.says)
@@ -198,15 +200,15 @@ ${sections}`
 
   test("refuses accepted and landed, which are history", () => {
     expect(held(current(~status="accepted", ~sections="## Question\n\n## Decision\n")))->toEqual([
-      "lanes/rfcs/design/x.md: a accepted RFC is history; the statuses are draft, decided, declined",
+      "lanes/rfcs/x.md: a accepted RFC is history; the statuses are draft, decided, declined",
     ])
   })
 
   test("refuses blocked-by, underway and commits", () => {
     expect(held(current(~extra="\nblocked-by: []\nunderway: step\ncommits: []")))->toEqual([
-      "lanes/rfcs/design/x.md: `blocked-by` is not a key of this form; the model's plan holds it",
-      "lanes/rfcs/design/x.md: `underway` is not a key of this form; the model's plan holds it",
-      "lanes/rfcs/design/x.md: `commits` is not a key of this form; the model's plan holds it",
+      "lanes/rfcs/x.md: `blocked-by` is not a key of this form; the model's plan holds it",
+      "lanes/rfcs/x.md: `underway` is not a key of this form; the model's plan holds it",
+      "lanes/rfcs/x.md: `commits` is not a key of this form; the model's plan holds it",
     ])
   })
 
@@ -215,20 +217,20 @@ ${sections}`
       ~sections="## Question\n\n### Next steps\n\n## Options\n\n```\n## Plan\n```\n\n#### Phase 2\n",
     )
     expect(held(text))->toEqual([
-      "lanes/rfcs/design/x.md: `Next steps` is a Next heading; the model's plan holds the work",
-      "lanes/rfcs/design/x.md: `Phase 2` is a Phase heading; the model's plan holds the work",
+      "lanes/rfcs/x.md: `Next steps` is a Next heading; the model's plan holds the work",
+      "lanes/rfcs/x.md: `Phase 2` is a Phase heading; the model's plan holds the work",
     ])
   })
 
   test("asks a draft for Options and no Decision, and a decided one for a Decision", () => {
     expect(held(current(~sections="## Question\n")))->toEqual([
-      "lanes/rfcs/design/x.md: a draft asks for a `## Options`",
+      "lanes/rfcs/x.md: a draft asks for a `## Options`",
     ])
     expect(held(current(~sections="## Question\n\n## Options\n\n## Decision\n")))->toEqual([
-      "lanes/rfcs/design/x.md: a draft has no `## Decision`; it is `decided` once decided",
+      "lanes/rfcs/x.md: a draft has no `## Decision`; it is `decided` once decided",
     ])
     expect(held(current(~status="decided", ~sections="## Question\n\n## Options\n")))->toEqual([
-      "lanes/rfcs/design/x.md: no `## Decision`",
+      "lanes/rfcs/x.md: no `## Decision`",
     ])
   })
 
@@ -238,9 +240,7 @@ ${sections}`
       ~extra="\nblocked-by: []\ncommits: []",
       ~sections="## Question\n\n## Next\n\n## Decision\n",
     )
-    expect(held(~day="2026-1101", ~order=1, old))->toEqual([
-      "lanes/rfcs/design/x.md: unknown section `Next`",
-    ])
+    expect(held(~day="2026-1031", old))->toEqual(["lanes/rfcs/x.md: unknown section `Next`"])
   })
 })
 
@@ -271,36 +271,76 @@ describe("blocked-by", () => {
 })
 
 describe("an id space", () => {
-  let file = (~repo, ~area="design", ~day="2026-1022", ~order=1, id): Rfc_spaces.file => {
+  let file = (~repo, ~area="", ~day="2026-1022", id): Rfc_spaces.file => {
     day,
-    order,
     slug: "x",
     id,
     space: "monoflake",
     repo,
     area,
-    path: `/w/${repo}/docs/rfcs/${area}/${id}.md`,
+    path: `/w/${repo}/docs/rfcs/${id}.md`,
     where: `${repo}/${id}.md`,
   }
   let held = entries =>
     Rfc_check.held(
       entries,
       ~strays=[],
-      ~areas=["design"],
+      ~areas=[],
       ~repos=["workspace", "monoflake/platform"],
       ~exists=(_, hash) => Some(hash == "d25effc4"),
     )->Array.map(problem => problem.says)
 
-  test("holds an id and a place unique across its repositories", () => {
+  test("holds an id unique across its repositories", () => {
     let entries = [
       {Rfc_check.file: file(~repo="a", "aaaaa"), text: front()},
-      {file: file(~repo="b", ~order=2, "aaaaa"), text: front()},
+      {file: file(~repo="b", "aaaaa"), text: front()},
       {file: file(~repo="b", "bbbbb"), text: front()},
     ]
-    expect(held(entries))->toEqual([
-      "b/aaaaa.md: id aaaaa is also a/aaaaa.md's",
-      "b/bbbbb.md: 2026-1022-01 is also a/aaaaa.md's place",
+    expect(held(entries))->toEqual(["b/aaaaa.md: id aaaaa is also a/aaaaa.md's"])
+  })
+
+  test("keeps a repository flat to Layout.widest RFCs, then in areas of its own tree", () => {
+    let many = (~area, count) =>
+      Array.fromInitializer(
+        ~length=count,
+        at => {
+          Rfc_check.file: file(~repo="a", ~area, `a${Int.toString(at)->String.padStart(4, "0")}`),
+          text: front(),
+        },
+      )
+    let held = (entries, ~inTree) =>
+      Rfc_check.held(
+        entries,
+        ~strays=[],
+        ~areas=["libs"],
+        ~repos=["workspace"],
+        ~exists=(_, _) => Some(true),
+        ~inTree,
+      )->Array.map(problem => problem.says)
+    expect(held(many(~area="", Layout.widest), ~inTree=(_, _) => false))->toEqual([])
+    expect(held(many(~area="libs", 1), ~inTree=(_, _) => true))->toEqual([
+      "a/a0000.md: a holds at most 16 RFCs, so they stand flat",
     ])
+    expect(held(many(~area="", Layout.widest + 1), ~inTree=(_, _) => true)->Array.length)->toBe(
+      Layout.widest + 1,
+    )
+    expect(held(many(~area="libs", Layout.widest + 1), ~inTree=(_, _) => true))->toEqual([])
+    expect(
+      held(many(~area="libs", Layout.widest + 1), ~inTree=(_, _) => false)->Array.length,
+    )->toBe(Layout.widest + 1)
+  })
+
+  test("lets a superseded RFC stand on the same day but not a later one", () => {
+    let supersede = (~day) => [
+      {Rfc_check.file: file(~repo="a", ~day="2026-1022", "aaaaa"), text: front()},
+      {
+        file: file(~repo="a", ~day, "bbbbb"),
+        text: front()->String.replace("supersedes: []", "supersedes: [aaaaa]"),
+      },
+    ]
+    let later = says => says->Array.some(line => line->String.includes("which is not earlier"))
+    expect(later(held(supersede(~day="2026-1022"))))->toBe(false)
+    expect(later(held(supersede(~day="2026-1021"))))->toBe(true)
   })
 
   test("asks the repository a commit names, and refuses one the registry does not list", () => {

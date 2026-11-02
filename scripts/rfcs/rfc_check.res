@@ -7,7 +7,7 @@ type entry = {file: Rfc_spaces.file, text: string}
 /** A problem, and the files it concerns, so one repository's check reports only its own. */
 type problem = {concerns: array<string>, says: string}
 
-let shape = "docs/rfcs/<area>/<yyyy>-<mmdd>-<nn>-<slug>-<id>.md"
+let shape = "docs/rfcs/[<area>/]<yyyy>-<mmdd>-<slug>-<id>.md"
 
 /**
  * Every problem of one space's RFCs; `exists` says whether a commit is held, None where its
@@ -19,6 +19,7 @@ let held = (
   ~areas: array<string>,
   ~repos: array<string>,
   ~exists: (string, string) => option<bool>,
+  ~inTree: (string, string) => bool=(_, _) => true,
 ): array<problem> => {
   let problems = strays->Array.map(path => {
     concerns: [path],
@@ -31,8 +32,23 @@ let held = (
       problems->Array.push({concerns: [], says: `area ${area} is not lowercase words and hyphens`})
     }
   )
+  // A repository's RFCs sit flat while they number at most Layout.widest, and past that in areas.
+  let counts: Map.t<string, int> = Map.make()
+  entries->Array.forEach(({file}) =>
+    counts->Map.set(file.repo, counts->Map.get(file.repo)->Option.getOr(0) + 1)
+  )
+  let asked: Map.t<string, bool> = Map.make()
+  let inTree = (repo, area) => {
+    let key = `${repo}/${area}`
+    switch asked->Map.get(key) {
+    | Some(answer) => answer
+    | None =>
+      let answer = inTree(repo, area)
+      asked->Map.set(key, answer)
+      answer
+    }
+  }
   let byId: Map.t<string, entry> = Map.make()
-  let byPlace: Map.t<string, Rfc_spaces.file> = Map.make()
   entries->Array.forEach(({file} as entry) => {
     if areas->Array.includes(file.id) {
       say(file, `id ${file.id} is also an area's name`)
@@ -45,14 +61,21 @@ let held = (
       })
     | None => byId->Map.set(file.id, entry)
     }
-    let place = Rfc_name.place(file.day, file.order)
-    switch byPlace->Map.get(place) {
-    | Some(holder) =>
-      problems->Array.push({
-        concerns: [file.path, holder.path],
-        says: `${file.where}: ${place} is also ${holder.where}'s place`,
-      })
-    | None => byPlace->Map.set(place, file)
+    let split = counts->Map.get(file.repo)->Option.getOr(0) > Layout.widest
+    if split && file.area == "" {
+      say(
+        file,
+        `${file.repo} holds more than ${Int.toString(
+            Layout.widest,
+          )} RFCs, so each stands in an area`,
+      )
+    } else if !split && file.area != "" {
+      say(
+        file,
+        `${file.repo} holds at most ${Int.toString(Layout.widest)} RFCs, so they stand flat`,
+      )
+    } else if file.area != "" && !inTree(file.repo, file.area) {
+      say(file, `area ${file.area} is no directory of ${file.repo}'s own tree`)
     }
   })
   // What one RFC may name depends on where the others stand, so every front is read first.
@@ -79,9 +102,7 @@ let held = (
     let (front, found) = Rfc_record.readFront(text)
     let body = Rfc_record.body(text)
     let status = front->Option.map(front => front.status)
-    let newForm =
-      Rfc_name.place(file.day, file.order) >= Planning.newFormFrom &&
-        !(Planning.oldForm->Array.includes(file.id))
+    let newForm = file.day >= Planning.newFormFrom && !(Planning.oldForm->Array.includes(file.id))
     let own = Array.concat(found, Rfc_record.checkSections(body, ~status, ~newForm))
     if newForm {
       own->Array.pushMany(Rfc_record.checkNewForm(text, ~status))
@@ -96,9 +117,8 @@ let held = (
       front.supersedes->Array.forEach(id =>
         switch byId->Map.get(id) {
         | None => own->Array.push(`supersedes ${id}, which no RFC of its id space holds`)
-        | Some(earlier)
-          if Rfc_name.place(earlier.file.day, earlier.file.order) >=
-          Rfc_name.place(file.day, file.order) =>
+        // A name holds no order within a day, so a superseded RFC of the same day is allowed.
+        | Some(earlier) if earlier.file.day > file.day =>
           own->Array.push(`supersedes ${id}, which is not earlier`)
         | Some(_) =>
           switch fronts->Map.get(id) {
@@ -150,6 +170,7 @@ let space = (space): array<problem> => {
     ~areas,
     ~repos=Array.concat([Planning.workspaceSpace], Registry.paths()),
     ~exists,
+    ~inTree=(repo, area) => Rfc_spaces.tree(repo)->Array.includes(area),
   )
 }
 

@@ -10,7 +10,11 @@ let lines = (space): array<string> => {
   let shown: Map.t<string, shown> = Map.make()
   Rfc_spaces.read(space).files->Array.forEach(file =>
     switch Rfc_record.readFront(Node.readFileSync(file.path)) {
-    | (Some(front), _) => shown->Map.set(file.id, {front, at: `${file.repo}/${file.area}`})
+    | (Some(front), _) =>
+      shown->Map.set(
+        file.id,
+        {front, at: file.area == "" ? file.repo : `${file.repo}/${file.area}`},
+      )
     | (None, _) => ()
     }
   )
