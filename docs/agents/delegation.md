@@ -3,7 +3,7 @@
 How work is split between the session the user is talking to, the top level, and the agents it
 spawns. The split is shaped for the user's hands, not for an agent's throughput, and every rule
 below follows from that. The rest of it is in four files beside this one: [briefs.md](briefs.md),
-what a spawned agent is handed; [reading.md](reading.md), what a reader does; [lanes.md](lanes.md),
+what a spawned agent is handed; [reading.md](seats/reading.md), what a reader does; [lanes.md](lanes.md),
 how the lanes are kept apart and merged; [checking.md](checking.md), how a wave is checked, reviewed
 and committed.
 
@@ -29,7 +29,8 @@ once there are independent pieces.
 
 **The hooks hold an implementer's commands**, `implementer-commands` in
 [model/rules/delegation.res](../../model/rules/delegation.res). They hold implementers spawned
-without a name.
+without a name. **What every seat follows is [seats/rules.md](seats/rules.md)**, which a brief points
+at rather than copies.
 
 **The integrator schedules the queue itself**: it judges what is independent and runs those pieces
 side by side, neither all serial nor split hard. A piece waits only on what it truly depends on;
@@ -57,23 +58,25 @@ each.
 **A file near its limit is split before the work, not at the push**, `split-before-work` in
 [model/rules/code.res](../../model/rules/code.res): one past `splitBeforeLines` gets a refactorer
 first, beside the implementer's lane, and an implementer checks what it touched against `hardLines`
-before it hands in, `mise run lane handed`, [lanes.md](lanes.md).
+before it hands in, `mise run //:lane handed`, [lanes.md](lanes.md).
 
 **The command hooks guard against a slip, not against malice**: an implementer works with the
 integrator, so the hooks cover the common spellings of a command and no more. **An implementer is
 refused four kinds of command alone**, `implementer-commands`:
 
 - **version control**, jj and git alike;
-- **the machinery of a whole repository's check**: `check`, `verify`, `audit`, and `--pending` even
-  beside one part, the one exception being a single part of the workspace's own check;
+- **the machinery of a whole repository's check**: `check`, `verify`, a `verify:<part>`, `audit`, and
+  `--pending` even beside one part, the exceptions being a single part of the workspace's own check
+  and `mise run //:lane check`, [checking.md](checking.md), its parts `seat-parts`;
 - **a task that deploys or releases**, `Delegation.releasing`;
 - **`ssh`, `rsync` and `wrangler`.**
 
 **A refactorer is refused the same four**, being a role that writes code as an implementer does,
-with no part of the workspace's check excepted, `refactorer-commands`.
+with no part of the workspace's check excepted, `refactorer-commands`. A command given to `mise run
+//:job` is judged as its own.
 
 A list of what to refuse is never complete, and the completion protocol,
-[implementer.md](implementer.md), leaves an implementer no reason to go around it. **Every other way
+[implementer.md](seats/implementer.md), leaves an implementer no reason to go around it. **Every other way
 around the four is a known limit, and a review does not count it a defect.** Known to pass unseen:
 `pnpm --filter <name> exec <command>`, an option before `exec`; a backtick span inside double
 quotes, judged as a command where the shell would run it; and any spelling the hooks do not parse.
@@ -82,16 +85,64 @@ quotes, judged as a command where the shell would run it; and any spelling the h
 
 **The user names a session's role in words at its start**, with no hook and no command to start it.
 Each role has one file beside this one, and reading it is enough to recover what the role does and
-where it stops: [advisor](advisor.md), [integrator](integrator.md), [implementer](implementer.md),
-[reviewer](reviewer.md), [refactorer](refactorer.md), [reader](reader.md), which holds the scout, and
-[scribe](scribe.md).
+where it stops: [advisor](advisor.md), [integrator](integrator.md), [implementer](seats/implementer.md),
+[reviewer](seats/reviewer.md), [refactorer](seats/refactorer.md), [reader](seats/reader.md), which holds the scout, and
+[scribe](seats/scribe.md), those of seats under [seats/](seats/), and [supervisor](supervisor.md) and
+[auditor](auditor.md).
 
 **The top level is split by what it decides**. Where an advisor is named, the paraphrase, the
 judgment and the decisions belong to the user and the advisor; the sequence, who owns which file,
-the commits, and writing what was decided into the rules belong to the integrator, but for what the
-advisor writes and commits itself, [advisor.md](advisor.md). **Where no role is named, one session
-holds both halves**, and where this file names the advisor or the integrator it then means that
-session.
+the commits, and writing what was decided into the rules belong to the integrator. **Where no role
+is named, one session holds both halves**, and where this file names the advisor or the integrator
+it then means that session.
+
+- **The advisor, one**, [advisor.md](advisor.md): talks with the author; paraphrase, judgment, the
+  decision queue. It dispatches no seat, lands nothing and reads no check log.
+- **A supervisor, one for each thread, one thread at first**, [supervisor.md](supervisor.md): takes a
+  thread's charter, watches its target test, orders the work, directs the integrators, handles
+  failures. It writes no code and never asks the author directly.
+- **Two integrators**, [integrator.md](integrator.md), landing, checks and seats: one for platform,
+  driver and machine, one for cloud and the workspace.
+- **A seat**, [seats/implementer.md](seats/implementer.md): one result in one lane.
+- **The reviewer**, [seats/reviewer.md](seats/reviewer.md): on call for authorization and protocol
+  changes, directed by nobody; it reports to the supervisor, a severe finding copied to the advisor.
+- **The auditor**, [auditor.md](auditor.md): a fresh session at each checkpoint, asking questions.
+- **The watchdog is a program, no agent**, [runs.md](runs.md).
+
+**Where a thread has no supervisor named, the advisor's word reaches the integrator directly**, as a
+supervisor's would, and the advisor still dispatches nothing.
+
+## Decision rights
+
+**Each layer decides only what is its own.**
+
+- **A seat**: implementation, names and tests inside one result.
+- **An integrator**: landing its repositories, fixing a check, a crate's internal interface.
+- **The supervisor**: order, how a thing is proved, reversible technical choices inside the charter,
+  which review findings to fix.
+- **The advisor**: a small reading of a decision made; a reversible policy value given a default and
+  written to the ledger.
+- **The author**: direction, what a checkpoint is, a contract's shape an app sees, a new account or
+  money, the word to change production, credentials, and irreversible data operations.
+
+**The test at each layer: is it reversible, and is it inside what is decided?** Both yes, the lowest
+layer with the right decides and writes the ledger. Either no, it goes up to the layer with the right
+and stops there.
+
+**Before going up, the RFCs, the plan and the ledger are searched**; a decision found there is quoted
+and not asked again. **A decision carries the step of the path it stands on, a recommended default
+and whether it can be undone.** One naming no step of the current path is parked and not shown. A
+reversible one goes on under its default. An irreversible one blocks its branch alone.
+
+**Peers exchange facts directly**: check locks, cross-repository interface alignment and landing
+order, never scope or a decision. What they settle goes in the ledger; a disagreement goes to their
+common superior.
+
+**No order skips a layer, except the global stop**, which the advisor broadcasts and every layer takes
+at its nearest safe point. Production down, a credential leaked or data lost goes straight to the
+advisor and pushes to the author.
+
+A thread's charter, decision queue, ledger and status are files, [threads.md](threads.md).
 
 **A subagent type is defined only where it truly differs in tools, model or permissions.**
 
@@ -103,8 +154,8 @@ session.
 - **Reading work goes first to the built-in Explore**, as a reader.
 
 - **The scout** only reads, answers one question from named files or one area of the map, and quotes
-  where it found the answer, [reader.md](reader.md).
-- **The scribe** edits Markdown files alone, in a lane, [scribe.md](scribe.md).
+  where it found the answer, [reader.md](seats/reader.md).
+- **The scribe** edits Markdown files alone, in a lane, [scribe.md](seats/scribe.md).
 
 The implementer, the reviewer, the refactorer, the scout and the scribe are defined in
 [.claude/agents/](../../.claude/agents/), each definition's body pointing to its role file and
@@ -196,7 +247,7 @@ the first sentence goes and rediscovers the codebase, and is paid for by the tok
 
 **Judgment.** Working out _why_ something is broken, and what the fix has to be, stays at the top
 level. It is made on text an agent quoted back rather than on an agent's conclusion, which is the
-subject of [reading.md](reading.md).
+subject of [reading.md](seats/reading.md).
 
 **Decisions.** Who decides what is [agent-protocol.md](agent-protocol.md), "Decision authority",
 unchanged.
@@ -268,7 +319,7 @@ MONOFLAKE_ROLE=implementer codex exec -C <lane>/monoflake/<repository> \
   directory under `~/.cargo/build`, so under it Codex cannot build the workspace or a crate. The
   hooks hold both vendors alike: `implementer-commands` on its shell, and `implementer-lane` on
   every Edit, Write and `apply_patch`, refusing a write outside its lane,
-  [implementer.md](implementer.md). A new or changed entry in `~/.codex/hooks.json` runs only once
+  [implementer.md](seats/implementer.md). A new or changed entry in `~/.codex/hooks.json` runs only once
   the author has trusted it in Codex, which skips an untrusted hook without a word, and an agent
   never writes Codex's trust record itself, since a hash it forged would grant what only the author
   grants, so a hook is proven by a probe after each change. The brief is stdin, and `-o` keeps the

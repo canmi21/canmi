@@ -85,7 +85,8 @@ where any working copy holds a change `main` lacks; otherwise the jj workspaces 
 forgotten only after a jj command run in the lane**: jj snapshots a working copy only when a command
 runs in it, so an edit never snapshotted would go with the lane's directory. Open and close run from
 the base workspace, never from inside a lane. **A lane is judged by its diff before it is handed
-back**, and `handed` runs from inside the lane too: `mise run lane handed <name> [--own
+back**, and `handed` runs from inside the lane too, there as `//:lane`, a bare `lane` looking for the
+lane's own repository's task: `mise run lane handed <name> [--own
 <directory> ...]` reads the files each of the lane's workspaces changed from where it forked from
 `main`, and refuses one past `hardLines`, one in `singleWriter`, a lockfile, and, where `--own`
 names the block's directories, a file outside them; a file past `splitBeforeLines` is listed. It
@@ -93,8 +94,13 @@ also reports what the form layer would refuse at landing, a file its formatter w
 directory past `Layout.widest`, a comment past its columns, so a seat runs it before it reports.
 `split-before-work` in [model/rules/code.res](../../model/rules/code.res) and `single-writer`, `own-directory` and
 `lockfile-derived` in [model/rules/delegation.res](../../model/rules/delegation.res) are held there;
-close refuses the same lengths. The `lanes` part of the check holds the task declared and
-named here, and `lane-state` warns of a lane that is no workspace of a registered path and of a
+close refuses the same lengths. **A lane is taken by `mise run //:lane take <name> [--in <repository>]`**, for whoever lands: it
+snapshots the lane first, since `jj restore --from <lane>@` reads the lane's last snapshot, restores
+the paths the lane changed and no others, both sides of a rename, and refuses a path main moved since
+the fork or the main checkout holds an edit to, `lane-taken-snapshotted`. **A lane rebased from
+outside goes stale**, its seat then working on the old tree without knowing, so a dispatch into one is
+refused, `lane check` and `lane take` too, `lane-not-stale`. The `lanes` part of the check holds the
+task declared and named here, and `lane-state` warns of a lane that is no workspace of a registered path and of a
 `target` past the limit below, `lane-target`.
 
 **Before a lane opens, the base workspace's working copy is frozen with `jj new`, and while a lane

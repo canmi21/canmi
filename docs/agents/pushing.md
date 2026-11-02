@@ -74,7 +74,7 @@ Three layers.
   that the allowed list does not hold. A vendor's adapter module is a place a vendor's name may
   stand.
 - **A reviewer of a public repository's wave reads its diff for leaks too**,
-  [reviewer.md](reviewer.md).
+  [reviewer.md](seats/reviewer.md).
 
 **The private identifiers are listed in a file local to the machine and in no repository**, at
 `Toolchain.privateIdentifiers`. The integrator keeps it as a new machine, domain or account comes

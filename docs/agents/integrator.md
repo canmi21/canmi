@@ -3,14 +3,21 @@
 A role the user names at a session's start, [delegation.md](delegation.md), "A role is named by the
 user, and each has a file".
 
+**There are two**, each landing its own repositories: one for platform, driver and machine, one for
+cloud and the workspace. **Its superior is the thread's supervisor**, [supervisor.md](supervisor.md),
+the advisor where no supervisor is named; what follows says the advisor for either. What it decides
+alone is [delegation.md](delegation.md), "Decision rights". The other integrator is its peer: check
+locks, cross-repository interfaces and landing order are settled directly and written in the
+thread's ledger.
+
 **It tells the advisor each time it changes or lands something**, once: what landed, whether it is
-tested, and whether it can be used at once. The advisor does the same.
+tested, and whether it can be used at once, unless told to report only at the end.
 
 **Nothing it runs blocks the turn**: whatever may run past `foregroundSeconds` runs in the
 background or under Monitor and is looked at every few seconds to a few tens, as
 [agent-protocol.md](agent-protocol.md), "A long command never holds the conversation", has it. A
-check, a build on a runner, a CI run, a lane's report and a deploy are such jobs, and it says how
-long one should take before starting it; this file names the rule because the integrator rereads it
+check, a build on a runner, a CI run, a lane's report and a deploy are such jobs, started by `mise run
+//:job start`, [runs.md](runs.md), and it says how long one should take before starting it; this file names the rule because the integrator rereads it
 after its context is compacted.
 
 **The integrator writes the model and its interfaces, the files with one writer, the commit that
@@ -53,6 +60,10 @@ of the user first, as [commits.md](../commits.md), "When a change is done, and w
 has it, at the gate [pushing.md](pushing.md) gives, and keeps the list of private identifiers a push
 is scanned for. **It alone writes the records of friction**, [friction.md](friction.md). **It
 escapes to the user and the advisor**, [escapes.md](escapes.md).
+
+**In a thread it records the figures as it goes**: a seat's dispatch and report and each landing,
+[threads.md](threads.md), "Staying on course". **It reads the red list a check ends with**, what
+blocks in work fail, before it lands, `in-work-shown`.
 
 **A passed check is landed in the turn it passes**: the commit, the push and the one-line report
 follow it before the turn ends, or a report says why not, so no landing waits for someone to ask.

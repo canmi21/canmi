@@ -115,9 +115,8 @@ working copy on. See [repos.md](../repos.md).
 
 **Other sessions do not talk to each other.** No harness messaging between peer sessions --
 Claude Code's cross-session messaging, or any equivalent -- and no side channel invented for the
-purpose. The exceptions are the advisor and the integrator, who message each other directly and
-settle what they can between them without going through the author, and a supervisor and the agents
-it spawns, below.
+purpose. The exceptions are the roles of [delegation.md](delegation.md), "Decision rights", each
+messaging the layer above and below it and its peer, and a session and the agents it spawns, below.
 
 Two reasons for the rule, each sufficient. A message has no reliable boundary and can land somewhere
 with nothing to do with the work. And a decision made in a conversation between two agents is
@@ -128,9 +127,9 @@ work is called done, as a decision reached in a message always is.
 Projects are separate repositories, so two pieces of work are two directories. What crosses between
 any other peer sessions is a commit and nothing else. See [repos.md](../repos.md).
 
-### A supervisor and the agents it spawns are the exception
+### A session and the agents it spawns are the exception
 
-The rule above is about _peer sessions_, the advisor and the integrator aside. An agent that spawns
+The rule above is about _peer sessions_, the named roles aside. An agent that spawns
 implementers and directs them is a different arrangement.
 
 It is not the default. The user says whether a session delegates, and a session they have not said
@@ -266,9 +265,10 @@ wrong, and one refusing more than once in a session is reported with how its mes
 
 **Anything that may run past `foregroundSeconds`, could hang, or waits for a condition runs in the
 background or under Monitor**, and the conversation goes on, in every session and every implementer
-it spawns. **The agent looks at the job every few seconds to a few tens of seconds**, sooner the
+it spawns. **`mise run //:job start -- <command>` is the way in**, which records it where the watchdog
+reads, [runs.md](runs.md). **The agent looks at the job every few seconds to a few tens of seconds**, sooner the
 shorter the job, each look an instant read of the output that asks whether it moved since the last.
-**To look, it reads the output file, or runs `mise run watch <file>` under Monitor**, which prints a
+**To look, it reads the output file, or runs `mise run //:watch <id>` under Monitor**, which prints a
 line for each progress or failure line the file gains, a line naming a stall after `stallSeconds`
 without growth, and ends on an end line or at `watchBoundSeconds`. A job that stopped, or a wait
 nothing will meet, is reported at that look, never found later by the user, and a result still

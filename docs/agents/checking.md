@@ -104,8 +104,12 @@ checker would have said for free.
 
 **An implementer runs its own block's build, type check, lint and tests, the logic layer, and never
 a whole repository's check**. Checking the whole is a question only the party that sees the whole
-wave can ask. **Where what it writes is one part of the workspace's check, it may run that part
-alone**, `mise run check workspace <part>`, and never the whole. **No agent the integrator spawns
+wave can ask. **What a seat could catch it catches in its lane**: on 2026-11-02 about six rounds of a
+check on main found faults a seat could have, so **`mise run //:lane check <part> ...`, from inside the
+lane, runs the fast parts by what they catch**, `format`, `names`, `wire`, the wire's names in the
+model's check, `compile`, and `tests`, the repository's `test` or, given a block, its `built`,
+`Delegation.seatParts`. **Where what it writes is one part of the workspace's check, it may run that
+part alone**, `mise run check workspace <part>`, and never the whole. **No agent the integrator spawns
 runs `--pending`**, which is the integrator's reading of the model.
 
 **Between edits the integrator runs only the parts a change touches, and the full check once before
@@ -116,6 +120,11 @@ declares a `verify:<part>` task runs that task alone, in the order its `mise.tom
 and a name it shares with a part of the workspace's check is refused as ambiguous. With no part
 named the check runs whole, and only that run writes the stamp a commit waits on, so the rule that a
 commit waits on the full check is unchanged.
+
+**A block not yet accepted fails nothing, and the check ends by naming what it fails**, `in-work-shown`:
+it prints a failing test under "In work, failing nothing until accepted" while the check exits 0, so
+whoever lands reads a last list of them, however far up the first print scrolled. Whether a block is
+accepted is the author's.
 
 **A block a project's model holds alone is the case it is made for**: where each block builds, lints
 and tests apart from every other, as `monoflake/platform`'s `docs/code.md` makes them, its

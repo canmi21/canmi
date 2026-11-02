@@ -1,7 +1,7 @@
 # Reading
 
 What a reader does, and how a read and a piece of research are briefed. A reader is the built-in
-Explore, [reader.md](reader.md); how the work is split is [delegation.md](delegation.md).
+Explore, [reader.md](reader.md); how the work is split is [delegation.md](../delegation.md).
 
 ## Reading is delegated; the judgment on what comes back is not
 
@@ -77,5 +77,5 @@ recommendation that was not asked for.
 **A research brief usually has a local half, and it belongs in the same reader.** What the platform
 does in general is only half an answer; what this tree does with it is the other. One reader holding
 both gives an answer already applied, and the alternative is the top level joining two reports
-written without reference to each other. See [checking.md](checking.md), "The integrator reads the
+written without reference to each other. See [checking.md](../checking.md), "The integrator reads the
 diff, not the file".

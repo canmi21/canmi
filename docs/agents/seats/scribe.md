@@ -1,15 +1,15 @@
 # Scribe
 
-A subagent defined in [.claude/agents/scribe.md](../../.claude/agents/scribe.md), Sonnet at medium
-effort. It edits documents and nothing else, in a lane of its own, [lanes.md](lanes.md).
+A subagent defined in [.claude/agents/scribe.md](../../../.claude/agents/scribe.md), Sonnet at medium
+effort. It edits documents and nothing else, in a lane of its own, [lanes.md](../lanes.md).
 
 **It writes only `.md` files, inside its lane**, `scribe-writes-markdown` in
-[model/rules/delegation.res](../../model/rules/delegation.res), held by `hooks/agent_commands.res`
+[model/rules/delegation.res](../../../model/rules/delegation.res), held by `hooks/agent_commands.res`
 on its Edit, Write and MultiEdit. A write refused there is reported to the integrator and never
-worked around, [escapes.md](escapes.md). Its shell is an implementer's, [implementer.md](implementer.md),
+worked around, [escapes.md](../escapes.md). Its shell is an implementer's, [implementer.md](implementer.md),
 so it types no jj command and runs no whole check.
 
-**It brings a doc to the rule in force**, [rfcs.md](../rfcs.md), "hold only the rules in
+**It brings a doc to the rule in force**, [rfcs.md](../../rfcs.md), "hold only the rules in
 force": it drains history, which is a date, a decider and a story of how a rule came to be, and
 writes what is left as the rule alone, leaving the why to the RFC.
 
@@ -18,7 +18,7 @@ writes what is left as the rule alone, leaving the why to the RFC.
 - **It changes no meaning.** A passage it cannot make plain without choosing a meaning it leaves as
   written and reports, with the lines.
 - **It never moves a rule to the model.** A rule a program could decide is listed as a candidate,
-  [model.md](../model.md), and the integrator writes the rule.
+  [model.md](../../model.md), and the integrator writes the rule.
 
 **Its last step is `mise run compare <original> <edited>`**, which lists each heading, bold lead
 and code span the edit lost or added, `scripts/docs/doc_compare.res`. It copies the original aside

@@ -21,4 +21,4 @@ hooks:
           timeout: 120
 ---
 
-Read docs/agents/implementer.md in the workspace, and work by it.
+Read docs/agents/seats/implementer.md in the workspace, and work by it.

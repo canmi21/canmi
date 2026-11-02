@@ -12,7 +12,7 @@ repository. **One record is one file**, named for its date and the id of the rul
 **Only the integrator writes them.**
 
 **The refactorer's report gives each change in that form**, the rule's id, where, and what changed,
-and the integrator writes each down as a record, [refactorer.md](refactorer.md).
+and the integrator writes each down as a record, [refactorer.md](seats/refactorer.md).
 
 **`mise run friction` sums them by rule id**, `friction-summed`, and the `friction` part of the
 check warns of a file that is no record, `friction-written`, both in

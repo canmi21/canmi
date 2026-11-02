@@ -22,7 +22,7 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   same turn by the commit, the push and the one-line report, or by a report of why not; on
   2026-11-02 a passed check sat uncommitted for 29 minutes until the advisor asked.
 - **A seat never ends its turn to wait for a background job's notice.** No notice wakes it, so it
-  watches the job's output itself under Monitor with `mise run watch` until the job ends; its
+  watches the job's output itself under Monitor with `mise run //:watch` until the job ends; its
   dispatcher reads the seat's last transcript entry at each follow-up, never ListAgents' idle.
 - **Each commit is its own call, alone in its message, opened by `jj root &&`.** Stop if the root
   names the wrong repository.
@@ -97,20 +97,20 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   `strings` once reported a full flash chip as empty.
 - **In the Bash tool's zsh, `$var` holding a command does not split**, so use a function; `==` at a line
   start in an unquoted `echo` breaks; `cd` carries to the next call, so use absolute paths and a subshell.
-- **`mise run watch` on a log holding file contents gives false ended and failure lines**, and reads
+- **`mise run //:watch` on a log holding file contents gives false ended and failure lines**, and reads
   `failed=0` as a failure. Watch a status file, or print no such word.
 - **`perl -e 'alarm N; exec @ARGV' mise run ...` kills mise alone.** The task's children live on and hold
   what they hold, so a timed-out conform kept running and its lock refused the rerun; list them by
   `ps` before reading the alarm as the job's end.
 - **A bounded `for ... sleep` loop is still a foreground wait.** Wait on a job's completion notice,
-  or watch its log under Monitor with `mise run watch <log>`; never type the wait in the foreground.
+  or watch its log under Monitor with `mise run //:watch <log>`; never type the wait in the foreground.
 
 ## Code
 
 - **Mark a Worker's abstract RPC binding type `@notUndefined` before holding it in a ReScript
   option.**
 - **A query's cost is measured, never assumed from its tests passing.** Measure rows read against a
-  budget for each statement; follow [agents/reviewer.md](agents/reviewer.md) for reporting rows and
+  budget for each statement; follow [agents/seats/reviewer.md](agents/seats/reviewer.md) for reporting rows and
   their growth.
 - **A shell script's test on the host's PATH never proves its package's inputs.** Review every
   command against the package's runtime inputs, and include a second run in live tests of stateful
@@ -187,9 +187,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   Select only needed fields, as `jq '{organization, relayed, address, origin: (.origin != null)}'`.
 - **A directory holding secrets is listed by names and sizes alone.** Never select files to read by
   excluding secret-looking names.
-- **A lane is taken only after a jj command has run in it.** `jj restore --from <lane>@` reads the
-  lane's last snapshot, so a hand edit there is lost unless a jj command ran after it; run `jj st`
-  in the lane before duplicating or restoring from it.
+- **A lane is taken by `mise run //:lane take`.** `jj restore --from <lane>@` reads the lane's last
+  snapshot, so a hand edit there is lost unless a jj command ran after it; the take runs one first,
+  and a duplicate by hand needs `jj st` in the lane.
 - **A check's exit 0 is read with its red list.** Read failures listed after the check, including
   `task failed`; blocks in progress can report failures without failing the exit code.
 - **A command handed to the author is first run in a form that changes nothing.** Rehearse from the

@@ -89,15 +89,18 @@ agents is the user's call, made per session, and the default is no. The user nam
 role at its start. **Where an advisor is named, the paraphrase, the judgment and the decisions
 belong to the user and the advisor; the sequence, who owns which file, the commits and writing the
 rules belong to the integrator**, which reads every implementer's diff and runs the check once per
-wave. Where no role is named, one session holds both. The implementers edit, each in a lane of its
+wave. Where no role is named, one session holds both. **The roles and what each decides are [docs/agents/delegation.md](docs/agents/delegation.md),
+"Decision rights"**: one advisor, a supervisor for each thread, two integrators, seats, an on-call
+reviewer and an auditor at each checkpoint; a watchdog program reports what nobody is reading,
+[docs/agents/runs.md](docs/agents/runs.md). The implementers edit, each in a lane of its
 own, owning a declared set of files and touching nothing else. Testing belongs to the user -- they
 are faster than any verification loop -- so a round of work ends with something the user can try
 by hand, a page to click or a curl to run, and where there is nothing to try, with a rehearsal that
 passed. See [docs/agents/delegation.md](docs/agents/delegation.md).
 
-**Long commands** -- anything that may run past a few seconds runs in the background or under
-Monitor and is looked at every few seconds to a few tens, `mise run watch <file>` doing the looking;
-a hook refuses the rest. See [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md), "A long
+**Long commands** -- anything that may run past a few seconds starts by `mise run //:job start --
+<command>`, in the ledger the watchdog reads, and is looked at every few seconds to a few tens, `mise
+run watch <id>` under Monitor doing the looking; a hook refuses the rest. See [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md), "A long
 command never holds the conversation".
 
 **Commits** -- Conventional Commits, the types and widths in `model/rules/commits.res`. Omit the
@@ -211,7 +214,9 @@ project still works.
 | When the user names a role at a session's start, read that role's file first                            | [docs/agents/](docs/agents/)                                   |
 | Lessons learned the hard way: commits, other sessions, shells, remotes, reading                         | [docs/lessons.md](docs/lessons.md)                             |
 | The model: what a program decides, what holds each rule, what is pending                                | [docs/model.md](docs/model.md)                                 |
-| Spawning implementers: briefs, lanes, who tests, who checks, who commits                                | [docs/agents/delegation.md](docs/agents/delegation.md)         |
+| Spawning implementers: briefs, lanes, who tests, who checks, who commits; the roles and decision rights | [docs/agents/delegation.md](docs/agents/delegation.md)         |
+| A thread's files, its target test and figures, staying on course                                        | [docs/agents/threads.md](docs/agents/threads.md)               |
+| The run ledger and the watchdog                                                                         | [docs/agents/runs.md](docs/agents/runs.md)                     |
 | Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                                 |
 | Planning: the loop first, a short roadmap here, every open question and decided work an RFC             | [docs/planning.md](docs/planning.md)                           |
 | READMEs, repository descriptions and license years                                                      | [docs/readme.md](docs/readme.md)                               |
@@ -228,12 +233,12 @@ project still works.
 
 **Writing code**
 
-| Topic                                                                            | File                                       |
-| -------------------------------------------------------------------------------- | ------------------------------------------ |
-| Type checking, tests, comments, a UI that only draws                             | [docs/code.md](docs/code.md)               |
+| Topic                                                                            | File                                                           |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Type checking, tests, comments, a UI that only draws                             | [docs/code.md](docs/code.md)                                   |
 | Linting and formatting                                                           | [docs/toolchain/lint-format.md](docs/toolchain/lint-format.md) |
-| Shell, addresses, secrets, versions, jj, hooks                                   | [docs/toolchain.md](docs/toolchain.md)     |
-| CI: writing a workflow first (entries, one-shot steps, names, schedules, caches) | [docs/ci.md](docs/ci.md)                   |
+| Shell, addresses, secrets, versions, jj, hooks                                   | [docs/toolchain.md](docs/toolchain.md)                         |
+| CI: writing a workflow first (entries, one-shot steps, names, schedules, caches) | [docs/ci.md](docs/ci.md)                                       |
 
 **The projects**
 

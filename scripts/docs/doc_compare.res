@@ -1,6 +1,6 @@
 /**
  * A doc against its original on headings, bold leads and code spans, the last step of a scribe,
- * docs/agents/scribe.md. Run as `mise run compare <original> <edited>`.
+ * docs/agents/seats/scribe.md. Run as `mise run compare <original> <edited>`.
  */
 type parts = {headings: array<string>, leads: array<string>, spans: array<string>}
 

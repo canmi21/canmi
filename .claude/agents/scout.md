@@ -13,4 +13,4 @@ hooks:
           timeout: 120
 ---
 
-Read docs/agents/reader.md in the workspace, and work by it.
+Read docs/agents/seats/reader.md in the workspace, and work by it.

@@ -1,21 +1,21 @@
 # Implementer
 
 A subagent the integrator spawns, defined in
-[.claude/agents/implementer.md](../../.claude/agents/implementer.md).
+[.claude/agents/implementer.md](../../../.claude/agents/implementer.md).
 
 **An implementer writes only its own block's directory**, in a lane of its own,
-[lanes.md](lanes.md), "A lane is a directory beside `repos/`". It names what is local to its block,
-and only that, choosing the most exact and most technically neutral word, [naming.md](../naming.md),
+[lanes.md](../lanes.md), "A lane is a directory beside `repos/`". It names what is local to its block,
+and only that, choosing the most exact and most technically neutral word, [naming.md](../../naming.md),
 "A global name is the model's". **A write outside its lane is refused before it lands**,
 `implementer-lane`, by `hooks/agent_commands.res` on a Claude implementer's Edit, Write or
 NotebookEdit and a Codex implementer's `apply_patch`, a temporary directory aside; the implementer
-then stops and reports to the integrator, [escapes.md](escapes.md), "A refusal is never worked
+then stops and reports to the integrator, [escapes.md](../escapes.md), "A refusal is never worked
 around".
 
 **Its brief is what `mise run brief <name>` prints**, with its lane's path, the files it owns and
-the dependencies still waiting, [briefs.md](briefs.md), "What a brief holds". **Its model is the one
+the dependencies still waiting, [briefs.md](../briefs.md), "What a brief holds". **Its model is the one
 the integrator picks in that brief**: Codex while it has quota, else Sonnet at low, medium or high
-effort, or Opus at medium, [delegation.md](delegation.md), "Codex comes first while it has quota".
+effort, or Opus at medium, [delegation.md](../delegation.md), "Codex comes first while it has quota".
 
 **It works by a completion protocol**, which the end of every brief `mise run brief` prints says
 again, written by monoflake/platform's model:
@@ -25,38 +25,42 @@ again, written by monoflake/platform's model:
   and hands back;
 - **it writes unit tests only for logic inside its block that the samples do not reach**; the
   samples are not its to write or to change;
-- **before it hands back, it runs `mise run lane handed <name>`**, which refuses a file it changed
+- **before it hands back, it runs `mise run //:lane handed <name>`**, which refuses a file it changed
   past `hardLines`, one only the integrator changes, `singleWriter`, and a lockfile, and lists a file
-  past `splitBeforeLines`, [lanes.md](lanes.md);
+  past `splitBeforeLines`, [lanes.md](../lanes.md);
+- **while writing it may run `mise run //:lane check <part> ...`** from inside its lane, what it can
+  catch of the check before the landing does, [checking.md](../checking.md);
 - **it never needs a whole repository's check, `fmt`, a deploy, a rehearsal or jj**, and where it
-  believes it does it escapes, [escapes.md](escapes.md).
+  believes it does it escapes, [escapes.md](../escapes.md).
+
+**What every seat follows besides is [rules.md](rules.md).**
 
 Its own block's tests alone cost little and their scope is plain; running none would leave a failure
 to the merge, where several blocks are already mixed. That is the logic layer for its own block
-alone, [checking.md](checking.md), "The check has two layers". **It types no jj command**; a task it
+alone, [checking.md](../checking.md), "The check has two layers". **It types no jj command**; a task it
 runs, as `accept --from`, may read its own lane's history. Such a task snapshots its own lane's
 working copy first, as every jj read does to see the latest edits; that touches its own lane's
 working-copy commit alone, and records one operation in the shared store, where jj merges the
 operations several workspaces make at once by itself. It does not deploy, does not run the whole of
 `mise run check` and spawns no agent; **where what it writes is one part of the workspace's check,
 it may run that part alone**, `mise run check workspace <part>`, and in any other repository it runs
-its block's `built` and `accept`, [checking.md](checking.md); it does not use Agent, SendMessage,
+its block's `built` and `accept`, [checking.md](../checking.md); it does not use Agent, SendMessage,
 Workflow or Artifact. A hook in its definition holds its commands, four kinds alone,
-`implementer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res) and
-[delegation.md](delegation.md). Beside it, `secrets-unprinted` refuses every role a command that
-prints the environment or a decrypted secret, [briefs.md](briefs.md), "Every brief carries these".
+`implementer-commands` in [model/rules/delegation.res](../../../model/rules/delegation.res) and
+[delegation.md](../delegation.md). Beside it, `secrets-unprinted` refuses every role a command that
+prints the environment or a decrypted secret, [briefs.md](../briefs.md), "Every brief carries these".
 **It runs only in an implementer spawned without a name**: one spawned by name, as a teammate a
 message can reach, is not refused, so an implementer is spawned plainly and a later word reaches it
 by its id.
 
-**It escapes to the integrator**, [escapes.md](escapes.md), when a contract cannot express the
+**It escapes to the integrator**, [escapes.md](../escapes.md), when a contract cannot express the
 behavior its block needs, when its samples contradict each other, when the work cannot go on without
 a file outside its own, or when one failure has been tried three times and still fails. The part
 that is stopped waits; the rest goes on.
 
 **Nothing it runs blocks the turn**: `built`, `accept`, a test run and anything else that may run
 past `foregroundSeconds` goes to the background or under Monitor and is looked at every few seconds
-to a few tens, [agent-protocol.md](agent-protocol.md), "A long command never holds the
+to a few tens, [agent-protocol.md](../agent-protocol.md), "A long command never holds the
 conversation"; `hooks/gates/background.res` refuses it otherwise.
 
 **It does not commit.** It reports four things:

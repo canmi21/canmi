@@ -1,7 +1,7 @@
 # Briefs
 
 What a spawned agent is handed when the integrator dispatches it. How the work is split is
-[delegation.md](delegation.md); a reader's brief is [reading.md](reading.md).
+[delegation.md](delegation.md); a reader's brief is [reading.md](seats/reading.md).
 
 ## A spawned agent is an editing tool that can think
 
@@ -32,9 +32,9 @@ looks finished and is not.
 **An implementer's brief is what `mise run brief <name>` prints**, with its lane's path, the set of
 files it owns, and the dependencies it waits on that are still waiting. What `brief` prints ends in
 the completion protocol, `built` while writing and `accept <name> --from <base>` once,
-[implementer.md](implementer.md); until `accept-in-lane` lands, `accept` still lets another block's
+[implementer.md](seats/implementer.md); until `accept-in-lane` lands, `accept` still lets another block's
 files stand, [lanes.md](lanes.md). **A reader's brief names the four things**
-[reading.md](reading.md), "Reading is delegated; the judgment on what comes back is not", gives.
+[reading.md](seats/reading.md), "Reading is delegated; the judgment on what comes back is not", gives.
 
 **An implementer's brief names its one result and its one verification**, on a line starting
 `Result:` and a line starting `Verify:`; a dispatch without exactly one of each is refused,
@@ -43,6 +43,10 @@ files stand, [lanes.md](lanes.md). **A reader's brief names the four things**
 **Samples come before an implementer.** The integrator writes a block's samples from the contract
 the author decided, and an implementer is dispatched to build against them only once the user and
 the advisor have reviewed them.
+
+**Every brief points at [seats/rules.md](seats/rules.md)**, which holds what every seat follows and
+survives a reboot as a scratchpad does not. **A brief's permission to change an interface inside the
+seat's own files is written once there**, so a seat stops for an interface only outside them.
 
 **Every brief carries these, because a spawned agent starts cold.**
 

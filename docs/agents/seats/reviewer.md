@@ -1,11 +1,11 @@
 # Reviewer
 
-A subagent, defined in [.claude/agents/reviewer.md](../../.claude/agents/reviewer.md), Opus at high
+A subagent, defined in [.claude/agents/reviewer.md](../../../.claude/agents/reviewer.md), Opus at high
 effort.
 
 **A reviewer only reads.** It starts in a fresh context, and its brief holds the diff, the rules and
 the RFCs alone, **never an implementer's reasoning or report.** **Its commands are a whitelist**,
-`reviewer-commands` in [model/rules/delegation.res](../../model/rules/delegation.res):
+`reviewer-commands` in [model/rules/delegation.res](../../../model/rules/delegation.res):
 
 - jj as `diff`, `log`, `show`, `file show` and `file list`, never `status`, and never given a flag
   in `jjRunning`;
@@ -23,23 +23,23 @@ the RFCs alone, **never an implementer's reasoning or report.** **Its commands a
 a role that only reads must not, and what a check concludes is the integrator's.
 
 **A way around the whitelist is a known limit**, as a way around the implementer's four kinds is,
-[delegation.md](delegation.md), and a review does not count it a defect. The hook guards a
+[delegation.md](../delegation.md), and a review does not count it a defect. The hook guards a
 well-meaning agent against a slip, not against an adversary, and a reviewer is no adversary; the
 mechanism is not polished further.
 
-**In a public repository's wave it also reads the diff for leaks**, [pushing.md](pushing.md), "A
+**In a public repository's wave it also reads the diff for leaks**, [pushing.md](../pushing.md), "A
 push carries nothing private".
 
 **For every SQL statement a diff adds or changes, it states how many rows the statement reads and
 what quantity that grows with**. Every review brief carries the item, a Codex reviewer's included,
-[lessons.md](../lessons.md).
+[lessons.md](../../lessons.md).
 
 **It reports defects alone**, each with its file and line, the text quoted, and the rule it breaks;
-that report is its escape, [escapes.md](escapes.md). It proposes nothing of the design.
+that report is its escape, [escapes.md](../escapes.md). It proposes nothing of the design.
 
 **A wave has one full review, and the fixes made for it one verification**, which reads only the
 items the review listed and says of each whether it is fixed. What a verification finds beside them
 is reported with its severity: a high one stops the work for the user, any other is a record of
 friction and blocks no push. What is still not fixed after it goes to the user; the advisor or the
 user confirms the integrator's fix by reading it, and no reviewer is dispatched again,
-[checking.md](checking.md), "A wave is reviewed once, and its fixes verified once".
+[checking.md](../checking.md), "A wave is reviewed once, and its fixes verified once".
