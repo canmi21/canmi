@@ -99,6 +99,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   start in an unquoted `echo` breaks; `cd` carries to the next call, so use absolute paths and a subshell.
 - **`mise run watch` on a log holding file contents gives false ended and failure lines**, and reads
   `failed=0` as a failure. Watch a status file, or print no such word.
+- **`perl -e 'alarm N; exec @ARGV' mise run ...` kills mise alone.** The task's children live on and hold
+  what they hold, so a timed-out conform kept running and its lock refused the rerun; list them by
+  `ps` before reading the alarm as the job's end.
 - **A bounded `for ... sleep` loop is still a foreground wait.** Wait on a job's completion notice,
   or watch its log under Monitor with `mise run watch <log>`; never type the wait in the foreground.
 
