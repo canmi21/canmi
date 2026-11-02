@@ -56,4 +56,19 @@ describe("the lose gate", () => {
       expect(Lose.handle(payload(repo, "jj log")))->toBe(0)
     },
   )
+
+  test("passes an abandon of changes main already has, also through -R", () => {
+    let repo = main()
+    tree(repo, [("a.md", "one\n")])
+    jj(repo, ["commit", "-m", "x"])
+    jj(repo, ["bookmark", "create", "main", "-r", "@-"])
+    expect(Lose.handle(payload(repo, "jj abandon main")))->toBe(0)
+    expect(Lose.handle(payload("/tmp", `jj -R ${repo} abandon main`)))->toBe(0)
+    jj(repo, ["new", "main"])
+    tree(repo, [("b.md", "two\n")])
+    expect(Lose.handle(payload(repo, "jj abandon @")))->toBe(2)
+    expect(Lose.handle(payload("/tmp", `jj -R ${repo} abandon @`)))->toBe(2)
+    tree(repo, [("a.md", "changed\n")])
+    expect(Lose.handle(payload(repo, "jj abandon main @")))->toBe(2)
+  })
 })

@@ -134,7 +134,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "work-not-lost",
-    says: "An agent's `jj restore` with no path, and `jj abandon` of a commit holding changes, are refused where they would lose uncommitted work; named paths and an empty commit pass, `SKIP=restore` naming the escape",
+    says: "An agent's `jj restore` with no path, and `jj abandon` of a commit holding changes main does not have, are refused where they would lose work; named paths and an empty or landed commit pass, `SKIP=restore` naming the escape",
     doc: "docs/lessons.md",
     held: Hook("hooks/gates/lose"),
   },

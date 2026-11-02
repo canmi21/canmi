@@ -65,8 +65,55 @@ let holds = (place, revset): result<bool, string> => {
     : Error(answer.stderr->Nullable.getOr("")->String.trim)
 }
 
+/** jj's stdout from `place`, or why it could not answer. */
+let ask = (place, args): result<string, string> => {
+  let answer = Node.spawnSync(
+    "jj",
+    args,
+    {cwd: place, encoding: "utf8", maxBuffer: 268435456, timeout: 10000},
+  )
+  answer.status->Nullable.toOption == Some(0)
+    ? Ok(answer.stdout->Nullable.getOr(""))
+    : Error(answer.stderr->Nullable.getOr("")->String.trim)
+}
+
+/** A path as a quoted fileset that jj reads relative to where it runs. */
+let quoted = path =>
+  `cwd:"${path->String.replaceAll("\\", "\\\\")->String.replaceAll("\"", "\\\"")}"`
+
+/** Whether every change in the commits of a revset is already in main, path by path. */
+let landed = (place, revset): result<bool, string> =>
+  switch ask(
+    place,
+    ["log", "--no-graph", "-r", `(${revset}) & ~empty()`, "-T", "commit_id ++ \"\\n\""],
+  ) {
+  | Error(why) => Error(why)
+  | Ok(found) =>
+    found
+    ->String.split("\n")
+    ->Array.map(String.trim)
+    ->Array.filter(id => id != "")
+    ->Array.reduce(Ok(true), (all, id) =>
+      switch (all, ask(place, ["diff", "-r", id, "--name-only"])) {
+      | (Ok(false), _) => Ok(false)
+      | (Error(why), _) | (_, Error(why)) => Error(why)
+      | (Ok(true), Ok(names)) =>
+        let paths = names->String.split("\n")->Array.filter(line => line != "")
+        paths == []
+          ? Ok(true)
+          : ask(
+              place,
+              ["diff", "--from", "main", "--to", id, "--name-only", ...paths->Array.map(quoted)],
+            )
+            // No main to compare with means nothing of it is on main.
+            ->Result.mapOr(false, left => left->String.trim == "")
+            ->Ok
+      }
+    )
+  }
+
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
-let handle = (payload: Payload.t, ~holds=holds): int =>
+let handle = (payload: Payload.t, ~holds=holds, ~landed=landed): int =>
   try {
     let command = Payload.command(payload)
     let guarded = ["restore", "abandon"]
@@ -85,7 +132,15 @@ let handle = (payload: Payload.t, ~holds=holds): int =>
             revset =>
               if refused.contents == None {
                 switch holds(place, revset) {
-                | Ok(true) => refused := Some((subcommand, revset))
+                | Ok(true) =>
+                  switch subcommand == "abandon" ? landed(place, revset) : Ok(false) {
+                  | Ok(true) => ()
+                  | Ok(false) => refused := Some((subcommand, revset))
+                  | Error(why) =>
+                    Console.error(
+                      `hooks/gates/lose.res could not compare ${revset} with main, so the command passes: ${why}`,
+                    )
+                  }
                 | Ok(false) => ()
                 | Error(why) =>
                   Console.error(
@@ -100,7 +155,7 @@ let handle = (payload: Payload.t, ~holds=holds): int =>
       | None => 0
       | Some((subcommand, revset)) =>
         Console.error(
-          `jj ${subcommand} refused by hooks/gates/lose.res: ${revset} holds changes that nothing else keeps, and this would lose them.\n` ++
+          `jj ${subcommand} refused by hooks/gates/lose.res: ${revset} holds changes that main does not have, and this would lose them.\n` ++
           `Name the paths to restore, or commit or snapshot the changes first. To lose them anyway, name the gate: \`SKIP=restore jj ${subcommand} ...\`.`,
         )
         2
