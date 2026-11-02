@@ -100,7 +100,7 @@ passed. See [docs/agents/delegation.md](docs/agents/delegation.md).
 
 **Long commands** -- anything that may run past a few seconds starts by `mise run //:job start --
 <command>`, in the ledger the watchdog reads, and is looked at every few seconds to a few tens, `mise
-run watch <id>` under Monitor doing the looking; a hook refuses the rest. See [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md), "A long
+run //:watch <id>` under Monitor doing the looking; a hook refuses the rest. See [docs/agents/agent-protocol.md](docs/agents/agent-protocol.md), "A long
 command never holds the conversation".
 
 **Commits** -- Conventional Commits, the types and widths in `model/rules/commits.res`. Omit the

@@ -384,6 +384,9 @@ let main = (argv: array<string>): int => {
       },
       {target, name, siblings},
     )->finish(~root, ~dry)
+  | ["take", name] if siblings == [] && fromBase(root) != Ok() =>
+    Console.error(`run lane take ${name} from the base workspace, not from inside a lane`)
+    1
   | ["take", name] if siblings == [] =>
     Lane_state.workspacesOf(
       ~root,

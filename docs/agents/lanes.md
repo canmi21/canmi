@@ -99,7 +99,8 @@ snapshots the lane first, since `jj restore --from <lane>@` reads the lane's las
 the paths the lane changed and no others, both sides of a rename, and refuses a path main moved since
 the fork or the main checkout holds an edit to, `lane-taken-snapshotted`. **A lane rebased from
 outside goes stale**, its seat then working on the old tree without knowing, so a dispatch into one is
-refused, `lane check` and `lane take` too, `lane-not-stale`. The `lanes` part of the check holds the
+refused, `lane check` and `lane take` too, `lane-not-stale`. A seat runs neither `lane open`, `close`
+nor `take`, `notSeats`. The `lanes` part of the check holds the
 task declared and named here, and `lane-state` warns of a lane that is no workspace of a registered path and of a
 `target` past the limit below, `lane-target`.
 

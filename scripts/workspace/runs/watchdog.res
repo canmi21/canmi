@@ -80,6 +80,17 @@ let aboutSession = (session: session, ~now, ~moved): array<finding> =>
         notify,
       },
     ]
+  | (Some(_), None) if session.transcript == None => [
+      {
+        key: `unwatched:${session.name}`,
+        says: `unwatched to=${Delegation.silentTurns
+          ->Array.find(((role, _, _)) => role == session.role)
+          ->Option.mapOr("advisor", ((_, _, superior)) =>
+            superior
+          )} ${session.role} ${session.name} is registered with no transcript, so its turn cannot be read`,
+        notify: false,
+      },
+    ]
   | _ => []
   }
 
@@ -163,9 +174,10 @@ let look = (~now=Date.now(), ~notify=notified) => {
     if one.says != "" {
       Ledger.append(Ledger.events(), `${at(now)} ${one.says}\n`)
     }
-    Ledger.append(Ledger.seen(), `${one.key}\n`)
-    if one.notify {
-      notify(one.says)->ignore
+
+    // An author not reached is tried again at the next look.
+    if !one.notify || notify(one.says) {
+      Ledger.append(Ledger.seen(), `${one.key}\n`)
     }
   })
   found->Array.length

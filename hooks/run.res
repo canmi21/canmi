@@ -53,6 +53,34 @@ let opening = (payload: Payload.t) =>
   ->Array.filter(part => part != "")
   ->Array.join("\n\n")
 
+/** The gates that hold a command by what it does, for one a job is given to run later. */
+let lineGates = [
+  (payload: Payload.t) => Commit.refuse(payload),
+  payload => Push.refuse(payload),
+  payload => Rmvar.refuse(payload),
+  payload => Kill_named.refuse(payload),
+  payload => Verified.handle(payload),
+  payload => Form.handle(payload),
+  payload => Lose.handle(payload),
+  payload => Trash.refuse(payload),
+]
+
+/** What each command `mise run //:job start` is given would meet, typed by itself. */
+let refusedInJob = (payload: Payload.t) =>
+  Jj_command.segments(Payload.command(payload))
+  ->Array.filterMap(segment =>
+    segment[0]->Option.map(Node.basename) == Some("mise") ? Agent_commands.jobLine(segment) : None
+  )
+  ->Array.reduce(0, (refused, line) => {
+    let input = payload->Payload.object("tool_input")->Option.getOr(Dict.make())->Dict.copy
+    input->Dict.set("command", JSON.String(line))
+    let inner = payload->Dict.copy
+    inner->Dict.set("tool_input", JSON.Object(input))
+    refused != 0
+      ? refused
+      : lineGates->Array.reduce(0, (refused, gate) => refused != 0 ? refused : gate(inner))
+  })
+
 let handle = (payload: Payload.t): int =>
   switch payload->Payload.text("hook_event_name") {
   | Some("SessionStart") =>
@@ -88,7 +116,7 @@ let handle = (payload: Payload.t): int =>
                         switch Trash.refuse(payload) {
                         | 0 =>
                           Commit.fix(payload)
-                          0
+                          refusedInJob(payload)
                         | refused => refused
                         }
                       | refused => refused

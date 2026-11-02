@@ -142,7 +142,8 @@ common superior.
 at its nearest safe point. Production down, a credential leaked or data lost goes straight to the
 advisor and pushes to the author.
 
-A thread's charter, decision queue, ledger and status are files, [threads.md](threads.md).
+**Where a supervisor is named, the order of a thread's work is its own**, and the integrator's sequence
+is the order of its landings. A thread's charter, decision queue, ledger and status are files, [threads.md](threads.md).
 
 **A subagent type is defined only where it truly differs in tools, model or permissions.**
 

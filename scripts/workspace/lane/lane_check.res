@@ -51,7 +51,7 @@ let formatStep = (~tasks, ~hasRescript) =>
   }
 
 /** The steps of each part named, or the first word that is no part. */
-let plan = (parts: array<string>, ~tasks, ~hasRescript, ~hasCargo) => {
+let plan = (parts: array<string>, ~tasks, ~hasRescript, ~hasCargo, ~hasModel=true) => {
   let known = Delegation.seatParts->Array.map(((name, _)) => name)
   let rec go = (rest: list<string>, steps) =>
     switch rest {
@@ -79,7 +79,7 @@ let plan = (parts: array<string>, ~tasks, ~hasRescript, ~hasCargo) => {
         more,
         Array.concat(
           steps,
-          tasks->Array.includes("check")
+          hasModel && tasks->Array.includes("check")
             ? [Mise(["run", "check"])]
             : [Say("wire: this repository has no model to check")],
         ),
@@ -152,6 +152,7 @@ let main = (parts: array<string>, ~dry) => {
       parts,
       ~tasks=tasksOf(root),
       ~hasRescript=Node.existsSync(Node.join([root, "rescript.json"])),
+      ~hasModel=Delegation.wireRepositories->Array.includes(Node.basename(root)),
       ~hasCargo=Node.existsSync(cargo) &&
       !(Node.readFileSync(cargo)->String.includes("members = []")),
     ) {

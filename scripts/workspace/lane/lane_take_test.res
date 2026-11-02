@@ -40,6 +40,18 @@ describe("a seat's check", () => {
     expect(plan(["verify"]))->toEqual(Error("verify"))
   })
 
+  test("runs the model's check for wire only where check is the model's", () => {
+    expect(
+      Lane_check.plan(
+        ["wire"],
+        ~tasks=["check"],
+        ~hasRescript=true,
+        ~hasCargo=false,
+        ~hasModel=false,
+      ),
+    )->toEqual(Ok([Say("wire: this repository has no model to check")]))
+  })
+
   test("tells a stale working copy from what jj said", () => {
     expect(
       Lane_check.staleSaid("Error: The working copy is stale (not updated since op x)"),

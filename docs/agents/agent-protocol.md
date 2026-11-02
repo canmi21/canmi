@@ -171,7 +171,8 @@ mechanisms keep the rest.
 
 - **The author decides** direction and boundaries -- the layers, a contract's shape, a vendor or a
   product chosen; **every fixed value that is policy** -- a limit, a timeout, a retention, a name
-  seen outside the system; and every act that is outward or hard to undo -- a publish, an account,
+  seen outside the system, though the advisor gives a reversible one a default, written to the
+  ledger, until the author reads it; and every act that is outward or hard to undo -- a publish, an account,
   money spent, data deleted, a credential.
 - **The agent decides the rest within a thread** -- how it is built, the order steps are accepted
   in, the tests, the names inside the system within `docs/naming.md` -- and carries on without

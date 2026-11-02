@@ -1,6 +1,6 @@
 /**
- * A thread's figures, which warn and never block, docs/agents/threads.md: seat time and landings
- * since a step last went green, and the share of its seat time that is tooling.
+ * A thread's figures, which warn and never block, docs/agents/threads.md. They are seat time and
+ * landings since a step last went green, and the share of its seat time that is tooling.
  */
 type record =
   | Green({step: string, at: float})
@@ -120,7 +120,12 @@ let shown = (name, figures) => {
       : ""}`
 }
 
-let threads = () => Node.existsSync(root()) ? Node.readdir(root()) : []
+let threads = () =>
+  Node.existsSync(root())
+    ? Node.readdir(root())->Array.filter(name =>
+        Node.stat(directory(name))->Option.mapOr(false, Node.statsIsDirectory)
+      )
+    : []
 
 /** A thread's figures once each period, and once more on crossing the share. */
 let keysOf = (name, figures, ~now) => {

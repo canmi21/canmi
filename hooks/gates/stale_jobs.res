@@ -443,7 +443,7 @@ let modified = path =>
 let describe = (found: stale) =>
   `Background job ${found.job.id} (${found.job.description}) has been silent for ${Int.toString(
       found.silent,
-    )} seconds. Look at it now: read ${found.job.output}, or run \`mise run watch ${found.job.output}\` under Monitor. A job that is hung never sends its completion notice.`
+    )} seconds. Look at it now: read ${found.job.output}, or run \`mise run //:watch ${found.job.output}\` under Monitor. A job that is hung never sends its completion notice.`
 
 let finalNote = (found: stale) =>
   `${describe(found)} It has been silent over an hour, so this is the last time it is said.`

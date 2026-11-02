@@ -197,8 +197,8 @@ let runs = "~/.local/state/workspace/runs/"
 let threads = "~/.local/share/monoflake/threads/"
 
 /**
- * Why each starting value, to be tuned: the watchdog ticks each minute and a report is owed within
- * two, so a job's silence and an unread end are both reported at one minute.
+ * Starting values to be tuned. The watchdog ticks each minute and a report is owed within two, so
+ * a job's silence and an unread end are both reported at one minute.
  */
 let watchdogSeconds = 60
 let runSilentSeconds = 60
@@ -240,6 +240,12 @@ let seatParts = [
   ("compile", "what does not compile, ReScript and Rust"),
   ("tests", "a failing test: the block's `built`, or the repository's `test`"),
 ]
+
+/** Where `check` is the model's alone, so `wire` runs it; elsewhere it is the whole check. */
+let wireRepositories = ["platform", "driver", "cloud"]
+
+/** A lane's, a launchd job's or a step's verbs a seat never runs, `implementer-commands`. */
+let notSeats = [("lane", ["open", "close", "take"]), ("job", ["install"]), ("thread", ["green"])]
 
 /** The file a check's blocks in work are listed to, read at the end of `check`, `in-work-shown`. */
 let inWorkFile = "IN_WORK_FILE"
@@ -375,7 +381,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "implementer-commands",
-    says: "An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, a `verify:<part>` among them, one part of the workspace's check and `lane check` of `seatParts` aside, and --pending always; a task that deploys; and ssh, rsync or wrangler, a command given to `job` judged as its own. A task it runs may read its own lane's history",
+    says: "An implementer is refused these kinds alone: version control, jj and git; a whole repository's check, verify or audit, a `verify:<part>` among them, one part of the workspace's check and `lane check` of `seatParts` aside, and --pending always; a task that deploys; ssh, rsync or wrangler, a command given to `job` judged as its own; and `notSeats`. A task it runs may read its own lane's history",
     doc: "docs/agents/seats/implementer.md",
     held: Hook("hooks/agent_commands"),
   },

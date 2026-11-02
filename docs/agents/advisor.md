@@ -51,9 +51,9 @@ block's samples before an implementer is dispatched to build against them.
 raises comes to the user and the advisor, [escapes.md](escapes.md).
 
 **Its opinions on open choices go to the user**, never to another session or agent as an
-instruction. A decision the user has made, and a small reading of one, it relays to the integrator
-as an instruction. The advisor and the integrator message each other directly and settle what they
-can without going through the author, [agent-protocol.md](agent-protocol.md), "Working beside other
+instruction. A decision the user has made, and a small reading of one, it relays to the supervisor, or to the
+integrator where no supervisor is named, as an instruction, and they settle with it what they can
+without going through the author, [agent-protocol.md](agent-protocol.md), "Working beside other
 agents".
 
 **"Handover" from the user means this session is about to be compacted or replaced by one with zero

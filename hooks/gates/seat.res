@@ -70,6 +70,14 @@ let staleFaults = (text: string, ~exists=Node.existsSync, ~stale=Lane_check.stal
     ->Array.map(one => `lanes/${name}/${one.rel} is stale, so open a fresh lane`)
   )
 
+/** A prompt and the brief file it points at, whichever names the lane. */
+let withPointed = prompt =>
+  pointer
+  ->RegExp.exec(prompt)
+  ->Option.flatMap(found => found[1]->Option.flatMap(x => x))
+  ->Option.flatMap(path => readFile(path->String.replaceRegExp(/[.,;:)]+$/, "")))
+  ->Option.mapOr(prompt, brief => `${prompt}\n${brief}`)
+
 /** The file a segment's stdin is redirected from, `< path` or `<path`. */
 let redirected = (words: array<string>) =>
   words
@@ -167,7 +175,7 @@ let refuse = (payload: Payload.t): int => {
         ->Payload.object("tool_input")
         ->Option.flatMap(input => input->Payload.text("prompt"))
         ->Option.getOr("")
-        ->(prompt => Array.concat(promptFaults(prompt), staleFaults(prompt))),
+        ->(prompt => Array.concat(promptFaults(prompt), staleFaults(withPointed(prompt)))),
       )
     | _ => None
     }

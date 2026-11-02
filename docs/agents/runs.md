@@ -20,7 +20,7 @@ silent. **`mise run //:job run -- <command>` waits and exits with its status**, 
 - **`mise run //:watch <id>` under Monitor** follows it, and reaching its end records the read.
 - **`mise run //:job read <id>`** prints its status and the end of its output, and records the read. A
   Read or a shell command naming its output file records it too, by a hook.
-- **`mise run //:job stop <id>`** ends its process group. `list` shows the last ones.
+- **`mise run //:job stop <id>`** ends its process group, and a watch of it. `list` shows the last ones.
 - **`mise run //:job table [--since <yyyy-mm-dd>]`** is duration times count by command, the top one the
   bottleneck. Timing comes free of the ledger, and nothing else is timed specially.
 

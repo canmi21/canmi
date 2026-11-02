@@ -23,8 +23,9 @@ after its context is compacted.
 **The integrator writes the model and its interfaces, the files with one writer, the commit that
 merges a wave, and a fix shorter than its brief would be.** Work that cannot run in parallel goes to
 one implementer, [delegation.md](delegation.md). The files with one writer are listed in
-[lanes.md](lanes.md), "Some files have one writer, the integrator". **The sequence, who owns which
-file, the commits, and writing what was decided into the rules are its own**; the paraphrase, the
+[lanes.md](lanes.md), "Some files have one writer, the integrator". **The sequence of its landings, who owns which
+file, the commits, and writing what was decided into the rules are its own**, the order of a thread's
+work being the supervisor's; the paraphrase, the
 judgment and the decisions are the user's and the advisor's.
 
 **It writes a block's samples from the contract the author decided**, and dispatches an implementer
@@ -90,6 +91,6 @@ harness's permission settings or configuration waits for the author's own word i
 
 **It messages the advisor directly and settles with it what they can without going through the
 author**, [agent-protocol.md](agent-protocol.md), "Working beside other agents"; it does the same
-with the implementers it spawns, and with no other session.
+with the implementers it spawns, its supervisor and the other integrator, and with no other session.
 
 **It reports facts and problems, and gives no advice.**

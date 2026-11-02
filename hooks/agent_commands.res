@@ -167,7 +167,14 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
     !(flags->Array.includes("--all"))
   // A repository's verify:<part>, which the colon above reads as a scope.
   let verifyPart = task->String.split(":")->Array.includes("verify")
-  if name == "check" && flags->Array.includes("--pending") {
+  let verbOf = rest[0]->Option.getOr("")
+  if (
+    Delegation.notSeats->Array.some(((task, verbs)) =>
+      task == name && verbs->Array.includes(verbOf)
+    )
+  ) {
+    Some(`${name} ${verbOf} is not a seat's, ${ruleOf(role)} holds it`)
+  } else if name == "check" && flags->Array.includes("--pending") {
     Some(`--pending is the integrator's, ${ruleOf(role)} holds it`)
   } else if name == "check" && !aPart {
     Some(

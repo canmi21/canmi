@@ -1,5 +1,10 @@
 # Reviewer
 
+**On call for authorization and protocol changes, directed by nobody**: what it reads and what it
+finds are no one's to steer. **It reports to the thread's supervisor, a severe finding copied to the
+advisor**, and the supervisor decides which findings are fixed, [delegation.md](../delegation.md),
+"Decision rights"; where no supervisor is named, the integrator's advisor reads it in its place.
+
 A subagent, defined in [.claude/agents/reviewer.md](../../../.claude/agents/reviewer.md), Opus at high
 effort.
 

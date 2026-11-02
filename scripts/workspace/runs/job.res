@@ -1,5 +1,5 @@
 /**
- * The one entry for a long command, docs/agents/runs.md: `job start` returns at once, `job run`
+ * The one entry for a long command, docs/agents/runs.md. `job start` returns at once, `job run`
  * waits, and either writes the ledger at the start and the end.
  */
 type stdio
@@ -118,6 +118,8 @@ let stop = id =>
     }
     let now = Date.now()
     Ledger.ended(~id, ~status=143, ~at=now)
+    // A watch of it ends here, as its owner died before saying so.
+    Ledger.append(job.output, "[exited with code 143]\n")
     // Whoever stops a job has read its end.
     Ledger.markRead(~id, ~at=now)
     Console.log(`${id} stopped`)
@@ -169,7 +171,13 @@ let begin = (argv, ~wait) => {
       let finished = ref(None)
       while finished.contents == None {
         Node.spawnSync("sleep", ["1"], {stdio: "ignore"})->ignore
-        finished := Ledger.find(id)->Option.flatMap(job => job.status)
+        finished :=
+          switch Ledger.find(id) {
+          | Some({status: Some(status)}) => Some(status)
+          // Its owner gone with no end written is the end of the wait.
+          | Some({pid}) if pid > 0 && !Watchdog.alive(pid) => Some(1)
+          | _ => None
+          }
       }
       finished.contents->Option.getOr(1)
     } else {
@@ -186,7 +194,9 @@ let register = (role, name, ~transcript) =>
   } else {
     Ledger.registerSession(~role, ~name, ~transcript)
     Console.log(
-      `${role} ${name} registered${transcript == None ? ", its transcript named by the hook" : ""}`,
+      `${role} ${name} registered${transcript == None
+          ? "; the hook names its transcript, and where none runs the watchdog says it cannot watch it"
+          : ""}`,
     )
     0
   }

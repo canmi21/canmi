@@ -20,7 +20,7 @@ let summaryPaths = (text: string) =>
   ->Array.filter(line => line != "")
   ->Array.flatMap(pathsOfSummary)
 
-/** What keeps a path from being taken, each named: main moved it, or the checkout holds an edit. */
+/** What keeps a path from being taken, main having moved it or the checkout holding an edit. */
 let blocked = (~touched, ~moved, ~edited) =>
   Array.concat(
     touched
@@ -53,7 +53,7 @@ let takeOne = (~source, ~name, ~dry, one: Lane_state.found) =>
       jj(one.path, ["st"]),
       jj(one.path, ["diff", "--from", fork, "--to", "@", "--summary"]),
       jj(one.path, ["diff", "--from", fork, "--to", "main", "--summary"]),
-      jj(source, ["diff", "--from", "@-", "--to", "@", "--summary"]),
+      jj(source, ["diff", "--from", "main", "--to", "@", "--summary"]),
     ) {
     | (Error(why), _, _, _)
     | (_, Error(why), _, _)

@@ -1,8 +1,8 @@
 /**
- * What a tool call tells the run ledger, docs/agents/runs.md: an output read is a job's result
+ * What a tool call tells the run ledger, docs/agents/runs.md. An output read is a job's result
  * read, and a registering command names the session's transcript, whose growth is its turn.
  */
-let registering = /\bmise\s+run\s+(?:\/\/:)?job\s+register\s+([a-z]+)\s+([A-Za-z0-9_.-]+)(?!\s+--transcript)/
+let registering = /\bmise\s+run\s+(?:\/\/:)?job\s+register\s+([a-z]+)\s+([A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-]|\s+--transcript)/
 
 /** The output paths of the ledger a call's text names. */
 let outputsIn = (text: string) => {

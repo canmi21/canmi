@@ -17,7 +17,8 @@ are we" from these files alone.
 - **`decisions.md`**: the queue, each decision carrying the step of the path it stands on, a
   recommended default and whether it can be undone, [delegation.md](delegation.md), "Decision
   rights".
-- **`ledger.md`**: what any layer chose under its right, one line each.
+- **`ledger.md`**: what any layer chose under its right, one line each, the working copy of the RFC's
+  `### Ledger`, into which the supervisor gathers it at the thread's end.
 - **`status.md`**: where the thread stands, kept by the supervisor.
 
 ## Staying on course

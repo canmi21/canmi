@@ -64,7 +64,7 @@ In a lane, accept runs with --from the wave's base and passes over no other bloc
 
 ### implementer-commands
 
-An implementer is refused four kinds alone: version control, jj and git; a whole repository's check, verify or audit, a `verify:<part>` among them, one part of the workspace's check and `lane check` of `seatParts` aside, and --pending always; a task that deploys; and ssh, rsync or wrangler, a command given to `job` judged as its own. A task it runs may read its own lane's history.
+An implementer is refused these kinds alone: version control, jj and git; a whole repository's check, verify or audit, a `verify:<part>` among them, one part of the workspace's check and `lane check` of `seatParts` aside, and --pending always; a task that deploys; ssh, rsync or wrangler, a command given to `job` judged as its own; and `notSeats`. A task it runs may read its own lane's history.
 
 - doc: [docs/agents/seats/implementer.md](../../docs/agents/seats/implementer.md)
 - held by: hook `hooks/agent_commands`
