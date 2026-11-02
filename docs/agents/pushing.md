@@ -24,9 +24,9 @@ verb alone. See [lessons.md](../lessons.md).
 
 **A push that finds the remote's main moved is expected, and nothing to escalate**,
 `push-behind-main`. CI commits to main itself, most often the scheduled update moving tools and
-dependencies every day, [ci.md](../ci.md). The pusher runs `mise run pull <name>`, which fetches and
-lists what came in, reads those commits, rebases its own onto `main@origin` and moves `main` to its
-last, runs the check again, and pushes.
+dependencies every day, [ci.md](../ci.md). `mise run push` fetches first and, finding main moved, names each commit that came in and stops
+with the steps, and a dry run says the same; the pusher reads those commits, rebases its own onto
+`main@origin` and moves `main` to its last, runs the check again, and pushes.
 
 **A wave worked in roles also waits on the full check passing, a reviewer having read the wave, and
 the wave accepted**, `push-gated`, [checking.md](checking.md), "Acceptance comes before the push". A
