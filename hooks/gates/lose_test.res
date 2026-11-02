@@ -71,4 +71,16 @@ describe("the lose gate", () => {
     tree(repo, [("a.md", "changed\n")])
     expect(Lose.handle(payload(repo, "jj abandon main @")))->toBe(2)
   })
+
+  test("passes the guarded words inside a here-document body or a quoted echo", () => {
+    let repo = main()
+    tree(repo, [("a.md", "one\n")])
+    expect(Lose.handle(payload(repo, "cat > note.md <<'EOF'\njj restore --from main@\nEOF")))->toBe(
+      0,
+    )
+    expect(Lose.handle(payload(repo, "cat > note.md <<EOF\njj abandon @\nEOF")))->toBe(0)
+    expect(Lose.handle(payload(repo, "echo 'run jj restore, then jj abandon @'")))->toBe(0)
+    expect(Lose.handle(payload(repo, "cat <<EOF >n\nx\nEOF\njj abandon @")))->toBe(2)
+    expect(Lose.handle(payload(repo, "cat <<< x\njj abandon @")))->toBe(2)
+  })
 })

@@ -174,6 +174,35 @@ describe("a background job gone silent", () => {
     reset(input)
   })
 
+  test("is a follow-up timer, passed until its own sleep has passed", () => {
+    let timer = (name, ~silent, command) => {
+      let out = output(`${name}.out`, ~silent)
+      let transcript = write(
+        `${name}.jsonl`,
+        [
+          started(
+            ~session=name,
+            ~call="t1",
+            ~id=name,
+            ~output=out,
+            ~description="Follow up",
+            ~command,
+          ),
+        ],
+      )
+      let input = payload(transcript, name)
+      reset(input)
+      let found = ids(input)
+      reset(input)
+      found
+    }
+    expect(timer("tm1", ~silent=34, "sleep 300; echo \"follow up now\""))->toEqual([])
+    expect(timer("tm2", ~silent=34, "sleep 5m && printf 'x\\n'; echo done"))->toEqual([])
+    expect(timer("tm3", ~silent=301, "sleep 300; echo \"follow up now\""))->toEqual(["tm3"])
+    expect(timer("tm4", ~silent=34, "sleep 300; make build"))->toEqual(["tm4"])
+    expect(timer("tm5", ~silent=34, "sleep 300; echo $(make build)"))->toEqual(["tm5"])
+  })
+
   test("is held again when it spoke and fell silent anew", () => {
     let out = output("b.out", ~silent=60)
     let transcript = write(
@@ -380,7 +409,7 @@ describe("nothing in the gate", () => {
     Node.writeFileSync(Stale_jobs.ledger(input), "{not json")
     expect(Stale_jobs.response(input, ~at)->Option.isSome)->toBe(true)
     reset(input)
-    Node.writeFileSync(Stale_jobs.ledger(input), "{\"v\":1}")
+    Node.writeFileSync(Stale_jobs.ledger(input), `{"v":${Stale_jobs.version->Int.toString}}`)
     expect(Stale_jobs.context(input, ~at))->toEqual(None)
     reset(input)
     // A directory as the transcript is unreadable and named, not thrown.

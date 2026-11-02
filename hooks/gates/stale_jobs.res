@@ -2,7 +2,13 @@
  * Names a background job started and gone silent, so the agent looks at it,
  * long-command-background.
  */
-type job = {id: string, description: string, output: string, targets: array<string>}
+type job = {
+  id: string,
+  description: string,
+  command: string,
+  output: string,
+  targets: array<string>,
+}
 type stale = {job: job, silent: int, marker: float}
 type call = {description: string, command: string, cwd: string}
 
@@ -40,7 +46,7 @@ type bytes
 
 /** A description holding this word marks a job silent by design, which is never named. */
 let quiet = Delegation.quietMark
-let version = 1
+let version = 2
 /** How much of the end of a transcript the first call reads, and the chunk each read takes. */
 let firstReadBytes =
   64. *. 1048576.
@@ -56,7 +62,7 @@ let startedAs = /Command running in background with ID: ([A-Za-z0-9_-]+)\. Outpu
 let stoppedAs = /Successfully stopped task: ([A-Za-z0-9_-]+)/
 let taskIdAs = /<task-id>([^<]+)<\/task-id>/
 let redirectAs = /^(?:\d*|&)>>?(.*)$/
-let heredocAs = /<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1/
+let heredocAs = /(?<!<)<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1/
 
 let capture = (found: option<RegExp.Result.t>, at) =>
   found->Option.flatMap(result => result->Array.get(at))->Option.flatMap(text => text)
@@ -289,6 +295,7 @@ let feed = (state: state, line, ~session) =>
                       id: job,
                       output,
                       description: call.description,
+                      command: call.command,
                       targets: targetsOf(call.command, ~cwd=call.cwd),
                     })
                   | _ => ()
@@ -383,6 +390,24 @@ let observe = (payload: Payload.t): result<option<state>, string> =>
     }
   }
 
+let timerAs = /^sleep\s+(\d+(?:\.\d+)?)([smhd]?)\s*(?:;|&&|\n)\s*((?:echo|printf)\b[^;&|\n]*(?:\s*(?:;|&&|\n)\s*(?:echo|printf)\b[^;&|\n]*)*);?$/
+
+/** The seconds a follow-up timer sleeps, a sleep followed only by echo or printf. */
+let timerSeconds = command => {
+  let found = timerAs->RegExp.exec(command->String.trim)
+  switch (found->capture(1)->Option.flatMap(Float.fromString), found->capture(3)) {
+  | (Some(amount), Some(rest)) if !(rest->String.includes("`") || rest->String.includes("$(")) =>
+    let unit = switch found->capture(2) {
+    | Some("m") => 60.
+    | Some("h") => 3600.
+    | Some("d") => 86400.
+    | _ => 1.
+    }
+    Some(amount *. unit)
+  | _ => None
+  }
+}
+
 /**
  * The jobs silent for `stallSeconds` or more, by the latest time `mtime` gives their output or
  * redirects.
@@ -402,7 +427,12 @@ let stale = (jobs: array<job>, ~at, ~mtime): array<stale> =>
       )
       ->Option.flatMap(marker => {
         let silent = Float.toInt((at -. marker) /. 1000.)
-        silent >= Delegation.stallSeconds ? Some({job, silent, marker}) : None
+        // A timer is silent by design until its own sleep has passed.
+        let early = switch timerSeconds(job.command) {
+        | Some(seconds) => silent->Int.toFloat < seconds
+        | None => false
+        }
+        silent >= Delegation.stallSeconds && !early ? Some({job, silent, marker}) : None
       })
     }
   )

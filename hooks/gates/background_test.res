@@ -1,12 +1,14 @@
 open Testing
 
-let payload = (~background=false, ~timeout=?, command): Payload.t => {
+let payload = (~background=false, ~timeout=?, ~tool=?, command): Payload.t => {
   let input = Dict.fromArray([
     ("command", JSON.String(command)),
     ("run_in_background", JSON.Boolean(background)),
   ])
   timeout->Option.forEach(ms => input->Dict.set("timeout", JSON.Number(ms)))
-  Dict.fromArray([("tool_input", JSON.Object(input))])
+  let fields = Dict.fromArray([("tool_input", JSON.Object(input))])
+  tool->Option.forEach(name => fields->Dict.set("tool_name", JSON.String(name)))
+  fields
 }
 
 describe("a command that holds the conversation", () => {
@@ -31,6 +33,13 @@ describe("a command that holds the conversation", () => {
       Background.refuse(payload(~background=true, "until test -e f; do sleep 2; done")),
     )->toEqual(0)
     expect(Background.refuse(payload("ls")))->toEqual(0)
+  })
+
+  test("is passed when Monitor runs it, and refused when Bash does", () => {
+    let command = "until grep -q 'exited with code' out.log; do sleep 3; done; cat out.log"
+    expect(Background.refuse(payload(~tool="Monitor", command)))->toEqual(0)
+    expect(Background.refuse(payload(~tool="Bash", command)))->toEqual(2)
+    expect(Background.refuse(payload(command)))->toEqual(2)
   })
 
   test("is a foreground call asking for more than the foreground seconds", () => {

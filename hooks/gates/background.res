@@ -214,9 +214,12 @@ and lineLong = (command: string) =>
 /** Whether a command line runs an always-long command in the foreground. */
 let long = lineLong
 
+/** Whether the call is to Monitor, which waits on a loop without holding the conversation. */
+let monitored = (payload: Payload.t) => payload->Payload.text("tool_name") == Some("Monitor")
+
 /** Why a foreground call would hold the conversation, or nothing where it would not. */
 let held = (payload: Payload.t) =>
-  if background(payload) {
+  if background(payload) || monitored(payload) {
     None
   } else if polls(Payload.command(payload)) {
     Some("it waits in a loop that sleeps")

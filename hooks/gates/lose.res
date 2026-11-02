@@ -115,7 +115,8 @@ let landed = (place, revset): result<bool, string> =>
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let handle = (payload: Payload.t, ~holds=holds, ~landed=landed): int =>
   try {
-    let command = Payload.command(payload)
+    // A here-document body is text the shell never runs, so only its command words are judged.
+    let command = Stale_jobs.withoutHeredocs(Payload.command(payload))
     let guarded = ["restore", "abandon"]
     if Jj_command.skipped(command)->Array.includes("restore") {
       0
