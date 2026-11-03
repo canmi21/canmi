@@ -118,6 +118,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 
 ## Remotes, and what cannot be taken back
 
+- **A line to the advisor is read only by an advisor registered and watching.** On 2026-11-03 the
+  idle escalation fired at 02:35:20 UTC and nobody read it, no advisor being registered; the holder
+  registers and keeps a Monitor on the event file, [advisor.md](agents/advisor.md), "One holder".
 - **Docker is not quit under running containers.** At 02:15 UTC on 2026-11-03 Docker was quit by
   `osascript` with both machine containers running, and a "VM stopped unexpectedly" dialog followed,
   the cause not proven. Whoever next runs `local up` first reads whether the volumes

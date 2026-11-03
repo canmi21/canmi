@@ -91,6 +91,11 @@ window, and the session runs `mise run //:advisor case`**, which says which it i
 - **Broken**: a record that cannot be read. As an orphan, on the author's word alone.
 - **Unknown**: the session's own `CLAUDE_PID`, what the seat reads, is absent or no pid. It changes nothing.
 
+**The holder registers as advisor, `mise run //:job register advisor <name>`, and keeps a Monitor on
+the `to=advisor` lines of the event file `mise run //:job events` names, re-armed at each expiry**, as
+what the watchdog says to the advisor reaches nobody else. A successor does both before it takes the
+seat.
+
 **A lock left by a crash, `advisor-current.lock`, refuses every change to the seat** until `claim <name>
 --author-said` overrides it.
 
