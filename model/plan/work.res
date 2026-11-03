@@ -70,7 +70,7 @@ let items: array<item> = [
   },
   {
     id: "inline-data-path",
-    says: "driver(cloudflare)'s deploy gives a Worker bindings to what the same binding holds, as a service binding to the driver's own object Worker, as the control compiles each call's paths fewest jumps first, a machine's equivalent its loopback, so the data plane on a Cloudflare account is inlined inside Cloudflare and never crosses the control or the public network, RFCs vr5lw and 94y0d and monoflake/driver's nrs5v; its machine half, a deployment reaching the deployments of its own binding it declares, is under way since 2026-10-24 for the component test bench, and its Cloudflare half waits until the products land, or the advisor judges the moment right",
+    says: "driver(cloudflare)'s deploy gives a Worker bindings to what the same binding holds, as a service binding to the driver's own object Worker, as the control compiles each call's paths fewest jumps first, a machine's equivalent its loopback, so the data plane on a Cloudflare account is inlined inside Cloudflare and never crosses the control or the public network, RFCs vr5lw and 94y0d and monoflake/driver's nrs5v; its machine half, a deployment reaching the deployments of its own binding it declares, is under way since 2026-10-24 for the component test bench, and its Cloudflare half waits until the products land, or the advisor judges the moment right. A slot speaks the product's contract, never the kind's, RFC ahcrp, so on Cloudflare a storage slot binds to the storage product's Worker, not the driver's object Worker, when that home is built",
     repos: ["monoflake/platform", "monoflake/driver"],
     after: [],
     holds: Owes("the author's word"),
