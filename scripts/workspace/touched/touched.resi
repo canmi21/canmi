@@ -16,3 +16,12 @@ let of_: (~paths: array<string>, ~blocks: array<(string, string)>, ~full: bool) 
 
 /** The changed paths of a repository's working copy and its commits not yet at its origin. */
 let changed: string => array<string>
+
+/** Each package under a repository's `code/`, by its name less its scope, and its directory. */
+let blocksOf: string => array<(string, string)>
+
+/**
+ * What a repository's verify is handed, `--blocks` and the blocks its change touches where its
+ * mise.toml declares the flag, and nothing where it runs every block.
+ */
+let arguments: string => array<string>

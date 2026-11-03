@@ -27,3 +27,20 @@ describe("the blocks a change touches", () => {
     expect(touched(["code/products/storage"]))->toEqual(Touched.Every)
   })
 })
+
+describe("the blocks of a repository and what its verify is handed", () => {
+  test("names each package under code/ by its name without its scope, and its directory", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "touched-"]))
+    let package = (directory, name) => {
+      Node.mkdirAll(Node.join([root, directory]))
+      Node.writeFileSync(Node.join([root, directory, "package.json"]), `{"name": "${name}"}`)
+    }
+    package("code/products/storage", "@monoflake/storage")
+    package("code/libs/keys", "@monoflake/keys")
+    expect(
+      Touched.blocksOf(root)->Array.toSorted(((a, _), (b, _)) => String.compare(a, b)),
+    )->toEqual([("keys", "code/libs/keys"), ("storage", "code/products/storage")])
+    expect(Touched.arguments(root))->toEqual([])
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+})

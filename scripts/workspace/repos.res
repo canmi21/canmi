@@ -472,8 +472,12 @@ let checked = async (repo, ~skipped, ~verbose) => {
       skipped->Array.push(place)
       (0, "")
     | Verify =>
-      Console.log(`\n=== ${task(repo, "verify")} ===`)
-      await Node.stream(~cwd=root, "mise", ["run", task(repo, "verify")])
+      // A repository whose verify takes `--blocks` runs only the blocks its change touches.
+      let blocks = Touched.arguments(repo)
+      Console.log(
+        `\n=== ${task(repo, "verify")}${blocks == [] ? "" : " " ++ blocks->Array.join(" ")} ===`,
+      )
+      await Node.stream(~cwd=root, "mise", ["run", task(repo, "verify"), ...blocks])
     }
   let result = await walked(planned(checkParts(repo, []), verifyParts(repo)), run)
   let waiting = Array.concat(Waiting.shown(~repo=Some(place)), Repo_plan.waiting(~repo=Some(place)))
