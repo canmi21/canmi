@@ -177,7 +177,9 @@ let aboutIdle = (
       one.transcript->Option.flatMap(moved)->Option.mapOr([], last => [last]),
     )
     let busy =
-      own->Array.some(job => job.ended == None && alive(job.pid)) ||
+      own->Array.some(job =>
+        job.ended == None && alive(job.pid) && Ledger.runsUntil(job, ~now) >= now
+      ) ||
       one.transcript->Option.mapOr(false, path => openSeats->Array.includes(sessionId(path))) ||
       times->Array.some(last => now -. last < limit)
     let last =

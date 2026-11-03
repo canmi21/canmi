@@ -241,9 +241,22 @@ let p95 = (values: array<float>) => {
 }
 
 /** How long `job` may run: its own limit, else twice its command's p95 once there is history. */
+/** An integrator's own task, `job task start`, owned by its session's process. */
+let isTask = (job: job) => job.command->String.startsWith("task: ")
+
+/** Until when an unended job runs, a forgotten task no longer than `seatOpenSeconds`. */
+let runsUntil = (job: job, ~now) =>
+  switch job.ended {
+  | Some(ended) => ended
+  | None if isTask(job) =>
+    Math.min(now, job.started +. Delegation.seatOpenSeconds->Int.toFloat *. 1000.)
+  | None => now
+  }
+
 let limitOf = (job: job, ~all: array<job>) =>
   switch job.limit {
   | Some(_) as given => given
+  | None if isTask(job) => Some(Delegation.pieceMinutes->Int.toFloat *. 60.)
   | None =>
     let past =
       all

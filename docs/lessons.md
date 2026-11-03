@@ -118,6 +118,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 
 ## Remotes, and what cannot be taken back
 
+- **A change reaches the main checkout compiled.** Three times on 2026-11-03 an integrator's code
+  written straight into the workspace's main checkout broke its build, which the other integrator
+  shares; a change is made in a lane, or compiled, before it lands there, however small.
 - **A line to the advisor is read only by an advisor registered and watching.** On 2026-11-03 the
   idle escalation fired at 02:35:20 UTC and nobody read it, no advisor being registered; the holder
   registers and keeps a Monitor on the event file, [advisor.md](agents/advisor.md), "One holder".

@@ -217,7 +217,7 @@ let activityOf = (
   let jobs = jobs->Array.filterMap(job =>
     id == Some(job.session) && (job.ended != None || alive(job.pid))
       ? {
-          let span = {from: job.started, to: job.ended->Option.getOr(now)}
+          let span = {from: job.started, to: Ledger.runsUntil(job, ~now)}
           // A seat's jobs run `--by` its lane, the name its `thread seat` records.
           let own = job.by == "session" || job.by == session.name
           held->Array.push((own ? "own" : `seat:${job.by}`, span))

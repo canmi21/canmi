@@ -24,6 +24,18 @@ describe("an integrator's own task", () => {
       None,
     ))
     expect(Classes.classOf(job.command))->toBe("integrator task")
+    expect(Job.main(["stop", job.id]))->toBe(1)
+    expect(Ledger.find(job.id)->Option.flatMap(one => one.ended))->toEqual(None)
+    let savedSession = Node.env->Dict.get("CLAUDE_CODE_SESSION_ID")
+    Node.env->Dict.set("CLAUDE_CODE_SESSION_ID", "another")
+    expect(Job.main(["task", "end", job.id]))->toBe(1)
+    switch savedSession {
+    | Some(value) => Node.env->Dict.set("CLAUDE_CODE_SESSION_ID", value)
+    | None => Node.env->Dict.delete("CLAUDE_CODE_SESSION_ID")
+    }
+    expect(Ledger.limitOf(job, ~all=[]))->toEqual(Some(Delegation.pieceMinutes->Int.toFloat *. 60.))
+    let bound = Delegation.seatOpenSeconds->Int.toFloat *. 1000.
+    expect(Ledger.runsUntil(job, ~now=job.started +. 2. *. bound))->toEqual(job.started +. bound)
     expect(Job.main(["task", "end", job.id]))->toBe(0)
     let closed = Ledger.find(job.id)->Option.getOrThrow
     expect((closed.status, Ledger.wasRead(closed)))->toEqual((Some(0), true))

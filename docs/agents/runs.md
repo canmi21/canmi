@@ -26,7 +26,8 @@ silent. **`mise run //:job run -- <command>` waits and exits with its status**, 
   a pid its agent recorded. A seat starts its jobs `--by <its lane>` and stops them the same way. `list` shows the last ones.
 - **`mise run //:job task start <what>` and `task end <id>`** record an integrator's own task, not
   a seat, in the ledger with its time, so a piece past `Delegation.pieceMinutes` counts whole; its
-  owner is the session's process, so it lives while the session does.
+  owner is the session's process, so it lives while the session does, `job stop` refusing it. One
+  left open counts as running up to `Delegation.seatOpenSeconds`, and says `over` past `pieceMinutes`.
 - **`mise run //:job table [--since <yyyy-mm-dd>]`** is duration times count by command, the top one the
   bottleneck. Timing comes free of the ledger, and nothing else is timed specially; `--by-class`
   gathers it by class, with Claude seats, reviews, landings, recurring work and pieces past the limit

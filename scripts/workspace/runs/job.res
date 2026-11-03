@@ -135,6 +135,11 @@ let stop = (id, ~by) =>
   | Some({ended: Some(_)}) =>
     Console.log(`${id} ended already`)
     0
+  | Some(job) if Ledger.isTask(job) =>
+    Console.error(
+      `${id} is a task, its owner the session itself, so it ends by mise run //:job task end ${id} and is never signaled`,
+    )
+    1
   | Some(job) if notOwn(job, ~session=currentSession(), ~by) != None =>
     let whose = notOwn(job, ~session=currentSession(), ~by)->Option.getOr("")
     Console.error(
@@ -198,6 +203,10 @@ let taskStart = what =>
 
 let taskEnd = id =>
   switch Ledger.find(id) {
+  | Some({command, ended: None, session})
+    if command->String.startsWith("task: ") && session != currentSession() =>
+    Console.error(`${id} is a task of session ${session}, ended only there`)
+    1
   | Some({command, ended: None}) if command->String.startsWith("task: ") =>
     let now = Date.now()
     Ledger.ended(~id, ~status=0, ~at=now)
