@@ -279,8 +279,15 @@ let registeredRoles = ["advisor", "seat", "integrator", "supervisor"]
  * of it past which an advisor is replaced rather than left to compaction, `advisor-replaced`.
  */
 let contextWindowTokens = 1000000
-let advisorReplacedFrom = 0.7
-let advisorReplacedBy = 0.8
+let advisorReplacedFrom = 0.85
+let advisorReplacedBy = 0.9
+
+/**
+ * The share of the window past which a session's `context` line goes to the supervisor and the
+ * advisor once, by its role, the author's values of 2026-11-03: it stops at a clean point, writes
+ * a savepoint, and the author compacts it, or the advisor is replaced, `context-reported`.
+ */
+let contextReported = [("integrator", 0.85), ("supervisor", 0.75), ("advisor", 0.85)]
 
 /**
  * The share of a thread's seat time that is tooling past which its figures warn, about a fifth by
@@ -500,6 +507,12 @@ let rules: array<Rule.t> = [
     name: "advisor-replaced",
     says: "An advisor is replaced, never left to compaction, between `advisorReplacedFrom` and `advisorReplacedBy` of `contextWindowTokens`, and the watchdog says so to it once it is past the first",
     doc: "docs/agents/advisor.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "context-reported",
+    says: "A session past its role's share in `contextReported` of `contextWindowTokens` is named by the watchdog in one `context` line to the supervisor and the advisor, once per crossing",
+    doc: "docs/agents/runs.md",
     held: Check("scripts"),
   },
   {

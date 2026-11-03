@@ -2,7 +2,7 @@
 
 # Rules
 
-42 rules, 6 pending a check.
+43 rules, 6 pending a check.
 
 ## Delegation
 
@@ -130,6 +130,13 @@ The watchdog, run by launchd each `watchdogSeconds` with no model in it, writes 
 An advisor is replaced, never left to compaction, between `advisorReplacedFrom` and `advisorReplacedBy` of `contextWindowTokens`, and the watchdog says so to it once it is past the first.
 
 - doc: [docs/agents/advisor.md](../../docs/agents/advisor.md)
+- held by: check part `scripts`
+
+### context-reported
+
+A session past its role's share in `contextReported` of `contextWindowTokens` is named by the watchdog in one `context` line to the supervisor and the advisor, once per crossing.
+
+- doc: [docs/agents/runs.md](../../docs/agents/runs.md)
 - held by: check part `scripts`
 
 ### advisor-one-holder
