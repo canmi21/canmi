@@ -94,4 +94,7 @@ harness's permission settings or configuration waits for the author's own word i
 author**, [agent-protocol.md](agent-protocol.md), "Working beside other agents"; it does the same
 with the implementers it spawns, its supervisor and the other integrator, and with no other session.
 
+**An order reaching it from the advisor's seat is checked against the holder**, `mise run //:advisor
+order-from <name>`, [advisor.md](advisor.md), "One holder".
+
 **It reports facts and problems, and gives no advice.**

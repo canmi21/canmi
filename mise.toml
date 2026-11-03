@@ -121,6 +121,12 @@ run = "test -f scripts/workspace/runs/watch.res.mjs || mise run build; node scri
 description = "Start a long command in the ledger, or read it: `job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command> | read <id> | stop <id> [--by <who>] | list | table [--since <date>] | events | register <role> <name> [--thread <name>] [--transcript <file>] | unregister <name> | watchdog | install [--dry-run]`"
 run = "test -f scripts/workspace/runs/job.res.mjs || mise run build; node scripts/workspace/runs/job.res.mjs"
 
+# Who holds the advisor's seat, docs/agents/advisor.md.
+[tasks.advisor]
+description = "Who holds the advisor's seat: `advisor case | where | claim <name> [--author-said] | handing <name> | pass <name> <pid> | order-from <name>`"
+depends = ["build"]
+run = "node scripts/workspace/runs/advisor.res.mjs"
+
 # A thread's charter, decision queue, ledger and status, docs/agents/threads.md.
 [tasks.thread]
 description = "Start a thread's files, or say where they are: `thread new <name> [--dry-run] | where <name> | list | audit <name> | green <name> <step> | seat <name> <seat> [--tooling] | seated <name> <seat> | landed <name> <repository> <commit> <subject>`"

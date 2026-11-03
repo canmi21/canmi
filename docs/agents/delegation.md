@@ -136,6 +136,10 @@ and not asked again. **A decision carries the step of the path it stands on, a r
 and whether it can be undone.** One naming no step of the current path is parked and not shown. A
 reversible one goes on under its default. An irreversible one blocks its branch alone.
 
+**A session messages only the roles registered in the thread's files or the session registry**, never a
+name it merely sees in a listing, and contacting another machine is only on the author's explicit word,
+`send-on-this-machine`.
+
 **Peers exchange facts directly**: check locks, cross-repository interface alignment and landing
 order, never scope or a decision. What they settle goes in the ledger; a disagreement goes to their
 common superior.

@@ -196,6 +196,10 @@ let runs = "~/.local/state/workspace/runs/"
 /** Where a thread's private files live, one directory each, docs/agents/threads.md. */
 let threads = "~/.local/share/monoflake/threads/"
 
+/** Beside `threads`, who holds the advisor's seat and its handover, `advisor-one-holder`. */
+let advisorCurrent = "advisor-current"
+let advisorHandover = "advisor-handover.md"
+
 /**
  * Starting values to be tuned. The watchdog ticks each minute and a report is owed within two, so
  * a job's silence and an unread end are both reported at one minute.
@@ -449,6 +453,18 @@ let rules: array<Rule.t> = [
     says: "An advisor is replaced, never left to compaction, between `advisorReplacedFrom` and `advisorReplacedBy` of `contextWindowTokens`, and the watchdog says so to it once it is past the first",
     doc: "docs/agents/advisor.md",
     held: Check("scripts"),
+  },
+  {
+    name: "advisor-one-holder",
+    says: "`advisorCurrent` names the advisor who holds the seat; `mise run //:advisor case` tells a session it is first, a candidate or an orphan, an orphan claiming only on the author's word, only the holder passes the seat, and `order-from` refuses an order of anyone else",
+    doc: "docs/agents/advisor.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "send-on-this-machine",
+    says: "A message goes only to `main`, a session named in `~/.claude/sessions/*.json`, a socket of `/tmp/cc-socks`, or a subagent of this session; a listing's ` [ref]` is read off; anything else is refused, saying what was checked and to try again, as a session just opened writes its record a moment later",
+    doc: "docs/agents/delegation.md",
+    held: Hook("hooks/gates/messages/send_local"),
   },
   {
     name: "thread-figures",

@@ -2,7 +2,7 @@
 
 # Rules
 
-36 rules, 5 pending a check.
+38 rules, 5 pending a check.
 
 ## Delegation
 
@@ -131,6 +131,20 @@ An advisor is replaced, never left to compaction, between `advisorReplacedFrom` 
 
 - doc: [docs/agents/advisor.md](../../docs/agents/advisor.md)
 - held by: check part `scripts`
+
+### advisor-one-holder
+
+`advisorCurrent` names the advisor who holds the seat; `mise run //:advisor case` tells a session it is first, a candidate or an orphan, an orphan claiming only on the author's word, only the holder passes the seat, and `order-from` refuses an order of anyone else.
+
+- doc: [docs/agents/advisor.md](../../docs/agents/advisor.md)
+- held by: check part `scripts`
+
+### send-on-this-machine
+
+A message goes only to `main`, a session named in `~/.claude/sessions/*.json`, a socket of `/tmp/cc-socks`, or a subagent of this session; a listing's ` [ref]` is read off; anything else is refused, saying what was checked and to try again, as a session just opened writes its record a moment later.
+
+- doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
+- held by: hook `hooks/gates/messages/send_local`
 
 ### thread-figures
 

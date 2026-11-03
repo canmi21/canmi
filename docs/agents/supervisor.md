@@ -29,3 +29,7 @@ Production down, a credential leaked or data lost goes straight to the advisor.
 
 **Nothing it runs blocks the turn**, [agent-protocol.md](agent-protocol.md), "A long command never
 holds the conversation".
+
+**It acts on the advisor's order alone**, the holder's, `mise run //:advisor order-from <name>`,
+[advisor.md](advisor.md), "One holder". A handover above it changes nothing here until it is told the
+new name.

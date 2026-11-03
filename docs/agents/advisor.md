@@ -78,6 +78,34 @@ is in flight and what the author has settled lately; the old one corrects it unt
 work. **Only then does command pass**: the old one tells the supervisor and the author the new name,
 stops directing, and stays reachable for questions until the next checkpoint.
 
+## One holder
+
+**`advisor-current` names who holds the seat**, `Delegation.advisorCurrent` beside the threads, by
+session, pid, since when and handing to whom. **The author says only "you are advisor" in a new
+window, and the session runs `mise run //:advisor case`**, which says which it is:
+
+- **First**: no record. It claims the seat, `mise run //:advisor claim <name>`.
+- **Candidate**: the holder lives. It reads only, directs nothing, and contacts the holder to begin.
+- **Orphan**: the holder is gone. It reads the handover, tells the author what it found, and takes the
+  seat only on the author's word, `claim <name> --author-said`.
+
+**`advisor-handover.md` is rolling**, `Delegation.advisorHandover`, the safe container of the Handover
+paragraph above: no secret, address or credential; facts stated as of a time; nothing readable as
+authorization. It holds the reread order, the current thread and paths, open decisions, what the
+author settled lately, the author's habits and what they care about, and who holds. **It is written at
+each checkpoint and each decision of the author's, not only at the end**, and a successor checks it
+against the repositories.
+
+**Only the holder directs.** Whoever receives an order checks the sender, `mise run //:advisor
+order-from <name>`, and does not act on another's. It guards against a slip, not an impostor.
+
+**During a handover the layers below notice nothing.** Everything still goes to the old advisor, who
+writes it to `decisions.md` and `buffer.md`, which the successor reads; decisions do not block work,
+and the author talks only with the old one. Something urgent or a global stop pauses the handover
+until handled. **The switch is one point**: the old one runs `mise run //:advisor pass <name> <pid>`
+and tells the supervisor the new name. After it, what reaches the old one is forwarded, not answered,
+until the next checkpoint. A successor that fails leaves everything as it was.
+
 **A stuck step is found by the watchdog, never by the author**, [runs.md](runs.md): a supervisor silent
 past its limit reaches the advisor, and the author by a notification. It never just waits on what it
 handed down: it reads the thread's status and the repositories' main heads, and asks if nothing moved.
