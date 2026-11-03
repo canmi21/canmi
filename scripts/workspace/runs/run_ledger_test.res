@@ -67,6 +67,8 @@ describe("the hook's view of the ledger", () => {
   test("names a registering session's transcript, and leaves one named by hand alone", () => {
     let names = () => Node.existsSync(Ledger.sessions()) ? Node.readdir(Ledger.sessions()) : []
     Run_ledger.observe(payload("mise run //:job register seat lane-one --transcript /x"))
+    Run_ledger.observe(payload("cat <<'E'\nmise run //:job register seat in-a-heredoc\nE"))
+    Run_ledger.observe(payload("rg 'mise run //:job register seat in-a-quote' docs"))
     expect(names())->toEqual([])
     Run_ledger.observe(payload("mise run //:job register integrator infra"))
     expect(names())->toEqual(["infra.json"])
