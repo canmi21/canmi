@@ -195,6 +195,18 @@ let active = (activity, slice) =>
     ? Some(Turn)
     : None
 
+/** How many steps one integrator can be on in a slice, none before its registration. */
+let workers = (activity, bucket, slice) =>
+  bucket == None
+    ? 0
+    : {
+        let running =
+          [activity.jobs, activity.seats, activity.reviews]->Array.reduce(0, (count, spans) =>
+            count + spans->Array.filter(span => holds([span], slice))->Array.length
+          )
+        Math.Int.max(running, 1)
+      }
+
 let zero = {job: 0., review: 0., turn: 0., decision: 0., ready: 0., nothing: 0.}
 let add = (total, bucket, minutes) =>
   switch bucket {
@@ -223,14 +235,12 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
         to: Math.min(span.to, at.contents +. Delegation.roundSliceSeconds->Int.toFloat *. 1000.),
       }
       let buckets = sessions->Array.map(activity => active(activity, slice))
+      // Each job and seat of an integrator holds a step, and its own turn holds one at most.
       let busy =
         sessions->Array.reduceWithIndex(0, (count, activity, index) =>
           count + (
-            activity.session.role == "integrator" &&
-              (buckets->Array.getUnsafe(index) == Some(Job) ||
-              buckets->Array.getUnsafe(index) == Some(Turn) ||
-              buckets->Array.getUnsafe(index) == Some(Review))
-              ? 1
+            activity.session.role == "integrator"
+              ? workers(activity, buckets->Array.getUnsafe(index), slice)
               : 0
           )
         )

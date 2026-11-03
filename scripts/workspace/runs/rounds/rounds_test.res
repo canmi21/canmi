@@ -82,6 +82,16 @@ describe("round slice precedence", () => {
     expect((found->Array.getUnsafe(0)).unattended)->toEqual(minute)
     expect((rounds(~steps, [idle("own"), busy])->total).ready)->toEqual(minute)
   })
+  test("an integrator's own job and seat each hold a step, its turn only one", () => {
+    let both = {...idle("both"), jobs: [span(0., 2.)], seats: [span(0., 2.)]}
+    let step = id => {Charter.id, after: []}
+    let two = [step("1"), step("2")]
+    let three = [step("1"), step("2"), step("3")]
+    let ready = (steps, one) => (rounds(~steps, ~count=2., [one])->Array.getUnsafe(0)).unattended
+    expect(ready(two, both))->toEqual(0.)
+    expect(ready(three, both))->toEqual(2. *. minute)
+    expect(ready(two, {...idle("turning"), turns: [span(0., 2.)]}))->toEqual(2. *. minute)
+  })
   test("a slice before registration has no bucket and consumes no integrator capacity", () => {
     let registered = {...idle("late"), at: 1.5 *. slice, jobs: [span(0., 3.)]}
     let found = rounds(~steps=[{id: "1", after: []}], ~count=3., [registered])
