@@ -251,6 +251,7 @@ let seatOpenSeconds = 900
  * shows an empty row.
  */
 let jobClasses = [
+  ("integrator task", "^task: "),
   ("Codex seat", "codex exec"),
   ("conform dry run", "mise run (//:)?conform\\b.*--dry-run"),
   ("conform one kind", "mise run (//:)?conform\\b.*--kind"),
@@ -515,7 +516,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "job-classes",
-    says: "`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews by the wall clock of their subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed",
+    says: "`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, an integrator's own task by `job task start` and `end`, Claude seats and reviews by the wall clock of their subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed",
     doc: "docs/agents/runs.md",
     held: Check("scripts"),
   },

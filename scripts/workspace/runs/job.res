@@ -158,9 +158,56 @@ let stop = (id, ~by) =>
 let usage =
   "usage: mise run //:job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command>\n" ++
   "       mise run //:job read <id> | stop <id> [--by <who>] | list | table [--by-class] [--since <yyyy-mm-dd>] | events\n" ++
+  "       mise run //:job task start <what> | task end <id>\n" ++
   "       mise run //:job register <role> <name> [--thread <name>] [--transcript <file>] | unregister <name>\n" ++ "       mise run //:job watchdog | install [--dry-run]"
 
 let defaultBy = () => Node.env->Dict.get("MONOFLAKE_ROLE")->Option.getOr("session")
+
+/**
+ * An integrator's own task in the ledger, its owner the session's process so the watchdog sees it
+ * live, quiet as it writes no output.
+ */
+let taskStart = what =>
+  switch Node.env->Dict.get("CLAUDE_PID")->Option.flatMap(text => Int.fromString(text)) {
+  | None =>
+    Console.error(
+      "a task is recorded from a Claude session, whose CLAUDE_PID it takes as its owner",
+    )
+    2
+  | Some(pid) =>
+    let now = Date.now()
+    let id = newId(~now)
+    Ledger.started({
+      id,
+      by: defaultBy(),
+      session: currentSession(),
+      command: `task: ${what}`,
+      cwd: originalCwd(),
+      pid,
+      started: now,
+      output: Ledger.outputOf(id),
+      limit: None,
+      quiet: true,
+      ended: None,
+      status: None,
+      read: None,
+    })
+    Console.log(`task ${id}; end it with mise run //:job task end ${id}`)
+    0
+  }
+
+let taskEnd = id =>
+  switch Ledger.find(id) {
+  | Some({command, ended: None}) if command->String.startsWith("task: ") =>
+    let now = Date.now()
+    Ledger.ended(~id, ~status=0, ~at=now)
+    Ledger.markRead(~id, ~at=now)
+    Console.log(`task ${id} ended`)
+    0
+  | _ =>
+    Console.error(`${id} is no open task`)
+    1
+  }
 
 let begin = (argv, ~wait) => {
   let given = parseGiven(argv, ~defaultBy=defaultBy())
@@ -330,6 +377,9 @@ let install = (~dry) => {
 let main = (argv: array<string>) =>
   switch argv {
   | ["supervise", text] => supervise(text)
+  | _ if argv[0] == Some("task") && argv[1] == Some("start") && argv->Array.length > 2 =>
+    taskStart(argv->Array.slice(~start=2)->Array.join(" "))
+  | ["task", "end", id] => taskEnd(id)
   | ["read", id] => read(id)
   | ["stop", id] => stop(id, ~by=defaultBy())
   | ["stop", id, "--by", by] => stop(id, ~by)

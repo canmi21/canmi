@@ -63,7 +63,8 @@ has it, at the gate [pushing.md](pushing.md) gives, and keeps the list of privat
 is scanned for. **It alone writes the records of friction**, [friction.md](friction.md). **It
 escapes to the user and the advisor**, [escapes.md](escapes.md).
 
-**In a thread it records the figures as it goes**: a seat's dispatch and report and each landing,
+**In a thread it records the figures as it goes**: a seat's dispatch and report, each landing, and
+its own task by `mise run //:job task start <what>` and `task end <id>`, [runs.md](runs.md),
 [threads.md](threads.md), "Staying on course". **It reads the red list a check ends with**, what
 blocks in work fail, before it lands, `in-work-shown`.
 

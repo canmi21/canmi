@@ -7,6 +7,40 @@ let start = (id, ~at=0., ~command="c") =>
 let end_ = (id, ~at, ~status=0) =>
   `{"kind":"end","id":"${id}","status":${Int.toString(status)},"at":${Float.toString(at)}}`
 
+@val external processPid: int = "process.pid"
+
+describe("an integrator's own task", () => {
+  test("is a job of its session, quiet, ended and read by its end, and classed apart", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "task-"]))
+    let saved = ["RUNS_HOME", "CLAUDE_PID"]->Array.map(key => (key, Node.env->Dict.get(key)))
+    Node.env->Dict.set("RUNS_HOME", root)
+    Node.env->Dict.set("CLAUDE_PID", Int.toString(processPid))
+    expect(Job.main(["task", "start", "write", "the", "doc"]))->toBe(0)
+    let job = Ledger.jobs()->Array.getUnsafe(0)
+    expect((job.command, job.quiet, job.pid, job.ended))->toEqual((
+      "task: write the doc",
+      true,
+      processPid,
+      None,
+    ))
+    expect(Classes.classOf(job.command))->toBe("integrator task")
+    expect(Job.main(["task", "end", job.id]))->toBe(0)
+    let closed = Ledger.find(job.id)->Option.getOrThrow
+    expect((closed.status, Ledger.wasRead(closed)))->toEqual((Some(0), true))
+    expect(Job.main(["task", "end", job.id]))->toBe(1)
+    Node.env->Dict.delete("CLAUDE_PID")
+    expect(Job.main(["task", "start", "x"]))->toBe(2)
+    saved->Array.forEach(
+      ((key, value)) =>
+        switch value {
+        | Some(value) => Node.env->Dict.set(key, value)
+        | None => Node.env->Dict.delete(key)
+        },
+    )
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+})
+
 describe("a session's registrations", () => {
   test("are kept per thread once written, its transcript filling in", () => {
     let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "registrations-"]))
