@@ -9,6 +9,9 @@ type asked = {
 
 let usage = "Land a repository's working copy: fmt, bump, check, commit, push: `land <name> -m <subject> [--trailer <line>]... [--paths <path>...] [--thread <name>] [--dry-run]`"
 
+let message = (asked: asked) =>
+  asked.trailers == [] ? asked.subject : asked.subject ++ "\n\n" ++ asked.trailers->Array.join("\n")
+
 let parse = arguments => {
   let repository = arguments->Array.get(0)->Option.getOr("")
   let subject = ref("")
@@ -56,14 +59,16 @@ let parse = arguments => {
   ) {
     Error(usage)
   } else {
-    Ok({
+    let asked = {
       repository,
       subject: subject.contents,
       trailers,
       paths,
       thread: thread.contents,
       dry: dry.contents,
-    })
+    }
+    let problems = History.problems(message(asked))
+    problems == [] ? Ok(asked) : Error(usage ++ "\n" ++ problems->Array.join("\n"))
   }
 }
 
@@ -90,13 +95,9 @@ let command = (asked, step) => {
   | Bump => verb("bump")
   | Check => verb("check")
   | Commit =>
-    let message =
-      asked.trailers == []
-        ? asked.subject
-        : asked.subject ++ "\n\n" ++ asked.trailers->Array.join("\n")
     // jj reads a path from the directory it runs in, the workspace's root.
     let inside = path => directory(asked) == "." ? path : `${directory(asked)}/${path}`
-    ("jj", [...repository, "commit", "-m", message, ...asked.paths->Array.map(inside)])
+    ("jj", [...repository, "commit", "-m", message(asked), ...asked.paths->Array.map(inside)])
   | Bookmark => ("jj", [...repository, "bookmark", "move", "main", "--to", "@-"])
   | PushDry => ("mise", ["run", "push", ...name, "--dry-run"])
   | Push => verb("push")

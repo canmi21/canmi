@@ -16,7 +16,7 @@ type asked = {
   dry: bool,
 }
 
-/** The arguments read, or why they are refused, the usage among it. */
+/** The arguments read, or the usage followed by any message problems from History.problems. */
 let parse: array<string> => result<asked, string>
 
 /**

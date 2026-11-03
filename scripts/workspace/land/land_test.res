@@ -46,6 +46,55 @@ describe("landing a working copy", () => {
       },
     )->toBe(true)
   })
+  test("refuses a 97 character subject naming the width", () => {
+    let subject = "fix: " ++ Array.fromInitializer(~length=92, _ => "x")->Array.join("")
+    expect(subject->String.length)->toBe(97)
+    expect(
+      switch Land.parse(["workspace", "-m", subject]) {
+      | Error(why) =>
+        why->String.split("\n")->Array.slice(~start=1) == History.problems(subject) &&
+          why->String.includes("is 97 characters, the limit 96")
+      | _ => false
+      },
+    )->toBe(true)
+  })
+  test("refuses an unknown commit type", () => {
+    expect(
+      switch Land.parse(["workspace", "-m", "unknown: add a check"]) {
+      | Error(why) => why->String.includes("is not a Conventional Commit")
+      | _ => false
+      },
+    )->toBe(true)
+  })
+  test("accepts a clean message with a coauthor trailer", () => {
+    let trailer = "Co-Authored-By: Codex GPT-6 <codex@openai.com>"
+    expect(Land.parse(["monoflake/driver", "-m", asked.subject, "--trailer", trailer]))->toEqual(
+      Ok({...asked, trailers: [trailer]}),
+    )
+  })
+  test("refuses every problem in the whole commit message after the usage", () => {
+    let subject = "fix: Added a check."
+    let trailers = ["Co-Authored-By: Codex <codex@openai.com>", "**markdown**"]
+    let (_, arguments) = Land.command({...asked, subject, trailers}, Commit)
+    let problems = History.problems(arguments->Array.getUnsafe(4))
+    expect(problems->Array.length > 1)->toBe(true)
+    expect(
+      switch Land.parse([
+        "monoflake/driver",
+        "-m",
+        subject,
+        "--trailer",
+        trailers[0]->Option.getOr(""),
+        "--trailer",
+        trailers[1]->Option.getOr(""),
+      ]) {
+      | Error(why) =>
+        why->String.startsWith("Land a repository's working copy") &&
+          why->String.split("\n")->Array.slice(~start=1) == problems
+      | _ => false
+      },
+    )->toBe(true)
+  })
   test("takes every path before the next flag", () => {
     expect(
       Land.parse(["monoflake/driver", "-m", "test: nothing", "--paths", "a", "b", "--dry-run"]),
