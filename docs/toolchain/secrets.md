@@ -75,9 +75,14 @@ secret: 2 set in /Users/canmi/workspace/repos/platform/secrets.json,
   still encrypted; it is committed as it is
 ```
 
-**So an agent that needs a secret asks for this command, never for the value.** It names the
+**A value the author holds, an agent asks for by this command, never for the value.** It names the
 repository and the names, the author runs it in their own terminal, and the agent reads only that
 the names now exist. A value pasted into a chat is in a transcript, and that is not undone.
+
+**A secret no person holds, random bytes a program makes, the agent generates and enters itself**:
+made in a 0700 directory under its scratchpad, entered by `--from`, never printed, and the file
+removed with `rm`. The test platform's `salt-master`, the salt master of RFC b8f35, is one, entered
+so on 2026-11-03 into monoflake/cloud's `platforms/test/secrets.json`.
 
 ### Three things that will bite
 

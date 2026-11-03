@@ -188,6 +188,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 
 ## Reading and reporting
 
+- **A checklist row is read to its `done` before it is called open.** On 2026-11-03 a scope id's
+  byte form was reported open from its row's question, though its `done` named RFC b8f35 and code
+  implemented it.
 - **A finding is fixed, or passed by a named escape, and never hidden.** Do not split a string, rename a
   word or move a line so a check cannot see it; fix what it asks, or use `SKIP=<gate>` or a rule's
   `exempts`, or take the rule to the integrator or the author.
