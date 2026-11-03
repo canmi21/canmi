@@ -46,7 +46,10 @@ let command: (asked, step) => (string, array<string>)
  */
 let raised: (~before: array<string>, ~after: array<string>, ~paths: array<string>) => array<string>
 
-/** A failed step's causes, the last lines of its output, printed before land's own last line. */
+/**
+ * A failed step's last eight marked lines, or last eight nonempty lines where none are marked.
+ * ANSI colors are removed before matching and returning the lines.
+ */
 let causes: string => array<string>
 
 /**

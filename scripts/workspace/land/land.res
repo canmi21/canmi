@@ -133,12 +133,15 @@ let raised = (~before, ~after, ~paths) =>
     after->Array.filter(path => !(before->Array.includes(path)) && !(paths->Array.includes(path))),
   )
 
-let causes = output =>
-  output
-  ->String.split("\n")
-  ->Array.map(String.trimEnd)
-  ->Array.filter(line => line != "")
-  ->Array.slice(~start=-8)
+let causes = output => {
+  let all =
+    output
+    ->String.split("\n")
+    ->Array.map(line => line->String.replaceRegExp(/\u001b\[[0-9;]*m/g, "")->String.trimEnd)
+    ->Array.filter(line => line != "")
+  let flagged = all->Array.filter(line => Repos.marked->RegExp.test(line))
+  (flagged == [] ? all : flagged)->Array.slice(~start=-8)
+}
 
 /** The paths a repository's working copy changes, relative to it. */
 let changedNames = asked =>

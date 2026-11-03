@@ -381,7 +381,7 @@ let active = (name, ~everything, paused) =>
  * The lines of a failed verify worth repeating under the summary, which a long log buries: an
  * error, a panic, a failed test as cargo or node says it, and a rule's own `x` finding.
  */
-let marked = /\berror\b|panicked|FAILED|^\s*x\s|✖|^not ok\b/
+let marked = /\berror\b|panicked|FAILED|^\s*x\s|✖|^not ok\b|We've found a bug for you!|^\s*\S+\.resi?:\d+:\d+/
 let symptom = output => {
   let all = output->String.split("\n")
   let flagged = all->Array.filter(line => marked->RegExp.test(line))
