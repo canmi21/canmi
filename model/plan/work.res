@@ -413,6 +413,13 @@ let items: array<item> = [
     holds: Owes("each limit closed, or judged not worth a fix"),
   },
   {
+    id: "lane-open-together",
+    says: "`mise run //:lane open monoflake/driver <name>` run twice in a row for two driver lanes loses the first lane's driver workspace: it drops out of `jj workspace list` there, and `lane close` then fails, the workspace having no working-copy commit, while its directory and its platform sibling stay. Two cases in thread fifth, each the first of its pair: slotconfig about 02:49 UTC beside slotsocket, fixcontainer at 03:28 UTC beside fixfunction, both cleaned by hand, nothing lost",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("the cause found and the pair reproduced in a test, then open fixed or refusing"),
+  },
+  {
     id: "hook-adapters-match",
     says: "A check that .claude/settings.json and .codex/hooks.json declare the same matchers, each difference naming its reason; that Codex lacks the SendMessage and Read tools is unverified",
     repos: ["workspace"],
