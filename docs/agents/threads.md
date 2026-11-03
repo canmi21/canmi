@@ -13,7 +13,9 @@ What it is day to day is four files in one place, a message being only a nudge.
 RFC keeps what is the record**, its goal and its `### Ledger` at the end. The advisor answers "where
 are we" from these files alone.
 
-- **`charter.md`**: the goal, its target test in steps, the bounds, the values to fix.
+- **`charter.md`**: the goal, its target test in steps, the bounds, the values to fix. **Each step
+  says `after:`, what must be green first, never an order**, and the supervisor opens every step whose
+  `after` is met, [delegation.md](delegation.md), "Work without a dependency runs in parallel by default".
 - **`decisions.md`**: the queue, each decision carrying the step of the path it stands on, a
   recommended default and whether it can be undone, [delegation.md](delegation.md), "Decision
   rights".

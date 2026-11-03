@@ -222,6 +222,21 @@ let silentTurns = [
 ]
 let notifiesAuthor = "supervisor"
 
+/**
+ * An integrator with no job, no seat and no turn this long while a step is ready goes to the
+ * supervisor. A landing takes minutes, and idling was a round's top bottleneck, so five.
+ */
+let idleSeconds = 300
+
+/** The supervisor told of an idle integrator and silent this long more goes to the advisor. */
+let idleSupervisorSeconds = 300
+
+/** A turn's lines this close are one stretch of work, as a model answers within a minute. */
+let turnGapSeconds = 60
+
+/** A round is split in slices this long, fine beside rounds of minutes and cheap to count. */
+let roundSliceSeconds = 10
+
 /** Who registers, the advisor with no limit on its turns, as its turns wait on the author. */
 let registeredRoles = ["advisor", "seat", "integrator", "supervisor"]
 

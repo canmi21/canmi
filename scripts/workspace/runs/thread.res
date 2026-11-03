@@ -8,11 +8,11 @@ let root = Figures.root
 let shape = [
   (
     "charter.md",
-    "# Charter\n\nRFC: the thread's RFC id.\nGoal: what is true when this thread ends.\nTarget test: the command that decides it and where it runs, in steps, each green or not; the author's and the advisor's, changed by no one below them.\nBounds: what is out of scope, and what only the author may change.\nValues to fix: each policy value, a default or the author's.\n",
+    "# Charter\n\nRFC: the thread's RFC id.\nGoal: what is true when this thread ends.\nTarget test: the command that decides it and where it runs; the author's and the advisor's, changed by no one below them. In steps, each green or not, the supervisor opening every step whose `after` is met:\n\n1. What is true, and how it goes green.\n   after: none\n2. What is true next, and how it goes green.\n   after: 1\n\nBounds: what is out of scope, and what only the author may change.\nValues to fix: each policy value, a default or the author's.\n",
   ),
   (
     "decisions.md",
-    "# Decision queue\n\nOne block each, the oldest open first; an answered one stays, marked.\n\n## <short name>\nStep: the step of the current path it stands on.\nAsk: the question, in plain words.\nDefault: what happens if nobody answers.\nUndone by: how it can be undone, or `irreversible`, which blocks its branch alone.\nFound in: the RFC, plan or ledger line already read, or `none`.\nAnswer: open.\n",
+    "# Decision queue\n\nOne block each, the oldest open first; an answered one stays, marked.\n\n## <short name>\nStep: the step of the current path it stands on.\nAsk: the question, in plain words.\nDefault: what happens if nobody answers.\nUndone by: how it can be undone, or `irreversible`, which blocks its branch alone.\nFound in: the RFC, plan or ledger line already read, or `none`.\nAsked: time in UTC.\nAnswered: time in UTC, once it is.\nAnswer: open.\n",
   ),
   (
     "buffer.md",

@@ -154,6 +154,9 @@ settles them.
 **Where a supervisor is named, the order of a thread's work is its own**, and the integrator's sequence
 is the order of its landings. A thread's charter, decision queue, ledger and status are files, [threads.md](threads.md).
 
+**Work without a dependency runs in parallel by default, and running in series names what it depends
+on.** A wait expected past about two minutes asks at its start who can do something else meanwhile.
+
 **A subagent type is defined only where it truly differs in tools, model or permissions.**
 
 - **The implementer** types no jj command, cannot deploy, cannot run `mise run check` and cannot
