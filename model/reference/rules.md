@@ -3,7 +3,7 @@
 # Rules
 
 - [Commits](rules-commits.md), 16 rules
-- [Naming](rules-naming.md), 15 rules
+- [Naming](rules-naming.md), 16 rules
 - [Layout](rules-layout.md), 15 rules
 - [Toolchain](rules-toolchain.md), 44 rules
 - [Code](rules-code.md), 8 rules

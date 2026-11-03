@@ -135,7 +135,8 @@ the `lib` repository. See [docs/voice.md](docs/voice.md).
 
 **Naming** -- Files and directories are lowercase English, hyphens allowed. A language with its own
 convention wins locally: Rust and ReScript source files use underscores. Identifiers inside code
-always follow the language's own convention. A name is written whole -- Cloudflare, never `CF`.
+always follow the language's own convention. A name is written whole -- Cloudflare, never `CF`,
+and identifiers use whole words by `Naming.abbreviations`.
 Vendor names stay at the binding edge -- name a module for what it does, not for who supplies it.
 See [docs/naming.md](docs/naming.md).
 

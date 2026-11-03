@@ -26,6 +26,44 @@ let domains = ["com", "net", "org", "dev", "io", "app"]
 /** The vendors' names held to the edge, each unmistakably a vendor's and no plain English word. */
 let vendors = ["cloudflare", "cloudflared", "r2", "d1", "aws"]
 
+/** cfg len sql str fn ref var buf repo keep keyword, vendor, SQL, fleet and repos spellings. */
+let abbreviations = [
+  ("db", "database"),
+  ("stmt", "statement"),
+  ("conn", "connection"),
+  ("req", "request"),
+  ("resp", "response"),
+  ("ctx", "context"),
+  ("msg", "message"),
+  ("err", "error"),
+  ("idx", "index"),
+  ("addr", "address"),
+  ("tmp", "temporary"),
+  ("val", "value"),
+  ("param", "parameter"),
+  ("params", "parameters"),
+  ("prev", "previous"),
+  ("curr", "current"),
+  ("dest", "destination"),
+  ("dst", "destination"),
+  ("src", "source"),
+  ("pkg", "package"),
+  ("cmd", "command"),
+  ("func", "function"),
+  ("obj", "object"),
+  ("ptr", "pointer"),
+  ("mgr", "manager"),
+  ("svc", "service"),
+  ("srv", "server"),
+  ("proc", "process"),
+  ("util", "utility"),
+  ("utils", "utilities"),
+  ("sess", "session"),
+  ("acct", "account"),
+  ("img", "image"),
+  ("btn", "button"),
+]
+
 /** What the author named by hand in a vendor account, each its account, kind and name. */
 let handNamed = [
   ("monoflake", "worker", "control"),
@@ -34,8 +72,26 @@ let handNamed = [
   ("monoflake", "worker", "gateway"),
 ]
 
+/** Names a language's library or a vendor's crate spells so, used and never declared by us. */
+let abbreviationsExempt = [
+  "SocketAddr",
+  "SocketAddrV4",
+  "SocketAddrV6",
+  "IpAddr",
+  "Ipv4Addr",
+  "Ipv6Addr",
+  "DbConfig",
+  "params_from_iter",
+]
+
 let doc = "docs/naming.md"
 let rules: array<Rule.t> = [
+  {
+    name: "identifiers-whole",
+    says: "An identifier in code is written whole by `abbreviations`, warned of and failing nothing while the tree holds many",
+    doc,
+    held: Check("names"),
+  },
   {
     name: "file-names",
     says: "A file or directory is lowercase English, hyphens allowed, by `shape`",

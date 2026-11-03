@@ -1,7 +1,7 @@
 # Naming conventions
 
-This document covers filesystem names only: files and directories. Identifiers inside source
-code are governed by the language, not by this document -- see [Inside code](#inside-code).
+This document covers filesystem names and the words inside identifiers. A language governs the
+shape of its identifiers -- see [Inside code](#inside-code).
 
 ## A workspace member is named in one word
 
@@ -287,7 +287,7 @@ holds every pair.
 
 ## Inside code
 
-Identifiers follow the language's own convention with no interference from this document:
+Identifiers follow the language's own convention:
 
 - TypeScript / JavaScript: `camelCase` variables and functions, `PascalCase` types.
 - Rust: `snake_case` items, `PascalCase` types, `SCREAMING_SNAKE_CASE` constants.
@@ -295,6 +295,15 @@ Identifiers follow the language's own convention with no interference from this 
 
 A `camelCase` variable inside a `user-profile.ts` file is correct. The two rules do not
 interact.
+
+### An identifier is written whole
+
+An abbreviation adds another spelling to search for. `identifiers-whole` and
+`Naming.abbreviations` in [model/rules/naming.res](../model/rules/naming.res) hold the words that
+are written whole. The names part warns rather than fails while the tree holds many abbreviated
+identifiers. A member's use follows its declaration or its vendor; Rust variants, attributes and
+macros, a decorator, and what `Naming.abbreviationsExempt` lists keep their owner's spelling. It reads
+a repository by an absolute path.
 
 ### A name is not reused inside its own scope
 

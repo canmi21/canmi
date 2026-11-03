@@ -145,7 +145,7 @@ let others: array<(string, part)> = [
   ("verbs", Found(Verbs.main)),
   ("push", Soft(Declared_push.main)),
   ("todos", Found(Todos.main)),
-  ("names", Found(() => Filenames.main(~root))),
+  ("names", Found(() => Array.concat(Filenames.main(~root), Whole_words.warned(~root)))),
   ("words", Found(() => Words.main(~root))),
   ("credentials", Found(() => Credentials_check.main(~root))),
   ("docs", Found(() => Docs_force.main(~root))),
@@ -288,7 +288,16 @@ let over = (repo): array<(string, part)> =>
       ("tasks", Script(() => reported(Tasks.found(~root=repo)))),
       ("repository", Script(() => reported(Conduct.found(~root=repo)))),
       ("placed", Found(() => Placed.found(~root=repo))),
-      ("names", Found(() => Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)))),
+      (
+        "names",
+        Found(
+          () =>
+            Array.concat(
+              Array.concat(Filenames.names(~root=repo), Own_name.main(~root=repo)),
+              Whole_words.warned(~root=repo),
+            ),
+        ),
+      ),
       ("commits", Found(() => commits(repo))),
       ("comments", Formed(pushing => Comments.main(~root=repo, ~given=[], ~pushing))),
       ("workflows", Found(() => Workflows.main(~root=repo))),

@@ -2,9 +2,16 @@
 
 # Rules
 
-15 rules, 7 pending a check.
+16 rules, 7 pending a check.
 
 ## Naming
+
+### identifiers-whole
+
+An identifier in code is written whole by `abbreviations`, warned of and failing nothing while the tree holds many.
+
+- doc: [docs/naming.md](../../docs/naming.md)
+- held by: check part `names`
 
 ### file-names
 
