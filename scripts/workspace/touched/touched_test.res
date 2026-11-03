@@ -236,3 +236,12 @@ describe("a crate's blocks and uses", () => {
     Node.rmSync(root, {recursive: true, force: true})
   })
 })
+
+describe("a Cargo.lock change read for its member", () => {
+  test("is not a member's version where the hunk holds no name above it", () => {
+    let diff = "--- a/Cargo.lock\n+++ b/Cargo.lock\n@@ -40,3 +40,3 @@\n source = \"x\"\n-version = \"0.1.0\"\n+version = \"0.1.1\"\n"
+    expect(Touched.versionsOnly(~file="Cargo.lock", ~diff, ~members=["driver-machine"]))->toEqual(
+      false,
+    )
+  })
+})

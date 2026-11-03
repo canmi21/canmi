@@ -41,6 +41,15 @@ let steps: array<step>
 let command: (asked, step) => (string, array<string>)
 
 /**
+ * The paths a landing commits once bump has run: those given, then each file the working copy
+ * changes after bump and did not before it.
+ */
+let raised: (~before: array<string>, ~after: array<string>, ~paths: array<string>) => array<string>
+
+/** A failed step's causes, the last lines of its output, printed before land's own last line. */
+let causes: string => array<string>
+
+/**
  * Each step run in order from the workspace, stopping at the first that fails with its causes last;
  * a dry run says each command and runs none. The exit status.
  */

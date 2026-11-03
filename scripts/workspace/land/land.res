@@ -128,8 +128,35 @@ let quoted = value =>
     ? value
     : "'" ++ value->String.replaceRegExp(/'/g, "'\"'\"'") ++ "'"
 
+let raised = (~before, ~after, ~paths) =>
+  paths->Array.concat(
+    after->Array.filter(path => !(before->Array.includes(path)) && !(paths->Array.includes(path))),
+  )
+
+let causes = output =>
+  output
+  ->String.split("\n")
+  ->Array.map(String.trimEnd)
+  ->Array.filter(line => line != "")
+  ->Array.slice(~start=-8)
+
+/** The paths a repository's working copy changes, relative to it. */
+let changedNames = asked =>
+  Node.spawnSync(
+    "jj",
+    ["diff", "--name-only"],
+    {cwd: Node.join([Registry.root, directory(asked)]), encoding: "utf8", maxBuffer: 268435456},
+  ).stdout
+  ->Nullable.getOr("")
+  ->String.split("\n")
+  ->Array.map(String.trim)
+  ->Array.filter(line => line != "")
+
 let run = async asked => {
   let status = ref(0)
+  // Paths given leave out what bump writes, so each file it changes joins them.
+  let current = ref(asked)
+  let before = ref([])
   if asked.dry {
     Console.log(
       `land: the check lock for ${asked.repository} is held by message between the integrators, never a file`,
@@ -137,7 +164,7 @@ let run = async asked => {
   }
   for index in 0 to steps->Array.length - 1 {
     let step = steps->Array.getUnsafe(index)
-    let (program, arguments) = command(asked, step)
+    let (program, arguments) = command(current.contents, step)
     if status.contents == 0 && program != "" {
       Console.log(
         `land: ${label(step)}: ${[program, ...arguments]->Array.map(quoted)->Array.join(" ")}`,
@@ -154,11 +181,25 @@ let run = async asked => {
         } else {
           arguments
         }
+        if step == Bump && asked.paths != [] {
+          before := changedNames(asked)
+        }
+        let output = ref("")
         if status.contents == 0 {
-          let (code, _) = await Node.stream(~cwd=Registry.root, program, arguments)
+          let (code, streamed) = await Node.stream(~cwd=Registry.root, program, arguments)
           status := code
+          output := streamed
+        }
+        if step == Bump && status.contents == 0 && asked.paths != [] {
+          let paths = raised(
+            ~before=before.contents,
+            ~after=changedNames(asked),
+            ~paths=current.contents.paths,
+          )
+          current := {...current.contents, paths}
         }
         if status.contents != 0 {
+          causes(output.contents)->Array.forEach(line => Console.log(line))
           Console.log(`land: ${label(step)} failed, status ${Int.toString(status.contents)}`)
         }
       }

@@ -80,3 +80,20 @@ describe("landing a working copy", () => {
     expect(Land.command(asked, Record))->toEqual(("", []))
   })
 })
+
+describe("what a landing commits and says", () => {
+  test("adds to the paths given each file bump changed, and none the change held before", () => {
+    expect(
+      Land.raised(
+        ~before=["machine/object/src/lib.rs", "notes.md"],
+        ~after=["machine/object/src/lib.rs", "notes.md", "machine/object/Cargo.toml", "Cargo.lock"],
+        ~paths=["machine/object/src/lib.rs"],
+      ),
+    )->toEqual(["machine/object/src/lib.rs", "machine/object/Cargo.toml", "Cargo.lock"])
+  })
+
+  test("ends a failure with the failing step's last lines", () => {
+    let output = Array.fromInitializer(~length=12, index => `line ${Int.toString(index)}`)
+    expect(Land.causes(output->Array.join("\n") ++ "\n\n"))->toEqual(output->Array.slice(~start=4))
+  })
+})
