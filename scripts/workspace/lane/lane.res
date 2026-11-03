@@ -168,7 +168,14 @@ let openPlan = (
  * What the steps of a close are. Every working copy is snapshotted and judged first, so a lane
  * with a change not landed loses nothing.
  */
-let closePlan = (~root, ~registered, ~hasCargo, ~name, workspaces: array<Lane_state.found>) => {
+let closePlan = (
+  ~root,
+  ~registered,
+  ~hasCargo,
+  ~closed=_ => Ok(false),
+  ~name,
+  workspaces: array<Lane_state.found>,
+) => {
   let sources =
     workspaces->Array.map(one => (one, Lane_state.sourceOf(~root, ~registered, one.rel)))
   switch (fromBase(root), sources->Array.find(((_, from)) => from == None)) {
@@ -180,31 +187,47 @@ let closePlan = (~root, ~registered, ~hasCargo, ~name, workspaces: array<Lane_st
     Error(`lanes/${name}/${one.rel} is neither canmi nor a registered repository's path`)
   | _ =>
     let kept = sources->Array.filterMap(((one, from)) => from->Option.map(from => (one, from)))
-    Ok(
-      Array.concat(
-        kept->Array.flatMap(((one, _)) => [
-          Handed({
-            cwd: one.path,
-            dir: `lanes/${name}/${one.rel}`,
-            own: [],
-            all: false,
-            integrator: false,
-          }),
-          Run({cwd: one.path, program: "jj", args: ["st"]}),
-          Guard({cwd: one.path, dir: `lanes/${name}/${one.rel}`}),
-        ]),
+    let judged = kept->Array.map(((one, from)) => (one, from, closed(from)))
+    switch judged->Array.findMap(((one, _, state)) =>
+      switch state {
+      | Error(why) => Some(`lanes/${name}/${one.rel} could not be judged: ${why}`)
+      | Ok(_) => None
+      }
+    ) {
+    | Some(why) => Error(why)
+    | None =>
+      let active =
+        judged->Array.filterMap(((one, from, state)) =>
+          state == Ok(false) ? Some((one, from)) : None
+        )
+      Ok(
         Array.concat(
-          kept->Array.flatMap(((one, from)) =>
-            Array.flat([
-              [Run({cwd: from, program: "jj", args: ["workspace", "forget", name]})],
-              hasCargo(one.path) ? [Run({cwd: one.path, program: "cargo", args: ["clean"]})] : [],
-              [Remove(Node.join([one.path, "node_modules"]))],
-            ])
+          active->Array.flatMap(((one, _)) => [
+            Handed({
+              cwd: one.path,
+              dir: `lanes/${name}/${one.rel}`,
+              own: [],
+              all: false,
+              integrator: false,
+            }),
+            Run({cwd: one.path, program: "jj", args: ["st"]}),
+            Guard({cwd: one.path, dir: `lanes/${name}/${one.rel}`}),
+          ]),
+          Array.concat(
+            kept->Array.flatMap(((one, from)) =>
+              Array.flat([
+                active->Array.some(((openHalf, _)) => openHalf.path == one.path)
+                  ? [Run({cwd: from, program: "jj", args: ["workspace", "forget", name]})]
+                  : [],
+                hasCargo(one.path) ? [Run({cwd: one.path, program: "cargo", args: ["clean"]})] : [],
+                [Remove(Node.join([one.path, "node_modules"]))],
+              ])
+            ),
+            [Remove(Node.join([Lane_state.lanes(root), name]))],
           ),
-          [Remove(Node.join([Lane_state.lanes(root), name]))],
         ),
-      ),
-    )
+      )
+    }
   }
 }
 
@@ -261,6 +284,12 @@ let jjLines = (cwd, args) => {
       )
     : Error(answer.stderr->Nullable.getOr("jj failed")->String.trim)
 }
+
+/** A forgotten half has no working copy to judge, docs/agents/lanes.md. */
+let closedIn = (~name, cwd) =>
+  jjLines(cwd, ["workspace", "list", "-T", "name ++ \"\\n\""])->Result.map(names =>
+    !(names->Array.includes(name))
+  )
 
 /** Paths the lane's own change touches that main neither equals nor has moved on since the fork. */
 let notHeld = (~touched, ~differ, ~moved) =>
@@ -446,6 +475,7 @@ let main = (argv: array<string>): int => {
       ~root,
       ~registered,
       ~hasCargo=dir => Node.existsSync(Node.join([dir, "Cargo.toml"])),
+      ~closed=cwd => closedIn(~name, cwd),
       ~name,
       workspaces,
     )->finish(~root, ~dry)

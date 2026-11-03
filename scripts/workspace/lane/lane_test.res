@@ -358,3 +358,68 @@ describe("a real lane", () => {
     expect(Lane.notHeld(~touched=["a", "b", "c"], ~differ=["a", "b"], ~moved=["b"]))->toEqual(["a"])
   })
 })
+
+describe("closing every half of a real lane", () => {
+  setConfig({"testTimeout": 30000})
+  let base = Testing.temporaryRoot("lane-close-")
+  let command = (cwd, args) => {
+    let answer = Node.spawnSync("jj", args, {cwd, encoding: "utf8"})
+    expectAs(answer.status->Nullable.toOption, answer.stderr->Nullable.getOr(""))->toEqual(Some(0))
+  }
+  let build = () => {
+    let root = base.contents
+    let halves = ["first", "second"]->Array.map(rel => {
+      let source = Node.join([root, "repos", rel])
+      Testing.tree(source, [("a.txt", "one\n")])
+      command(source, ["git", "init"])
+      command(source, ["bookmark", "create", "main", "-r", "@"])
+      command(source, ["new"])
+      let path = Node.join([root, "lanes", "wave", rel])
+      Node.mkdirAll(Node.dirname(path))
+      command(source, ["workspace", "add", "--name", "wave", "-r", "main", path])
+      {Lane_state.lane: "wave", rel, path}
+    })
+    (root, halves)
+  }
+  let closed = (root, rel) => Lane.closedIn(~name="wave", Node.join([root, "repos", rel]))
+  let close = (root, halves) =>
+    Lane.closePlan(
+      ~root,
+      ~registered=["first", "second"],
+      ~hasCargo=_ => false,
+      ~closed=cwd => Lane.closedIn(~name="wave", cwd),
+      ~name="wave",
+      halves,
+    )->Result.flatMap(steps => Lane.execute(~root, steps))
+
+  test("forgets neither half when the second half refuses", () => {
+    let (root, halves) = build()
+    let second = halves->Array.getUnsafe(1)
+    Node.writeFileSync(Node.join([second.path, "b.txt"]), "unlanded\n")
+    switch close(root, halves) {
+    | Error(why) => expect(why)->toContain("lanes/wave/second holds changes not in main")
+    | Ok() => expect("closed")->toBe("refused")
+    }
+    expect(closed(root, "first"))->toEqual(Ok(false))
+    expect(closed(root, "second"))->toEqual(Ok(false))
+    expect(Node.readFileSync(Node.join([second.path, "b.txt"])))->toBe("unlanded\n")
+    expect(Node.existsSync(Node.join([root, "lanes", "wave"])))->toBe(true)
+  })
+
+  test("forgets both halves only after both pass", () => {
+    let (root, halves) = build()
+    expect(close(root, halves))->toEqual(Ok())
+    expect(closed(root, "first"))->toEqual(Ok(true))
+    expect(closed(root, "second"))->toEqual(Ok(true))
+    expect(Node.existsSync(Node.join([root, "lanes", "wave"])))->toBe(false)
+  })
+
+  test("passes over an already forgotten half and closes the remaining half", () => {
+    let (root, halves) = build()
+    command(Node.join([root, "repos", "first"]), ["workspace", "forget", "wave"])
+    expect(closed(root, "first"))->toEqual(Ok(true))
+    expect(close(root, halves))->toEqual(Ok())
+    expect(closed(root, "second"))->toEqual(Ok(true))
+    expect(Node.existsSync(Node.join([root, "lanes", "wave"])))->toBe(false)
+  })
+})
