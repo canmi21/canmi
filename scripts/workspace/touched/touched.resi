@@ -31,3 +31,19 @@ let withDependents: (array<string>, ~uses: array<(string, array<string>)>) => ar
  * dependents, where its mise.toml declares the flag, and nothing where it runs every block.
  */
 let arguments: string => array<string>
+
+/**
+ * A repository's table of what its verify parts cover, from its workspace.toml's
+ * `[[check.touched]]` rows, each `paths`, globs where `**` crosses directories and `*` does not,
+ * and `parts`, its `verify:<part>` names; none where it declares no row.
+ */
+let tableOf: string => option<array<(array<string>, array<string>)>>
+
+/**
+ * The verify parts a change touches, each once in the order the table first names it, none for a
+ * change whose rows name no part; `None` where a changed path matches no row, so the whole verify.
+ */
+let parts: (
+  ~paths: array<string>,
+  ~table: array<(array<string>, array<string>)>,
+) => option<array<string>>

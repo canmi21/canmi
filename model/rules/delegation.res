@@ -311,6 +311,30 @@ let seatParts = [
   ("tests", "a failing test: the block's `built`, or the repository's `test`"),
 ]
 
+/**
+ * The workspace's rule parts over a repository that read its files alone, run right after the form
+ * and format gates and stopping at their first failure, before its verify, by the author's word of
+ * 2026-11-03; a part that runs a program, `commits` and `versions` reading jj, runs after it.
+ */
+let readsFilesAlone = [
+  "tasks",
+  "repository",
+  "placed",
+  "names",
+  "workflows",
+  "step-names",
+  "ci",
+  "ci-steps",
+  "ci-shell",
+  "domains",
+  "suffixes",
+  "plain",
+  "identifiers",
+  "drift",
+  "rfcs",
+  "plan",
+]
+
 /** Where `check` is the model's alone, so `wire` runs it; elsewhere it is the whole check. */
 let wireRepositories = ["platform", "driver", "cloud"]
 

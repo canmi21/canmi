@@ -118,3 +118,7 @@ let arguments = repo =>
     | Blocks(names) => ["--blocks", withDependents(names, ~uses=usesOf(repo))->Array.join(",")]
     }
   }
+
+let tableOf = _ => None
+
+let parts = (~paths as _, ~table as _) => None
