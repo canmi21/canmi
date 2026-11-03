@@ -436,6 +436,31 @@ let items: array<item> = [
     ),
   },
   {
+    id: "land-raised-dirty",
+    says: "`land` with `--paths` adds to the commit only the files bump changed that were clean before it, scripts/workspace/land/land.res `raised`, so a manifest or Cargo.lock already changed before bump and changed again by it stays out of the commit and its raise with it",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes(
+      "a file bump changes joins the paths whether or not it was changed before, with a test",
+    ),
+  },
+  {
+    id: "land-raised-whole-copy",
+    says: "`land` reads what bump changed from the main checkout's whole working copy before and after it, so a file another session writes there during bump joins a `--paths` commit; it leans on the main checkout having one writer, docs/agents/lanes.md",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes(
+      "the files bump changed read from bump's own report, or the landing refusing a working copy that moved during bump",
+    ),
+  },
+  {
+    id: "land-dry-parts",
+    says: "`land --dry-run` says each step's command but not the parts its check would run, which step 12 of thread fifth settled it would say",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("the dry run listing the check's planned parts, from the check's own planning"),
+  },
+  {
     id: "green-to-push-measured",
     says: "`job table --by-class` gives a step's time from its local green to its push, which needs a record of the local green and of which landing is the step's own; until then it prints that it is not measured, as a step's green is recorded after its own landing",
     repos: ["workspace"],
