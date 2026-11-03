@@ -18,7 +18,82 @@ let of_ = (~paths, ~blocks, ~full) => {
   }
 }
 
-let versionsOnly = (~file as _, ~diff as _, ~members as _) => false
+let versionsOnly = (~file, ~diff, ~members) => {
+  let name = ref("")
+  let added = ref(false)
+  let removed = ref(false)
+  let valid = ref(true)
+  let base = file->String.split("/")->Array.toReversed->Array.get(0)->Option.getOr("")
+  diff
+  ->String.split("\n")
+  ->Array.forEach(line => {
+    if line->String.startsWith("@@") {
+      name.contents = ""
+    } else if !(line->String.startsWith("+++")) && !(line->String.startsWith("---")) {
+      let plus = line->String.startsWith("+")
+      let minus = line->String.startsWith("-")
+      let content = line->String.slice(~start=1, ~end=String.length(line))
+      if content == "[[package]]" {
+        name.contents = ""
+      } else if content->String.startsWith("name = \"") {
+        name.contents = content->String.replaceRegExp(/^name = "([^"]+)"$/, "$1")
+      }
+      if plus || minus {
+        added.contents = added.contents || plus
+        removed.contents = removed.contents || minus
+        let version = switch base {
+        | "package.json" => content->String.replaceRegExp(/^\t"version": "[^"]+",?$/, "") == ""
+        | "Cargo.lock" =>
+          content->String.replaceRegExp(/^version = "[^"]+"$/, "") == "" &&
+            members->Array.includes(name.contents)
+        | _ => false
+        }
+        valid.contents = valid.contents && version
+      }
+    }
+  })
+  valid.contents &&
+  (added.contents || removed.contents) &&
+  (base != "package.json" || (added.contents && removed.contents))
+}
+
+let stringsAt = (fields, key) =>
+  fields
+  ->Dict.get(key)
+  ->Option.flatMap(JSON.Decode.array)
+  ->Option.mapOr([], values => values->Array.filterMap(JSON.Decode.string))
+
+let tableAt = (fields, key) => fields->Dict.get(key)->Option.flatMap(JSON.Decode.object)
+
+let bumpedOf = repo => {
+  try {
+    Toml.parse(Node.readFileSync(Node.join([repo, "workspace.toml"])))
+    ->JSON.Decode.object
+    ->Option.flatMap(fields => tableAt(fields, "land"))
+    ->Option.mapOr([], fields => stringsAt(fields, "bumped"))
+  } catch {
+  | _ => []
+  }
+}
+
+let membersOf = repo => {
+  let root = Node.join([repo, "Cargo.toml"])
+  if !Node.existsSync(root) {
+    []
+  } else {
+    Toml.parse(Node.readFileSync(root))
+    ->JSON.Decode.object
+    ->Option.flatMap(fields => tableAt(fields, "workspace"))
+    ->Option.mapOr([], fields => stringsAt(fields, "members"))
+    ->Array.filterMap(member =>
+      Toml.parse(Node.readFileSync(Node.join([repo, member, "Cargo.toml"])))
+      ->JSON.Decode.object
+      ->Option.flatMap(fields => tableAt(fields, "package"))
+      ->Option.flatMap(fields => fields->Dict.get("name"))
+      ->Option.flatMap(JSON.Decode.string)
+    )
+  }
+}
 
 let changed = repo => {
   let result = Node.spawnSync(
@@ -29,11 +104,26 @@ let changed = repo => {
   if result.status->Nullable.getOr(1) != 0 {
     []
   } else {
+    let bumped = bumpedOf(repo)
+    let members = bumped == [] ? [] : membersOf(repo)
     result.stdout
     ->Nullable.getOr("")
     ->String.split("\n")
     ->Array.map(String.trim)
     ->Array.filter(line => line != "")
+    ->Array.filter(file => {
+      if !(bumped->Array.includes(file)) {
+        true
+      } else {
+        let diff = Node.spawnSync(
+          "jj",
+          ["diff", "--git", "--from", "main@origin", "--to", "@", file],
+          {cwd: repo, encoding: "utf8", maxBuffer: 268435456},
+        )
+        diff.status->Nullable.getOr(1) != 0 ||
+          !versionsOnly(~file, ~diff=diff.stdout->Nullable.getOr(""), ~members)
+      }
+    })
   }
 }
 

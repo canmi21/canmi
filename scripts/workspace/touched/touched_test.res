@@ -1,5 +1,44 @@
 open Testing
 
+describe("version-only bumped files", () => {
+  test("accepts a top-level package version", () => {
+    let diff = "diff --git a/package.json b/package.json\n--- a/package.json\n+++ b/package.json\n@@ -1,3 +1,3 @@\n {\n-\t\"version\": \"1.0.0\",\n+\t\"version\": \"1.0.1\",\n }"
+    expect(Touched.versionsOnly(~file="code/host/package.json", ~diff, ~members=[]))->toEqual(true)
+  })
+  test("rejects a dependency version change", () => {
+    let diff = "@@ -1,5 +1,5 @@\n-\t\"version\": \"1.0.0\",\n+\t\"version\": \"1.0.1\",\n \t\"dependencies\": {\n-\t\t\"other\": \"1.0.0\"\n+\t\t\"other\": \"1.0.1\"\n \t}"
+    expect(Touched.versionsOnly(~file="package.json", ~diff, ~members=[]))->toEqual(false)
+  })
+  test("rejects a nested version field", () => {
+    let diff = "@@ -1,2 +1,2 @@\n-\t\t\"version\": \"1.0.0\"\n+\t\t\"version\": \"1.0.1\""
+    expect(Touched.versionsOnly(~file="package.json", ~diff, ~members=[]))->toEqual(false)
+  })
+  test("accepts a member crate version", () => {
+    let diff = "--- a/Cargo.lock\n+++ b/Cargo.lock\n@@ -1,3 +1,3 @@\n [[package]]\n name = \"host\"\n-version = \"1.0.0\"\n+version = \"1.0.1\""
+    expect(Touched.versionsOnly(~file="Cargo.lock", ~diff, ~members=["host"]))->toEqual(true)
+  })
+  test("rejects a non-member crate version", () => {
+    let diff = "@@ -1,3 +1,3 @@\n [[package]]\n name = \"other\"\n-version = \"1.0.0\"\n+version = \"1.0.1\""
+    expect(Touched.versionsOnly(~file="Cargo.lock", ~diff, ~members=["host"]))->toEqual(false)
+  })
+  test("rejects adding a package", () => {
+    let diff = "@@ -1,1 +1,4 @@\n+[[package]]\n+name = \"host\"\n+version = \"1.0.1\""
+    expect(Touched.versionsOnly(~file="Cargo.lock", ~diff, ~members=["host"]))->toEqual(false)
+  })
+  test("rejects an unknown file", () => {
+    let diff = "@@ -1,1 +1,1 @@\n-version = \"1.0.0\"\n+version = \"1.0.1\""
+    expect(Touched.versionsOnly(~file="other.toml", ~diff, ~members=[]))->toEqual(false)
+  })
+  test("rejects an empty diff", () => {
+    let diff = ""
+    expect(Touched.versionsOnly(~file="package.json", ~diff, ~members=[]))->toEqual(false)
+  })
+  test("does not carry a crate name across hunks", () => {
+    let diff = "@@ -1,1 +1,1 @@\n name = \"host\"\n@@ -20,1 +20,1 @@\n-version = \"1.0.0\"\n+version = \"1.0.1\""
+    expect(Touched.versionsOnly(~file="Cargo.lock", ~diff, ~members=["host"]))->toEqual(false)
+  })
+})
+
 let blocks = [("storage", "code/products/storage"), ("host", "code/products/host")]
 let touched = paths => Touched.of_(~paths, ~blocks, ~full=false)
 
