@@ -51,6 +51,16 @@ history; that is a hint, and changes no result.
 **The refactorer tidies only what an implementer wrote.** A warning in a file with one writer that
 the integrator wrote is tidied by the integrator itself, with no refactorer dispatched.
 
+## A check fails fast and runs what a change touches
+
+**Format and form run first, and the first failure stops the check** before anything compiles or
+tests, by the author's word of 2026-11-03: `mise run check <repository>` runs the workspace's form
+parts, `shape`, `lines` and `comments`, then the repository's own format part, and only then its
+verify. **A repository's check runs the blocks a change touches**, `Touched` in
+`scripts/workspace/touched/`, and the full check where a change touches what blocks share or the
+author asks for it. **A failed check ends with its causes**, its last lines naming what failed;
+notes and the deferred list are printed only when asked.
+
 ## A wave runs in one order
 
 1. The implementers write the logic, each passing the logic layer alone; independent pieces run in
@@ -71,6 +81,10 @@ the integrator wrote is tidied by the integrator itself, with no refactorer disp
 
 ### A wave is reviewed once, and its fixes verified once
 
+- **Review is by block, never by piece**, by the author's word of 2026-11-03: pieces are integrated
+  first, and one reviewer reads a block once they are, with no review repeated. In a thread that is
+  one review of the whole slice when its step on the local machine is green, beside the test
+  machine's run, and its verification once.
 - **A wave has one full review.**
 - **The fixes made for that review are verified once**, and the verification reads only the items
   its report listed; it is no second full review.

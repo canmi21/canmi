@@ -155,7 +155,9 @@ let pushesOf = (named: array<(string, array<Figures.record>)>, ~since) =>
 /** Why green to push prints no figure, plan item green-to-push-measured. */
 let greenToPushUnmeasured = "green to push: not measured, as a step's green is recorded after its own landing and nothing records when it went green locally or which landing is its own"
 
-let shown = (~timings, ~landings, ~pushes=[]) => {
+type seat = {who: string, name: string, text: string}
+
+let shown = (~timings, ~landings, ~pushes=[], ~seats=[]) => {
   let number = value => value->Float.toFixed(~digits=1)
   let lines = ["class | runs | total seconds | median | longest | recurring | one-off"]
   rows(timings, landings)->Array.forEach(row => {
@@ -202,6 +204,21 @@ let shown = (~timings, ~landings, ~pushes=[]) => {
       `${one.kind} | ${one.who} | ${number(one.seconds /. 60.)} minutes | ${one.description}`,
     )
   )
+  let minutes = seconds => number(seconds /. 60.)
+  lines->Array.push("seat | who | warm-up | reads | editing | checks | whole")
+  seats->Array.forEach(seat =>
+    switch Warmup.of_(seat.text) {
+    | Some(one) =>
+      let slow = one.warmup > 120. ? " (past 2 minutes)" : ""
+      let many = one.reads > 15 ? " (past 15)" : ""
+      lines->Array.push(
+        `${seat.name} | ${seat.who} | ${minutes(one.warmup)}${slow} | ${Int.toString(
+            one.reads,
+          )}${many} | ${minutes(one.editing)} | ${minutes(one.checks)} | ${minutes(one.whole)}`,
+      )
+    | None => lines->Array.push(`${seat.name} | ${seat.who} | - | - | - | - | -`)
+    }
+  )
   lines->Array.join("\n") ++ "\n"
 }
 
@@ -237,6 +254,19 @@ let activityOf = (sessions: array<Watchdog.session>) => {
     })
   )
 }
+
+let seatsOf = (sessions: array<Watchdog.session>) =>
+  activityOf(sessions)
+  ->Array.filter(one => one.kind == "Claude seat")
+  ->Array.filterMap(one =>
+    sessions
+    ->Array.find(session => session.name == one.who)
+    ->Option.flatMap(session => session.transcript)
+    ->Option.flatMap(transcript =>
+      Rounds.read(Node.join([Rounds.withoutSuffix(transcript), "subagents", one.description]))
+    )
+    ->Option.map(text => {who: one.who, name: one.description, text})
+  )
 
 let landingOf = (~repository, result: Node.spawned): landing => {
   repository,
@@ -320,6 +350,7 @@ let run = argv => {
           threads->Array.map(thread => (thread, Figures.records(thread))),
           ~since=Rounds.timeOf(day)->Option.getOr(0.),
         ),
+        ~seats=seatsOf(sessions),
       ),
     )
     0

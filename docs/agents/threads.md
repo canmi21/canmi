@@ -37,6 +37,10 @@ and evidence; no layer ranks across goals.
 label on the work. Its test belongs to the author and the advisor; the supervisor and everyone below
 do not change it.
 
+**A charter names the specification of any step touching order, concurrency or a crash, or says
+why none is needed**, by the author's word of 2026-11-03: a TLA+ specification whose traces the
+code's own tests replay, so a change to either fails the other, RFC w0w82.
+
 **The advisor owns staying on course; the supervisor gives the figures and no judgment.** The
 watchdog says each thread's seat time and landings since a step last went green, and the share of its
 seat time that is tooling, flagged past `Delegation.toolingShare`, `thread-figures` in

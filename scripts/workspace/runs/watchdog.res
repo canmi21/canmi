@@ -96,20 +96,37 @@ let aboutSession = (session: session, ~now, ~moved): array<finding> =>
 
 let percent = share => Float.toFixed(share *. 100., ~digits=0)
 
-/** An advisor past the share of the window is told it is due to be replaced, once. */
+/** The share past which a session of this role is reported, `contextReported`. */
+let reportedAt = role =>
+  Delegation.contextReported->Array.find(((one, _)) => one == role)->Option.map(((_, at)) => at)
+
+/**
+ * A session past its role's share is named to the supervisor and the advisor once per crossing,
+ * a compaction starting a new one, and an advisor told it is due to be replaced.
+ */
 let aboutContext = (session: session, outcome: option<Context.outcome>): array<finding> =>
-  switch outcome {
-  | Some(Read({tokens})) if session.role == "advisor" && Context.due(tokens) => [
-      {
-        key: `context:${session.name}:replace`,
-        says: `context to=advisor advisor ${session.name} holds ${Int.toString(
-            tokens,
-          )} tokens, ${percent(Context.share(tokens))}% of its window, past ${percent(
-            Delegation.advisorReplacedFrom,
-          )}%, so it is due to be replaced (advisor-replaced)`,
-        notify: false,
-      },
-    ]
+  switch (outcome, reportedAt(session.role)) {
+  | (Some(Read({tokens, compactions})), Some(at)) if Context.share(tokens) >= at =>
+    let held = `${Int.toString(tokens)} tokens, ${percent(Context.share(tokens))}% of its window`
+    session.role == "advisor"
+      ? [
+          {
+            key: `context:${session.name}:replace:${Int.toString(compactions)}`,
+            says: `context to=advisor advisor ${session.name} holds ${held}, past ${percent(
+                at,
+              )}%, so it is due to be replaced (advisor-replaced)`,
+            notify: false,
+          },
+        ]
+      : [
+          {
+            key: `context:${session.name}:${Int.toString(compactions)}`,
+            says: `context to=supervisor,advisor ${session.role} ${session.name} holds ${held}, past ${percent(
+                at,
+              )}%: it stops at a clean point, writes a savepoint, and the author compacts it (context-reported)`,
+            notify: false,
+          },
+        ]
   | _ => []
   }
 

@@ -54,7 +54,10 @@ whose path `mise run //:job events` prints, said once:
 - **`figures`**: a thread's, [threads.md](threads.md), "Staying on course", with each registered
   session's context size and compactions in the thread's `figures.txt`, or `contexts.txt` beside the
   event file; a read that fails says so and never says zero;
-- **`context`**: an advisor past `Delegation.advisorReplacedFrom`, to itself,
+- **`context`**: a session past its role's share in `Delegation.contextReported`, once per
+  crossing, a compaction starting a new one: an integrator or the supervisor to the supervisor and
+  the advisor, naming the procedure, which is to stop at a clean point, write a savepoint and have the
+  author compact it, `context-reported`; an advisor to itself, due to be replaced,
   [advisor.md](advisor.md).
 
 **A session with no transcript to read is said once, `unwatched`, rather than passed over in silence.**

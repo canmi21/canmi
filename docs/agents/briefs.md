@@ -40,6 +40,13 @@ files stand, [lanes.md](lanes.md). **A reader's brief names the four things**
 `Result:` and a line starting `Verify:`; a dispatch without exactly one of each is refused,
 `seat-one-result`, [delegation.md](delegation.md).
 
+**A seat does not learn the project**, by the author's word of 2026-11-03. Its brief carries the
+contract with its wire form and shared sample, the exact files and line ranges to read, and the tests
+to pass, nothing more, and a seat that needs more asks. Its warm-up, from dispatch to its first edit,
+is held to about 2 minutes and about 15 reads; the job table shows each seat's warm-up, its reads
+before its first edit, its editing, its own checks and its whole span, `Warmup` in
+`scripts/workspace/runs/rounds/`, and flags a warm-up past either figure.
+
 **Samples come before an implementer.** The integrator writes a block's samples from the contract
 the author decided, and an implementer is dispatched to build against them only once the user and
 the advisor have reviewed them.

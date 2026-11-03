@@ -70,7 +70,8 @@ that text into what follows, so the text is:
 
 The same text is saved beside the agent's memory note of work in progress.
 
-**An advisor is replaced, never left to compaction, at about 70 to 80 percent of its context window**,
+**An advisor is replaced, never left to compaction, between `advisorReplacedFrom` and
+`advisorReplacedBy` of its context window**,
 `advisor-replaced` in [model/rules/delegation.res](../../model/rules/delegation.res), of which the
 watchdog tells it. The author opens a new window, and the two talk directly: the old advisor gives it
 its handover text and the thread files; the new one reads them and says back the open decisions, what

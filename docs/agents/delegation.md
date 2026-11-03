@@ -160,6 +160,12 @@ on.** A wait expected past about two minutes asks at its start who can do someth
 handed out, a seat or an integrator's own task, so a stall shows soon and work is split small; it warns
 and never blocks, allowed past that while starting.
 
+**Pieces are cut by one scheme**, by the author's word of 2026-11-03. The integrator writes the
+interface first, its wire form and shared sample included, and the seats fork from it. Work past
+about `Delegation.pieceMinutes` splits along disjoint sets of files; two pieces reading the same
+files, or one whose change is under about 3 minutes, merge into one. One file is never given to two
+seats, and ten seats at most run at once.
+
 **A subagent type is defined only where it truly differs in tools, model or permissions.**
 
 - **The implementer** types no jj command, cannot deploy, cannot run `mise run check` and cannot

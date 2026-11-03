@@ -138,6 +138,21 @@ describe("a session's context", () => {
     expect(owedFor(~said=keys, held(Delegation.advisorReplacedFrom +. 0.02)))->toEqual([])
   })
 
+  test("names an integrator or the supervisor past its share to both, once per crossing", () => {
+    let integrator = owedFor(~role="integrator", held(0.86))
+    expect(integrator->Array.length)->toEqual(1)
+    let says = (integrator->Array.getUnsafe(0)).says
+    expect(says->String.startsWith("context to=supervisor,advisor integrator n"))->toEqual(true)
+    expect(says->String.includes("context-reported"))->toEqual(true)
+    let keys = integrator->Array.map(one => one.key)
+    expect(owedFor(~role="integrator", ~said=keys, held(0.9)))->toEqual([])
+    let compacted = Context.Read({tokens: tokens(0.86), compactions: 2})
+    expect(owedFor(~role="integrator", ~said=keys, compacted)->Array.length)->toEqual(1)
+    expect(owedFor(~role="integrator", held(0.84)))->toEqual([])
+    expect(owedFor(~role="supervisor", held(0.76))->Array.length)->toEqual(1)
+    expect(owedFor(~role="supervisor", held(0.74)))->toEqual([])
+  })
+
   test("says nothing for an advisor under the share, another role or a failed read", () => {
     expect(owedFor(held(Delegation.advisorReplacedFrom -. 0.01)))->toEqual([])
     expect(owedFor(~role="seat", held(0.95)))->toEqual([])
