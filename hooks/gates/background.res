@@ -142,7 +142,7 @@ let sleepSeconds = (word: string) =>
   }
 
 /** The seconds every literal sleep in a foreground command adds up to. */
-let sleepTotal = command =>
+let rec sleepTotal = command =>
   Jj_command.segments(foregroundText(command))->Array.reduce(0., (total, piece) =>
     switch Jj_command.commandAt(piece) {
     | Some(at) if piece[at] == Some("sleep") =>
@@ -150,7 +150,7 @@ let sleepTotal = command =>
       piece
       ->Array.slice(~start=at + 1)
       ->Array.reduce(0., (sum, word) => sum +. sleepSeconds(word)->Option.getOr(0.))
-    | _ => total
+    | _ => total +. Jj_command.shellLine(piece)->Option.mapOr(0., sleepTotal)
     }
   )
 

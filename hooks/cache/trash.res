@@ -30,9 +30,8 @@ let reason = (path): option<string> =>
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let refuse = (payload: Payload.t): int =>
   try {
-    let command = Stale_jobs.withoutHeredocs(Payload.command(payload))
     let cwd = Payload.cwd(payload)
-    let found = Jj_command.segments(command)->Array.flatMap(segment =>
+    let found = Jj_command.running(Payload.command(payload))->Array.flatMap(segment =>
       switch Jj_command.programOf(segment) {
       | Some(("trash", rest)) =>
         operands(rest)->Array.filterMap(operand => reason(resolved(operand, ~cwd)))

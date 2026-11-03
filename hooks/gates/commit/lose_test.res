@@ -72,6 +72,12 @@ describe("the lose gate", () => {
     expect(Lose.handle(payload(repo, "jj abandon main @")))->toBe(2)
   })
 
+  test("refuses the guarded words through a shell's line", () => {
+    let repo = main()
+    tree(repo, [("a.md", "one\n")])
+    expect(Lose.handle(payload(repo, "sh -c 'jj abandon @'")))->toBe(2)
+  })
+
   test("passes the guarded words inside a here-document body or a quoted echo", () => {
     let repo = main()
     tree(repo, [("a.md", "one\n")])

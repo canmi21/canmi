@@ -67,7 +67,9 @@ let withoutQuotedBodies = command => {
 }
 
 /** Whether a command line pushes past the verb anywhere in it. */
-let bypasses = command => Jj_command.segments(withoutQuotedBodies(command))->Array.some(pushes)
+let bypasses = command =>
+  Jj_command.segments(withoutQuotedBodies(command))->Array.some(pushes) ||
+    Jj_command.running(command)->Array.some(pushes)
 
 /** The exit status the harness reads, 2 refusing the command with the reason on stderr. */
 let refuse = (payload: Payload.t): int =>

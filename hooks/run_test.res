@@ -516,6 +516,29 @@ describe("a command a job is given", () => {
     expect(Commit.messages(`sh -c 'cat <<EOF\njj commit -m "x"\nEOF'`))->toEqual([])
   })
 
+  test("each gate holds through a shell's line", () => {
+    let held = [
+      ("commit", Commit.refuse, `sh -c 'jj commit -m "Bad subject"'`),
+      ("push", Push.refuse, "sh -c 'jj git push'"),
+      ("push", Push.refuse, "bash -lc 'cd x && git push'"),
+      ("background", Background.refuse, "sh -c 'sleep 100'"),
+      ("rm", Rmvar.refuse, "sh -c 'rm -rf $X/y'"),
+      ("kill", Kill_named.refuse, "sh -c 'pkill x'"),
+      ("trash", Trash.refuse, "sh -c 'trash target'"),
+      ("job", Run.refusedInJob, "sh -c 'mise run //:job start -- jj git push'"),
+      ("job", Run.refusedInJob, "sh -c 'mise run //:job start -- pkill x'"),
+    ]
+    held->Array.forEach(
+      ((name, gate, command)) =>
+        expect((name, command, gate(payload(command)) != 0))->toEqual((name, command, true)),
+    )
+    expect(Jj_command.placed(`sh -c 'jj commit -m "fix: x"'`, ~cwd="/a", ["commit"]))->toEqual([
+      "/a",
+    ])
+    expect(Push.refuse(payload("sh -c 'cat <<EOF\ngit push\nEOF'")))->toBe(0)
+    expect(Background.refuse(payload("sh -c 'sleep 100 &'")))->toBe(0)
+  })
+
   test("keeps its quoting, so what only names a thing passes", () => {
     [
       "mise run //:job start -- rg 'a; pkill b' docs",

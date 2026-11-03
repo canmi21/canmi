@@ -88,39 +88,45 @@ let lineGates = [
   payload => Trash.refuse(payload),
 ]
 
+/** The payload as if `line` were typed. */
+let typing = (payload: Payload.t, line) => {
+  let input = payload->Payload.object("tool_input")->Option.getOr(Dict.make())->Dict.copy
+  input->Dict.set("command", JSON.String(line))
+  let inner = payload->Dict.copy
+  inner->Dict.set("tool_input", JSON.Object(input))
+  inner
+}
+
 /** What each command `mise run //:job start` is given would meet, typed by itself. */
-let refusedInJob = (payload: Payload.t) =>
+let rec refusedInJob = (payload: Payload.t) =>
   Jj_command.segments(
     ~keepQuotes=true,
     Background.foregroundText(
       ~keepBackground=true,
       Push.withoutQuotedBodies(Payload.command(payload)),
     ),
-  )
-  ->Array.filterMap(segment =>
-    switch (Jj_command.programOf(segment), Jj_command.commandAt(segment)) {
-    | (Some(("mise", words)), Some(at)) =>
-      // An assignment before the job reaches the command, as SKIP does.
-      let assigned =
-        segment
-        ->Array.slice(~start=0, ~end=at)
-        ->Array.filter(word => /^[A-Z_][A-Z0-9_]*=/->RegExp.test(word))
-        ->Array.join(" ")
-      Agent_commands.jobLine(words, ~line=Kill_named.lineOf)->Option.map(line =>
-        `${assigned} ${line}`->String.trim
-      )
-    | _ => None
-    }
-  )
-  ->Array.reduce(0, (refused, line) => {
-    let input = payload->Payload.object("tool_input")->Option.getOr(Dict.make())->Dict.copy
-    input->Dict.set("command", JSON.String(line))
-    let inner = payload->Dict.copy
-    inner->Dict.set("tool_input", JSON.Object(input))
+  )->Array.reduce(0, (refused, segment) =>
     refused != 0
       ? refused
-      : lineGates->Array.reduce(0, (refused, gate) => refused != 0 ? refused : gate(inner))
-  })
+      : switch (Jj_command.programOf(segment), Jj_command.commandAt(segment)) {
+        | (Some(("mise", words)), Some(at)) =>
+          // An assignment before the job reaches the command, as SKIP does.
+          let assigned =
+            segment
+            ->Array.slice(~start=0, ~end=at)
+            ->Array.filter(word => /^[A-Z_][A-Z0-9_]*=/->RegExp.test(word))
+            ->Array.join(" ")
+          Agent_commands.jobLine(words, ~line=Kill_named.lineOf)->Option.mapOr(0, line => {
+            let inner = typing(payload, `${assigned} ${line}`->String.trim)
+            lineGates->Array.reduce(0, (refused, gate) => refused != 0 ? refused : gate(inner))
+          })
+        | _ =>
+          // A job started inside a shell's line is judged as one started outside it.
+          Jj_command.shellLine(segment)->Option.mapOr(0, line =>
+            refusedInJob(typing(payload, Rmvar.decoded(line)))
+          )
+        }
+  )
 
 let handle = (payload: Payload.t): int =>
   switch payload->Payload.text("hook_event_name") {
