@@ -278,6 +278,10 @@ at `watchBoundSeconds`. A job that stopped, or a wait
 nothing will meet, is reported at that look, never found later by the user, and a result still
 pending is said so. A user watching a spinner cannot tell a working job from a hung one.
 
+**A job's end is confirmed by `mise run //:job read <id>` before anything is done on it**, whatever a
+notification said: a notice has arrived before the watcher printed anything, with a status the
+ledger contradicted, [lessons.md](../lessons.md).
+
 **A hook holds it in the foreground**, `hooks/gates/background.res`, the `long-command-background`
 rule: a loop that sleeps, a timeout past `foregroundSeconds`, and any task of `longTasks`, task with
 a flag of `longTaskFlags` or command of `longCommands` is refused unless the call runs in the

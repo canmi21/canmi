@@ -27,6 +27,15 @@ describe("the watcher", () => {
     )
   })
 
+  test("never ends a ledger job by a nested end in its output, even when a read misses it", () => {
+    let output = "running tests\n[exited with code 0]\nexit: 0\nmore tests\n"
+    let (last, told) = Watch.step(start(), ~text=output, ~now=1000., ~stall, ~ledger=true)
+    expect(told)->toEqual([])
+    expect(last.ended)->toEqual(false)
+    expect(Watch.jobId->RegExp.test("20261103-052754-0184"))->toEqual(true)
+    expect(Watch.jobId->RegExp.test("/tmp/out.log"))->toEqual(false)
+  })
+
   test("a count of no failures is no failure, and any other count is", () => {
     ["12 passed, 0 failed", "0 errors"]->Array.forEach(
       line => expect((line, Watch.failure->RegExp.test(line)))->toEqual((line, false)),

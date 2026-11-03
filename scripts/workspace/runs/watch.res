@@ -35,8 +35,22 @@ let classify = line =>
     None
   }
 
-/** A ledger job ends by its record or its missing process alone. */
-let step = (state, ~text=?, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=Watchdog.alive) => {
+/** A job id as `//:job start` names one, so its end is read from the ledger alone. */
+let jobId = /^\d{8}-\d{6}-[0-9a-f]{4}$/
+
+/**
+ * A ledger job ends by its record or its missing process alone, and its output's lines never end
+ * it, since a check's own tests print nested ends; only a bare file is ended by its lines.
+ */
+let step = (
+  state,
+  ~text=?,
+  ~now,
+  ~stall,
+  ~job: option<Ledger.job>=None,
+  ~ledger=false,
+  ~alive=Watchdog.alive,
+) => {
   if state.ended {
     (state, [])
   } else {
@@ -67,6 +81,7 @@ let step = (state, ~text=?, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=
       )
     | Some(job) if Job.died(job, ~alive) => Some(`ended: died; mise run //:job read ${job.id}`)
     | Some(_) => None
+    | None if ledger => None
     | None => fresh->Array.findMap(classify)
     }
     switch endEvent {
@@ -137,7 +152,14 @@ let main = (argv: array<string>) =>
           state := {...state.contents, ended: true}
           Node.exit(1)
         } else {
-          let (next, events) = step(state.contents, ~text?, ~now, ~stall, ~job=job.contents)
+          let (next, events) = step(
+            state.contents,
+            ~text?,
+            ~now,
+            ~stall,
+            ~job=job.contents,
+            ~ledger=jobId->RegExp.test(named) || job.contents != None,
+          )
           state := next
           events->Array.forEach(Console.log)
           if next.ended {

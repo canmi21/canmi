@@ -41,6 +41,10 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 
 ## Other sessions and formatters
 
+- **A notification of a job's end is not its end; the ledger is.** On 2026-11-03 a Monitor
+  notice said "ended: status 0, 29.4 s" for job 20261103-053145-c4a7 while the ledger held only its
+  start; the watcher's own later line, "status 1, 28.3 s", matched the ledger. The cause, outside the
+  workspace's tools, is unconfirmed; `mise run //:job read <id>` decides.
 - **`fmt` names its repository, and a formatter run by hand names its files.**
 - **A write across repositories first looks for another session.** Inspect `jj op log` for other
   sessions' operations and `pgrep -fl claude`; skip and name any repository in use.
