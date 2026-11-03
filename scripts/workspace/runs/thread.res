@@ -115,6 +115,7 @@ let main = (argv: array<string>) =>
     )
     0
   | ["audit", name] => audit(name)
+  | ["rounds", name] => Rounds.run(name)
   | ["new", name] => start(name, ~dry=false)
   | ["new", name, "--dry-run" | "-n"] => start(name, ~dry=true)
   | ["where", name] =>
@@ -123,7 +124,7 @@ let main = (argv: array<string>) =>
   | ["list"] => list()
   | _ =>
     Console.error(
-      "usage: mise run //:thread new <name> [--dry-run] | where <name> | list | audit <name>\n       mise run //:thread green <name> <step> | seat <name> <seat> [--tooling] | seated <name> <seat> | landed <name> <repository> <commit> <subject>",
+      "usage: mise run //:thread new <name> [--dry-run] | where <name> | list | audit <name> | rounds <name>\n       mise run //:thread green <name> <step> | seat <name> <seat> [--tooling] | seated <name> <seat> | landed <name> <repository> <commit> <subject>",
     )
     2
   }

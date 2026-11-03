@@ -481,6 +481,18 @@ let rules: array<Rule.t> = [
     held: Hook("hooks/gates/messages/send_local"),
   },
   {
+    name: "idle-reported",
+    says: "The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor for a supervisor silent `idleSupervisorSeconds` past that",
+    doc: "docs/agents/runs.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "round-figures",
+    says: "`mise run //:thread rounds <name>` splits each round's time per session, in slices of `roundSliceSeconds`, a job or seat first, then a review, a turn within `turnGapSeconds`, a decision asked and not answered, ready steps outnumbering busy integrators, and nothing",
+    doc: "docs/agents/threads.md",
+    held: Check("scripts"),
+  },
+  {
     name: "thread-figures",
     says: "The watchdog says each thread's seat time and landings since a step last went green and the share of its seat time that is tooling, flagged past `toolingShare`, each `figuresSeconds`, which warn and fail nothing",
     doc: "docs/agents/threads.md",

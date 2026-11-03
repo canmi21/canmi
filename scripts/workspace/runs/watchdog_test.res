@@ -180,3 +180,148 @@ describe("a thread's figures", () => {
     expect(Figures.shown("t", figures)->String.includes("no step green yet"))->toEqual(true)
   })
 })
+
+describe("idle integrators", () => {
+  let integrator: Watchdog.session = {
+    name: "i",
+    role: "integrator",
+    transcript: Some("/sessions/s.jsonl"),
+    thread: Some("t"),
+  }
+  let supervisor: Watchdog.session = {
+    name: "v",
+    role: "supervisor",
+    transcript: Some("/sessions/v.jsonl"),
+    thread: Some("t"),
+  }
+  let ready: array<(Charter.step, float)> = [({id: "1", after: []}, 0.)]
+  let idle = (
+    ~now=300000.,
+    ~jobs=[],
+    ~sessions=[integrator],
+    ~ready=ready,
+    ~said=[],
+    ~alive=_ => true,
+    ~moved=_ => Some(0.),
+    ~seats=_ => [],
+  ) =>
+    Watchdog.aboutIdle(~thread="t", ~ready, ~sessions, ~jobs, ~now, ~alive, ~moved, ~seats, ~said)
+
+  test("waits 300 seconds and says each stretch once", () => {
+    expect(idle(~now=299000.))->toEqual([])
+    let found = idle()
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
+    expect((found->Array.getUnsafe(0)).says)->toEqual(
+      "idle to=supervisor integrator i has had no job, no seat and no turn for 300 s while thread t has ready step(s) 1; 0 of 1 integrators busy",
+    )
+    let said = found->Array.map(one => one.key)
+    expect(idle(~said, ~now=400000.))->toEqual([])
+    expect(
+      idle(~said, ~now=400000., ~moved=_ => Some(100000.))->Array.map(one => one.key),
+    )->toEqual(["idle:i:100000"])
+  })
+
+  test("counts live jobs, seats and turns as work, but no dead pid", () => {
+    expect(idle(~jobs=[job()]))->toEqual([])
+    expect(idle(~jobs=[job()], ~alive=_ => false)->Array.length)->toEqual(1)
+    expect(idle(~seats=_ => [1000.]))->toEqual([])
+    expect(idle(~moved=_ => Some(1000.)))->toEqual([])
+    expect(idle(~jobs=[job(~ended=1000., ())]))->toEqual([])
+    expect(idle(~jobs=[job(~started=1000., ())], ~alive=_ => false))->toEqual([])
+  })
+
+  test("uses the earliest ready step and only this thread's integrators", () => {
+    expect(idle(~ready=[]))->toEqual([])
+    expect(idle(~ready=[({Charter.id: "2", after: []}, 1000.)]))->toEqual([])
+    let found = idle(
+      ~ready=[({Charter.id: "2", after: []}, 1000.), ...ready],
+      ~sessions=[integrator, {...integrator, name: "other", thread: Some("other")}],
+    )
+    expect(
+      (found->Array.getUnsafe(0)).says->String.endsWith("2, 1; 0 of 1 integrators busy"),
+    )->toEqual(true)
+    let worker = {...integrator, name: "worker", transcript: Some("/worker.jsonl")}
+    let found = idle(~sessions=[integrator, worker], ~jobs=[{...job(), session: "worker"}])
+    expect((found->Array.getUnsafe(0)).says->String.endsWith("1 of 2 integrators busy"))->toEqual(
+      true,
+    )
+  })
+
+  test("escalates after the supervisor's allowance unless its transcript moved", () => {
+    let sessions = [integrator, supervisor]
+    expect(idle(~sessions, ~now=599000.)->Array.length)->toEqual(1)
+    let found = idle(~sessions, ~now=600000.)
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-supervisor:v:i:0"])
+    expect((found->Array.getUnsafe(1)).says)->toEqual(
+      "idle to=advisor supervisor v has done nothing for 300 s on idle integrator i of thread t",
+    )
+    expect(idle(~sessions, ~now=600000., ~said=found->Array.map(one => one.key)))->toEqual([])
+    expect(
+      idle(
+        ~sessions,
+        ~now=600000.,
+        ~moved=path => Some(path == "/sessions/v.jsonl" ? 301000. : 0.),
+      )->Array.length,
+    )->toEqual(1)
+    expect(
+      idle(~sessions=[integrator, {...supervisor, transcript: None}], ~now=600000.)->Array.length,
+    )->toEqual(1)
+  })
+
+  test("writes idle to the real event file and reads seat move times", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "watchdog-idle-"]))
+    let saved = ["RUNS_HOME", "THREADS_HOME"]->Array.map(key => (key, Node.env->Dict.get(key)))
+    Node.env->Dict.set("RUNS_HOME", Node.join([root, "runs"]))
+    Node.env->Dict.set("THREADS_HOME", Node.join([root, "threads"]))
+    let cleanup = () => {
+      saved->Array.forEach(
+        ((key, value)) =>
+          switch value {
+          | Some(value) => Node.env->Dict.set(key, value)
+          | None => Node.env->Dict.delete(key)
+          },
+      )
+      Node.rmSync(root, {recursive: true, force: true})
+    }
+    try {
+      Node.mkdirAll(Figures.directory("t"))
+      Node.mkdirAll(Node.join([Figures.directory("broken"), "charter.md"]))
+      Node.mkdirAll(Figures.directory("older"))
+      Node.writeFileSync(Node.join([Figures.directory("older"), "charter.md"]), "1. older step\n")
+      Node.writeFileSync(
+        Node.join([Figures.directory("t"), "charter.md"]),
+        "1. work\n  after: none\n",
+      )
+      let transcript = Node.join([root, "s.jsonl"])
+      Node.writeFileSync(transcript, "")
+      Ledger.registerSession(
+        ~role="integrator",
+        ~name="i",
+        ~thread=Some("t"),
+        ~transcript=Some(transcript),
+      )
+      let last = Watchdog.moved(transcript)->Option.getOrThrow
+      let now = last +. 300000.
+      Watchdog.look(~now, ~notify=_ => true)->ignore
+      Watchdog.look(~now, ~notify=_ => true)->ignore
+      let lines =
+        Node.readFileSync(Ledger.events())
+        ->String.split("\n")
+        ->Array.filter(line => line->String.includes("idle to=supervisor integrator i"))
+      expect(lines->Array.length)->toEqual(1)
+      let directory = Node.join([root, "s", "subagents"])
+      Node.mkdirAll(directory)
+      Node.writeFileSync(Node.join([directory, "seat.jsonl"]), "")
+      Node.writeFileSync(Node.join([directory, "ignored.txt"]), "")
+      Node.mkdirAll(Node.join([directory, "ignored.jsonl"]))
+      expect(Watchdog.seats({...integrator, transcript: Some(transcript)})->Array.length)->toEqual(
+        1,
+      )
+    } catch {
+    | error =>
+      cleanup()
+      throw(error)
+    }
+    cleanup()
+  })
+})

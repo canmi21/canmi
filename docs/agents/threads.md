@@ -41,6 +41,11 @@ seat time that is tooling, flagged past `Delegation.toolingShare`, `thread-figur
 `figures.txt`. **They warn and never block, and no check fails on them.** A figure that helps in
 neither of two threads is removed.
 
+**`mise run //:thread rounds <name>` splits each round's time per session**, `round-figures`, a round
+running from one green to the next: running a job or seat, waiting on a review, working in a turn,
+waiting on a decision, nothing to do, and ready work with nobody on it, the last meant to be near zero.
+A decision is timed by its `Asked:` and `Answered:`.
+
 They are read from what the integrators and the supervisor record as the thread goes:
 
 - `mise run //:thread green <name> <step>`, by the supervisor, when the target test turns a step green;

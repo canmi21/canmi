@@ -2,7 +2,7 @@
 
 # Rules
 
-38 rules, 5 pending a check.
+40 rules, 5 pending a check.
 
 ## Delegation
 
@@ -145,6 +145,20 @@ A message goes only to `main` or `team-lead`, the names a subagent has for its p
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
 - held by: hook `hooks/gates/messages/send_local`
+
+### idle-reported
+
+The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor for a supervisor silent `idleSupervisorSeconds` past that.
+
+- doc: [docs/agents/runs.md](../../docs/agents/runs.md)
+- held by: check part `scripts`
+
+### round-figures
+
+`mise run //:thread rounds <name>` splits each round's time per session, in slices of `roundSliceSeconds`, a job or seat first, then a review, a turn within `turnGapSeconds`, a decision asked and not answered, ready steps outnumbering busy integrators, and nothing.
+
+- doc: [docs/agents/threads.md](../../docs/agents/threads.md)
+- held by: check part `scripts`
 
 ### thread-figures
 

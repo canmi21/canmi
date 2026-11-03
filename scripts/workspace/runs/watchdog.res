@@ -146,6 +146,123 @@ let alive = pid =>
 
 let moved = path => Node.stat(path)->Option.map(Ledger.mtimeMs)
 
+/** Idle integrators and their supervisors, with all activity supplied by the caller. */
+let aboutIdle = (
+  ~thread,
+  ~ready: array<(Charter.step, float)>,
+  ~sessions: array<session>,
+  ~jobs: array<Ledger.job>,
+  ~now,
+  ~alive,
+  ~moved,
+  ~seats,
+  ~said: array<string>,
+) => {
+  let limit = Delegation.idleSeconds->Int.toFloat *. 1000.
+  let integrators =
+    sessions->Array.filter(one => one.role == "integrator" && one.thread == Some(thread))
+  let activity = integrators->Array.map(one => {
+    let own = one.transcript->Option.mapOr([], path => {
+      let id = Node.basename(path)->String.replaceRegExp(/\.jsonl$/, "")
+      jobs->Array.filter(job => job.session == id)
+    })
+    let times = Array.concat(
+      seats(one),
+      one.transcript->Option.flatMap(moved)->Option.mapOr([], last => [last]),
+    )
+    let busy =
+      own->Array.some(job => job.ended == None && alive(job.pid)) ||
+        times->Array.some(last => now -. last < limit)
+    let last =
+      own->Array.reduce(0., (last, job) =>
+        Math.max(last, Math.max(job.started, job.ended->Option.getOr(0.)))
+      )
+    (one, busy, times->Array.reduce(last, Math.max))
+  })
+  let busyCount = activity->Array.filter(((_, busy, _)) => busy)->Array.length->Int.toString
+  let total = integrators->Array.length->Int.toString
+  ready == []
+    ? []
+    : {
+        let first = ready->Array.reduce(now, (first, (_, since)) => Math.min(first, since))
+        let ids = ready->Array.map(((step, _)) => step.id)->Array.join(", ")
+        activity
+        ->Array.flatMap(((one, busy, last)) => {
+          let idleFrom = Math.max(first, last)
+          let since = Float.toString(idleFrom)
+          let waiting = now -. idleFrom
+          busy || waiting < limit
+            ? []
+            : Array.concat(
+                [
+                  {
+                    key: `idle:${one.name}:${since}`,
+                    says: `idle to=supervisor integrator ${one.name} has had no job, no seat and no turn for ${whole(
+                        waiting /. 1000.,
+                      )} s while thread ${thread} has ready step(s) ${ids}; ${busyCount} of ${total} integrators busy`,
+                    notify: false,
+                  },
+                ],
+                sessions->Array.filterMap(supervisor => {
+                  let deadline = idleFrom +. limit
+                  switch supervisor.transcript->Option.flatMap(moved) {
+                  | Some(last)
+                    if supervisor.role == "supervisor" &&
+                    supervisor.thread == Some(thread) &&
+                    last <= deadline &&
+                    now -. deadline >= Delegation.idleSupervisorSeconds->Int.toFloat *. 1000. =>
+                    Some({
+                      key: `idle-supervisor:${supervisor.name}:${one.name}:${since}`,
+                      says: `idle to=advisor supervisor ${supervisor.name} has done nothing for ${whole(
+                          (now -. deadline) /. 1000.,
+                        )} s on idle integrator ${one.name} of thread ${thread}`,
+                      notify: false,
+                    })
+                  | _ => None
+                  }
+                }),
+              )
+        })
+        ->Array.filter(one => !(said->Array.includes(one.key)))
+      }
+}
+
+/** The move times of a session's Claude seats, ignoring other files. */
+let seats = (session: session) =>
+  session.transcript->Option.mapOr([], path => {
+    let directory = Node.join([path->String.replaceRegExp(/\.jsonl$/, ""), "subagents"])
+    Node.existsSync(directory)
+      ? Node.readdir(directory)
+        ->Array.filter(name => name->String.endsWith(".jsonl"))
+        ->Array.filterMap(name => {
+          let path = Node.join([directory, name])
+          Node.stat(path)->Option.flatMap(
+            stat => Node.statsIsFile(stat) ? Some(Ledger.mtimeMs(stat)) : None,
+          )
+        })
+      : []
+  })
+
+/** A failed thread read leaves every other thread available to this look. */
+let idleOwed = (~sessions, ~jobs, ~said, ~now) =>
+  Figures.threads()->Array.flatMap(thread =>
+    try {
+      aboutIdle(
+        ~thread,
+        ~ready=Charter.ready(Charter.steps(thread), Figures.records(thread), ~at=now),
+        ~sessions,
+        ~jobs,
+        ~said,
+        ~now,
+        ~alive,
+        ~moved,
+        ~seats,
+      )
+    } catch {
+    | _ => []
+    }
+  )
+
 let sessionFrom = (text: string): option<session> =>
   Payload.parse(text)->Option.map(fields => {
     name: Ledger.textOf(fields, "name"),
@@ -232,18 +349,20 @@ let look = (~now=Date.now(), ~notify=notified) => {
     ? Node.readFileSync(Ledger.seen())->String.split("\n")
     : []
   let sessions = registered()
+  let jobs = Ledger.jobs()
   let reads =
     sessions->Array.filterMap(session =>
       contextRead(session, ~now)->Option.map(outcome => (session, outcome))
     )
   let outcomes = Dict.make()
   reads->Array.forEach(((session, outcome)) => outcomes->Dict.set(session.name, outcome))
-  let found = Array.concat(
-    owed(~jobs=Ledger.jobs(), ~sessions, ~said, ~now, ~alive, ~moved, ~contextOf=session =>
+  let found = Array.flat([
+    owed(~jobs, ~sessions, ~said, ~now, ~alive, ~moved, ~contextOf=session =>
       outcomes->Dict.get(session.name)
     ),
     figuresOwed(~said, ~now),
-  )
+    idleOwed(~sessions, ~jobs, ~said, ~now),
+  ])
   contextsWritten(reads, ~now)
   found->Array.forEach(one => {
     if one.says != "" {
