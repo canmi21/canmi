@@ -2,7 +2,7 @@
 type step = {id: string, after: array<string>}
 
 let stepStart = /^(\d+[a-z]*)\.\s/
-let afterLine = /^\s+after:\s*(.*?)\s*$/
+let afterLine = /^\s*after:\s*(.*?)\s*$/
 
 let group = (found, at) => found->RegExp.Result.matches->Array.get(at)->Option.flatMap(x => x)
 
@@ -23,7 +23,7 @@ let stepsOf = (text: string): array<step> => {
           id,
           after: named == "none" || named == ""
             ? []
-            : named->String.splitByRegExp(/[,\s]+/)->Array.filterMap(x => x),
+            : named->String.splitByRegExp(/\s*,\s*/)->Array.filterMap(x => x),
         })
         current := None
       | _ => ()
@@ -32,6 +32,48 @@ let stepsOf = (text: string): array<step> => {
   )
   steps
 }
+
+/** What keeps a charter from being read as written, a reference to no step among it. */
+let problemsOf = (text: string, ~greens: array<string>) => {
+  let steps = stepsOf(text)
+  let ids = steps->Array.map(step => step.id)
+  let numbered =
+    text
+    ->String.split("\n")
+    ->Array.filterMap(line =>
+      RegExp.exec(stepStart, line)->Option.flatMap(found => group(found, 0))
+    )
+  Array.flat([
+    numbered
+    ->Array.filter(id => !(ids->Array.includes(id)))
+    ->Array.map(id => `step ${id} has no \`after:\` line of its own`),
+    steps->Array.flatMap(step =>
+      step.after
+      ->Array.filter(id => !(ids->Array.includes(id)))
+      ->Array.map(id => `step ${step.id} comes after \`${id}\`, which is no step`)
+    ),
+    ids == []
+      ? []
+      : greens
+        ->Array.filter(id => !(ids->Array.includes(id)))
+        ->Array.map(id => `green names step ${id}, which is no step`),
+  ])
+}
+
+/** A thread's charter problems, one that cannot be read being one. */
+let problems = (name, ~records: array<Figures.record>) =>
+  try {
+    let file = Node.join([Figures.directory(name), "charter.md"])
+    let greens = records->Array.filterMap(one =>
+      switch one {
+      | Green({step}) => Some(step)
+      | _ => None
+      }
+    )
+    Node.existsSync(file) ? problemsOf(Node.readFileSync(file), ~greens) : ["it has no charter"]
+  } catch {
+  | _ => ["its charter cannot be read"]
+  }
 
 /** The steps of a thread's charter, none where it has no charter or an older shape. */
 let steps = name => {

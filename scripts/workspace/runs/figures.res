@@ -4,7 +4,7 @@
  */
 type record =
   | Green({step: string, at: float})
-  | Seat({name: string, tooling: bool, at: float})
+  | Seat({name: string, tooling: bool, at: float, session?: string})
   | Seated({name: string, at: float})
   | Landed({repository: string, commit: string, subject: string, at: float})
 
@@ -24,7 +24,15 @@ let recordOf = (line: string) =>
     let text = key => Ledger.textOf(fields, key)
     switch text("kind") {
     | "green" => Some(Green({step: text("step"), at}))
-    | "seat" => Some(Seat({name: text("name"), tooling: fields->Payload.flag("tooling"), at}))
+    | "seat" =>
+      Some(
+        Seat({
+          name: text("name"),
+          tooling: fields->Payload.flag("tooling"),
+          at,
+          session: ?(fields->Payload.text("session")),
+        }),
+      )
     | "seated" => Some(Seated({name: text("name"), at}))
     | "landed" =>
       Some(
@@ -60,6 +68,22 @@ let spans = (found: array<record>, ~now) =>
         }
       )
       Some({tooling, from: at, to: closed->Option.getOr(now)})
+    | _ => None
+    }
+  )
+
+/** Each seat a session recorded, from its dispatch to its report or `now`. */
+let seatsOf = (found: array<record>, ~session, ~now) =>
+  found->Array.filterMap(one =>
+    switch one {
+    | Seat({name, at, session: ?Some(owner)}) if owner == session =>
+      let closed = found->Array.findMap(other =>
+        switch other {
+        | Seated({name: ended, at: closedAt}) if ended == name && closedAt >= at => Some(closedAt)
+        | _ => None
+        }
+      )
+      Some((at, closed->Option.getOr(now)))
     | _ => None
     }
   )

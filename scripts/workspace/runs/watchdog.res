@@ -156,15 +156,21 @@ let aboutIdle = (
   ~alive,
   ~moved,
   ~seats,
+  ~openSeats=[],
   ~said: array<string>,
 ) => {
   let limit = Delegation.idleSeconds->Int.toFloat *. 1000.
+  let sessionId = path => Node.basename(path)->String.replaceRegExp(/\.jsonl$/, "")
+  // One whose turn cannot be read is `unwatched`, never idle.
   let integrators =
-    sessions->Array.filter(one => one.role == "integrator" && one.thread == Some(thread))
+    sessions->Array.filter(one =>
+      one.role == "integrator" &&
+      one.thread == Some(thread) &&
+      one.transcript->Option.flatMap(moved) != None
+    )
   let activity = integrators->Array.map(one => {
     let own = one.transcript->Option.mapOr([], path => {
-      let id = Node.basename(path)->String.replaceRegExp(/\.jsonl$/, "")
-      jobs->Array.filter(job => job.session == id)
+      jobs->Array.filter(job => job.session == sessionId(path))
     })
     let times = Array.concat(
       seats(one),
@@ -172,14 +178,16 @@ let aboutIdle = (
     )
     let busy =
       own->Array.some(job => job.ended == None && alive(job.pid)) ||
-        times->Array.some(last => now -. last < limit)
+      one.transcript->Option.mapOr(false, path => openSeats->Array.includes(sessionId(path))) ||
+      times->Array.some(last => now -. last < limit)
     let last =
       own->Array.reduce(0., (last, job) =>
         Math.max(last, Math.max(job.started, job.ended->Option.getOr(0.)))
       )
     (one, busy, times->Array.reduce(last, Math.max))
   })
-  let busyCount = activity->Array.filter(((_, busy, _)) => busy)->Array.length->Int.toString
+  let busyNumber = activity->Array.filter(((_, busy, _)) => busy)->Array.length
+  let busyCount = busyNumber->Int.toString
   let total = integrators->Array.length->Int.toString
   ready == []
     ? []
@@ -203,23 +211,23 @@ let aboutIdle = (
                     notify: false,
                   },
                 ],
+                // Its transcript says nothing, as each Monitor notice writes there and wakes it.
                 sessions->Array.filterMap(supervisor => {
                   let deadline = idleFrom +. limit
-                  switch supervisor.transcript->Option.flatMap(moved) {
-                  | Some(last)
-                    if supervisor.role == "supervisor" &&
-                    supervisor.thread == Some(thread) &&
-                    last <= deadline &&
-                    now -. deadline >= Delegation.idleSupervisorSeconds->Int.toFloat *. 1000. =>
-                    Some({
-                      key: `idle-supervisor:${supervisor.name}:${one.name}:${since}`,
-                      says: `idle to=advisor supervisor ${supervisor.name} has done nothing for ${whole(
-                          (now -. deadline) /. 1000.,
-                        )} s on idle integrator ${one.name} of thread ${thread}`,
-                      notify: false,
-                    })
-                  | _ => None
-                  }
+                  supervisor.role == "supervisor" &&
+                  supervisor.thread == Some(thread) &&
+                  ready->Array.length > busyNumber &&
+                  now -. deadline >= Delegation.idleSupervisorSeconds->Int.toFloat *. 1000.
+                    ? Some({
+                        key: `idle-supervisor:${supervisor.name}:${one.name}:${since}`,
+                        says: `idle to=advisor supervisor ${supervisor.name} has left integrator ${one.name} idle for ${whole(
+                            (now -. deadline) /. 1000.,
+                          )} s past its report, while thread ${thread} has ${ready
+                          ->Array.length
+                          ->Int.toString} ready step(s) and ${busyCount} busy integrators`,
+                        notify: false,
+                      })
+                    : None
                 }),
               )
         })
@@ -245,23 +253,49 @@ let seats = (session: session) =>
 
 /** A failed thread read leaves every other thread available to this look. */
 let idleOwed = (~sessions, ~jobs, ~said, ~now) =>
-  Figures.threads()->Array.flatMap(thread =>
+  Figures.threads()->Array.flatMap(thread => {
+    let charter = why => {
+      key: `charter:${thread}:${why}`,
+      says: `charter to=supervisor thread ${thread}: ${why}, so its ready steps may be wrong`,
+      notify: false,
+    }
     try {
-      aboutIdle(
-        ~thread,
-        ~ready=Charter.ready(Charter.steps(thread), Figures.records(thread), ~at=now),
-        ~sessions,
-        ~jobs,
-        ~said,
-        ~now,
-        ~alive,
-        ~moved,
-        ~seats,
+      let records = Figures.records(thread)
+      let steps = Charter.steps(thread)
+      let open_ = records->Array.filterMap(one =>
+        switch one {
+        | Seat({name, at, session: ?Some(session)}) =>
+          records->Array.some(
+            other =>
+              switch other {
+              | Seated({name: ended, at: closed}) => ended == name && closed >= at
+              | _ => false
+              },
+          )
+            ? None
+            : Some(session)
+        | _ => None
+        }
+      )
+      Array.concat(
+        Charter.problems(thread, ~records)->Array.map(charter),
+        aboutIdle(
+          ~thread,
+          ~ready=Charter.ready(steps, records, ~at=now),
+          ~sessions,
+          ~jobs,
+          ~said,
+          ~now,
+          ~alive,
+          ~moved=Context.lastTurn,
+          ~seats,
+          ~openSeats=open_,
+        ),
       )
     } catch {
-    | _ => []
-    }
-  )
+    | _ => [charter("its files cannot be read")]
+    }->Array.filter(one => !(said->Array.includes(one.key)))
+  })
 
 let sessionFrom = (text: string): option<session> =>
   Payload.parse(text)->Option.map(fields => {

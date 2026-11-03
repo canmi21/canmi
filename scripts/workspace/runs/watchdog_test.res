@@ -204,8 +204,35 @@ describe("idle integrators", () => {
     ~alive=_ => true,
     ~moved=_ => Some(0.),
     ~seats=_ => [],
+    ~openSeats=[],
   ) =>
-    Watchdog.aboutIdle(~thread="t", ~ready, ~sessions, ~jobs, ~now, ~alive, ~moved, ~seats, ~said)
+    Watchdog.aboutIdle(
+      ~thread="t",
+      ~ready,
+      ~sessions,
+      ~jobs,
+      ~now,
+      ~alive,
+      ~moved,
+      ~seats,
+      ~openSeats,
+      ~said,
+    )
+
+  test("an integrator whose turn cannot be read is not idle, and its total leaves it out", () => {
+    expect(idle(~moved=_ => None))->toEqual([])
+    expect(idle(~sessions=[{...integrator, transcript: None}]))->toEqual([])
+  })
+
+  test("an open seat of its own keeps it busy, another session's does not", () => {
+    let own =
+      integrator.transcript->Option.mapOr(
+        "",
+        path => Node.basename(path)->String.replaceRegExp(/\.jsonl$/, ""),
+      )
+    expect(idle(~openSeats=[own]))->toEqual([])
+    expect(idle(~openSeats=["another"])->Array.length)->toEqual(1)
+  })
 
   test("waits 300 seconds and says each stretch once", () => {
     expect(idle(~now=299000.))->toEqual([])
@@ -247,25 +274,38 @@ describe("idle integrators", () => {
     )
   })
 
-  test("escalates after the supervisor's allowance unless its transcript moved", () => {
-    let sessions = [integrator, supervisor]
-    expect(idle(~sessions, ~now=599000.)->Array.length)->toEqual(1)
-    let found = idle(~sessions, ~now=600000.)
-    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-supervisor:v:i:0"])
-    expect((found->Array.getUnsafe(1)).says)->toEqual(
-      "idle to=advisor supervisor v has done nothing for 300 s on idle integrator i of thread t",
+  test(
+    "escalates past the allowance, whatever a Monitor writes to the supervisor's transcript",
+    () => {
+      let sessions = [integrator, supervisor]
+      expect(idle(~sessions, ~now=599000.)->Array.length)->toEqual(1)
+      let found = idle(~sessions, ~now=600000.)
+      expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-supervisor:v:i:0"])
+      expect((found->Array.getUnsafe(1)).says)->toEqual(
+        "idle to=advisor supervisor v has left integrator i idle for 300 s past its report, while thread t has 1 ready step(s) and 0 busy integrators",
+      )
+      expect(idle(~sessions, ~now=600000., ~said=found->Array.map(one => one.key)))->toEqual([])
+      expect(
+        idle(
+          ~sessions,
+          ~now=600000.,
+          ~moved=path => Some(path == "/sessions/v.jsonl" ? 599900. : 0.),
+        )->Array.length,
+      )->toEqual(2)
+      expect(
+        idle(~sessions=[integrator, {...supervisor, transcript: None}], ~now=600000.)->Array.length,
+      )->toEqual(2)
+    },
+  )
+
+  test("does not escalate while ready steps are each held by a busy integrator", () => {
+    let other = {...integrator, name: "j", transcript: Some("/sessions/j.jsonl")}
+    let found = idle(
+      ~sessions=[integrator, other, supervisor],
+      ~now=600000.,
+      ~moved=path => Some(path == "/sessions/j.jsonl" ? 599000. : 0.),
     )
-    expect(idle(~sessions, ~now=600000., ~said=found->Array.map(one => one.key)))->toEqual([])
-    expect(
-      idle(
-        ~sessions,
-        ~now=600000.,
-        ~moved=path => Some(path == "/sessions/v.jsonl" ? 301000. : 0.),
-      )->Array.length,
-    )->toEqual(1)
-    expect(
-      idle(~sessions=[integrator, {...supervisor, transcript: None}], ~now=600000.)->Array.length,
-    )->toEqual(1)
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
   })
 
   test("writes idle to the real event file and reads seat move times", () => {
@@ -293,7 +333,10 @@ describe("idle integrators", () => {
         "1. work\n  after: none\n",
       )
       let transcript = Node.join([root, "s.jsonl"])
-      Node.writeFileSync(transcript, "")
+      Node.writeFileSync(
+        transcript,
+        `{"type":"assistant","timestamp":"2020-01-01T00:00:00.000Z"}\n`,
+      )
       Ledger.registerSession(
         ~role="integrator",
         ~name="i",

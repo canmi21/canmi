@@ -101,6 +101,50 @@ let sizeOf = (path): result<int, string> =>
     found.contents->Option.getOr(Error("no assistant message with usage in the file"))
   }
 
+/** When one line shows the session itself at work, a queued notice written for it never does. */
+let turnOfLine = (line: string) =>
+  line->String.includes("\"timestamp\"")
+    ? Payload.parse(line)->Option.flatMap(fields =>
+        ["assistant", "api-request"]->Array.includes(Ledger.textOf(fields, "type"))
+          ? fields
+            ->Payload.text("timestamp")
+            ->Option.map(text => Date.fromString(text)->Date.getTime)
+            ->Option.filter(Float.isFinite)
+          : None
+      )
+    : None
+
+/** The session's last turn from its transcript's end, the read widened while it finds none. */
+let lastTurn = (path): option<float> =>
+  switch Node.stat(path) {
+  | None => None
+  | Some(stats) =>
+    let total = stats->size
+    let descriptor = openSync(path)
+    let found = ref(None)
+    let covered = ref(total <= 0.)
+    try {
+      tailBytes->Array.forEach(want => {
+        if found.contents == None && !covered.contents {
+          let length = Math.min(want->Int.toFloat, total)->Float.toInt
+          covered := length->Int.toFloat >= total
+          let place = allocate(length)
+          let got = readSync(descriptor, place, 0, length, total -. length->Int.toFloat)
+          let lines = place->textOf("latin1", 0, got)->String.split("\n")
+          found :=
+            (covered.contents ? lines : lines->Array.slice(~start=1))->Array.reduceRight(None, (
+              last,
+              line,
+            ) => last != None ? last : turnOfLine(line))
+        }
+      })
+    } catch {
+    | _ => ()
+    }
+    closeSync(descriptor)
+    found.contents
+  }
+
 /** Every compaction boundary in the file, read in chunks so no whole transcript is held. */
 let countIn = (path): result<int, string> =>
   switch Node.stat(path) {

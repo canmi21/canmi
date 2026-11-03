@@ -37,8 +37,10 @@ whose path `mise run //:job events` prints, said once:
 - **`silent`**: a live job whose output has not moved, `--quiet` exempt;
 - **`over`**: one past its `--limit`, or twice its command's p95 once it has history;
 - **`idle`**: an integrator of a thread with no job, no seat and no turn past `Delegation.idleSeconds`
-  while a step is ready by the charter's `after`, to the supervisor, and a supervisor doing nothing on
-  that past `Delegation.idleSupervisorSeconds`, to the advisor;
+  while a step is ready by the charter's `after`, to the supervisor, and past
+  `Delegation.idleSupervisorSeconds` more with ready steps outnumbering busy integrators, to the
+  advisor, a supervisor's transcript moving by every Monitor notice and so saying nothing. A charter
+  with a reference to no step, or none readable, says `charter`;
 - **`quiet`**: a registered role with no turn for its limit in `Delegation.silentTurns`, to its
   superior. Past a supervisor's, the author gets a notification;
 - **`figures`**: a thread's, [threads.md](threads.md), "Staying on course", with each registered

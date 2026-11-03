@@ -225,12 +225,66 @@ describe("transcript and decision inputs", () => {
     let found = Rounds.decisionsOf(
       `# Decisions\n\n## Open\nAsked: ${iso(slice)}\n\n## Done\nAsked: ${iso(0.)}\nAnswered: ${iso(
           slice,
-        )}\n\n## Old\nAnswer: open\n\n## Template\nAsked: time in UTC.\n`,
+        )}.\n\n## Old\nAnswer: open\n\n## <short name>\nAsked: time in UTC.\n\n## Bad\nAsked: ${iso(
+          0.,
+        )}\nAnswered: soon\n\n## Local\nAsked: 2026-11-02 19:00\n`,
     )
     expect(found)->toEqual({
       timed: [{asked: slice, answered: None}, {asked: 0., answered: Some(slice)}],
-      untimed: 2,
+      untimed: 1,
+      malformed: ["Bad", "Local"],
     })
+  })
+
+  test("a thread's ready counts the clock once, however many sessions sit idle", () => {
+    let sessionOf = (name, role): Watchdog.session => {
+      name,
+      role,
+      transcript: None,
+      thread: Some("t"),
+    }
+    let idleOne = (session): Rounds.activity => {
+      session,
+      jobs: [],
+      seats: [],
+      reviews: [],
+      turns: [],
+      missing: [],
+    }
+    let rounds = Rounds.roundsOf(
+      ~records=[],
+      ~sessions=[
+        idleOne(sessionOf("a", "integrator")),
+        idleOne(sessionOf("b", "integrator")),
+        idleOne(sessionOf("v", "supervisor")),
+      ],
+      ~steps=[{id: "1", after: []}],
+      ~decisions=[],
+      ~now=6. *. slice,
+    )
+    let last = rounds[rounds->Array.length - 1]->Option.getOrThrow
+    expect(last.unattended *. 60000.)->toEqual(last.span.to -. last.span.from)
+  })
+
+  test(
+    "a recorded seat of the session counts for its whole span, a gap in its file no matter",
+    () => {
+      let session: Watchdog.session = {
+        name: "i",
+        role: "integrator",
+        transcript: Some("/sessions/id.jsonl"),
+        thread: Some("t"),
+      }
+      let records = [Figures.Seat({name: "s", tooling: false, at: 0., session: "id"})]
+      let found = Rounds.activityOf(session, ~jobs=[], ~now=90000., ~alive=_ => true, ~records)
+      expect(found.seats)->toEqual([{from: 0., to: 90000.}])
+    },
+  )
+
+  test("a queued notice is no stretch of a session's turn", () => {
+    expect(
+      Rounds.timestamps(`{"type":"queue-operation","timestamp":"2026-11-03T00:00:00.000Z"}`),
+    )->toEqual([])
   })
   test("the command filters registered threads and writes exactly what it prints", () => {
     let started = Date.now() -. 2. *. slice

@@ -19,6 +19,23 @@ describe("a charter's steps", () => {
     expect(Charter.stepsOf("1. Roll by commit.\n2. Faults.\n"))->toEqual([])
   })
 
+  test("says each reference that does not resolve, rather than going silent", () => {
+    let said = (text, ~greens=[]) => Charter.problemsOf(text, ~greens)
+    expect(said(text))->toEqual([])
+    [
+      "1. x\n   after: none\n2. y\n   after: 1,\n",
+      "1. x\n   after: none\n2. y\n   after: None\n",
+      "1. x\n   after: none\n2. y\n   after: 1 and 2\n",
+      "1. x\n   after: none\n2. y\n   after: 9\n",
+      "1. x after: none\n2. y\n   after: 1\n",
+      "1. x\n2. y\n",
+    ]->Array.forEach(written => expect((written, said(written) != []))->toEqual((written, true)))
+    expect(said("1. x\nafter: none\n"))->toEqual([])
+    expect(said("1. x\n   after: none\n", ~greens=["step-1"]))->toEqual([
+      "green names step step-1, which is no step",
+    ])
+  })
+
   test("the template's own charter is of this shape", () => {
     let (_, written) = Thread.shape->Array.getUnsafe(0)
     expect(Charter.stepsOf(written)->Array.map(step => step.id))->toEqual(["1", "2"])

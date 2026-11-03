@@ -148,7 +148,7 @@ A message goes only to `main` or `team-lead`, the names a subagent has for its p
 
 ### idle-reported
 
-The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor for a supervisor silent `idleSupervisorSeconds` past that.
+The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor when that integrator stays idle `idleSupervisorSeconds` past that with ready steps outnumbering busy integrators, as a supervisor's transcript moves by every Monitor notice; a turn is its own assistant or api-request line; a charter's unresolved reference or unread file is said.
 
 - doc: [docs/agents/runs.md](../../docs/agents/runs.md)
 - held by: check part `scripts`

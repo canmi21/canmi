@@ -14,6 +14,28 @@ let user = `{"type":"user","message":{"role":"user","content":"hello"}}`
 let boundary = `{"type":"system","subtype":"compact_boundary","content":"Conversation compacted"}`
 let quoting = `{"type":"user","message":{"role":"user","content":"a compact_boundary entry"}}`
 
+describe("a session's last turn", () => {
+  test("is its own line, and a queued notice written after it is not", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "last-turn-"]))
+    let file = Node.join([root, "t.jsonl"])
+    let line = (kind, at) => `{"type":"${kind}","timestamp":"${at}"}`
+    Node.writeFileSync(
+      file,
+      [
+        line("assistant", "2026-11-03T00:00:00.000Z"),
+        line("api-request", "2026-11-03T00:01:00.000Z"),
+        line("queue-operation", "2026-11-03T00:09:00.000Z"),
+        `{"type":"attachment","timestamp":"2026-11-03T00:09:01.000Z"}`,
+      ]->Array.join("\n"),
+    )
+    expect(Context.lastTurn(file))->toEqual(
+      Some(Date.fromString("2026-11-03T00:01:00.000Z")->Date.getTime),
+    )
+    expect(Context.lastTurn(Node.join([root, "none.jsonl"])))->toEqual(None)
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+})
+
 describe("a transcript's context size", () => {
   let root = temporaryRoot("context-")
   let transcript = lines => {

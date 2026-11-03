@@ -9,7 +9,7 @@ type activity = {
   missing: array<string>,
 }
 type decision = {asked: float, answered: option<float>}
-type decisions = {timed: array<decision>, untimed: int}
+type decisions = {timed: array<decision>, untimed: int, malformed: array<string>}
 type bucket = Job | Review | Turn | Decision | Ready | Nothing
 type totals = {
   job: float,
@@ -20,7 +20,7 @@ type totals = {
   nothing: float,
 }
 type row = {session: Watchdog.session, minutes: totals}
-type round = {heading: string, span: span, rows: array<row>}
+type round = {heading: string, span: span, rows: array<row>, unattended: float}
 
 let timeOf = text => {
   let time = Date.fromString(text)->Date.getTime
@@ -31,9 +31,12 @@ let timestamps = text =>
   text
   ->String.split("\n")
   ->Array.filterMap(line =>
-    RegExp.exec(/"timestamp"\s*:\s*"([^"]+)"/, line)
-    ->Option.flatMap(found => Charter.group(found, 0))
-    ->Option.flatMap(timeOf)
+    // A notice queued for a session is none of its own work.
+    line->String.includes("\"queue-operation\"")
+      ? None
+      : RegExp.exec(/"timestamp"\s*:\s*"([^"]+)"/, line)
+        ->Option.flatMap(found => Charter.group(found, 0))
+        ->Option.flatMap(timeOf)
   )
 
 /** Only gaps within the model's turn gap join two timestamped events. */
@@ -55,25 +58,40 @@ let stretches = times => {
   spans
 }
 
+/** A time a person wrote, its zone required and a sentence's period forgiven. */
+let statedTime = text =>
+  /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})\.?$/->RegExp.test(text)
+    ? timeOf(text->String.replaceRegExp(/\.$/, ""))
+    : None
+
 let decisionsOf = text => {
   let timed = []
   let untimed = ref(0)
+  let malformed = []
   text
   ->String.splitByRegExp(/^##\s+/m)
   ->Array.slice(~start=1)
   ->Array.filterMap(x => x)
   ->Array.forEach(block => {
+    let lines = block->String.split("\n")
+    let name = lines[0]->Option.getOr("")
     let field = label =>
-      block
-      ->String.split("\n")
+      lines
       ->Array.find(line => line->String.startsWith(label))
-      ->Option.flatMap(line => line->String.slice(~start=String.length(label))->String.trim->timeOf)
-    switch field("Asked:") {
-    | Some(asked) => timed->Array.push({asked, answered: field("Answered:")})
-    | None => untimed := untimed.contents + 1
+      ->Option.map(line => line->String.slice(~start=String.length(label))->String.trim->statedTime)
+
+    // The template's own block is no decision.
+    if !(name->String.startsWith("<")) {
+      switch (field("Asked:"), field("Answered:")) {
+      | (None, _) => untimed := untimed.contents + 1
+      | (Some(Some(asked)), None) => timed->Array.push({asked, answered: None})
+      | (Some(Some(asked)), Some(Some(answered))) =>
+        timed->Array.push({asked, answered: Some(answered)})
+      | _ => malformed->Array.push(name)
+      }
     }
   })
-  {timed, untimed: untimed.contents}
+  {timed, untimed: untimed.contents, malformed}
 }
 
 let read = file =>
@@ -87,7 +105,13 @@ let entries = directory =>
 let withoutSuffix = file =>
   file->String.endsWith(".jsonl") ? file->String.slice(~start=0, ~end=-6) : file
 
-let activityOf = (session: Watchdog.session, ~jobs: array<Ledger.job>, ~now, ~alive) => {
+let activityOf = (
+  session: Watchdog.session,
+  ~jobs: array<Ledger.job>,
+  ~now,
+  ~alive,
+  ~records=[],
+) => {
   let missing = []
   let activity = file =>
     switch read(file) {
@@ -116,6 +140,11 @@ let activityOf = (session: Watchdog.session, ~jobs: array<Ledger.job>, ~now, ~al
     })
   })
   let id = session.transcript->Option.map(path => Node.basename(path)->withoutSuffix)
+  id->Option.forEach(id =>
+    Figures.seatsOf(records, ~session=id, ~now)->Array.forEach(((from, to)) =>
+      seats->Array.push({from, to})
+    )
+  )
   let jobs =
     jobs->Array.filterMap(job =>
       id == Some(job.session) && (job.ended != None || alive(job.pid))
@@ -177,6 +206,7 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
   spansOf(records, ~now)->Array.map(((heading, span)) => {
     let totals = sessions->Array.map(_ => ref(zero))
     let at = ref(span.from)
+    let unattended = ref(0.)
     while at.contents < span.to {
       let slice = {
         from: at.contents,
@@ -198,6 +228,9 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
         decisions->Array.some(one =>
           one.asked <= slice.from && one.answered->Option.mapOr(true, at => at > slice.from)
         )
+      if ready && !decision {
+        unattended := unattended.contents +. (slice.to -. slice.from) /. 60000.
+      }
       buckets->Array.forEachWithIndex((bucket, index) => {
         let bucket = bucket->Option.getOr(decision ? Decision : ready ? Ready : Nothing)
         let total = totals->Array.getUnsafe(index)
@@ -212,12 +245,19 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
         let total = totals->Array.getUnsafe(index)
         {session: activity.session, minutes: total.contents}
       }),
+      unattended: unattended.contents,
     }
   })
 
 let minutes = value => Float.toFixed(value, ~digits=2)
-let shown = (~name, ~rounds: array<round>, ~untimed, ~missing) => {
+let shown = (~name, ~rounds: array<round>, ~untimed, ~missing, ~malformed=[], ~problems=[]) => {
   let lines = [`untimed decision blocks: ${Int.toString(untimed)}`]
+  malformed->Array.forEach(block =>
+    lines->Array.push(
+      `decision block not timed, a time in it has no zone or does not parse: ${block}`,
+    )
+  )
+  problems->Array.forEach(problem => lines->Array.push(`charter: ${problem}`))
   missing
   ->Set.fromArray
   ->Set.toArray
@@ -239,8 +279,7 @@ let shown = (~name, ~rounds: array<round>, ~untimed, ~missing) => {
           )}, ready ${minutes(total.ready)} minutes`,
       )
     )
-    let ready = round.rows->Array.reduce(0., (sum, row) => sum +. row.minutes.ready)
-    lines->Array.push(`thread ${name}: ready ${minutes(ready)} minutes`)
+    lines->Array.push(`thread ${name}: ready ${minutes(round.unattended)} minutes`)
   })
   lines->Array.join("\n") ++ "\n"
 }
@@ -255,7 +294,9 @@ let run = (name, ~now=Date.now()) => {
     let sessions =
       Watchdog.registered()
       ->Array.filter(session => session.thread == Some(name))
-      ->Array.map(session => activityOf(session, ~jobs, ~now, ~alive=Watchdog.alive))
+      ->Array.map(session =>
+        activityOf(session, ~jobs, ~now, ~alive=Watchdog.alive, ~records=Figures.records(name))
+      )
     let decisions = read(Node.join([directory, "decisions.md"]))->Option.getOr("")->decisionsOf
     let rounds = roundsOf(
       ~records=Figures.records(name),
@@ -268,6 +309,8 @@ let run = (name, ~now=Date.now()) => {
       ~name,
       ~rounds,
       ~untimed=decisions.untimed,
+      ~malformed=decisions.malformed,
+      ~problems=Charter.problems(name, ~records=Figures.records(name)),
       ~missing=sessions->Array.flatMap(activity => activity.missing),
     )
     Node.writeFileSync(Node.join([directory, "rounds.txt"]), text)

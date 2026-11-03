@@ -83,11 +83,37 @@ let audit = name => {
 
 let at = () => JSON.Number(Date.now())
 
+/** The session id of the Claude session running this, read from the record of its pid. */
+let ownSession = () =>
+  Node.env
+  ->Dict.get("CLAUDE_PID")
+  ->Option.flatMap(pid => {
+    let file = Node.join([
+      Node.env->Dict.get("HOME")->Option.getOr(""),
+      ".claude",
+      "sessions",
+      `${pid}.json`,
+    ])
+    try Payload.parse(Node.readFileSync(file))->Option.flatMap(fields =>
+      fields->Payload.text("sessionId")
+    ) catch {
+    | _ => None
+    }
+  })
+
 let main = (argv: array<string>) =>
   switch argv {
   | ["green", name, step] =>
-    Figures.add(name, [("kind", JSON.String("green")), ("step", JSON.String(step)), ("at", at())])
-    0
+    let ids = Charter.steps(name)->Array.map(one => one.id)
+    if ids != [] && !(ids->Array.includes(step)) {
+      Console.error(
+        `${step} is no step of ${name}'s charter, whose steps are ${ids->Array.join(", ")}`,
+      )
+      2
+    } else {
+      Figures.add(name, [("kind", JSON.String("green")), ("step", JSON.String(step)), ("at", at())])
+      0
+    }
   | ["seat", name, seat] | ["seat", name, seat, "--tooling"] =>
     Figures.add(
       name,
@@ -95,6 +121,7 @@ let main = (argv: array<string>) =>
         ("kind", JSON.String("seat")),
         ("name", JSON.String(seat)),
         ("tooling", JSON.Boolean(argv->Array.includes("--tooling"))),
+        ...ownSession()->Option.mapOr([], session => [("session", JSON.String(session))]),
         ("at", at()),
       ],
     )
