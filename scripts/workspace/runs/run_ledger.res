@@ -2,17 +2,35 @@
  * What a tool call tells the run ledger, docs/agents/runs.md. An output read is a job's result
  * read, and a registering command names the session's transcript, whose growth is its turn.
  */
-/** A command's own words, up to its first redirection. */
-let pastRedirects = (words: array<string>) =>
-  switch words->Array.findIndex(word => /^\d*[<>]/->RegExp.test(word)) {
-  | -1 => words
-  | at => words->Array.slice(~start=0, ~end=at)
-  }
+/** A registration's own words, with what a shell takes for itself removed. */
+let ownWords = (segment: array<string>) => {
+  let found = []
+  let skip = ref(false)
+  let ended = ref(false)
+  segment->Array.forEachWithIndex((word, at) => {
+    let word = at == 0 ? word->String.replaceRegExp(/^\(+/, "") : word
+    if skip.contents {
+      skip := false
+    } else if word->String.startsWith("#") {
+      ended := true
+    } else if !ended.contents {
+      let word = word->String.replaceRegExp(/[)&]+$/, "")
+      switch word->String.search(/(?:\d*|&)[<>]/) {
+      | -1 => word != "" ? found->Array.push(word) : ()
+      | cut =>
+        cut > 0 ? found->Array.push(word->String.slice(~start=0, ~end=cut)) : ()
+        // An operator standing alone takes the next word as its target.
+        skip := /[<>]$/->RegExp.test(word)
+      }
+    }
+  })
+  found
+}
 
 let registration = segment =>
-  switch Jj_command.programOf(segment)->Option.map(((program, words)) => (
+  switch Jj_command.programOf(ownWords(segment))->Option.map(((program, words)) => (
     program,
-    pastRedirects(words)->List.fromArray,
+    words->List.fromArray,
   )) {
   | Some(("mise", list{"run", "job" | "//:job", "register", role, name, ...flags}))
     if Delegation.registeredRoles->Array.includes(role) && /^[A-Za-z0-9_.-]+$/->RegExp.test(name) =>

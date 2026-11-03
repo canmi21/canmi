@@ -501,6 +501,21 @@ describe("a command a job is given", () => {
     expect(Commit.refuse(payload(`sh -c 'jj commit -m "fix: x"'`)))->toBe(0)
   })
 
+  test("a shell's line is read for commits alone, past here-documents, its SKIP honored", () => {
+    [
+      "sh -c 'sleep 100 &'",
+      "sh -c 'mise run check &'",
+      "sh -c 'cat <<EOF\nsleep 999\nEOF'",
+    ]->Array.forEach(
+      command => expect((command, Background.refuse(payload(command))))->toEqual((command, 0)),
+    )
+    let noted = `cat > note.md <<'EOF'\njj commit -m "x; not a message"\nEOF`
+    expect(Commit.messages(noted))->toEqual([])
+    expect(Commit.refuse(payload(noted)))->toBe(0)
+    expect(Jj_command.skipped(`SKIP=verify sh -c 'jj commit -m "fix: x"'`))->toEqual(["verify"])
+    expect(Commit.messages(`sh -c 'cat <<EOF\njj commit -m "x"\nEOF'`))->toEqual([])
+  })
+
   test("keeps its quoting, so what only names a thing passes", () => {
     [
       "mise run //:job start -- rg 'a; pkill b' docs",

@@ -117,18 +117,24 @@ let ownPid = () =>
 
 let now = () => Date.make()->Date.toISOString
 
+/** A name a record can be read back with, as `parse` requires one. */
+let validName = name => /^[A-Za-z0-9_.@-]+$/->RegExp.test(name)
+
 let refused = why => {
   Console.error(`${why}; nothing changed`)
   1
 }
 
 /** Every mutation checks and publishes while holding the same exclusive directory. */
-let changing = (pid, action) => {
+let changing = (~force=false, pid, action) => {
   if pid <= 0 {
     refused("your session pid is unknown, so the seat cannot be changed")
   } else {
     Node.mkdirAll(home())
     let lock = currentFile() ++ ".lock"
+    if force {
+      clean(lock)
+    }
     let acquired = try {
       exclusiveDirectory(lock)
       true
@@ -136,7 +142,7 @@ let changing = (pid, action) => {
     | _ => false
     }
     if !acquired {
-      refused("the advisor record is locked, so this mutation cannot proceed")
+      refused(`${lock} is held; a stale one is overridden only by claim <name> --author-said`)
     } else {
       let result = try action() catch {
       | _ => refused("the advisor record could not be published")
@@ -148,8 +154,9 @@ let changing = (pid, action) => {
 }
 
 let claim = (name, ~pid, ~authorSaid) =>
-  changing(pid, () =>
+  changing(~force=authorSaid, pid, () =>
     switch standing(pid) {
+    | _ if !validName(name) => refused(`${name} is no name`)
     | Candidate(holder) =>
       Console.error(`${holder.name} holds the seat and lives, so it passes it; nothing changed`)
       1
@@ -192,6 +199,8 @@ let switched = (holder: holder, successor: holder) => {
 let pass = (name, ~to, ~pid) =>
   changing(pid, () =>
     switch standing(pid) {
+    | Holding(_) if !validName(name) => refused(`${name} is no name`)
+    | Holding(_) if to == pid => refused("the successor pid is the holder's own")
     | Holding(_) if !Watchdog.alive(to) => refused("the successor pid does not live")
     | Holding(holder) if holder.handingTo->Option.mapOr(false, successor => successor != name) =>
       refused("the successor differs from the one named by handing")
@@ -228,7 +237,7 @@ let main = (argv: array<string>) =>
   | ["claim", name, "--author-said"] => claim(name, ~pid=ownPid(), ~authorSaid=true)
   | ["handing", name] => handing(name, ~pid=ownPid())
   | ["pass", name, to] =>
-    switch Int.fromString(to) {
+    switch /^\d+$/->RegExp.test(to) ? Int.fromString(to) : None {
     | Some(to) => pass(name, ~to, ~pid=ownPid())
     | None =>
       Console.error(`${to} is no pid`)

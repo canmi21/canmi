@@ -406,6 +406,20 @@ let items: array<item> = [
     holds: Owes("an update push that starts verify, or verify run before the push"),
   },
   {
+    id: "hook-review-lows",
+    says: "The hooks' known limits left by the review of 300015bf. From its verification: a registration inside a here-document inside a substitution still registers, a shell line's misreads and one wrong directory in Jj_command.running, an advisor's unwatched line reaching only itself, watchFailure hiding `worker 0 failed` and missing `errors: 0`, the advisor's race test forcing no race, a short --stall reporting a late job as missing. From the review, parked: --transcript and --thread forms, `${HOME}/` in an output path, a holder's claim of another name and tasks.advisor needing a build, a bare file's dropped failures and rereads in the watch, context figures past a compaction, a subagent's transcript unreadable for good, an unwritable figures.txt stopping a look",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("each limit closed, or judged not worth a fix"),
+  },
+  {
+    id: "hook-adapters-match",
+    says: "A check that .claude/settings.json and .codex/hooks.json declare the same matchers, each difference naming its reason; that Codex lacks the SendMessage and Read tools is unverified",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("the check, and Codex's tool names verified"),
+  },
+  {
     id: "console-copy",
     says: "the local copy of console and its registry entry are removed",
     repos: ["console"],

@@ -25,6 +25,7 @@ describe("the advisor's seat", () => {
 })
 
 @val external processPid: int = "process.pid"
+@val external parentPid: int = "process.ppid"
 
 describe("advisor commands", () => {
   let root = temporaryRoot("advisor-")
@@ -110,6 +111,29 @@ describe("advisor commands", () => {
     expect(record())->toEqual(before)
   })
 
+  test("refuses a pass or claim it could not read back, and its own pid or a bad one", () => {
+    expect(Advisor.claim("", ~pid=processPid, ~authorSaid=false))->toEqual(1)
+    expect(Node.existsSync(Advisor.currentFile()))->toEqual(false)
+    expect(claim())->toEqual(0)
+    let before = record()
+    expect(Advisor.pass("", ~to=parentPid, ~pid=processPid))->toEqual(1)
+    expect(Advisor.pass("new", ~to=processPid, ~pid=processPid))->toEqual(1)
+    expect(Advisor.main(["pass", "new", `${Int.toString(parentPid)}junk`]))->toEqual(2)
+    expect(record())->toEqual(before)
+  })
+
+  test("a stale lock is overridden by the author's word alone", () => {
+    expect(claim())->toEqual(0)
+    let lock = Advisor.currentFile() ++ ".lock"
+    Advisor.exclusiveDirectory(lock)
+    let before = record()
+    expect(Advisor.handing("new", ~pid=processPid))->toEqual(1)
+    expect(Advisor.claim("old", ~pid=processPid, ~authorSaid=false))->toEqual(1)
+    expect(record())->toEqual(before)
+    expect(Advisor.claim("old", ~pid=processPid, ~authorSaid=true))->toEqual(0)
+    expect(Node.existsSync(lock))->toEqual(false)
+  })
+
   test("refuses a dead positive successor pid", () => {
     expect(claim())->toEqual(0)
     let before = record()
@@ -150,7 +174,7 @@ describe("advisor commands", () => {
     Ledger.registerSession(~role="advisor", ~name="old", ~transcript=None)
     Ledger.registerSession(~role="advisor", ~name="new", ~transcript=None)
     expect(Advisor.handing("new", ~pid=processPid))->toEqual(0)
-    expect(Advisor.pass("new", ~to=processPid, ~pid=processPid))->toEqual(0)
+    expect(Advisor.pass("new", ~to=parentPid, ~pid=processPid))->toEqual(0)
     expect(Advisor.read()->Option.map(one => one.name))->toEqual(Some("new"))
     expect(Node.readdir(Ledger.sessions()))->toEqual(["new.json"])
   })

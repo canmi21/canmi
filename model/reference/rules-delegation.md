@@ -134,14 +134,14 @@ An advisor is replaced, never left to compaction, between `advisorReplacedFrom` 
 
 ### advisor-one-holder
 
-`advisorCurrent` names the advisor who holds the seat; `mise run //:advisor case` tells a session it is first, a candidate or an orphan, an orphan claiming only on the author's word, only the holder passes the seat, and `order-from` refuses an order of anyone else.
+`advisorCurrent` names the advisor who holds the seat; `mise run //:advisor case` tells a session by its `CLAUDE_PID` that it is first, a candidate, an orphan, a holder of a broken record or unable to tell, an orphan, a broken record and a stale lock yielding only to the author's word, only the holder passes the seat, to a live pid and a name it can read back, and `order-from` refuses an order of anyone else.
 
 - doc: [docs/agents/advisor.md](../../docs/agents/advisor.md)
 - held by: check part `scripts`
 
 ### send-on-this-machine
 
-A message goes only to `main`, a session named in `~/.claude/sessions/*.json`, a socket of `/tmp/cc-socks`, or a subagent of this session; a listing's ` [ref]` is read off; anything else is refused, saying what was checked and to try again, as a session just opened writes its record a moment later.
+A message goes only to `main` or `team-lead`, the names a subagent has for its parent, a session named in `~/.claude/sessions/*.json` whose pid lives, a socket of `/tmp/cc-socks`, or a subagent of this session; a `to` carrying a listing's ` [ref]` is refused, as a ref may name another machine; anything else is refused, saying what was checked and to try again, as a session just opened writes its record a moment later.
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
 - held by: hook `hooks/gates/messages/send_local`

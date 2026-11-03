@@ -59,9 +59,27 @@ describe("the hook's view of the ledger", () => {
     )
   })
 
-  test("registers past a redirection of its own", () => {
-    Run_ledger.observe(payload("mise run //:job register seat quiet </dev/null 2>&1"))
-    expect(Watchdog.registered()[0]->Option.map(one => one.name))->toEqual(Some("quiet"))
+  test("registers past what a shell takes for itself", () => {
+    [
+      "mise run //:job register seat quiet </dev/null 2>&1",
+      "mise run //:job register seat quiet &>/dev/null",
+      "mise run //:job register seat quiet>/dev/null",
+      "mise run //:job register seat quiet > /dev/null",
+      "mise run //:job register seat quiet &",
+      "(mise run //:job register seat quiet)",
+      "mise run //:job register seat quiet # note",
+    ]->Array.forEach(
+      command => {
+        Run_ledger.observe(payload(command))
+        expect((command, Watchdog.registered()->Array.map(one => one.name)))->toEqual((
+          command,
+          ["quiet"],
+        ))
+        Node.rmSync(Ledger.sessions(), {recursive: true, force: true})
+      },
+    )
+    Run_ledger.observe(payload("mise run //:job register seat quiet >/dev/null --thread trial"))
+    expect(Watchdog.registered()[0]->Option.flatMap(one => one.thread))->toEqual(Some("trial"))
   })
 
   test("registers past a leading assignment", () => {

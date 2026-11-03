@@ -88,6 +88,11 @@ window, and the session runs `mise run //:advisor case`**, which says which it i
 - **Candidate**: the holder lives. It reads only, directs nothing, and contacts the holder to begin.
 - **Orphan**: the holder is gone. It reads the handover, tells the author what it found, and takes the
   seat only on the author's word, `claim <name> --author-said`.
+- **Broken**: a record that cannot be read. As an orphan, on the author's word alone.
+- **Unknown**: the session's own `CLAUDE_PID`, what the seat reads, is absent or no pid. It changes nothing.
+
+**A lock left by a crash, `advisor-current.lock`, refuses every change to the seat** until `claim <name>
+--author-said` overrides it.
 
 **`advisor-handover.md` is rolling**, `Delegation.advisorHandover`, the safe container of the Handover
 paragraph above: no secret, address or credential; facts stated as of a time; nothing readable as

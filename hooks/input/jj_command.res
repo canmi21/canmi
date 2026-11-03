@@ -259,6 +259,22 @@ let substitutions = (command: string): array<string> => {
   found
 }
 
+/** The command line cut at each separator, then each command substitution's own segments. */
+let rec segments = (~keepQuotes=false, command) =>
+  switch words(~keepQuotes, command) {
+  | None => []
+  | Some(all) =>
+    let cut = [[]]
+    all->Array.forEach(word =>
+      separators->Array.includes(word)
+        ? cut->Array.push([])
+        : cut[cut->Array.length - 1]->Option.forEach(last => last->Array.push(word))
+    )
+    cut
+    ->Array.filter(segment => segment != [])
+    ->Array.concat(substitutions(command)->Array.flatMap(inner => segments(~keepQuotes, inner)))
+  }
+
 /** Where the program of a segment sits, past assignments and the wrappers that run what follows. */
 let commandAt = (segment: array<string>): option<int> => {
   let length = segment->Array.length
@@ -314,26 +330,17 @@ let shellLine = (segment: array<string>): option<string> =>
     shell && flag >= 0 ? rest[flag + 1] : None
   })
 
-/** The command line cut at each separator, then what each substitution and shell line runs. */
-let rec segments = (~keepQuotes=false, command) =>
-  switch words(~keepQuotes, command) {
-  | None => []
-  | Some(all) =>
-    let cut = [[]]
-    all->Array.forEach(word =>
-      separators->Array.includes(word)
-        ? cut->Array.push([])
-        : cut[cut->Array.length - 1]->Option.forEach(last => last->Array.push(word))
-    )
-    let found = cut->Array.filter(segment => segment != [])
-    found
-    ->Array.concat(substitutions(command)->Array.flatMap(inner => segments(~keepQuotes, inner)))
-    ->Array.concat(
-      keepQuotes
-        ? []
-        : found->Array.filterMap(shellLine)->Array.flatMap(line => segments(~keepQuotes, line)),
-    )
-  }
+/** Each segment run in order, with a shell's line past here-documents and its assignments. */
+let rec running = (command): array<array<string>> =>
+  segments(withoutHeredocBodies(command))->Array.flatMap(segment =>
+    switch (shellLine(segment), commandAt(segment)) {
+    | (Some(line), Some(at)) =>
+      let assigned =
+        segment->Array.slice(~start=0, ~end=at)->Array.filter(word => word->String.includes("="))
+      [segment, ...running(line)->Array.map(inner => assigned->Array.concat(inner))]
+    | _ => [segment]
+    }
+  )
 
 /** Whether the word at `at` is the command its segment runs, past assignments and wrappers. */
 let isCommand = (segment: array<string>, at) =>
@@ -374,11 +381,11 @@ let invocationOf = (segment: array<string>): option<(string, array<string>)> => 
 
 /** Each jj subcommand and the arguments after it. */
 let invocations = (command): array<(string, array<string>)> =>
-  segments(command)->Array.filterMap(invocationOf)
+  running(command)->Array.filterMap(invocationOf)
 
 /** The gates a jj invocation's own assignments skip, `SKIP=verify jj commit`, comma-separated. */
 let skipped = (command): array<string> =>
-  segments(command)->Array.flatMap(segment => {
+  running(command)->Array.flatMap(segment => {
     let at =
       segment->Array.findIndexWithIndex((word, index) =>
         Node.basename(word) == "jj" && isCommand(segment, index)
@@ -421,13 +428,13 @@ let repositoryOf = (segment: array<string>): option<string> => {
 }
 
 /** The repository a jj invocation names with -R or --repository before its subcommand, if any. */
-let repository = (command): option<string> => segments(command)->Array.findMap(repositoryOf)
+let repository = (command): option<string> => running(command)->Array.findMap(repositoryOf)
 
 /** Where each invocation of `subcommands` runs, `cwd` moved by each `cd` before it, then -R. */
 let placed = (command, ~cwd, subcommands): array<string> => {
   let at = ref(cwd)
   let found = []
-  segments(command)->Array.forEach(segment =>
+  running(command)->Array.forEach(segment =>
     switch segment {
     | ["cd"] => at := Node.env->Dict.get("HOME")->Option.getOr(at.contents)
     | ["cd", target] => at := Node.resolve([at.contents, target])
