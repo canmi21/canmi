@@ -17,7 +17,8 @@ made from, in a process group of its own, and outlives the call. `--quiet` is a 
 silent. **`mise run //:job run -- <command>` waits and exits with its status**, for the Bash tool's
 `run_in_background`.
 
-- **`mise run //:watch <id>` under Monitor** follows it, and reaching its end records the read.
+- **`mise run //:watch <id>` under Monitor** wakes its session only at the end, at failures gathered and
+  at a stall once, and reaching the end records the read.
 - **`mise run //:job read <id>`** prints its status and the end of its output, and records the read. A
   Read or a shell command naming its output file records it too, by a hook.
 - **`mise run //:job stop <id> [--by <who>]`** ends its process group, and a watch of it: only a job
@@ -37,7 +38,11 @@ whose path `mise run //:job events` prints, said once:
 - **`over`**: one past its `--limit`, or twice its command's p95 once it has history;
 - **`quiet`**: a registered role with no turn for its limit in `Delegation.silentTurns`, to its
   superior. Past a supervisor's, the author gets a notification;
-- **`figures`**: a thread's, [threads.md](threads.md), "Staying on course".
+- **`figures`**: a thread's, [threads.md](threads.md), "Staying on course", with each registered
+  session's context size and compactions in the thread's `figures.txt`, or `contexts.txt` beside the
+  event file; a read that fails says so and never says zero;
+- **`context`**: an advisor past `Delegation.advisorReplacedFrom`, to itself,
+  [advisor.md](advisor.md).
 
 **A session with no transcript to read is said once, `unwatched`, rather than passed over in silence.**
 **A session registers once**, `mise run //:job register <role> <name> [--thread <name>]`, a hook naming its transcript,

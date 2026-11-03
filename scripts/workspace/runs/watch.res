@@ -1,41 +1,95 @@
-/** `watch <job id | file> [--stall <seconds>]` for Monitor, docs/agents/runs.md. */
-type state = {offset: int, lastGrowth: float, nextStall: float, ended: bool}
+/** The bounded Monitor watcher follows docs/agents/runs.md. */
+type state = {
+  offset: int,
+  size: int,
+  lastGrowth: float,
+  stalled: bool,
+  nextFailure: float,
+  failures: int,
+  pending: int,
+  first: string,
+  ended: bool,
+}
 
-let start = (~now, ~stall) => {offset: 0, lastGrowth: now, nextStall: now +. stall, ended: false}
+let failureInterval = Int.toFloat(Delegation.stallSeconds) *. 1000.
+let start = (~now, ~stall as _) => {
+  offset: 0,
+  size: 0,
+  lastGrowth: now,
+  stalled: false,
+  nextFailure: now +. failureInterval,
+  failures: 0,
+  pending: 0,
+  first: "",
+  ended: false,
+}
 
-let progress = RegExp.fromString(Delegation.watchProgress, ~flags="i")
 let failure = RegExp.fromString(Delegation.watchFailure, ~flags="i")
 let ending = RegExp.fromString(Delegation.watchEnd, ~flags="i")
 let exited = RegExp.fromString("^\\[exited with code -?\\d+\\]$")
 
-/** The event a new line is, an end before a failure before progress, or none for a quiet one. */
 let classify = line =>
   if ending->RegExp.test(line) || exited->RegExp.test(line) {
     Some(`ended: ${line}`)
-  } else if failure->RegExp.test(line) {
-    Some(`failure: ${line}`)
-  } else if progress->RegExp.test(line) {
-    Some(`progress: ${line}`)
   } else {
     None
   }
 
-/** One look at the file text at `now`, giving the next state and the lines to print. */
-let step = (state, ~text, ~now, ~stall) => {
-  let whole = text->String.lastIndexOf("\n") + 1
-  if whole > state.offset {
-    let fresh = text->String.slice(~start=state.offset, ~end=whole)->String.split("\n")
-    let events = fresh->Array.filterMap(classify)
-    let ended = events->Array.some(event => event->String.startsWith("ended:"))
-    ({offset: whole, lastGrowth: now, nextStall: now +. stall, ended}, events)
-  } else if now >= state.nextStall {
-    let quiet = Float.toInt((now -. state.lastGrowth) /. 1000.)
-    (
-      {...state, nextStall: now +. stall},
-      [`stalled: no new line for ${Int.toString(quiet)} seconds`],
-    )
-  } else {
+/** A ledger job ends by its record or its missing process alone. */
+let step = (state, ~text, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=Watchdog.alive) => {
+  if state.ended {
     (state, [])
+  } else {
+    let size = text->String.length
+    let whole = text->String.lastIndexOf("\n") + 1
+    let fresh =
+      whole > state.offset
+        ? text->String.slice(~start=state.offset, ~end=whole)->String.split("\n")
+        : []
+    let failures = fresh->Array.filter(line => failure->RegExp.test(line))
+    let count = failures->Array.length
+    let next = {
+      ...state,
+      offset: whole > state.offset ? whole : state.offset,
+      size,
+      lastGrowth: size > state.size ? now : state.lastGrowth,
+      stalled: size > state.size ? false : state.stalled,
+      failures: state.failures + count,
+      pending: state.pending + count,
+      first: state.pending == 0 ? failures[0]->Option.getOr("") : state.first,
+    }
+    let endEvent = switch job {
+    | Some({ended: Some(_), status: Some(status)} as job) =>
+      let seconds = Ledger.seconds(job)->Option.getOr(0.)->Float.toFixed(~digits=1)
+      Some(
+        `ended: status ${Int.toString(status)}, ${seconds} s, ${Int.toString(
+            next.failures,
+          )} failure lines; mise run //:job read ${job.id}`,
+      )
+    | Some(job) if Job.died(job, ~alive) => Some(`ended: died; mise run //:job read ${job.id}`)
+    | Some(_) => None
+    | None => fresh->Array.findMap(classify)
+    }
+    switch endEvent {
+    | Some(event) => ({...next, ended: true}, [event])
+    | None =>
+      let events = []
+      let next = if next.pending > 0 && now >= next.nextFailure {
+        events->Array.push(
+          `failure: ${Int.toString(next.pending)} new failure lines; ${next.first}`,
+        )
+        {...next, pending: 0, first: "", nextFailure: now +. failureInterval}
+      } else {
+        next
+      }
+      if !next.stalled && now -. next.lastGrowth >= stall {
+        let quiet = Float.toInt((now -. next.lastGrowth) /. 1000.)
+        events->Array.push(`stalled: no new line for ${Int.toString(quiet)} seconds`)
+        ({...next, stalled: true}, events)
+      } else {
+        (next, events)
+      }
+    }
   }
 }
 
@@ -48,12 +102,10 @@ let main = (argv: array<string>) =>
     2
   | Some(named) =>
     // A job of the ledger is named by its id, and reaching its end is reading its result.
-    let job = Ledger.find(named)
+    let job =
+      Ledger.find(named)->Option.orElse(Ledger.idOfOutput(named)->Option.flatMap(Ledger.find))
     let file = job->Option.mapOr(named, job => job.output)
     let id = job->Option.map(job => job.id)->Option.orElse(Ledger.idOfOutput(file))
-    if id == None {
-      Console.log(`note: ${file} has no job in the ledger; start one by mise run //:job start`)
-    }
     let stall =
       1000. *.
       switch argv->Array.findIndex(arg => arg == "--stall") {
@@ -70,7 +122,8 @@ let main = (argv: array<string>) =>
       let text = try Node.readFileSync(file) catch {
       | _ => ""
       }
-      let (next, events) = step(state.contents, ~text, ~now, ~stall)
+      let current = id->Option.flatMap(Ledger.find)
+      let (next, events) = step(state.contents, ~text, ~now, ~stall, ~job=current)
       state := next
       events->Array.forEach(Console.log)
       if next.ended {

@@ -94,11 +94,43 @@ let aboutSession = (session: session, ~now, ~moved): array<finding> =>
   | _ => []
   }
 
+let percent = share => Float.toFixed(share *. 100., ~digits=0)
+
+/** An advisor past the share of the window is told it is due to be replaced, once. */
+let aboutContext = (session: session, outcome: option<Context.outcome>): array<finding> =>
+  switch outcome {
+  | Some(Read({tokens})) if session.role == "advisor" && Context.due(tokens) => [
+      {
+        key: `context:${session.name}:replace`,
+        says: `context to=advisor advisor ${session.name} holds ${Int.toString(
+            tokens,
+          )} tokens, ${percent(Context.share(tokens))}% of its window, past ${percent(
+            Delegation.advisorReplacedFrom,
+          )}%, so it is due to be replaced (advisor-replaced)`,
+        notify: false,
+      },
+    ]
+  | _ => []
+  }
+
+/** The line a session's context figures are written as. */
+let contextLine = (session: session, outcome: Context.outcome, ~now) =>
+  `${at(now)} context ${session.name} ${session.role} ${switch outcome {
+    | Read({tokens, compactions}) =>
+      `${Int.toString(tokens)} tokens, ${percent(
+          Context.share(tokens),
+        )}% of the window, ${Int.toString(compactions)} compactions`
+    | Unreadable(why) => `unreadable: ${why}`
+    }}`
+
 /** Everything owed now and not said before, each once. */
-let owed = (~jobs, ~sessions, ~said: array<string>, ~now, ~alive, ~moved) =>
+let owed = (~jobs, ~sessions, ~said: array<string>, ~now, ~alive, ~moved, ~contextOf=_ => None) =>
   Array.concat(
-    jobs->Array.flatMap(job => aboutJob(job, ~all=jobs, ~now, ~alive, ~moved)),
-    sessions->Array.flatMap(session => aboutSession(session, ~now, ~moved)),
+    Array.concat(
+      jobs->Array.flatMap(job => aboutJob(job, ~all=jobs, ~now, ~alive, ~moved)),
+      sessions->Array.flatMap(session => aboutSession(session, ~now, ~moved)),
+    ),
+    sessions->Array.flatMap(session => aboutContext(session, contextOf(session))),
   )->Array.filter(found => !(said->Array.includes(found.key)))
 
 @module("node:process") external kill: (int, int) => unit = "kill"
@@ -161,16 +193,58 @@ let figuresOwed = (~said: array<string>, ~now) =>
     fresh->Array.mapWithIndex((key, index) => {key, says: index == 0 ? says : "", notify: false})
   })
 
+/** What one session's transcript says, a fault in the read being a value and never a stop. */
+let contextRead = (session: session, ~now) =>
+  session.transcript->Option.map(path =>
+    try Context.read(path, ~cache=Node.join([Ledger.home(), "compactions"]), ~now) catch {
+    | _ => Context.Unreadable("the read failed unexpectedly")
+    }
+  )
+
+/** Each session's figures, on its thread's figures.txt after its own line, else contexts.txt. */
+let contextsWritten = (reads: array<(session, Context.outcome)>, ~now) => {
+  let loose = []
+  reads->Array.forEach(((session, outcome)) => {
+    let line = `${contextLine(session, outcome, ~now)}\n`
+    let placed = switch session.thread {
+    | Some(thread) if Node.existsSync(Figures.directory(thread)) =>
+      try {
+        Ledger.append(Figures.shownFile(thread), line)
+        true
+      } catch {
+      | _ => false
+      }
+    | _ => false
+    }
+    if !placed {
+      loose->Array.push(line)
+    }
+  })
+  try Node.writeFileSync(Node.join([Ledger.home(), "contexts.txt"]), loose->Array.join("")) catch {
+  | _ => ()
+  }
+}
+
 /** One look, its events written and each marked said, how many it wrote returned. */
 let look = (~now=Date.now(), ~notify=notified) => {
   Node.mkdirAll(Ledger.home())
   let said = Node.existsSync(Ledger.seen())
     ? Node.readFileSync(Ledger.seen())->String.split("\n")
     : []
+  let sessions = registered()
+  let reads =
+    sessions->Array.filterMap(session =>
+      contextRead(session, ~now)->Option.map(outcome => (session, outcome))
+    )
+  let outcomes = Dict.make()
+  reads->Array.forEach(((session, outcome)) => outcomes->Dict.set(session.name, outcome))
   let found = Array.concat(
-    owed(~jobs=Ledger.jobs(), ~sessions=registered(), ~said, ~now, ~alive, ~moved),
+    owed(~jobs=Ledger.jobs(), ~sessions, ~said, ~now, ~alive, ~moved, ~contextOf=session =>
+      outcomes->Dict.get(session.name)
+    ),
     figuresOwed(~said, ~now),
   )
+  contextsWritten(reads, ~now)
   found->Array.forEach(one => {
     if one.says != "" {
       Ledger.append(Ledger.events(), `${at(now)} ${one.says}\n`)

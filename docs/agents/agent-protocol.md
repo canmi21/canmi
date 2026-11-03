@@ -270,9 +270,11 @@ background or under Monitor**, and the conversation goes on, in every session an
 it spawns. **`mise run //:job start -- <command>` is the way in**, which records it where the watchdog
 reads, [runs.md](runs.md). **The agent looks at the job every few seconds to a few tens of seconds**, sooner the
 shorter the job, each look an instant read of the output that asks whether it moved since the last.
-**To look, it reads the output file, or runs `mise run //:watch <id>` under Monitor**, which prints a
-line for each progress or failure line the file gains, a line naming a stall after `stallSeconds`
-without growth, and ends on an end line or at `watchBoundSeconds`. A job that stopped, or a wait
+**To look, it reads the output file, or runs `mise run //:watch <id>` under Monitor**, which wakes its
+session only at the job's end, with its status and summary, at failures, gathered rather than a line
+each, and at a stall of `stallSeconds`, said once. Progress stays in the file for `job read`, as the
+watchdog covers liveness, and it ends on the ledger's end for a job, an end line for a bare file, or
+at `watchBoundSeconds`. A job that stopped, or a wait
 nothing will meet, is reported at that look, never found later by the user, and a result still
 pending is said so. A user watching a spinner cannot tell a working job from a hung one.
 

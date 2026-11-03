@@ -186,7 +186,6 @@ let shortFlags = ["--dry-run", "-n", "--pending"]
 /** The watcher's stall, bound and line patterns, as regular expression sources. */
 let stallSeconds = 30
 let watchBoundSeconds = 1800
-let watchProgress = "\\b(?:passed|ok|done|finished|built|compiling|running)\\b"
 let watchFailure = "\\b(?:error|errors|failed|failure|fatal|panic|refused|timed out)\\b"
 let watchEnd = "^(?:exit|status|ended)[: =]"
 

@@ -118,3 +118,29 @@ describe("stopping a job", () => {
     expect(Job.notOwn({...job, session: ""}, ~session="", ~by="other"))->toEqual(Some("seat-a"))
   })
 })
+
+describe("a job whose process is gone", () => {
+  let job = Ledger.fold(start("gone"))->Array.getUnsafe(0)
+
+  test("is died in the list and in the read result", () => {
+    expect(Job.listState(job, ~alive=_ => false))->toEqual("died")
+    expect(Job.unfinished(job, ~alive=_ => false))->toEqual("job gone: died, output /o")
+    expect(Job.died(job, ~alive=_ => false))->toEqual(true)
+  })
+
+  test("keeps live jobs and pid zero running", () => {
+    expect(Job.listState(job, ~alive=_ => true))->toEqual("running")
+    expect(Job.unfinished(job, ~alive=_ => true))->toEqual("job gone: still running, output /o")
+    expect(Job.listState({...job, pid: 0}, ~alive=_ => false))->toEqual("running")
+    expect(Job.unfinished({...job, pid: 0}, ~alive=_ => false))->toEqual(
+      "job gone: still running, output /o",
+    )
+  })
+
+  test("keeps a recorded end even after the process disappears", () => {
+    let done = {...job, ended: Some(1000.), status: Some(2)}
+    expect(Job.died(done, ~alive=_ => false))->toEqual(false)
+    expect(Job.listState(done, ~alive=_ => false))->toEqual("2 unread")
+    expect(Job.listState({...done, read: Some(1000.)}, ~alive=_ => false))->toEqual("2")
+  })
+})

@@ -89,6 +89,49 @@ describe("the watchdog", () => {
   })
 })
 
+describe("a session's context", () => {
+  let session = (role): Watchdog.session => {
+    name: "n",
+    role,
+    transcript: Some("/t"),
+    thread: None,
+  }
+  let tokens = share => (Delegation.contextWindowTokens->Int.toFloat *. share)->Float.toInt
+  let owedFor = (~role="advisor", ~said=[], outcome) =>
+    Watchdog.owed(
+      ~jobs=[],
+      ~sessions=[session(role)],
+      ~said,
+      ~now=0.,
+      ~alive=_ => true,
+      ~moved=_ => Some(0.),
+      ~contextOf=_ => Some(outcome),
+    )->Array.filter(one => one.says->String.startsWith("context "))
+
+  let held = share => Context.Read({tokens: tokens(share), compactions: 1})
+
+  test("tells an advisor past the share it is due to be replaced, once", () => {
+    let over = owedFor(held(Delegation.advisorReplacedFrom +. 0.01))
+    expect(over->Array.length)->toEqual(1)
+    expect((over->Array.getUnsafe(0)).says->String.includes("advisor-replaced"))->toEqual(true)
+    let keys = over->Array.map(one => one.key)
+    expect(owedFor(~said=keys, held(Delegation.advisorReplacedFrom +. 0.02)))->toEqual([])
+  })
+
+  test("says nothing for an advisor under the share, another role or a failed read", () => {
+    expect(owedFor(held(Delegation.advisorReplacedFrom -. 0.01)))->toEqual([])
+    expect(owedFor(~role="seat", held(0.95)))->toEqual([])
+    expect(owedFor(Unreadable("no transcript at the path")))->toEqual([])
+  })
+
+  test("writes a line with the figures, and a failed read as unreadable", () => {
+    let line = outcome => Watchdog.contextLine(session("advisor"), outcome, ~now=0.)
+    let held = line(Read({tokens: 250000, compactions: 3}))
+    expect(held->String.includes("25% of the window, 3 compactions"))->toEqual(true)
+    expect(line(Unreadable("why"))->String.endsWith("unreadable: why"))->toEqual(true)
+  })
+})
+
 describe("a thread's figures", () => {
   let seat = (name, ~tooling=false, at): Figures.record => Seat({name, tooling, at})
 

@@ -81,6 +81,18 @@ let supervise = (text: string) =>
     2
   }
 
+let died = (job: Ledger.job, ~alive=Watchdog.alive) =>
+  job.ended == None && job.pid > 0 && !alive(job.pid)
+
+let listState = (job: Ledger.job, ~alive=Watchdog.alive) =>
+  switch job.status {
+  | Some(status) => `${Int.toString(status)}${Ledger.wasRead(job) ? "" : " unread"}`
+  | None => died(job, ~alive) ? "died" : "running"
+  }
+
+let unfinished = (job: Ledger.job, ~alive=Watchdog.alive) =>
+  `job ${job.id}: ${died(job, ~alive) ? "died" : "still running"}, output ${job.output}`
+
 /** A finished job's status and the end of its output, its read recorded. */
 let read = id =>
   switch Ledger.find(id) {
@@ -98,7 +110,7 @@ let read = id =>
             ~digits=1,
           )} s; whole output ${job.output}`,
       )
-    | _ => Console.log(`job ${id}: still running, output ${job.output}`)
+    | _ => Console.log(unfinished(job))
     }
     0
   }
@@ -235,10 +247,7 @@ let listed = () => {
   Ledger.jobs()
   ->Array.slice(~start=-30)
   ->Array.forEach(job => {
-    let state = switch job.status {
-    | Some(status) => `${Int.toString(status)}${Ledger.wasRead(job) ? "" : " unread"}`
-    | None => "running"
-    }
+    let state = listState(job)
     Console.log(`${job.id}  ${state}  ${job.by}  ${job.command->String.slice(~start=0, ~end=60)}`)
   })
   0

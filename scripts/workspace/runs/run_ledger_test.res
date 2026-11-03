@@ -1,6 +1,6 @@
 open Testing
 
-let home = Node.mkdtempSync(Node.join([Node.tmpdir(), "runs-home-"]))
+let home = Node.mkdtempSync(Node.join([Node.cwd(), ".runs-home-"]))
 let threads = Node.mkdtempSync(Node.join([Node.tmpdir(), "threads-home-"]))
 
 Node.env->Dict.set("RUNS_HOME", home)
@@ -46,6 +46,22 @@ describe("the hook's view of the ledger", () => {
     Ledger.ended(~id="20261102-000000-abcd", ~status=0, ~at=5.)
     Run_ledger.observe(payload(~file=Ledger.outputOf("20261102-000000-abcd"), "ls"), ~at=9.)
     expect(Ledger.find("20261102-000000-abcd")->Option.mapOr(false, Ledger.wasRead))->toEqual(true)
+  })
+
+  test("records command reads through tilde and HOME as through an absolute path", () => {
+    let user = Node.env->Dict.get("HOME")->Option.getOr("")
+    let relative = home->String.slice(~start=user->String.length)
+    ["~" ++ relative, "$HOME" ++ relative, home]->Array.forEachWithIndex(
+      (prefix, index) => {
+        let id = `20261102-000000-${Int.toString(index)}`
+        Ledger.started(job(id))
+        Ledger.ended(~id, ~status=0, ~at=5.)
+        let path = `${prefix}/outputs/${id}.log`
+        expect(Run_ledger.outputsIn(`cat ${path}`))->toEqual([Ledger.outputOf(id)])
+        Run_ledger.observe(payload(`cat ${path}`), ~at=9.)
+        expect(Ledger.find(id)->Option.mapOr(false, Ledger.wasRead))->toEqual(true)
+      },
+    )
   })
 
   test("names a registering session's transcript, and leaves one named by hand alone", () => {
