@@ -53,7 +53,9 @@ let raised: (~before: array<string>, ~after: array<string>, ~paths: array<string
 let causes: string => array<string>
 
 /**
- * Each step run in order from the workspace, stopping at the first that fails with its causes last;
+ * A sibling's pin moved to its main@origin first, scripts/workspace/land/repin.resi, its file joining
+ * `--paths`; then each step run in order from the workspace, stopping at the first that fails with
+ * its causes last;
  * a dry run says each command and runs none. The exit status.
  */
 let run: asked => promise<int>

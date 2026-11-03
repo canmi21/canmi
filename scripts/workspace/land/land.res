@@ -166,6 +166,23 @@ let run = async asked => {
       `land: the check lock for ${asked.repository} is held by message between the integrators, never a file`,
     )
   }
+
+  // A sibling's pin moves to its main at origin first, so CI builds what this landing checked.
+  if asked.dry {
+    Console.log(`land: pin: moved to its sibling's main@origin where it pins one behind it`)
+  } else {
+    switch Repin.moved(~root=Node.join([Registry.root, directory(asked)])) {
+    | Ok(None) => ()
+    | Ok(Some((from, to, pin))) =>
+      Console.log(`land: pin: ${pin} moved from ${from} to ${to}`)
+      if asked.paths != [] {
+        current := {...current.contents, paths: [...current.contents.paths, pin]}
+      }
+    | Error(why) =>
+      Console.log(`land: pin: ${why}`)
+      status := 1
+    }
+  }
   for index in 0 to steps->Array.length - 1 {
     let step = steps->Array.getUnsafe(index)
     let (program, arguments) = command(current.contents, step)
