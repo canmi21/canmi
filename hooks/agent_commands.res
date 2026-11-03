@@ -174,6 +174,16 @@ let taskReason = (role, (task: string, rest: array<string>), ~flags, ~cwd) => {
     )
   ) {
     Some(`${name} ${verbOf} is not a seat's, ${ruleOf(role)} holds it`)
+  } else if (
+    name == "lane" &&
+    rest[0] == Some("handed") &&
+    (rest->Array.includes("--integrator") || flags->Array.includes("--integrator"))
+  ) {
+    Some(
+      `lane handed --integrator passes single-writer files, the integrator's, ${ruleOf(
+          role,
+        )} holds it`,
+    )
   } else if name == "check" && flags->Array.includes("--pending") {
     Some(`--pending is the integrator's, ${ruleOf(role)} holds it`)
   } else if name == "check" && !aPart {

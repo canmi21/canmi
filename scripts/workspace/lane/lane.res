@@ -8,7 +8,7 @@ type step =
   | Run({cwd: string, program: string, args: array<string>})
   | Guard({cwd: string, dir: string})
   | Background({cwd: string, command: string, log: string})
-  | Handed({cwd: string, dir: string, own: array<string>, all: bool})
+  | Handed({cwd: string, dir: string, own: array<string>, all: bool, integrator: bool})
   | MakeDir(string)
   | Remove(string)
   | Say(string)
@@ -176,7 +176,13 @@ let closePlan = (~root, ~registered, ~hasCargo, ~name, workspaces: array<Lane_st
     Ok(
       Array.concat(
         kept->Array.flatMap(((one, _)) => [
-          Handed({cwd: one.path, dir: `lanes/${name}/${one.rel}`, own: [], all: false}),
+          Handed({
+            cwd: one.path,
+            dir: `lanes/${name}/${one.rel}`,
+            own: [],
+            all: false,
+            integrator: false,
+          }),
           Run({cwd: one.path, program: "jj", args: ["st"]}),
           Guard({cwd: one.path, dir: `lanes/${name}/${one.rel}`}),
         ]),
@@ -196,7 +202,14 @@ let closePlan = (~root, ~registered, ~hasCargo, ~name, workspaces: array<Lane_st
 }
 
 /** What the steps of a handing in are, every workspace of the lane judged by every rule. */
-let handedPlan = (~root, ~registered, ~own, ~name, workspaces: array<Lane_state.found>) =>
+let handedPlan = (
+  ~root,
+  ~registered,
+  ~own,
+  ~name,
+  ~integrator=false,
+  workspaces: array<Lane_state.found>,
+) =>
   switch (fromBase(root), workspaces) {
   | (Error(why), _) => Error(why)
   | _ if !(namePattern->RegExp.test(name)) =>
@@ -211,6 +224,7 @@ let handedPlan = (~root, ~registered, ~own, ~name, workspaces: array<Lane_state.
         dir: `lanes/${name}/${one.rel}`,
         own,
         all: true,
+        integrator,
       })),
     )
   }
@@ -298,8 +312,8 @@ let perform = (~root, step) =>
     | Ok(changes) => Error(`${dir} holds changes not in main, so it stays open:\n${changes}`)
     | Error(why) => Error(`${dir} could not be judged: ${why}`)
     }
-  | Handed({cwd, dir, own, all}) =>
-    Handed.report(~cwd, ~dir, ~own, ~all) == 0
+  | Handed({cwd, dir, own, all, integrator}) =>
+    Handed.report(~cwd, ~dir, ~own, ~all, ~integrator) == 0
       ? Ok()
       : Error(`${dir} holds a change that is refused above, so it stays open`)
   | Background({cwd, command, log}) =>
@@ -350,7 +364,7 @@ let parse = (argv: array<string>) => {
     switch rest {
     | list{"--with", one, ...more} => go(more, words, Array.concat(siblings, [one]), own)
     | list{"--own" | "--in", one, ...more} => go(more, words, siblings, Array.concat(own, [one]))
-    | list{"-n" | "--dry-run", ...more} => go(more, words, siblings, own)
+    | list{"-n" | "--dry-run" | "--integrator", ...more} => go(more, words, siblings, own)
     | list{word, ...more} => go(more, Array.concat(words, [word]), siblings, own)
     | list{} => (words, siblings, own)
     }
@@ -368,6 +382,7 @@ let usage =
 let main = (argv: array<string>): int => {
   let root = Registry.root
   let (words, siblings, own, dry) = parse(argv)
+  let integrator = argv->Array.includes("--integrator")
   let registered = Registry.paths()
   switch words {
   | _ if words[0] == Some("check") => Lane_check.main(words->Array.slice(~start=1), ~dry)
@@ -406,10 +421,11 @@ let main = (argv: array<string>): int => {
       ~isWorkspace=Lane_state.realIsWorkspace,
       name,
     )
-    let plan = handedPlan(~root, ~registered, ~own, ~name, workspaces)
+    let plan = handedPlan(~root, ~registered, ~own, ~name, ~integrator, workspaces)
     // A pass is recorded for take to read, docs/agents/lanes.md, so a dry run records none.
     switch plan {
-    | Ok(_) if !dry => Handed_pass.judged(~root, ~name, workspaces, () => finish(~root, ~dry, plan))
+    | Ok(_) if !dry =>
+      Handed_pass.judged(~root, ~name, ~integrator, workspaces, () => finish(~root, ~dry, plan))
     | _ => finish(~root, ~dry, plan)
     }
   | ["close", name] if siblings == [] && own == [] =>

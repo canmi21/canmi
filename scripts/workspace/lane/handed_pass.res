@@ -18,7 +18,10 @@ let commitOf = cwd => {
 }
 
 /** The record's text, one workspace's path below the lane and its commit to a line. */
-let written = pairs => pairs->Array.map(((rel, commit)) => `${rel} ${commit}\n`)->Array.join("")
+let // The last line names whether single-writer files were passed under `--integrator`.
+written = (~integrator=false, pairs) =>
+  pairs->Array.map(((rel, commit)) => `${rel} ${commit}\n`)->Array.join("") ++
+    `# integrator ${integrator ? "yes" : "no"}\n`
 
 let read = text =>
   text
@@ -63,7 +66,14 @@ let held = (~root, ~name, ~commitOf=commitOf, one: Lane_state.found) =>
  * `judge` run over every workspace of a lane, any earlier pass forgotten first, and a pass recorded
  * with each commit read before judging, so an edit made meanwhile needs another pass.
  */
-let judged = (~root, ~name, ~commitOf=commitOf, workspaces: array<Lane_state.found>, judge) => {
+let judged = (
+  ~root,
+  ~name,
+  ~commitOf=commitOf,
+  ~integrator=false,
+  workspaces: array<Lane_state.found>,
+  judge,
+) => {
   let path = file(~root, name)
   Node.rmSync(path, {recursive: false, force: true})
   let before =
@@ -83,7 +93,7 @@ let judged = (~root, ~name, ~commitOf=commitOf, workspaces: array<Lane_state.fou
   )
   switch (status, unread) {
   | (0, []) =>
-    Node.writeFileSync(path, written(pairs))
+    Node.writeFileSync(path, written(~integrator, pairs))
     0
   | (0, _) =>
     unread->Array.forEach(why => Console.error(`lanes/${name} pass not recorded: ${why}`))

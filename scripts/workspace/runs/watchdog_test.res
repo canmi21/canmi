@@ -300,15 +300,15 @@ describe("idle integrators", () => {
     },
   )
 
-  test("does not escalate while ready steps are each held by a busy integrator", () => {
+  test("escalates where the other integrator only takes turns, holding no step", () => {
     let other = {...integrator, name: "j", transcript: Some("/sessions/j.jsonl")}
     let found = idle(
       ~sessions=[integrator, other, supervisor],
       ~now=600000.,
       ~moved=path => Some(path == "/sessions/j.jsonl" ? 599000. : 0.),
     )
-    // j only takes turns, holding no step, so the advisor's line waits.
-    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
+    // j only takes turns, holding no step, so the step is free and the advisor is told.
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-supervisor:v:i:0"])
   })
 
   test("writes idle to the real event file and reads seat move times", () => {

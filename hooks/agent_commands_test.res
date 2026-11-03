@@ -591,6 +591,8 @@ describe("what is not a seat's", () => {
       "mise run //:lane close other",
       "mise run //:job install",
       "mise run //:thread green t one",
+      "mise run //:lane handed mine --integrator",
+      "mise run //:lane handed --integrator mine",
     ]->Array.forEach(
       command => expect((command, refused(Implementer, command)))->toEqual((command, true)),
     )

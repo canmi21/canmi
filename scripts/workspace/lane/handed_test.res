@@ -37,7 +37,9 @@ describe("the rules a lane's diff is read against", () => {
       "AGENTS.md",
     ])
     Node.env->Dict.delete("MONOFLAKE_ROLE")
-    expect(Handed.single(touched))->toEqual([])
+    // No role is no pass: only `--integrator` passes them.
+    expect(Handed.single(touched)->files->Array.length)->toBe(3)
+    expect(Handed.single(~integrator=true, touched))->toEqual([])
     saved->Option.forEach(value => Node.env->Dict.set("MONOFLAKE_ROLE", value))
   })
 

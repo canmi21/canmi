@@ -223,7 +223,7 @@ let aboutIdle = (
                     let deadline = idleFrom +. limit
                     supervisor.role == "supervisor" &&
                     supervisor.thread == Some(thread) &&
-                    ready->Array.length > busyNumber &&
+                    ready->Array.length > holdingNumber &&
                     now -. deadline >= Delegation.idleSupervisorSeconds->Int.toFloat *. 1000.
                       ? Some({
                           key: `idle-supervisor:${supervisor.name}:${one.name}:${since}`,

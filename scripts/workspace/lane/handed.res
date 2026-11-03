@@ -56,9 +56,9 @@ let sizes = (~lines, files) => {
 }
 
 /** The files that only the integrator changes, `single-writer`. */
-let single = files =>
-  // The integrator runs with no role, and lands what only it may change.
-  Node.env->Dict.get("MONOFLAKE_ROLE") == None
+let single = (~integrator=false, files) =>
+  // Passed only under `--integrator`, which a seat's command hook refuses.
+  integrator
     ? []
     : files
       ->Array.filter(file => Delegation.singleWriter->Array.some(under(file, _)))
@@ -79,10 +79,15 @@ let outside = (~own, files) =>
       ->Array.map(file => {file, why: "outside the block's own directory, own-directory"})
 
 /** What a lane's changed files hold against all the rules `handed` reads. */
-let judge = (~lines, ~own, files) => {
+let judge = (~lines, ~own, ~integrator=false, files) => {
   let size = sizes(~lines, files)
   {
-    refused: Array.flat([size.refused, single(files), locked(files), outside(~own, files)]),
+    refused: Array.flat([
+      size.refused,
+      single(~integrator, files),
+      locked(files),
+      outside(~own, files),
+    ]),
     listed: size.listed,
   }
 }
@@ -148,7 +153,7 @@ let formedIn = cwd =>
  * One working copy judged and printed, `all` for every rule of `handed` with formatting and the
  * form layer, else lengths alone.
  */
-let report = (~cwd, ~dir, ~own, ~all, ~check=?, ~form=formedIn) => {
+let report = (~cwd, ~dir, ~own, ~all, ~integrator=false, ~check=?, ~form=formedIn) => {
   let check = check->Option.getOr((program, args) => checkIn(~cwd, program, args))
   switch changed(cwd) {
   | Error(why) =>
@@ -164,7 +169,7 @@ let report = (~cwd, ~dir, ~own, ~all, ~check=?, ~form=formedIn) => {
       )
     }
     let lines = file => theirs(file) ? None : linesOf(~cwd, file)
-    let judged = all ? judge(~lines, ~own, files) : sizes(~lines, files)
+    let judged = all ? judge(~lines, ~own, ~integrator, files) : sizes(~lines, files)
     let loose = all
       ? unformatted(~check, files->Array.filter(file => Node.existsSync(Node.join([cwd, file]))))
       : []
