@@ -20,6 +20,7 @@ let idle = (~role="integrator", name): Rounds.activity => {
   seats: [],
   reviews: [],
   turns: [],
+  held: [],
   missing: [],
 }
 let first = Figures.Seat({name: "start", tooling: false, at: 0.})
@@ -82,14 +83,33 @@ describe("round slice precedence", () => {
     expect((found->Array.getUnsafe(0)).unattended)->toEqual(minute)
     expect((rounds(~steps, [idle("own"), busy])->total).ready)->toEqual(minute)
   })
-  test("an integrator's own job and seat each hold a step, its turn only one", () => {
-    let both = {...idle("both"), jobs: [span(0., 2.)], seats: [span(0., 2.)]}
+  test("one seat is one worker, its job, record and lane checks together", () => {
     let step = id => {Charter.id, after: []}
     let two = [step("1"), step("2")]
-    let three = [step("1"), step("2"), step("3")]
     let ready = (steps, one) => (rounds(~steps, ~count=2., [one])->Array.getUnsafe(0)).unattended
-    expect(ready(two, both))->toEqual(0.)
-    expect(ready(three, both))->toEqual(2. *. minute)
+    let codex = {
+      ...idle("codex"),
+      jobs: [span(0., 2.), span(0., 1.)],
+      seats: [span(0., 2.)],
+      held: [
+        ("seat:lane", span(0., 2.)),
+        ("record:lane", span(0., 2.)),
+        ("seat:lane", span(0., 1.)),
+      ],
+    }
+    expect(ready(two, codex))->toEqual(2. *. minute)
+    expect(ready([step("1")], codex))->toEqual(0.)
+    let pair = {
+      ...codex,
+      held: [("seat:a", span(0., 2.)), ("seat:b", span(0., 2.)), ("record:a", span(0., 2.))],
+    }
+    expect(ready(two, pair))->toEqual(0.)
+    let claude = {
+      ...idle("claude"),
+      seats: [span(0., 2.)],
+      held: [("record:x", span(0., 2.)), ("file:agent-x.jsonl", span(0., 2.))],
+    }
+    expect(ready(two, claude))->toEqual(2. *. minute)
     expect(ready(two, {...idle("turning"), turns: [span(0., 2.)]}))->toEqual(2. *. minute)
   })
   test("a slice before registration has no bucket and consumes no integrator capacity", () => {
@@ -286,6 +306,7 @@ describe("transcript and decision inputs", () => {
       seats: [],
       reviews: [],
       turns: [],
+      held: [],
       missing: [],
     }
     let rounds = Rounds.roundsOf(
@@ -324,14 +345,14 @@ describe("transcript and decision inputs", () => {
     let limit = Delegation.seatOpenSeconds->Int.toFloat *. 1000.
     let records = [Figures.Seat({name: "s", tooling: false, at: slice, session: "own"})]
     expect(Figures.seatsOf(records, ~session="own", ~now=2. *. limit))->toEqual([
-      (slice, slice +. limit),
+      ("s", slice, slice +. limit),
     ])
     expect(Figures.seatsOf(records, ~session="own", ~now=2. *. slice))->toEqual([
-      (slice, 2. *. slice),
+      ("s", slice, 2. *. slice),
     ])
     let closed = Array.concat(records, [Figures.Seated({name: "s", at: 3. *. limit})])
     expect(Figures.seatsOf(closed, ~session="own", ~now=4. *. limit))->toEqual([
-      (slice, 3. *. limit),
+      ("s", slice, 3. *. limit),
     ])
   })
   test("a model's long answer is part of a turn, and a subagent's time is its wall clock", () => {
@@ -346,6 +367,30 @@ describe("transcript and decision inputs", () => {
       Rounds.whole([line("assistant", 0.), line("assistant", 946.)]->Array.join("\n")),
     )->toEqual([{from: 0., to: 946000.}])
     expect(Rounds.whole(""))->toEqual([])
+  })
+
+  test("a resumed subagent's wait is no work, and an answer joins its request", () => {
+    let at = seconds => Date.fromTime(seconds *. 1000.)->Date.toISOString
+    let line = (kind, seconds, ~extra="") =>
+      `{"type":"${kind}"${extra},"timestamp":"${at(seconds)}"}`
+    let ended = `,"message":{"stop_reason":"end_turn"}`
+    let resumed = [
+      line("assistant", 0.),
+      line("assistant", 366., ~extra=ended),
+      line("user", 1009.),
+      line("assistant", 1137.),
+    ]
+    expect(Rounds.whole(resumed->Array.join("\n")))->toEqual([
+      {from: 0., to: 366000.},
+      {from: 1009000., to: 1137000.},
+    ])
+    let woken = [line("api-request", 0.), line("user", 0.1), line("assistant", 200.)]
+    expect(Rounds.turnsIn(woken->Array.join("\n")))->toEqual([{from: 0., to: 200000.}])
+    let unanswered = [line("api-request", 0.), line("user", 10800.)]
+    expect(Rounds.turnsIn(unanswered->Array.join("\n")))->toEqual([
+      {from: 0., to: 0.},
+      {from: 10800000., to: 10800000.},
+    ])
   })
 
   test("a queued notice is no stretch of a session's turn", () => {

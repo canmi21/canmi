@@ -7,6 +7,8 @@ type activity = {
   seats: array<span>,
   reviews: array<span>,
   turns: array<span>,
+  /** Each span by the worker it is, a seat's lane, a subagent's file, or `own`. */
+  held: array<(string, span)>,
   missing: array<string>,
 }
 type decision = {asked: float, answered: option<float>}
@@ -65,20 +67,31 @@ let statedTime = text =>
     ? timeOf(text->String.replaceRegExp(/\.$/, ""))
     : None
 
-/** A subagent's time, first line to last, a wall clock as a Codex seat's job has it. */
+/** A subagent's runs by wall clock, a wait after it ended its turn and before a resume left out. */
 let whole = text => {
-  let times = timestamps(text)
-  times == []
-    ? []
-    : [
-        {
-          from: times->Array.reduce(Float.Constants.positiveInfinity, Math.min),
-          to: times->Array.reduce(0., Math.max),
-        },
-      ]
+  let spans = []
+  let current = ref(None)
+  let ended = ref(false)
+  text
+  ->String.split("\n")
+  ->Array.forEach(line =>
+    timestamps(line)[0]->Option.forEach(at => {
+      switch current.contents {
+      | Some(span)
+        if !ended.contents || at -. span.to <= Delegation.turnGapSeconds->Int.toFloat *. 1000. =>
+        current := Some({...span, to: Math.max(span.to, at)})
+      | previous =>
+        previous->Option.forEach(span => spans->Array.push(span))
+        current := Some({from: at, to: at})
+      }
+      ended := line->String.includes("\"stop_reason\":\"end_turn\"")
+    })
+  )
+  current.contents->Option.forEach(span => spans->Array.push(span))
+  spans
 }
 
-/** A session's own turns, a request in flight joining what follows however long the model took. */
+/** A session's own turns, a request joined to its answer, one never answered not past a bound. */
 let turnsIn = text => {
   let spans = []
   let current = ref(None)
@@ -87,15 +100,25 @@ let turnsIn = text => {
   ->String.split("\n")
   ->Array.forEach(line =>
     timestamps(line)[0]->Option.forEach(at => {
+      let gap = switch current.contents {
+      | Some(span) => at -. span.to
+      | None => 0.
+      }
       switch current.contents {
       | Some(span)
-        if inFlight.contents || at -. span.to <= Delegation.turnGapSeconds->Int.toFloat *. 1000. =>
+        if gap <= Delegation.turnGapSeconds->Int.toFloat *. 1000. ||
+          (inFlight.contents && gap <= Delegation.seatOpenSeconds->Int.toFloat *. 1000.) =>
         current := Some({...span, to: Math.max(span.to, at)})
       | previous =>
         previous->Option.forEach(span => spans->Array.push(span))
         current := Some({from: at, to: at})
+        inFlight := false
       }
-      inFlight := line->String.includes("\"type\":\"api-request\"")
+      if line->String.includes("\"type\":\"api-request\"") {
+        inFlight := true
+      } else if line->String.includes("\"type\":\"assistant\"") {
+        inFlight := false
+      }
     })
   )
   current.contents->Option.forEach(span => spans->Array.push(span))
@@ -165,6 +188,7 @@ let activityOf = (
   }
   let seats = []
   let reviews = []
+  let held = []
   session.transcript->Option.forEach(transcript => {
     let directory = Node.join([withoutSuffix(transcript), "subagents"])
     entries(directory)
@@ -176,23 +200,32 @@ let activityOf = (
         ->Option.flatMap(Payload.parse)
         ->Option.flatMap(fields => fields->Payload.text("agentType")) == Some("reviewer")
       activity(path, ~spansOf=whole)->Array.forEach(
-        span => (reviewer ? reviews : seats)->Array.push(span),
+        span => {
+          (reviewer ? reviews : seats)->Array.push(span)
+          held->Array.push((`file:${file}`, span))
+        },
       )
     })
   })
   let id = session.transcript->Option.map(path => Node.basename(path)->withoutSuffix)
   id->Option.forEach(id =>
-    Figures.seatsOf(records, ~session=id, ~now)->Array.forEach(((from, to)) =>
+    Figures.seatsOf(records, ~session=id, ~now)->Array.forEach(((name, from, to)) => {
       seats->Array.push({from, to})
-    )
+      held->Array.push((`record:${name}`, {from, to}))
+    })
   )
-  let jobs =
-    jobs->Array.filterMap(job =>
-      id == Some(job.session) && (job.ended != None || alive(job.pid))
-        ? Some({from: job.started, to: job.ended->Option.getOr(now)})
-        : None
-    )
-  {session, at, jobs, seats, reviews, turns, missing}
+  let jobs = jobs->Array.filterMap(job =>
+    id == Some(job.session) && (job.ended != None || alive(job.pid))
+      ? {
+          let span = {from: job.started, to: job.ended->Option.getOr(now)}
+          // A seat's jobs run `--by` its lane, the name its `thread seat` records.
+          let own = job.by == "session" || job.by == session.name
+          held->Array.push((own ? "own" : `seat:${job.by}`, span))
+          Some(span)
+        }
+      : None
+  )
+  {session, at, jobs, seats, reviews, turns, held, missing}
 }
 
 let atOf = (record: Figures.record) =>
@@ -239,11 +272,21 @@ let workers = (activity, bucket, slice) =>
   bucket == None
     ? 0
     : {
-        let running =
-          [activity.jobs, activity.seats, activity.reviews]->Array.reduce(0, (count, spans) =>
-            count + spans->Array.filter(span => holds([span], slice))->Array.length
+        let keys =
+          activity.held
+          ->Array.filter(((_, span)) => holds([span], slice))
+          ->Array.map(((key, _)) => key)
+        // A seat's record is also its job or its file, so it counts only where neither runs.
+        let files = keys->Array.some(key => key->String.startsWith("file:"))
+        let workers =
+          keys
+          ->Array.filter(key =>
+            !(key->String.startsWith("record:")) ||
+            (!files && !(keys->Array.includes("seat:" ++ key->String.slice(~start=7))))
           )
-        Math.Int.max(running, 1)
+          ->Set.fromArray
+          ->Set.size
+        Math.Int.max(workers, 1)
       }
 
 let zero = {job: 0., review: 0., turn: 0., decision: 0., ready: 0., nothing: 0.}

@@ -90,6 +90,7 @@ let seatsOf = (found: array<record>, ~session, ~now) =>
         }
       )
       Some((
+        name,
         at,
         closed->Option.getOr(Math.min(now, at +. Delegation.seatOpenSeconds->Int.toFloat *. 1000.)),
       ))
