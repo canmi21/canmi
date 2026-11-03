@@ -80,7 +80,7 @@ let aboutSession = (session: session, ~now, ~moved): array<finding> =>
         notify,
       },
     ]
-  | (Some(_), None) => [
+  | (_, None) => [
       {
         key: `unwatched:${session.name}`,
         says: `unwatched to=${Delegation.silentTurns

@@ -36,15 +36,15 @@ let classify = line =>
   }
 
 /** A ledger job ends by its record or its missing process alone. */
-let step = (state, ~text, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=Watchdog.alive) => {
+let step = (state, ~text=?, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=Watchdog.alive) => {
   if state.ended {
     (state, [])
   } else {
-    let size = text->String.length
-    let whole = text->String.lastIndexOf("\n") + 1
+    let size = text->Option.mapOr(state.size, String.length)
+    let whole = text->Option.mapOr(state.offset, text => text->String.lastIndexOf("\n") + 1)
     let fresh =
       whole > state.offset
-        ? text->String.slice(~start=state.offset, ~end=whole)->String.split("\n")
+        ? text->Option.getOr("")->String.slice(~start=state.offset, ~end=whole)->String.split("\n")
         : []
     let failures = fresh->Array.filter(line => failure->RegExp.test(line))
     let count = failures->Array.length
@@ -53,7 +53,6 @@ let step = (state, ~text, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=Wa
       offset: whole > state.offset ? whole : state.offset,
       size,
       lastGrowth: size > state.size ? now : state.lastGrowth,
-      stalled: size > state.size ? false : state.stalled,
       failures: state.failures + count,
       pending: state.pending + count,
       first: state.pending == 0 ? failures[0]->Option.getOr("") : state.first,
@@ -82,7 +81,11 @@ let step = (state, ~text, ~now, ~stall, ~job: option<Ledger.job>=None, ~alive=Wa
       } else {
         next
       }
-      if !next.stalled && now -. next.lastGrowth >= stall {
+      if (
+        !next.stalled &&
+        !(job->Option.mapOr(false, job => job.quiet)) &&
+        now -. next.lastGrowth >= stall
+      ) {
         let quiet = Float.toInt((now -. next.lastGrowth) /. 1000.)
         events->Array.push(`stalled: no new line for ${Int.toString(quiet)} seconds`)
         ({...next, stalled: true}, events)
@@ -102,10 +105,8 @@ let main = (argv: array<string>) =>
     2
   | Some(named) =>
     // A job of the ledger is named by its id, and reaching its end is reading its result.
-    let job =
-      Ledger.find(named)->Option.orElse(Ledger.idOfOutput(named)->Option.flatMap(Ledger.find))
-    let file = job->Option.mapOr(named, job => job.output)
-    let id = job->Option.map(job => job.id)->Option.orElse(Ledger.idOfOutput(file))
+    let job: ref<option<Ledger.job>> = ref(None)
+    let foundFile = ref(false)
     let stall =
       1000. *.
       switch argv->Array.findIndex(arg => arg == "--stall") {
@@ -118,22 +119,37 @@ let main = (argv: array<string>) =>
     let began = Date.now()
     let state = ref(start(~now=began, ~stall))
     setInterval(() => {
-      let now = Date.now()
-      let text = try Node.readFileSync(file) catch {
-      | _ => ""
-      }
-      let current = id->Option.flatMap(Ledger.find)
-      let (next, events) = step(state.contents, ~text, ~now, ~stall, ~job=current)
-      state := next
-      events->Array.forEach(Console.log)
-      if next.ended {
-        id->Option.forEach(id => Ledger.markRead(~id, ~at=Date.now()))
-        Node.exit(0)
-      } else if now -. began > Int.toFloat(Delegation.watchBoundSeconds) *. 1000. {
-        Console.log(
-          `bound: ${file} watched for ${Int.toString(Delegation.watchBoundSeconds)} seconds`,
-        )
-        Node.exit(0)
+      if !state.contents.ended {
+        let now = Date.now()
+        job :=
+          switch job.contents {
+          | Some(known) => Ledger.find(known.id)->Option.orElse(Some(known))
+          | None =>
+            Ledger.find(named)->Option.orElse(Ledger.idOfOutput(named)->Option.flatMap(Ledger.find))
+          }
+        let file = job.contents->Option.mapOr(named, job => job.output)
+        foundFile := foundFile.contents || Node.existsSync(file)
+        let text = try Some(Node.readFileSync(file)) catch {
+        | _ => None
+        }
+        if job.contents == None && !foundFile.contents && now -. began >= stall {
+          Console.log(`missing: no job in the ledger and no file for ${named}`)
+          state := {...state.contents, ended: true}
+          Node.exit(1)
+        } else {
+          let (next, events) = step(state.contents, ~text?, ~now, ~stall, ~job=job.contents)
+          state := next
+          events->Array.forEach(Console.log)
+          if next.ended {
+            job.contents->Option.forEach(job => Ledger.markRead(~id=job.id, ~at=Date.now()))
+            Node.exit(0)
+          } else if now -. began > Int.toFloat(Delegation.watchBoundSeconds) *. 1000. {
+            Console.log(
+              `bound: ${file} watched for ${Int.toString(Delegation.watchBoundSeconds)} seconds`,
+            )
+            Node.exit(0)
+          }
+        }
       }
     }, 1000)
     0

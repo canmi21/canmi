@@ -1,66 +1,82 @@
 /** Refuses a message to a session not on this machine, `send-on-this-machine`. */
-/** A name past a listing's ` [ref]`, which a listing may append to it. */
-let bare = (to: string) =>
-  switch to->String.match(/^(.*?) \[[^\]]+\]$/) {
-  | Some(found) => found[1]->Option.flatMap(x => x)->Option.getOr(to)
-  | None => to
-  }
-
 /** What is known here of who may be reached, each read apart so a test gives its own. */
 type known = {sessions: array<string>, subagents: array<string>, socket: string => bool}
 
 /** Why a message to `to` is refused, none where it stays on this machine. */
 let why = (to: string, ~known: known) => {
-  let name = bare(to)
-  if (
-    name == "main" || known.sessions->Array.includes(name) || known.subagents->Array.includes(name)
+  if / \[[^\]]+\]$/->RegExp.test(to) {
+    Some(
+      `${to} carries a ref that does not identify this machine; use uds:/tmp/cc-socks/<pid>.sock`,
+    )
+  } else if (
+    to == "main" ||
+    to == "team-lead" ||
+    known.sessions->Array.includes(to) ||
+    known.subagents->Array.includes(to)
   ) {
     None
-  } else if name->String.startsWith("uds:") {
-    known.socket(name->String.slice(~start=4)) ? None : Some(`${to} is no socket on this machine`)
+  } else if to->String.startsWith("uds:") {
+    known.socket(to->String.slice(~start=4)) ? None : Some(`${to} is no socket on this machine`)
   } else {
     Some(`${to} is neither a session in ~/.claude/sessions/*.json nor a subagent of this session`)
   }
 }
 
-let home = () => Node.env->Dict.get("HOME")->Option.getOr("")
+@module("node:os") external userInfo: unit => {"homedir": string} = "userInfo"
 
-/** The name of each session this machine records, an unreadable record passed over. */
-let sessionNames = () => {
-  let directory = Node.join([home(), ".claude", "sessions"])
-  Node.existsSync(directory)
-    ? Node.readdir(directory)
-      ->Array.filter(file => file->String.endsWith(".json"))
-      ->Array.filterMap(file =>
-        try Node.readFileSync(Node.join([directory, file]))
-        ->Payload.parse
-        ->Option.flatMap(fields => fields->Payload.text("name")) catch {
-        | _ => None
-        }
-      )
-    : []
-}
+let home = () =>
+  switch Node.env->Dict.get("HOME") {
+  | Some(value) if value != "" => value
+  | _ => userInfo()["homedir"]
+  }
+
+/** The name of each live session this machine records, an unreadable record passed over. */
+let sessionNames = () =>
+  try {
+    let directory = Node.join([home(), ".claude", "sessions"])
+    Node.existsSync(directory)
+      ? Node.readdir(directory)
+        ->Array.filter(file => file->String.endsWith(".json"))
+        ->Array.filterMap(file =>
+          try Node.readFileSync(Node.join([directory, file]))
+          ->Payload.parse
+          ->Option.flatMap(fields =>
+            Ledger.numberOf(fields, "pid")
+            ->Option.filter(pid => pid == Math.floor(pid) && Watchdog.alive(pid->Float.toInt))
+            ->Option.flatMap(_ => fields->Payload.text("name"))
+          ) catch {
+          | _ => None
+          }
+        )
+      : []
+  } catch {
+  | _ => []
+  }
 
 /** Each subagent this session spawned by its id and its name, read beside its transcript. */
 let subagentsOf = (payload: Payload.t) =>
   payload
   ->Payload.text("transcript_path")
-  ->Option.mapOr([], transcript => {
-    let directory = Node.join([transcript->String.slice(~start=0, ~end=-6), "subagents"])
-    Node.existsSync(directory)
-      ? Node.readdir(directory)
-        ->Array.filter(file => file->String.endsWith(".meta.json"))
-        ->Array.flatMap(file => {
-          let id = file->String.slice(~start=6, ~end=-10)
-          let named = try Node.readFileSync(Node.join([directory, file]))
-          ->Payload.parse
-          ->Option.flatMap(fields => fields->Payload.text("name")) catch {
-          | _ => None
-          }
-          [id, ...named->Option.mapOr([], name => [name])]
-        })
-      : []
-  })
+  ->Option.mapOr([], transcript =>
+    try {
+      let directory = Node.join([transcript->String.slice(~start=0, ~end=-6), "subagents"])
+      Node.existsSync(directory)
+        ? Node.readdir(directory)
+          ->Array.filter(file => file->String.endsWith(".meta.json"))
+          ->Array.flatMap(file => {
+            let id = file->String.slice(~start=6, ~end=-10)
+            let named = try Node.readFileSync(Node.join([directory, file]))
+            ->Payload.parse
+            ->Option.flatMap(fields => fields->Payload.text("name")) catch {
+            | _ => None
+            }
+            [id, ...named->Option.mapOr([], name => [name])]
+          })
+        : []
+    } catch {
+    | _ => []
+    }
+  )
 
 /** A socket under the directory this machine's sessions listen in, and present. */
 let localSocket = path =>
@@ -86,7 +102,7 @@ let refuse = (payload: Payload.t): int =>
     | Some(reason) =>
       Console.error(
         `Message refused by hooks/gates/messages/send_local.res: ${reason}.\n` ++
-        "Checked ~/.claude/sessions/*.json for its name, this session's subagents, and /tmp/cc-socks for a socket. A session just opened writes its record a moment later, so try again shortly; contacting another machine is only on the author's explicit word.\n" ++ "The rule: send-on-this-machine in model/rules/delegation.res, and docs/agents/delegation.md",
+        "Checked live processes in ~/.claude/sessions/*.json, this session's subagents, and /tmp/cc-socks for a socket. A destination with a ref is refused; use uds:/tmp/cc-socks/<pid>.sock. A session just opened writes its record a moment later, so try again shortly; contacting another machine is only on the author's explicit word.\n" ++ "The rule: send-on-this-machine in model/rules/delegation.res, and docs/agents/delegation.md",
       )
       2
     }

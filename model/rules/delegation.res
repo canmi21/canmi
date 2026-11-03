@@ -186,7 +186,7 @@ let shortFlags = ["--dry-run", "-n", "--pending"]
 /** The watcher's stall, bound and line patterns, as regular expression sources. */
 let stallSeconds = 30
 let watchBoundSeconds = 1800
-let watchFailure = "\\b(?:error|errors|failed|failure|fatal|panic|refused|timed out)\\b"
+let watchFailure = "\\b(?<!\\b0 )(?:error|errors|failed|failure|fatal|panic|refused|timed out)\\b"
 let watchEnd = "^(?:exit|status|ended)[: =]"
 
 /** Where the run ledger, its outputs and the watchdog's event file live, in no repository. */

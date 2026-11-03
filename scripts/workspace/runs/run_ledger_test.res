@@ -39,6 +39,72 @@ let job = (id): Ledger.job => {
 }
 
 describe("the hook's view of the ledger", () => {
+  afterEach(() => Node.rmSync(Ledger.sessions(), {recursive: true, force: true}))
+  [
+    ("commit message", "jj commit -m 'x; mise run //:job register seat ghost'"),
+    ("search pattern", "rg 'a|mise run //:job register seat ghost' docs"),
+  ]->Array.forEach(((kind, command)) => {
+    test(
+      `ignores registration text in a ${kind}`,
+      () => {
+        Run_ledger.observe(payload(command))
+        // Quoted separators must not turn argument text into a registration.
+        expect(Node.existsSync(Node.join([Ledger.sessions(), "ghost.json"])))->toEqual(false)
+        Ledger.registerSession(~role="seat", ~name="ghost", ~transcript=Some("/original.jsonl"))
+        Run_ledger.observe(payload(command))
+        expect(Watchdog.registered()[0]->Option.flatMap(one => one.transcript))->toEqual(
+          Some("/original.jsonl"),
+        )
+      },
+    )
+  })
+
+  test("registers past a redirection of its own", () => {
+    Run_ledger.observe(payload("mise run //:job register seat quiet </dev/null 2>&1"))
+    expect(Watchdog.registered()[0]->Option.map(one => one.name))->toEqual(Some("quiet"))
+  })
+
+  test("registers past a leading assignment", () => {
+    Run_ledger.observe(payload("FOO=1 mise run //:job register advisor assigned"))
+    // An assignment does not change which program runs the registration.
+    expect(Watchdog.registered()[0]->Option.map(one => one.name))->toEqual(Some("assigned"))
+  })
+
+  [
+    (
+      "complete thread word",
+      "mise run //:job register seat scoped --thread trial_2",
+      Some("trial_2"),
+    ),
+    (
+      "thread in another segment",
+      "rg --thread elsewhere docs; mise run job register seat scoped",
+      None,
+    ),
+    (
+      "transcript in another segment",
+      "rg --transcript /other docs; mise run //:job register seat scoped",
+      None,
+    ),
+    (
+      "quoted transcript text",
+      "mise run //:job register seat scoped; rg 'mentions --transcript' docs",
+      None,
+    ),
+  ]->Array.forEach(((kind, command, thread)) => {
+    test(
+      `reads registration flags from its own words with ${kind}`,
+      () => {
+        Run_ledger.observe(payload(command))
+        // Flags belong to the registration segment and keep their complete values.
+        expect(Watchdog.registered()[0]->Option.flatMap(one => one.transcript))->toEqual(
+          Some("/t.jsonl"),
+        )
+        expect(Watchdog.registered()[0]->Option.flatMap(one => one.thread))->toEqual(thread)
+      },
+    )
+  })
+
   test("records a read of a finished job's output, and not of a running one's", () => {
     Ledger.started(job("20261102-000000-abcd"))
     Run_ledger.observe(payload(~file=Ledger.outputOf("20261102-000000-abcd"), "ls"))

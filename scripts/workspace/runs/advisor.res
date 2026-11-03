@@ -4,7 +4,11 @@
  */
 type holder = {name: string, pid: int, since: string, handingTo: option<string>}
 
-type standing = First | Holding(holder) | Candidate(holder) | Orphan(holder)
+type standing = First | Holding(holder) | Candidate(holder) | Orphan(holder) | Broken | Unknown
+
+@module("node:fs") external rename: (string, string) => unit = "renameSync"
+@module("node:fs") external link: (string, string) => unit = "linkSync"
+@module("node:fs") external exclusiveDirectory: string => unit = "mkdirSync"
 
 let home = () =>
   switch Node.env->Dict.get("ADVISOR_HOME") {
@@ -18,7 +22,8 @@ let handoverFile = () => Node.join([home(), Delegation.advisorHandover])
 let parse = (text: string): option<holder> =>
   Payload.parse(text)->Option.flatMap(fields =>
     switch (fields->Payload.text("name"), Ledger.numberOf(fields, "pid")) {
-    | (Some(name), Some(pid)) =>
+    | (Some(name), Some(pid))
+      if name != "" && pid > 0. && pid <= 2147483647. && Math.floor(pid) == pid =>
       Some({
         name,
         pid: Float.toInt(pid),
@@ -29,31 +34,58 @@ let parse = (text: string): option<holder> =>
     }
   )
 
-let read = () => Node.existsSync(currentFile()) ? parse(Node.readFileSync(currentFile())) : None
+let read = () =>
+  try parse(Node.readFileSync(currentFile())) catch {
+  | _ => None
+  }
 
-let write = (holder: holder) => {
+let clean = path =>
+  try Node.rmSync(path, {recursive: true, force: true}) catch {
+  | _ => Console.error(`could not remove advisor temporary path ${path}`)
+  }
+
+let write = (holder: holder, ~first=false) => {
   Node.mkdirAll(home())
-  Node.writeFileSync(
-    currentFile(),
-    Ledger.line(
-      [
-        ("name", JSON.String(holder.name)),
-        ("pid", JSON.Number(holder.pid->Int.toFloat)),
-        ("since", JSON.String(holder.since)),
-        ...holder.handingTo->Option.mapOr([], name => [("handingTo", JSON.String(name))]),
-      ],
-    ),
-  )
+  let temporary = Node.mkdtempSync(Node.join([home(), ".advisor-"]))
+  let staged = Node.join([temporary, "record"])
+  try {
+    Node.writeFileSync(
+      staged,
+      Ledger.line(
+        [
+          ("name", JSON.String(holder.name)),
+          ("pid", JSON.Number(holder.pid->Int.toFloat)),
+          ("since", JSON.String(holder.since)),
+          ...holder.handingTo->Option.mapOr([], name => [("handingTo", JSON.String(name))]),
+        ],
+      ),
+    )
+    if first {
+      link(staged, currentFile())
+    } else {
+      rename(staged, currentFile())
+    }
+  } catch {
+  | error =>
+    clean(temporary)
+    throw(error)
+  }
+  clean(temporary)
 }
 
 /** Which of the cases a session stands in, from the record, its own pid and who lives. */
-let standingOf = (record, ~pid, ~alive) =>
+let standingOf = (record, ~pid, ~alive, ~present=false) =>
   switch record {
+  | _ if pid <= 0 => Unknown
+  | None if present => Broken
   | None => First
   | Some(holder) if holder.pid == pid => Holding(holder)
   | Some(holder) if alive(holder.pid) => Candidate(holder)
   | Some(holder) => Orphan(holder)
   }
+
+let standing = pid =>
+  standingOf(read(), ~pid, ~alive=Watchdog.alive, ~present=Node.existsSync(currentFile()))
 
 /** Whether an order from `sender` may be acted on, or why not. */
 let orderFrom = (record, ~sender) =>
@@ -65,6 +97,8 @@ let orderFrom = (record, ~sender) =>
 
 let said = standing =>
   switch standing {
+  | Unknown => "cannot tell: your session pid is unknown; set CLAUDE_PID to its positive pid."
+  | Broken => "broken: the advisor record cannot be read; claim only on the author's word: --author-said."
   | First => "first: no record. You are the first advisor; say so to the author and claim the seat."
   | Holding(holder) => `holder: you hold the seat as ${holder.name}, since ${holder.since}.`
   | Candidate(holder) =>
@@ -74,51 +108,120 @@ let said = standing =>
   }
 
 let ownPid = () =>
-  Node.env->Dict.get("CLAUDE_PID")->Option.flatMap(text => Int.fromString(text))->Option.getOr(0)
+  Node.env
+  ->Dict.get("CLAUDE_PID")
+  ->Option.flatMap(text =>
+    /^\d+$/->RegExp.test(text) ? Int.fromString(text)->Option.filter(pid => pid > 0) : None
+  )
+  ->Option.getOr(0)
 
 let now = () => Date.make()->Date.toISOString
 
-let claim = (name, ~pid, ~authorSaid) =>
-  switch standingOf(read(), ~pid, ~alive=Watchdog.alive) {
-  | Candidate(holder) =>
-    Console.error(`${holder.name} holds the seat and lives, so it passes it; nothing changed`)
-    1
-  | Orphan(holder) if !authorSaid =>
-    Console.error(`${holder.name}'s seat is taken only on the author's word: --author-said`)
-    1
-  | _ =>
-    write({name, pid, since: now(), handingTo: None})
-    Console.log(`${name} holds the seat`)
-    0
+let refused = why => {
+  Console.error(`${why}; nothing changed`)
+  1
+}
+
+/** Every mutation checks and publishes while holding the same exclusive directory. */
+let changing = (pid, action) => {
+  if pid <= 0 {
+    refused("your session pid is unknown, so the seat cannot be changed")
+  } else {
+    Node.mkdirAll(home())
+    let lock = currentFile() ++ ".lock"
+    let acquired = try {
+      exclusiveDirectory(lock)
+      true
+    } catch {
+    | _ => false
+    }
+    if !acquired {
+      refused("the advisor record is locked, so this mutation cannot proceed")
+    } else {
+      let result = try action() catch {
+      | _ => refused("the advisor record could not be published")
+      }
+      clean(lock)
+      result
+    }
   }
+}
+
+let claim = (name, ~pid, ~authorSaid) =>
+  changing(pid, () =>
+    switch standing(pid) {
+    | Candidate(holder) =>
+      Console.error(`${holder.name} holds the seat and lives, so it passes it; nothing changed`)
+      1
+    | Orphan(holder) if !authorSaid =>
+      Console.error(`${holder.name}'s seat is taken only on the author's word: --author-said`)
+      1
+    | Broken if !authorSaid => refused("the advisor record is broken; --author-said is required")
+    | Unknown => refused("your session pid is unknown")
+    | state =>
+      write({name, pid, since: now(), handingTo: None}, ~first=state == First)
+      Console.log(`${name} holds the seat`)
+      0
+    }
+  )
+
+/** Keep the old registration available for rollback until the new seat is published. */
+let switched = (holder: holder, successor: holder) => {
+  let registration = Node.join([Ledger.sessions(), `${holder.name}.json`])
+  if holder.name == successor.name || !Node.existsSync(registration) {
+    write(successor)
+  } else {
+    let temporary = Node.mkdtempSync(Node.join([Ledger.home(), ".advisor-pass-"]))
+    let staged = Node.join([temporary, "registration"])
+    try {
+      rename(registration, staged)
+      write(successor)
+    } catch {
+    | error =>
+      if Node.existsSync(staged) {
+        rename(staged, registration)
+      }
+      clean(temporary)
+      throw(error)
+    }
+    clean(temporary)
+  }
+}
 
 /** The one point of a switch, the holder alone changing the file. */
 let pass = (name, ~to, ~pid) =>
-  switch standingOf(read(), ~pid, ~alive=Watchdog.alive) {
-  | Holding(_) =>
-    write({name, pid: to, since: now(), handingTo: None})
-    Console.log(`${name} holds the seat; tell the supervisor and the author the new name`)
-    0
-  | _ =>
-    Console.error("only the holder passes the seat; nothing changed")
-    1
-  }
+  changing(pid, () =>
+    switch standing(pid) {
+    | Holding(_) if !Watchdog.alive(to) => refused("the successor pid does not live")
+    | Holding(holder) if holder.handingTo->Option.mapOr(false, successor => successor != name) =>
+      refused("the successor differs from the one named by handing")
+    | Holding(holder) =>
+      switched(holder, {name, pid: to, since: now(), handingTo: None})
+      Console.log(`${name} holds the seat; tell the supervisor and the author the new name`)
+      0
+    | _ =>
+      Console.error("only the holder passes the seat; nothing changed")
+      1
+    }
+  )
 
 let handing = (name, ~pid) =>
-  switch standingOf(read(), ~pid, ~alive=Watchdog.alive) {
-  | Holding(holder) =>
-    write({...holder, handingTo: Some(name)})
-    Console.log(`handing to ${name}; everything still comes here until the switch`)
-    0
-  | _ =>
-    Console.error("only the holder names a successor; nothing changed")
-    1
-  }
+  changing(pid, () =>
+    switch standing(pid) {
+    | Holding(holder) =>
+      write({...holder, handingTo: Some(name)})
+      Console.log(`handing to ${name}; everything still comes here until the switch`)
+      0
+    | _ =>
+      Console.error("only the holder names a successor; nothing changed")
+      1
+    }
+  )
 
 let main = (argv: array<string>) =>
   switch argv {
   | ["case"] =>
-    Console.log(said(standingOf(read(), ~pid=ownPid(), ~alive=Watchdog.alive)))
+    Console.log(said(standing(ownPid())))
     Console.log(`your pid: ${Int.toString(ownPid())}`)
     0
   | ["claim", name] => claim(name, ~pid=ownPid(), ~authorSaid=false)

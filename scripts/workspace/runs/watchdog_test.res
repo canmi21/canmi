@@ -32,6 +32,26 @@ let look = (~jobs=[], ~sessions=[], ~said=[], ~now, ~alive=_ => true, ~moved=_ =
   )
 
 describe("the watchdog", () => {
+  test("says an advisor with no readable transcript to its superior once", () => {
+    [None, Some("/missing")]->Array.forEach(
+      transcript => {
+        let session: Watchdog.session = {name: "advisor", role: "advisor", transcript, thread: None}
+        let found = Watchdog.owed(
+          ~jobs=[],
+          ~sessions=[session],
+          ~said=[],
+          ~now=0.,
+          ~alive=_ => true,
+          ~moved=_ => None,
+        )
+        expect(found->Array.map(one => one.key))->toEqual(["unwatched:advisor"])
+        expect((found->Array.getUnsafe(0)).says->String.includes("unwatched to=advisor"))->toEqual(
+          true,
+        )
+        expect(look(~sessions=[session], ~said=["unwatched:advisor"], ~now=1000.))->toEqual([])
+      },
+    )
+  })
   test("says an end nobody read after its limit, and only then", () => {
     let ended = job(~ended=1000., ~status=0, ())
     expect(look(~jobs=[ended], ~now=30000.))->toEqual([])

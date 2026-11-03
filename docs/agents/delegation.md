@@ -146,7 +146,10 @@ common superior.
 
 **No order skips a layer, except the global stop**, which the advisor broadcasts and every layer takes
 at its nearest safe point. Production down, a credential leaked or data lost goes straight to the
-advisor and pushes to the author.
+advisor and pushes to the author. **A global stop says what becomes of a seat already running**: a
+drill or a soft stop lets it finish in its lane, and a real one, production down or a leak, stops it
+by its recorded pid. **Two orders in conflict resolve to the stricter** until a common superior
+settles them.
 
 **Where a supervisor is named, the order of a thread's work is its own**, and the integrator's sequence
 is the order of its landings. A thread's charter, decision queue, ledger and status are files, [threads.md](threads.md).

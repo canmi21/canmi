@@ -2,8 +2,27 @@
  * What a tool call tells the run ledger, docs/agents/runs.md. An output read is a job's result
  * read, and a registering command names the session's transcript, whose growth is its turn.
  */
-let registering = /(?:^|[;&|\n(]\s*)mise\s+run\s+(?:\/\/:)?job\s+register\s+([a-z]+)\s+([A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-])/
-let namedThread = /--thread\s+([a-z][a-z0-9-]*)/
+/** A command's own words, up to its first redirection. */
+let pastRedirects = (words: array<string>) =>
+  switch words->Array.findIndex(word => /^\d*[<>]/->RegExp.test(word)) {
+  | -1 => words
+  | at => words->Array.slice(~start=0, ~end=at)
+  }
+
+let registration = segment =>
+  switch Jj_command.programOf(segment)->Option.map(((program, words)) => (
+    program,
+    pastRedirects(words)->List.fromArray,
+  )) {
+  | Some(("mise", list{"run", "job" | "//:job", "register", role, name, ...flags}))
+    if Delegation.registeredRoles->Array.includes(role) && /^[A-Za-z0-9_.-]+$/->RegExp.test(name) =>
+    switch flags {
+    | list{} => Some((role, name, None))
+    | list{"--thread", thread} => Some((role, name, Some(thread)))
+    | _ => None
+    }
+  | _ => None
+  }
 
 /** The output paths of the ledger a call's text names. */
 let outputsIn = (text: string) => {
@@ -61,19 +80,12 @@ let observe = (payload: Payload.t, ~at=Date.now()) => {
     )
   )
 
-  switch (RegExp.exec(registering, typed(payload)), transcriptOf(payload)) {
-  | (Some(found), Some(transcript)) =>
-    switch (found[1]->Option.flatMap(x => x), found[2]->Option.flatMap(x => x)) {
-    | (Some(role), Some(name))
-      if Delegation.registeredRoles->Array.includes(role) &&
-        !(typed(payload)->String.includes("--transcript")) =>
-      let thread =
-        RegExp.exec(namedThread, typed(payload))->Option.flatMap(found =>
-          found[1]->Option.flatMap(x => x)
-        )
+  transcriptOf(payload)->Option.forEach(transcript =>
+    typed(payload)
+    ->Jj_command.segments
+    ->Array.filterMap(registration)
+    ->Array.forEach(((role, name, thread)) =>
       Ledger.registerSession(~role, ~name, ~transcript=Some(transcript), ~thread)
-    | _ => ()
-    }
-  | _ => ()
-  }
+    )
+  )
 }
