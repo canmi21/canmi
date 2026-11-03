@@ -454,6 +454,15 @@ let items: array<item> = [
     ),
   },
   {
+    id: "unread-to-dispatcher",
+    says: "The watchdog's `unread` of a seat's ended job goes to=supervisor alone, never to the integrator that dispatched it, so a seat's end waits unseen while that integrator is busy: f5's objectcalls, job 1091, on 2026-11-03 at 08:15 UTC",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes(
+      "a seat's `unread` said to its dispatching integrator too, read from the job's `--by` and the seat's record, with a test",
+    ),
+  },
+  {
     id: "land-dry-parts",
     says: "`land --dry-run` says each step's command but not the parts its check would run, which step 12 of thread fifth settled it would say",
     repos: ["workspace"],
