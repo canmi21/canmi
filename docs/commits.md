@@ -181,6 +181,14 @@ above: once the check passes, the form layer holds nothing and the work is done.
 on the form layer holding nothing**; a reviewer's read and the wave accepted hold for a wave worked
 in roles alone, [pushing.md](agents/pushing.md).
 
+**An integrator lands by `mise run land <repository> -m "<subject>"`**, one task from the workspace
+running in order the repository's format, `mise run bump`, `mise run check`, the commit of the
+working copy or of `--paths`, `main` moved to it, the push's dry run and the push, stopping at the
+first that fails with its causes last; `--dry-run` says each command and runs none, and `--thread`
+records the landing in that thread. A file `[land] bumped` lists in a repository's `workspace.toml`
+is read by the check as touching nothing where its change only raises that repository's own
+versions, `scripts/workspace/touched`. The steps by hand stay the way where the task cannot run.
+
 **A push that releases a version of our own code is asked of the user first**, in either mode,
 until the deferred item `release-push` is settled; canmi/lib's `held-back` is one such push.
 monoflake/driver's pushes release nothing, [pushing.md](agents/pushing.md).

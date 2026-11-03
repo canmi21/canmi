@@ -27,6 +27,11 @@ without asking.
 **A global stop from the advisor is taken at the nearest safe point**, and passed to its integrators.
 Production down, a credential leaked or data lost goes straight to the advisor.
 
+**Before it stops for a compaction, it hands each integrator the next piece that integrator can take
+without it**, and an integrator holding one goes on through it while the supervisor is away. Where
+none is ready it says so to the advisor, whose word then reaches the integrators directly until the
+supervisor says it is back.
+
 **Nothing it runs blocks the turn**, [agent-protocol.md](agent-protocol.md), "A long command never
 holds the conversation".
 

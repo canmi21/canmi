@@ -427,6 +427,15 @@ let items: array<item> = [
     holds: Owes("a line per switch job in the runner's output, its property named"),
   },
   {
+    id: "compacting-not-idle",
+    says: "The watchdog's `idle` says a session stopped for a compaction as idle: at 06:40:52 UTC on 2026-11-03 it reported integrator workspace-d3 with no job, seat or turn for 321 s while the author compacted it by hand after its 06:38 savepoint. A session whose savepoint marks it compacting is said as compacting, not idle, until its next turn",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes(
+      "a mark the savepoint leaves, and a watchdog test where a session so marked is said as compacting",
+    ),
+  },
+  {
     id: "green-to-push-measured",
     says: "`job table --by-class` gives a step's time from its local green to its push, which needs a record of the local green and of which landing is the step's own; until then it prints that it is not measured, as a step's green is recorded after its own landing",
     repos: ["workspace"],
