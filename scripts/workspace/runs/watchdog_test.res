@@ -205,6 +205,7 @@ describe("idle integrators", () => {
     ~moved=_ => Some(0.),
     ~seats=_ => [],
     ~openSeats=[],
+    ~steps=[],
   ) =>
     Watchdog.aboutIdle(
       ~thread="t",
@@ -216,6 +217,7 @@ describe("idle integrators", () => {
       ~moved,
       ~seats,
       ~openSeats,
+      ~steps,
       ~said,
     )
 
@@ -305,7 +307,7 @@ describe("idle integrators", () => {
       ~now=600000.,
       ~moved=path => Some(path == "/sessions/j.jsonl" ? 599000. : 0.),
     )
-    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-unassigned:i:0"])
   })
 
   test("writes idle to the real event file and reads seat move times", () => {
@@ -386,5 +388,75 @@ describe("idle integrators", () => {
       throw(error)
     }
     cleanup()
+  })
+})
+
+describe("an integrator with no step free for it", () => {
+  let integrator: Watchdog.session = {
+    name: "i",
+    role: "integrator",
+    transcript: Some("/sessions/s.jsonl"),
+    thread: Some("t"),
+  }
+  let other: Watchdog.session = {...integrator, name: "j", transcript: Some("/sessions/j.jsonl")}
+  let steps: array<Charter.step> = [{id: "1", after: []}]
+  let held: array<(Charter.step, float)> = [({id: "1", after: []}, 0.)]
+  let unassigned = (
+    ~now=300000.,
+    ~ready=[],
+    ~sessions=[integrator],
+    ~steps=steps,
+    ~said=[],
+    ~moved=_ => Some(0.),
+  ) =>
+    Watchdog.aboutIdle(
+      ~thread="t",
+      ~ready,
+      ~sessions,
+      ~jobs=[],
+      ~now,
+      ~alive=_ => true,
+      ~moved,
+      ~seats=_ => [],
+      ~steps,
+      ~said,
+    )
+
+  test("tells the advisor at 300 seconds and not at 299, with no step ready", () => {
+    expect(unassigned(~now=299000.))->toEqual([])
+    let found = unassigned()
+    expect(found->Array.map(one => one.key))->toEqual(["idle-unassigned:i:0"])
+    expect((found->Array.getUnsafe(0)).says)->toEqual(
+      "idle to=advisor integrator i has had no job, no seat and no turn for 300 s, and no step of thread t is free for it: 0 ready, 0 of 1 integrators busy",
+    )
+  })
+
+  test("tells it where the one ready step is held by another busy integrator", () => {
+    let found = unassigned(
+      ~ready=held,
+      ~sessions=[integrator, other],
+      ~moved=path => Some(path == "/sessions/j.jsonl" ? 299000. : 0.),
+    )
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-unassigned:i:0"])
+    expect(
+      (found->Array.getUnsafe(1)).says->String.endsWith("1 ready, 1 of 2 integrators busy"),
+    )->toEqual(true)
+  })
+
+  test("is silent where ready steps outnumber busy integrators", () => {
+    let found = unassigned(~ready=held)
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
+  })
+
+  test("says each stretch once, from the integrator's own last activity", () => {
+    let said = unassigned()->Array.map(one => one.key)
+    expect(unassigned(~said, ~now=400000.))->toEqual([])
+    expect(
+      unassigned(~said, ~now=400000., ~moved=_ => Some(100000.))->Array.map(one => one.key),
+    )->toEqual(["idle-unassigned:i:100000"])
+  })
+
+  test("says nothing for a thread with no steps", () => {
+    expect(unassigned(~steps=[]))->toEqual([])
   })
 })

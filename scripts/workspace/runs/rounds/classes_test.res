@@ -204,4 +204,58 @@ describe("class table", () => {
     expect(shown(values))->toContain("other | alpha |")
     expect(shown(values))->toContain("warning and never blocking")
   })
+  describe("green to push", () => {
+    let green = (step, at): Figures.record => Green({step, at})
+    let landed = (at): Figures.record => Landed({repository: "r", commit: "c", subject: "s", at})
+    test(
+      "a green reads the first landing at or after it",
+      () => {
+        expect(Figures.greenToPush([green("1", 1000.), landed(61000.)]))->toEqual([
+          ("1", 1000., Some(60.)),
+        ])
+        expect(Figures.greenToPush([landed(500.), green("1", 1000.), landed(1000.)]))->toEqual([
+          ("1", 1000., Some(0.)),
+        ])
+      },
+    )
+    test(
+      "a green with no landing after it is not pushed yet",
+      () => {
+        expect(Figures.greenToPush([green("1", 1000.), landed(999.)]))->toEqual([
+          ("1", 1000., None),
+        ])
+      },
+    )
+    test(
+      "two greens before one landing both read it",
+      () => {
+        expect(
+          Figures.greenToPush([green("1", 1000.), green("2", 31000.), landed(61000.)]),
+        )->toEqual([("1", 1000., Some(60.)), ("2", 31000., Some(30.))])
+      },
+    )
+    test(
+      "since filters greens and a thread without one says nothing",
+      () => {
+        let named = [
+          ("a", [green("1", 1000.), green("2", 5000.), landed(65000.)]),
+          ("b", [landed(1000.)]),
+          ("c", [green("3", 100.), landed(200.)]),
+        ]
+        let lines = Classes.pushesOf(named, ~since=2000.)
+        expect(lines)->toEqual([{thread: "a", step: "2", seconds: Some(60.)}])
+        let text = Classes.shown(~timings=[], ~landings=[], ~pushes=lines)
+        expect(text)->toContain(
+          "green to push, by the next landing recorded after each green, approximate:",
+        )
+        expect(text)->toContain("a step 2: 1.0 minutes")
+        expect(text)->negated->toContain("a step 1")
+        expect(text)->negated->toContain("b step")
+        let open_ = Classes.pushesOf([("d", [green("4", 10.)])], ~since=0.)
+        expect(Classes.shown(~timings=[], ~landings=[], ~pushes=open_))->toContain(
+          "d step 4: not pushed yet",
+        )
+      },
+    )
+  })
 })

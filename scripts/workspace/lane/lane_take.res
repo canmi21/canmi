@@ -1,6 +1,7 @@
 /**
  * `lane take <name> [--in <repository>]`, a lane's changed paths restored into the main checkout,
- * the lane snapshotted first since `jj restore` reads its last snapshot, docs/agents/lanes.md.
+ * the lane snapshotted first since `jj restore` reads its last snapshot, and refused where no
+ * passing `lane handed` judged what it holds now, docs/agents/lanes.md.
  */
 /** The paths one line of `jj diff --summary` names, both sides of a rename, a copy's new one. */
 let pathsOfSummary = (line: string) => {
@@ -44,43 +45,55 @@ let fork = "fork_point(main | @)"
 let fileset = path =>
   `root-file:"${path->String.replaceAll("\\", "\\\\")->String.replaceAll("\"", "\\\"")}"`
 
-/** One workspace of the lane taken into `source`, or why not, printing the paths. */
-let takeOne = (~source, ~name, ~dry, one: Lane_state.found) =>
+/**
+ * One workspace of the lane taken into `source`, or why not, printing the paths. `handed` says
+ * whether its last passing `lane handed` judged what it holds now.
+ */
+let takeOne = (~source, ~name, ~dry, ~handed, one: Lane_state.found) =>
   if Lane_check.stale(one.path) {
     Error(`lanes/${name}/${one.rel} is stale, so what it holds is not what its seat saw`)
   } else {
-    switch (
-      jj(one.path, ["st"]),
-      jj(one.path, ["diff", "--from", fork, "--to", "@", "--summary"]),
-      jj(one.path, ["diff", "--from", fork, "--to", "main", "--summary"]),
-      jj(source, ["diff", "--from", "main", "--to", "@", "--summary"]),
-    ) {
-    | (Error(why), _, _, _)
-    | (_, Error(why), _, _)
-    | (_, _, Error(why), _)
-    | (_, _, _, Error(why)) =>
-      Error(`lanes/${name}/${one.rel}: ${why}`)
-    | (Ok(_), Ok(touched), Ok(moved), Ok(edited)) =>
-      let touched = summaryPaths(touched)
-      switch blocked(~touched, ~moved=summaryPaths(moved), ~edited=summaryPaths(edited)) {
-      | [] if touched == [] =>
-        Console.log(`lanes/${name}/${one.rel}: nothing to take`)
-        Ok()
-      | [] if dry =>
-        touched->Array.forEach(path => Console.log(`would take ${one.rel}: ${path}`))
-        Ok()
-      | [] =>
-        jj(
-          source,
-          Array.concat(["restore", "--from", `${name}@`, "--to", "@"], touched->Array.map(fileset)),
-        )->Result.map(_ => touched->Array.forEach(path => Console.log(`took ${one.rel}: ${path}`)))
-      | found =>
-        Error(found->Array.map(line => `lanes/${name}/${one.rel}: ${line}`)->Array.join("\n"))
+    switch handed(one) {
+    | Error(why) => Error(why)
+    | Ok() =>
+      switch (
+        jj(one.path, ["st"]),
+        jj(one.path, ["diff", "--from", fork, "--to", "@", "--summary"]),
+        jj(one.path, ["diff", "--from", fork, "--to", "main", "--summary"]),
+        jj(source, ["diff", "--from", "main", "--to", "@", "--summary"]),
+      ) {
+      | (Error(why), _, _, _)
+      | (_, Error(why), _, _)
+      | (_, _, Error(why), _)
+      | (_, _, _, Error(why)) =>
+        Error(`lanes/${name}/${one.rel}: ${why}`)
+      | (Ok(_), Ok(touched), Ok(moved), Ok(edited)) =>
+        let touched = summaryPaths(touched)
+        switch blocked(~touched, ~moved=summaryPaths(moved), ~edited=summaryPaths(edited)) {
+        | [] if touched == [] =>
+          Console.log(`lanes/${name}/${one.rel}: nothing to take`)
+          Ok()
+        | [] if dry =>
+          touched->Array.forEach(path => Console.log(`would take ${one.rel}: ${path}`))
+          Ok()
+        | [] =>
+          jj(
+            source,
+            Array.concat(
+              ["restore", "--from", `${name}@`, "--to", "@"],
+              touched->Array.map(fileset),
+            ),
+          )->Result.map(_ =>
+            touched->Array.forEach(path => Console.log(`took ${one.rel}: ${path}`))
+          )
+        | found =>
+          Error(found->Array.map(line => `lanes/${name}/${one.rel}: ${line}`)->Array.join("\n"))
+        }
       }
     }
   }
 
-let main = (workspaces: array<Lane_state.found>, ~root, ~registered, ~name, ~dry) =>
+let main = (workspaces: array<Lane_state.found>, ~root, ~registered, ~name, ~dry, ~handed) =>
   if workspaces == [] {
     Console.error(`lanes/${name} holds no such jj workspace`)
     2
@@ -89,7 +102,7 @@ let main = (workspaces: array<Lane_state.found>, ~root, ~registered, ~name, ~dry
       switch Lane_state.sourceOf(~root, ~registered, one.rel) {
       | None => Some(`lanes/${name}/${one.rel} is neither canmi nor a registered repository's path`)
       | Some(source) =>
-        switch takeOne(~source, ~name, ~dry, one) {
+        switch takeOne(~source, ~name, ~dry, ~handed, one) {
         | Ok() => None
         | Error(why) => Some(why)
         }

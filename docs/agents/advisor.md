@@ -120,6 +120,9 @@ until the next checkpoint. A successor that fails leaves everything as it was.
 past its limit reaches the advisor, and the author by a notification. It never just waits on what it
 handed down: it reads the thread's status and the repositories' main heads, and asks if nothing moved.
 
+**The advisor prepares the next slice's reading and questions while one runs**, so the author's
+answer, not the reading, is what the next slice waits on.
+
 ## Decisions reach the author one at a time
 
 **The advisor holds a buffer, `buffer.md` in the thread's place**, [threads.md](threads.md), RFC ml1m6. **A

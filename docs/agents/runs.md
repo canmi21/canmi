@@ -47,7 +47,8 @@ whose path `mise run //:job events` prints, said once:
   while a step is ready by the charter's `after`, to the supervisor, and past
   `Delegation.idleSupervisorSeconds` more with ready steps outnumbering busy integrators, to the
   advisor, a supervisor's transcript moving by every Monitor notice and so saying nothing. A charter
-  with a reference to no step, or none readable, says `charter`;
+  with a reference to no step, or none readable, says `charter`; an integrator idle that long with no step it
+  can take, none ready or each held, is said to the advisor;
 - **`quiet`**: a registered role with no turn for its limit in `Delegation.silentTurns`, to its
   superior. Past a supervisor's, the author gets a notification;
 - **`figures`**: a thread's, [threads.md](threads.md), "Staying on course", with each registered

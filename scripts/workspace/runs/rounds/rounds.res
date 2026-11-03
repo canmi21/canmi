@@ -23,7 +23,7 @@ type totals = {
   nothing: float,
 }
 type row = {session: Watchdog.session, minutes: totals}
-type round = {heading: string, span: span, rows: array<row>, unattended: float}
+type round = {heading: string, span: span, rows: array<row>, unattended: float, reviews: float}
 
 let timeOf = text => {
   let time = Date.fromString(text)->Date.getTime
@@ -300,6 +300,24 @@ let add = (total, bucket, minutes) =>
   | Nothing => {...total, nothing: total.nothing +. minutes}
   }
 
+/** Minutes the spans cover inside a round, overlap counted once. */
+let coveredIn = (spans: array<span>, round: span) => {
+  let covered = ref(0.)
+  let reach = ref(round.from)
+  spans
+  ->Array.map(span => {from: Math.max(span.from, round.from), to: Math.min(span.to, round.to)})
+  ->Array.filter(span => span.to > span.from)
+  ->Array.toSorted((a, b) => Float.compare(a.from, b.from))
+  ->Array.forEach(span => {
+    let from = Math.max(span.from, reach.contents)
+    if span.to > from {
+      covered := covered.contents +. span.to -. from
+      reach := span.to
+    }
+  })
+  covered.contents /. 60000.
+}
+
 let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now): array<round> => {
   let ended = Figures.lastGreen(records)->Option.mapOr(false, ((_, at)) => {
     let green = Charter.greenBy(records, ~at)
@@ -351,6 +369,7 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
         {session: activity.session, minutes: total.contents}
       }),
       unattended: unattended.contents,
+      reviews: coveredIn(sessions->Array.flatMap(activity => activity.reviews), span),
     }
   })
 }
@@ -385,7 +404,11 @@ let shown = (~name, ~rounds: array<round>, ~untimed, ~missing, ~malformed=[], ~p
           )}, ready ${minutes(total.ready)} minutes`,
       )
     )
-    lines->Array.push(`thread ${name}: ready ${minutes(round.unattended)} minutes`)
+    lines->Array.push(
+      `thread ${name}: ready ${minutes(round.unattended)} minutes, reviews ${minutes(
+          round.reviews,
+        )} minutes`,
+    )
   })
   lines->Array.join("\n") ++ "\n"
 }

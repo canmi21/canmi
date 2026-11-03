@@ -157,6 +157,7 @@ let aboutIdle = (
   ~moved,
   ~seats,
   ~openSeats=[],
+  ~steps: array<Charter.step>=[],
   ~said: array<string>,
 ) => {
   let limit = Delegation.idleSeconds->Int.toFloat *. 1000.
@@ -191,50 +192,70 @@ let aboutIdle = (
   let busyNumber = activity->Array.filter(((_, busy, _)) => busy)->Array.length
   let busyCount = busyNumber->Int.toString
   let total = integrators->Array.length->Int.toString
-  ready == []
-    ? []
-    : {
-        let first = ready->Array.reduce(now, (first, (_, since)) => Math.min(first, since))
-        let ids = ready->Array.map(((step, _)) => step.id)->Array.join(", ")
-        activity
-        ->Array.flatMap(((one, busy, last)) => {
-          let idleFrom = Math.max(first, last)
-          let since = Float.toString(idleFrom)
-          let waiting = now -. idleFrom
+  let existing =
+    ready == []
+      ? []
+      : {
+          let first = ready->Array.reduce(now, (first, (_, since)) => Math.min(first, since))
+          let ids = ready->Array.map(((step, _)) => step.id)->Array.join(", ")
+          activity
+          ->Array.flatMap(((one, busy, last)) => {
+            let idleFrom = Math.max(first, last)
+            let since = Float.toString(idleFrom)
+            let waiting = now -. idleFrom
+            busy || waiting < limit
+              ? []
+              : Array.concat(
+                  [
+                    {
+                      key: `idle:${one.name}:${since}`,
+                      says: `idle to=supervisor integrator ${one.name} has had no job, no seat and no turn for ${whole(
+                          waiting /. 1000.,
+                        )} s while thread ${thread} has ready step(s) ${ids}; ${busyCount} of ${total} integrators busy`,
+                      notify: false,
+                    },
+                  ],
+                  // Its transcript says nothing, as each Monitor notice writes there and wakes it.
+                  sessions->Array.filterMap(supervisor => {
+                    let deadline = idleFrom +. limit
+                    supervisor.role == "supervisor" &&
+                    supervisor.thread == Some(thread) &&
+                    ready->Array.length > busyNumber &&
+                    now -. deadline >= Delegation.idleSupervisorSeconds->Int.toFloat *. 1000.
+                      ? Some({
+                          key: `idle-supervisor:${supervisor.name}:${one.name}:${since}`,
+                          says: `idle to=advisor supervisor ${supervisor.name} has left integrator ${one.name} idle for ${whole(
+                              (now -. deadline) /. 1000.,
+                            )} s past its report, while thread ${thread} has ${ready
+                            ->Array.length
+                            ->Int.toString} ready step(s) and ${busyCount} busy integrators`,
+                          notify: false,
+                        })
+                      : None
+                  }),
+                )
+          })
+          ->Array.filter(one => !(said->Array.includes(one.key)))
+        }
+  // No step is free for an integrator idle this long, so only the advisor can act.
+  let unassigned =
+    (steps != [] || ready != []) && ready->Array.length <= busyNumber
+      ? activity->Array.filterMap(((one, busy, last)) => {
+          let waiting = now -. last
           busy || waiting < limit
-            ? []
-            : Array.concat(
-                [
-                  {
-                    key: `idle:${one.name}:${since}`,
-                    says: `idle to=supervisor integrator ${one.name} has had no job, no seat and no turn for ${whole(
-                        waiting /. 1000.,
-                      )} s while thread ${thread} has ready step(s) ${ids}; ${busyCount} of ${total} integrators busy`,
-                    notify: false,
-                  },
-                ],
-                // Its transcript says nothing, as each Monitor notice writes there and wakes it.
-                sessions->Array.filterMap(supervisor => {
-                  let deadline = idleFrom +. limit
-                  supervisor.role == "supervisor" &&
-                  supervisor.thread == Some(thread) &&
-                  ready->Array.length > busyNumber &&
-                  now -. deadline >= Delegation.idleSupervisorSeconds->Int.toFloat *. 1000.
-                    ? Some({
-                        key: `idle-supervisor:${supervisor.name}:${one.name}:${since}`,
-                        says: `idle to=advisor supervisor ${supervisor.name} has left integrator ${one.name} idle for ${whole(
-                            (now -. deadline) /. 1000.,
-                          )} s past its report, while thread ${thread} has ${ready
-                          ->Array.length
-                          ->Int.toString} ready step(s) and ${busyCount} busy integrators`,
-                        notify: false,
-                      })
-                    : None
-                }),
-              )
+            ? None
+            : Some({
+                key: `idle-unassigned:${one.name}:${Float.toString(last)}`,
+                says: `idle to=advisor integrator ${one.name} has had no job, no seat and no turn for ${whole(
+                    waiting /. 1000.,
+                  )} s, and no step of thread ${thread} is free for it: ${ready
+                  ->Array.length
+                  ->Int.toString} ready, ${busyCount} of ${total} integrators busy`,
+                notify: false,
+              })
         })
-        ->Array.filter(one => !(said->Array.includes(one.key)))
-      }
+      : []
+  Array.concat(existing, unassigned)->Array.filter(one => !(said->Array.includes(one.key)))
 }
 
 /** The move times of a session's Claude seats, ignoring other files. */
@@ -293,6 +314,7 @@ let idleOwed = (~sessions, ~jobs, ~said, ~now) =>
           ~moved=Context.lastTurn,
           ~seats,
           ~openSeats=open_,
+          ~steps,
         ),
       )
     } catch {

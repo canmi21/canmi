@@ -8,6 +8,7 @@ type timing = {
   seconds: float,
   recurring: option<bool>,
 }
+type push = {thread: string, step: string, seconds: option<float>}
 type row = {kind: string, values: array<float>, recurring: option<int>, count: int}
 
 let names = () =>
@@ -143,7 +144,15 @@ let rows = (timings: array<timing>, landings: array<landing>) =>
     empty == 0. ? Float.compare(total(b), total(a)) : empty
   })
 
-let shown = (~timings, ~landings) => {
+/** Each green at or after `since` with its seconds to the next landing recorded. */
+let pushesOf = (named: array<(string, array<Figures.record>)>, ~since) =>
+  named->Array.flatMap(((thread, found)) =>
+    Figures.greenToPush(found)->Array.filterMap(((step, at, seconds)) =>
+      at >= since ? Some({thread, step, seconds}) : None
+    )
+  )
+
+let shown = (~timings, ~landings, ~pushes=[]) => {
   let number = value => value->Float.toFixed(~digits=1)
   let lines = ["class | runs | total seconds | median | longest | recurring | one-off"]
   rows(timings, landings)->Array.forEach(row => {
@@ -173,6 +182,17 @@ let shown = (~timings, ~landings) => {
   lines->Array.push(
     "recurring against one-off is a first read, by a normalized command, a retry of one fault reading as recurring",
   )
+  if pushes != [] {
+    lines->Array.push("green to push, by the next landing recorded after each green, approximate:")
+    pushes->Array.forEach(one =>
+      lines->Array.push(
+        `${one.thread} step ${one.step}: ${switch one.seconds {
+          | Some(seconds) => `${number(seconds /. 60.)} minutes`
+          | None => "not pushed yet"
+          }}`,
+      )
+    )
+  }
   lines->Array.push(
     `pieces past ${Int.toString(
         Delegation.pieceMinutes,
@@ -299,6 +319,10 @@ let run = argv => {
           ~since=Rounds.timeOf(day)->Option.getOr(0.),
         ),
         ~landings,
+        ~pushes=pushesOf(
+          threads->Array.map(thread => (thread, Figures.records(thread))),
+          ~since=Rounds.timeOf(day)->Option.getOr(0.),
+        ),
       ),
     )
     0

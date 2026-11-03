@@ -395,17 +395,23 @@ let main = (argv: array<string>): int => {
       name,
     )
     ->Array.filter(one => own == [] || own->Array.includes(one.rel))
-    ->Lane_take.main(~root, ~registered, ~name, ~dry)
+    ->Lane_take.main(~root, ~registered, ~name, ~dry, ~handed=one =>
+      Handed_pass.held(~root, ~name, one)
+    )
   | ["handed", name] if siblings == [] =>
     let root = baseOf(root)
-    Lane_state.workspacesOf(
+    let workspaces = Lane_state.workspacesOf(
       ~root,
       ~subdirs=Lane_state.realSubdirs,
       ~isWorkspace=Lane_state.realIsWorkspace,
       name,
     )
-    ->handedPlan(~root, ~registered, ~own, ~name)
-    ->finish(~root, ~dry)
+    let plan = handedPlan(~root, ~registered, ~own, ~name, workspaces)
+    // A pass is recorded for take to read, docs/agents/lanes.md, so a dry run records none.
+    switch plan {
+    | Ok(_) if !dry => Handed_pass.judged(~root, ~name, workspaces, () => finish(~root, ~dry, plan))
+    | _ => finish(~root, ~dry, plan)
+    }
   | ["close", name] if siblings == [] && own == [] =>
     let workspaces = Lane_state.workspacesOf(
       ~root,

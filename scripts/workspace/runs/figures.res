@@ -166,3 +166,19 @@ let keysOf = (name, figures, ~now) => {
   let hour = Float.toString(Math.floor(now /. (Delegation.figuresSeconds->Int.toFloat *. 1000.)))
   Array.concat([`figures:${name}:${hour}`], figures.flagged ? [`tooling:${name}`] : [])
 }
+
+/** Each green with the seconds to the first landing at or after it, none while unpushed. */
+let greenToPush = (found: array<record>) =>
+  found->Array.filterMap(one =>
+    switch one {
+    | Green({step, at}) =>
+      let pushed = found->Array.findMap(other =>
+        switch other {
+        | Landed({at: landed}) if landed >= at => Some(landed)
+        | _ => None
+        }
+      )
+      Some((step, at, pushed->Option.map(landed => (landed -. at) /. 1000.)))
+    | _ => None
+    }
+  )

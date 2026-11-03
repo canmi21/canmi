@@ -135,6 +135,29 @@ describe("round slice precedence", () => {
   })
 })
 
+describe("round review time", () => {
+  let reviews = (rounds: array<Rounds.round>) => rounds->Array.map(round => round.reviews)
+  test("a review beside a job counts as reviews though its bucket is job", () => {
+    let activity = {...idle("own"), jobs: [span(0., 1.)], reviews: [span(0., 1.)]}
+    let found = rounds([activity])
+    expect(found->total)->toEqual({...Rounds.zero, job: minute})
+    expect(found->reviews)->toEqual([minute])
+  })
+  test("overlapping reviews of one or many sessions count once", () => {
+    let one = {...idle("one"), reviews: [span(0., 2.), span(1., 3.)]}
+    let two = {...idle("two"), reviews: [span(2., 4.)]}
+    expect(rounds(~count=4., [one, two])->reviews)->toEqual([4. *. minute])
+  })
+  test("a review crossing a green split is clipped to each round", () => {
+    let records = [first, green("1", 1.5)]
+    let found = rounds(~records, ~count=2., [{...idle("own"), reviews: [span(1., 2.)]}])
+    expect(found->reviews)->toEqual([0.5 *. minute, 0.5 *. minute])
+  })
+  test("no review gives zero", () => {
+    expect(rounds([idle("own")])->reviews)->toEqual([0.])
+  })
+})
+
 describe("round boundaries", () => {
   test("repeated greens cut in record order and a job crosses each boundary", () => {
     let records = [first, green("1", 1.), green("1", 2.)]
@@ -471,7 +494,9 @@ describe("transcript and decision inputs", () => {
     expect(text->String.includes("supervisor waiting has no transcript"))->toEqual(true)
     expect(text->String.includes("running:"))->toEqual(false)
     expect(
-      text->String.includes(`thread trial: ready ${Rounds.minutes(5. *. minute)} minutes`),
+      text->String.includes(
+        `thread trial: ready ${Rounds.minutes(5. *. minute)} minutes, reviews 0.00 minutes`,
+      ),
     )->toEqual(true)
     expect(text->String.includes("advisor other:"))->toEqual(false)
     expect(text->String.includes("thread trial: ready"))->toEqual(true)

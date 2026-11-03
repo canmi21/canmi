@@ -97,7 +97,10 @@ directory past `Layout.widest`, a comment past its columns, so a seat runs it be
 close refuses the same lengths. **A lane is taken by `mise run //:lane take <name> [--in <repository>]`**, for whoever lands: it
 snapshots the lane first, since `jj restore --from <lane>@` reads the lane's last snapshot, restores
 the paths the lane changed and no others, both sides of a rename, and refuses a path main moved since
-the fork or the main checkout holds an edit to, `lane-taken-snapshotted`. **A lane rebased from
+the fork or the main checkout holds an edit to, `lane-taken-snapshotted`. **`take` refuses a lane with no passing `mise run //:lane handed <name>`
+newer than its last change**: each pass records every workspace's working-copy commit in
+`lanes/<name>/handed`, a failing or dry run records none, and a change after the pass needs another.
+**A lane rebased from
 outside goes stale**, its seat then working on the old tree without knowing, so a dispatch into one is
 refused, `lane check` and `lane take` too, `lane-not-stale`. A seat runs neither `lane open`, `close`
 nor `take`, `notSeats`. The `lanes` part of the check holds the

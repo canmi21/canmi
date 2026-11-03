@@ -16,6 +16,9 @@ are we" from these files alone.
 - **`charter.md`**: the goal, its target test in steps, the bounds, the values to fix. **Each step
   says `after:`, what must be green first, never an order**, and the supervisor opens every step whose
   `after` is met, [delegation.md](delegation.md), "Work without a dependency runs in parallel by default".
+  **A charter names work for every integrator, or names one held on purpose**, so none sits idle
+  unseen; the watchdog tells the advisor of one idle with no step it can take, [runs.md](runs.md).
+  **A line's review starts at its local green**, beside okra's run, never after it.
 - **`decisions.md`**: the queue, each decision carrying the step of the path it stands on, a
   recommended default and whether it can be undone, [delegation.md](delegation.md), "Decision
   rights".
