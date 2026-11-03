@@ -484,10 +484,22 @@ describe("a command a job is given", () => {
       "mise run //:job start -- rm -rf $D/x",
       "KEY='a b' mise run //:job start pkill x",
       "KEY='a b' mise run //:job start jj git push",
+      "mise run //:job start -- jj commit -m 'Bad subject'",
+      `mise run //:job start -- sh -c 'jj commit -m "Bad subject"'`,
+      `mise run //:job start -- bash -lc 'cd x && jj commit -m "Bad subject"'`,
     ]->Array.forEach(
       command =>
         expect((command, Run.refusedInJob(payload(command)) != 0))->toEqual((command, true)),
     )
+  })
+
+  test("a shell's line is read for a commit's message, the trailer's spelling included", () => {
+    let wrong = "fix: x\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+    let line = `sh -c 'jj commit -m "${wrong}"'`
+    expect(Commit.messages(line))->toEqual([wrong])
+    expect(Commit.refuse(payload(line)))->toBe(2)
+    expect(Run.refusedInJob(payload(`mise run //:job start -- ${line}`)))->toBe(2)
+    expect(Commit.refuse(payload(`sh -c 'jj commit -m "fix: x"'`)))->toBe(0)
   })
 
   test("keeps its quoting, so what only names a thing passes", () => {

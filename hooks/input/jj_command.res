@@ -259,22 +259,6 @@ let substitutions = (command: string): array<string> => {
   found
 }
 
-/** The command line cut at each separator, then each command substitution's own segments. */
-let rec segments = (~keepQuotes=false, command) =>
-  switch words(~keepQuotes, command) {
-  | None => []
-  | Some(all) =>
-    let cut = [[]]
-    all->Array.forEach(word =>
-      separators->Array.includes(word)
-        ? cut->Array.push([])
-        : cut[cut->Array.length - 1]->Option.forEach(last => last->Array.push(word))
-    )
-    cut
-    ->Array.filter(segment => segment != [])
-    ->Array.concat(substitutions(command)->Array.flatMap(inner => segments(~keepQuotes, inner)))
-  }
-
 /** Where the program of a segment sits, past assignments and the wrappers that run what follows. */
 let commandAt = (segment: array<string>): option<int> => {
   let length = segment->Array.length
@@ -320,6 +304,36 @@ let commandAt = (segment: array<string>): option<int> => {
   }
   at.contents < length ? Some(at.contents) : None
 }
+
+/** The line a shell given -c runs, which is a command like any typed. */
+let shellLine = (segment: array<string>): option<string> =>
+  commandAt(segment)->Option.flatMap(at => {
+    let rest = segment->Array.slice(~start=at + 1)
+    let flag = rest->Array.findIndex(word => /^-[A-Za-z]*c[A-Za-z]*$/->RegExp.test(word))
+    let shell = Delegation.shells->Array.includes(Node.basename(segment->Array.getUnsafe(at)))
+    shell && flag >= 0 ? rest[flag + 1] : None
+  })
+
+/** The command line cut at each separator, then what each substitution and shell line runs. */
+let rec segments = (~keepQuotes=false, command) =>
+  switch words(~keepQuotes, command) {
+  | None => []
+  | Some(all) =>
+    let cut = [[]]
+    all->Array.forEach(word =>
+      separators->Array.includes(word)
+        ? cut->Array.push([])
+        : cut[cut->Array.length - 1]->Option.forEach(last => last->Array.push(word))
+    )
+    let found = cut->Array.filter(segment => segment != [])
+    found
+    ->Array.concat(substitutions(command)->Array.flatMap(inner => segments(~keepQuotes, inner)))
+    ->Array.concat(
+      keepQuotes
+        ? []
+        : found->Array.filterMap(shellLine)->Array.flatMap(line => segments(~keepQuotes, line)),
+    )
+  }
 
 /** Whether the word at `at` is the command its segment runs, past assignments and wrappers. */
 let isCommand = (segment: array<string>, at) =>

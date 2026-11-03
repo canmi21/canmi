@@ -276,7 +276,8 @@ with `-m`; the history sees everything, an editor's message and a human's includ
 things: it checks the message, then -- once the verify gate below has passed too -- it runs `jj
 fix` with the workspace's `jujutsu.toml`, wherever below it the commit is made, so the content
 being committed is already formatted. A malformed message is refused with the specific reason,
-which the agent reads and corrects on the spot.
+which the agent reads and corrects on the spot. A shell's `-c` line is read as typed, and so is what
+`mise run //:job start` is given, since a commit run through either reaches `main` all the same.
 
 The guarded list is derived from which subcommands accept `-m`, not from the two that write most of
 the messages. A subcommand left off the list is a gap silent by construction: the hook cannot report
