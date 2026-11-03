@@ -190,12 +190,11 @@ describe("the shared entrypoint", () => {
     )
   })
   test("both vendor adapters are identical and run the one command", () => {
-    // SendMessage is Claude's tool alone, so its matcher names it and Codex's does not.
+    // SendMessage and Read are Claude's tools alone, so its matchers name them and Codex's do not.
     let claude = parseAdapter(
-      Node.readFileSync(Node.join([root, ".claude", "settings.json"]))->String.replace(
-        "|SendMessage",
-        "",
-      ),
+      Node.readFileSync(Node.join([root, ".claude", "settings.json"]))
+      ->String.replace("|SendMessage", "")
+      ->String.replace("^(Bash|Read)$", "^Bash$"),
     )
     let codex = parseAdapter(Node.readFileSync(Node.join([root, ".codex", "hooks.json"])))
     expect(claude.hooks)->toEqual(codex.hooks)
