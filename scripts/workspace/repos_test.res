@@ -195,7 +195,11 @@ describe("a repository's check parts", () => {
 
 describe("a full check's order", () => {
   let part = Check.Script(() => 0)
-  let shared = ["names", "comments", "tasks", "lines", "shape"]->Array.map(name => (name, part))
+  let shared =
+    ["names", "commits", "comments", "tasks", "lines", "shape", "versions"]->Array.map(name => (
+      name,
+      part,
+    ))
   let steps = Repos.planned(shared, ["rust", "format"])
   let walk = async failing => {
     let ran = []
@@ -207,24 +211,35 @@ describe("a full check's order", () => {
     (result, ran)
   }
 
-  test("runs the form parts, then the own format, then verify, then the other rules", () => {
+  test("runs form, own format and file reading gates before verify and the other rules", () => {
     expect(steps->Array.map(Repos.stepName))->toEqual([
       "shape",
       "lines",
       "comments",
       "verify:format",
-      "verify",
       "names",
       "tasks",
+      "verify",
+      "commits",
+      "versions",
     ])
     expect(Repos.planned(shared, ["rust"])->Array.map(Repos.stepName))->toEqual([
       "shape",
       "lines",
       "comments",
-      "verify",
       "names",
       "tasks",
+      "verify",
+      "commits",
+      "versions",
     ])
+  })
+
+  testAsync("a failed file reading part stops before verify", async () => {
+    let ((status, said), ran) = await walk(["names", "tasks"])
+    expect(status)->toBe(1)
+    expect(ran)->toEqual(["shape", "lines", "comments", "verify:format", "names"])
+    expect(said)->toBe("error: names failed")
   })
 
   testAsync(
@@ -246,12 +261,28 @@ describe("a full check's order", () => {
       let ((status, said), ran) = await walk([])
       expect((status, said))->toEqual((0, ""))
       expect(ran)->toEqual(steps->Array.map(Repos.stepName))
-      let ((status, said), ran) = await walk(["verify", "names"])
+      let ((status, said), ran) = await walk(["verify", "commits"])
       expect(status)->toBe(1)
       expect(ran)->toEqual(steps->Array.map(Repos.stepName))
-      expect(said)->toBe("error: verify failed\nerror: names failed")
+      expect(said)->toBe("error: verify failed\nerror: commits failed")
     },
   )
+
+  testAsync("a commits failure does not stop the remaining rules", async () => {
+    let ((status, said), ran) = await walk(["commits"])
+    expect(status)->toBe(1)
+    expect(ran)->toEqual(steps->Array.map(Repos.stepName))
+    expect(said)->toBe("error: commits failed")
+  })
+
+  test("plans no verify, declared touched parts or the whole verify", () => {
+    let plan = touched => Repos.plannedVerify(touched, ["rust", "format", "tests"])
+    expect(plan(Some([])))->toEqual(Repos.NoVerify)
+    expect(plan(Some(["tests", "rust", "missing"])))->toEqual(Repos.VerifyParts(["tests", "rust"]))
+    expect(plan(None))->toEqual(Repos.WholeVerify)
+    expect(Repos.plannedVerify(None, []))->toEqual(Repos.WholeVerify)
+    expect(Repos.plannedVerify(Some(["missing"]), ["tests"]))->toEqual(Repos.NoVerify)
+  })
 
   test("a part run here keeps what it logged beside its status", () => {
     let (status, said) = Repos.heard(

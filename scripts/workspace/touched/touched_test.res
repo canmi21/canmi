@@ -66,3 +66,106 @@ describe("a changed library's dependents", () => {
     expect(Touched.withDependents(["gateway"], ~uses))->toEqual(["gateway"])
   })
 })
+
+describe("the verify parts a change touches", () => {
+  let table = [
+    (["pages/**", "*.md"], ["format"]),
+    (["scripts/**"], ["format", "compile", "tests"]),
+    (["assets/*"], []),
+  ]
+  test("formats a documents only change", () => {
+    expect(Touched.parts(~paths=["pages/nested/guide.md", "README.md"], ~table))->toEqual(
+      Some(["format"]),
+    )
+  })
+  test("selects a script row's parts once in table order", () => {
+    expect(Touched.parts(~paths=["scripts/a.res", "pages/a.md", "scripts/b.res"], ~table))->toEqual(
+      Some(["format", "compile", "tests"]),
+    )
+  })
+  test("requires every path to match a row", () => {
+    expect(Touched.parts(~paths=["pages/a.md", "source/a.rs"], ~table))->toEqual(None)
+  })
+  test("does not let a single star cross a slash", () => {
+    expect(Touched.parts(~paths=["assets/icon.svg"], ~table))->toEqual(Some([]))
+    expect(Touched.parts(~paths=["assets/nested/icon.svg"], ~table))->toEqual(None)
+    expect(Touched.parts(~paths=["source/guide.md"], ~table))->toEqual(None)
+  })
+  test("matches the whole path and treats other characters literally", () => {
+    let table = [(["a.b/[x]+?", "prefix*suffix"], ["format"])]
+    expect(Touched.parts(~paths=["a.b/[x]+?", "prefixsuffix"], ~table))->toEqual(Some(["format"]))
+    expect(Touched.parts(~paths=["axb/[x]+?"], ~table))->toEqual(None)
+    expect(Touched.parts(~paths=["prefixsuffix/extra"], ~table))->toEqual(None)
+  })
+  test("unions overlapping rows in the order the table first names each part", () => {
+    let table = [
+      (["other/**"], ["tests"]),
+      (["scripts/**"], ["compile", "tests"]),
+      (["**"], ["format", "compile"]),
+    ]
+    expect(Touched.parts(~paths=["scripts/a.res"], ~table))->toEqual(
+      Some(["tests", "compile", "format"]),
+    )
+  })
+  test("selects no parts for an empty change", () => {
+    expect(Touched.parts(~paths=[], ~table))->toEqual(Some([]))
+  })
+})
+
+describe("a repository's verify part table", () => {
+  test("reads valid rows and skips malformed rows", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "touched-table-"]))
+    try {
+      let config = Node.join([root, "workspace.toml"])
+      expect(Touched.tableOf(root))->toEqual(None)
+      Node.writeFileSync(config, "[check]\n")
+      expect(Touched.tableOf(root))->toEqual(None)
+      Node.writeFileSync(config, "[check]\ntouched = []\n")
+      expect(Touched.tableOf(root))->toEqual(None)
+      Node.writeFileSync(
+        config,
+        `[[check.touched]]
+paths = ["pages/**", "*.md"]
+parts = ["format"]
+[[check.touched]]
+paths = ["scripts/**"]
+parts = ["compile", "tests"]
+[[check.touched]]
+paths = ["assets/*"]
+parts = []
+[[check.touched]]
+paths = []
+parts = []
+[[check.touched]]
+paths = ["bad/**", 1]
+parts = ["bad"]
+[[check.touched]]
+paths = ["missing/**"]
+[[check.touched]]
+paths = "wrong"
+parts = ["bad"]
+[[check.touched]]
+paths = ["bad/**"]
+parts = [false]
+`,
+      )
+      expect(Touched.tableOf(root))->toEqual(
+        Some([
+          (["pages/**", "*.md"], ["format"]),
+          (["scripts/**"], ["compile", "tests"]),
+          (["assets/*"], []),
+          ([], []),
+        ]),
+      )
+      Node.writeFileSync(config, "[[check.touched]]\npaths = [1]\nparts = []\n")
+      expect(Touched.tableOf(root))->toEqual(None)
+      Node.writeFileSync(config, "[invalid")
+      expect(Touched.tableOf(root))->toEqual(None)
+    } catch {
+    | error =>
+      Node.rmSync(root, {recursive: true, force: true})
+      throw(error)
+    }
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+})

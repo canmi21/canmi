@@ -61,6 +61,13 @@ verify. **A repository's check runs the blocks a change touches**, `Touched` in
 author asks for it. **A failed check ends with its causes**, its last lines naming what failed;
 notes and the deferred list are printed only when asked.
 
+**The workspace's rule parts that read files alone run before a repository's verify**, by the
+author's word of 2026-11-03, `Delegation.readsFilesAlone`, and stop at their first failure, so a
+document's mistake is found in seconds. **A repository whose verify has parts runs the parts a change
+touches**, from the `[[check.touched]]` rows of its workspace.toml, each `paths` globs and the
+`parts` they cover: a row naming no part means a change there builds nothing, and a changed path no
+row matches runs the whole verify.
+
 ## A wave runs in one order
 
 1. The implementers write the logic, each passing the logic layer alone; independent pieces run in

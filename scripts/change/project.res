@@ -371,6 +371,7 @@ let read = (root: string): result<declared, string> => {
             "push",
             "versions",
             "boundary",
+            "check",
           ],
         )
         Ok({

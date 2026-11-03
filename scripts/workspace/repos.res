@@ -423,16 +423,23 @@ let stepName = step =>
   | Verify => "verify"
   }
 
-/** A full check's steps over a repository, its form parts and own format first as gates. */
+/** A full check's form, format and file reading gates precede its verify. */
 let planned = (shared: array<(string, Check.part)>, owned) =>
   Array.flat([
     formParts
     ->Array.filterMap(name => shared->Array.find(((one, _)) => one == name))
     ->Array.map(((name, part)) => Gate(name, part)),
     owned->Array.includes("format") ? [OwnGate("format")] : [],
+    shared
+    ->Array.filter(((name, _)) =>
+      Delegation.readsFilesAlone->Array.includes(name) && !(formParts->Array.includes(name))
+    )
+    ->Array.map(((name, part)) => Gate(name, part)),
     [Verify],
     shared
-    ->Array.filter(((name, _)) => !(formParts->Array.includes(name)))
+    ->Array.filter(((name, _)) =>
+      !(formParts->Array.includes(name)) && !(Delegation.readsFilesAlone->Array.includes(name))
+    )
     ->Array.map(((name, part)) => Rule(name, part)),
   ])
 
@@ -456,6 +463,16 @@ let walked = async (steps, run) => {
   (said == [] ? 0 : 1, said->Array.join("\n"))
 }
 
+type verifyPlan = NoVerify | VerifyParts(array<string>) | WholeVerify
+
+let plannedVerify = (touched, owned) =>
+  switch touched {
+  | None => WholeVerify
+  | Some(parts) =>
+    let declared = parts->Array.filter(part => owned->Array.includes(part))
+    declared == [] ? NoVerify : VerifyParts(declared)
+  }
+
 /** One repository's full check, its deferred items shown only when asked. */
 let checked = async (repo, ~skipped, ~verbose) => {
   let place = Registry.label(repo)
@@ -468,16 +485,37 @@ let checked = async (repo, ~skipped, ~verbose) => {
       let path = task(repo, `verify:${name}`)
       Console.log(`\n=== ${path} ===`)
       await Node.stream(~cwd=root, "mise", ["run", path])
-    | Verify if !declares(repo, "verify") =>
-      skipped->Array.push(place)
-      (0, "")
     | Verify =>
-      // A repository whose verify takes `--blocks` runs only the blocks its change touches.
-      let blocks = Touched.arguments(repo)
-      Console.log(
-        `\n=== ${task(repo, "verify")}${blocks == [] ? "" : " " ++ blocks->Array.join(" ")} ===`,
-      )
-      await Node.stream(~cwd=root, "mise", ["run", task(repo, "verify"), ...blocks])
+      let touched = switch Touched.tableOf(repo) {
+      | None => None
+      | Some(table) => Touched.parts(~paths=Touched.changed(repo), ~table)
+      }
+      switch plannedVerify(touched, verifyParts(repo)) {
+      | NoVerify =>
+        Console.log(`${place}: no verify parts touched`)
+        (0, "")
+      | VerifyParts(parts) =>
+        let result = ref((0, ""))
+        for index in 0 to parts->Array.length - 1 {
+          let (status, _) = result.contents
+          if status == 0 {
+            let path = task(repo, `verify:${parts->Array.getUnsafe(index)}`)
+            Console.log(`\n=== ${path} ===`)
+            result := (await Node.stream(~cwd=root, "mise", ["run", path]))
+          }
+        }
+        result.contents
+      | WholeVerify if !declares(repo, "verify") =>
+        skipped->Array.push(place)
+        (0, "")
+      | WholeVerify =>
+        // A repository whose verify takes `--blocks` runs only the blocks its change touches.
+        let blocks = Touched.arguments(repo)
+        Console.log(
+          `\n=== ${task(repo, "verify")}${blocks == [] ? "" : " " ++ blocks->Array.join(" ")} ===`,
+        )
+        await Node.stream(~cwd=root, "mise", ["run", task(repo, "verify"), ...blocks])
+      }
     }
   let result = await walked(planned(checkParts(repo, []), verifyParts(repo)), run)
   let waiting = Array.concat(Waiting.shown(~repo=Some(place)), Repo_plan.waiting(~repo=Some(place)))
