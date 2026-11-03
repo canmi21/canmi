@@ -2,7 +2,7 @@
 
 # Rules
 
-41 rules, 6 pending a check.
+42 rules, 6 pending a check.
 
 ## Delegation
 
@@ -145,6 +145,13 @@ A message goes only to `main` or `team-lead`, the names a subagent has for its p
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
 - held by: hook `hooks/gates/messages/send_local`
+
+### job-classes
+
+`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews from subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed.
+
+- doc: [docs/agents/runs.md](../../docs/agents/runs.md)
+- held by: check part `scripts`
 
 ### piece-within-minutes
 

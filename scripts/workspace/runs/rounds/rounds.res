@@ -2,6 +2,7 @@
 type span = {from: float, to: float}
 type activity = {
   session: Watchdog.session,
+  at: float,
   jobs: array<span>,
   seats: array<span>,
   reviews: array<span>,
@@ -111,6 +112,7 @@ let activityOf = (
   ~now,
   ~alive,
   ~records=[],
+  ~at=0.,
 ) => {
   let missing = []
   let activity = file =>
@@ -151,7 +153,7 @@ let activityOf = (
         ? Some({from: job.started, to: job.ended->Option.getOr(now)})
         : None
     )
-  {session, jobs, seats, reviews, turns, missing}
+  {session, at, jobs, seats, reviews, turns, missing}
 }
 
 let atOf = (record: Figures.record) =>
@@ -183,7 +185,9 @@ let holds = (spans: array<span>, slice: span) =>
   )
 
 let active = (activity, slice) =>
-  holds(Array.concat(activity.jobs, activity.seats), slice)
+  slice.from < activity.at
+    ? None
+    : holds(Array.concat(activity.jobs, activity.seats), slice)
     ? Some(Job)
     : holds(activity.reviews, slice)
     ? Some(Review)
@@ -202,8 +206,14 @@ let add = (total, bucket, minutes) =>
   | Nothing => {...total, nothing: total.nothing +. minutes}
   }
 
-let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now): array<round> =>
-  spansOf(records, ~now)->Array.map(((heading, span)) => {
+let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now): array<round> => {
+  let ended = Figures.lastGreen(records)->Option.mapOr(false, ((_, at)) => {
+    let green = Charter.greenBy(records, ~at)
+    steps != [] && steps->Array.every(step => green->Dict.get(step.Charter.id) != None)
+  })
+  spansOf(records, ~now)
+  ->Array.filter(((heading, _)) => heading != "running" || !ended)
+  ->Array.map(((heading, span)) => {
     let totals = sessions->Array.map(_ => ref(zero))
     let at = ref(span.from)
     let unattended = ref(0.)
@@ -218,7 +228,8 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
           count + (
             activity.session.role == "integrator" &&
               (buckets->Array.getUnsafe(index) == Some(Job) ||
-                buckets->Array.getUnsafe(index) == Some(Turn))
+              buckets->Array.getUnsafe(index) == Some(Turn) ||
+              buckets->Array.getUnsafe(index) == Some(Review))
               ? 1
               : 0
           )
@@ -232,9 +243,11 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
         unattended := unattended.contents +. (slice.to -. slice.from) /. 60000.
       }
       buckets->Array.forEachWithIndex((bucket, index) => {
-        let bucket = bucket->Option.getOr(decision ? Decision : ready ? Ready : Nothing)
-        let total = totals->Array.getUnsafe(index)
-        total := add(total.contents, bucket, (slice.to -. slice.from) /. 60000.)
+        if slice.from >= (sessions->Array.getUnsafe(index)).at {
+          let bucket = bucket->Option.getOr(decision ? Decision : ready ? Ready : Nothing)
+          let total = totals->Array.getUnsafe(index)
+          total := add(total.contents, bucket, (slice.to -. slice.from) /. 60000.)
+        }
       })
       at := slice.to
     }
@@ -248,6 +261,7 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
       unattended: unattended.contents,
     }
   })
+}
 
 let minutes = value => Float.toFixed(value, ~digits=2)
 let shown = (~name, ~rounds: array<round>, ~untimed, ~missing, ~malformed=[], ~problems=[]) => {
@@ -291,12 +305,22 @@ let run = (name, ~now=Date.now()) => {
     2
   } else {
     let jobs = Ledger.jobs()
-    let sessions =
-      Watchdog.registered()
-      ->Array.filter(session => session.thread == Some(name))
-      ->Array.map(session =>
-        activityOf(session, ~jobs, ~now, ~alive=Watchdog.alive, ~records=Figures.records(name))
+    let sessions = Ledger.registrationsOf(name)->Array.map(registration => {
+      let session: Watchdog.session = {
+        name: registration.name,
+        role: registration.role,
+        thread: Some(registration.thread),
+        transcript: registration.transcript,
+      }
+      activityOf(
+        session,
+        ~at=registration.at,
+        ~jobs,
+        ~now,
+        ~alive=Watchdog.alive,
+        ~records=Figures.records(name),
       )
+    })
     let decisions = read(Node.join([directory, "decisions.md"]))->Option.getOr("")->decisionsOf
     let rounds = roundsOf(
       ~records=Figures.records(name),

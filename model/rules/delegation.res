@@ -512,6 +512,12 @@ let rules: array<Rule.t> = [
     held: Hook("hooks/gates/messages/send_local"),
   },
   {
+    name: "job-classes",
+    says: "`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews from subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed",
+    doc: "docs/agents/runs.md",
+    held: Check("scripts"),
+  },
+  {
     name: "piece-within-minutes",
     says: "Normally each piece of work, a seat or an integrator's own task, is at most `pieceMinutes` of agent time; allowed past that while starting, it warns and never blocks, and the figure comes down as the speed is tuned",
     doc: "docs/agents/delegation.md",

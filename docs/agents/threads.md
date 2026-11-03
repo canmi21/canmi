@@ -45,7 +45,9 @@ neither of two threads is removed.
 running from one green to the next: running a job or seat, waiting on a review, working in a turn,
 waiting on a decision, nothing to do, and ready work with nobody on it, the last meant to be near zero.
 A decision is timed by its `Asked:` and `Answered:`, each carrying a zone, one that does not parse being
-said and not timed. `thread seat` records its session, so an open seat counts as that session's.
+said and not timed. `thread seat` records its session, so an open seat counts as that session's, up to
+`Delegation.seatOpenSeconds`. A thread's members are read from every registration it has had, so a
+session moving to another thread leaves its rounds as they were.
 
 They are read from what the integrators and the supervisor record as the thread goes:
 

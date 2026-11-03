@@ -15,6 +15,7 @@ let session = (~role="integrator", name): Watchdog.session => {
 }
 let idle = (~role="integrator", name): Rounds.activity => {
   session: session(~role, name),
+  at: 0.,
   jobs: [],
   seats: [],
   reviews: [],
@@ -69,15 +70,29 @@ describe("round slice precedence", () => {
   test("nothing covers a slice without work", () => {
     expect(rounds([idle("own")])->total)->toEqual({...Rounds.zero, nothing: minute})
   })
-  test("ready requires more steps than integrators running jobs or taking turns", () => {
-    let busy = {...idle("busy"), jobs: [span(0., 1.)], turns: [span(1., 2.)]}
-    let found = rounds(~steps=[{id: "1", after: []}], ~count=3., [idle("own"), busy])
-    expect(found->total)->toEqual({...Rounds.zero, nothing: 2. *. minute, ready: minute})
+  test("ready requires more steps than integrators in jobs, turns or reviews", () => {
+    let busy = {
+      ...idle("busy"),
+      jobs: [span(0., 1.)],
+      turns: [span(1., 2.)],
+      reviews: [span(2., 3.)],
+    }
+    let found = rounds(~steps=[{id: "1", after: []}], ~count=4., [idle("own"), busy])
+    expect(found->total)->toEqual({...Rounds.zero, nothing: 3. *. minute, ready: minute})
+    expect((found->Array.getUnsafe(0)).unattended)->toEqual(minute)
     expect((rounds(~steps, [idle("own"), busy])->total).ready)->toEqual(minute)
+  })
+  test("a slice before registration has no bucket and consumes no integrator capacity", () => {
+    let registered = {...idle("late"), at: 1.5 *. slice, jobs: [span(0., 3.)]}
+    let found = rounds(~steps=[{id: "1", after: []}], ~count=3., [registered])
+    expect(found->total)->toEqual({...Rounds.zero, job: minute})
+    expect((found->Array.getUnsafe(0)).unattended)->toEqual(2. *. minute)
+    let idleLate = rounds(~steps, ~count=3., [{...registered, jobs: []}])
+    expect(idleLate->total)->toEqual({...Rounds.zero, ready: minute})
   })
   test("reviewers and busy sessions of other roles do not consume integrator capacity", () => {
     let busy = {...idle(~role="supervisor", "busy"), jobs: [span(0., 1.)]}
-    let review = {...idle("review"), reviews: [span(0., 1.)]}
+    let review = {...idle(~role="reviewer", "review"), reviews: [span(0., 1.)]}
     expect(
       (rounds(~steps=[{id: "1", after: []}], [idle("own"), busy, review])->total).ready,
     )->toEqual(minute)
@@ -86,7 +101,7 @@ describe("round slice precedence", () => {
     let steps: array<Charter.step> = [{id: "1", after: ["0"]}]
     let records = [first, green("0", 1.), green("1", 2.)]
     let found = rounds(~steps, ~records, ~count=3., [idle("own")])
-    expect(found->Array.map(round => total([round]).ready))->toEqual([0., minute, 0.])
+    expect(found->Array.map(round => total([round]).ready))->toEqual([0., minute])
   })
 })
 
@@ -100,6 +115,17 @@ describe("round boundaries", () => {
       ("running", span(2., 3.)),
     ])
     expect(found->Array.map(round => total([round]).job))->toEqual([minute, minute, minute])
+  })
+  test("all charter steps green ends at the last green, but no steps keeps running", () => {
+    let records = [first, green("1", 1.), green("2", 2.)]
+    expect(
+      rounds(~records, ~steps, ~count=8., [idle("own")])->Array.map(one => one.heading),
+    )->toEqual(["1", "2"])
+    expect(rounds(~records, ~count=8., [idle("own")])->Array.map(one => one.heading))->toEqual([
+      "1",
+      "2",
+      "running",
+    ])
   })
   test("an integrator's buckets sum to the span including partial slices", () => {
     let activity = {
@@ -129,7 +155,7 @@ describe("round boundaries", () => {
       ready: minute,
       nothing: 0.,
     })
-    expect(total(found->Array.slice(~start=1)).nothing)->toEqual(1.5 *. minute)
+    expect(found->Array.length)->toEqual(1)
   })
   test("empty records and a first green keep zero length rounds", () => {
     expect(Rounds.spansOf([], ~now=slice))->toEqual([("running", span(1., 1.))])
@@ -245,6 +271,7 @@ describe("transcript and decision inputs", () => {
     }
     let idleOne = (session): Rounds.activity => {
       session,
+      at: 0.,
       jobs: [],
       seats: [],
       reviews: [],
@@ -252,7 +279,7 @@ describe("transcript and decision inputs", () => {
       missing: [],
     }
     let rounds = Rounds.roundsOf(
-      ~records=[],
+      ~records=[first],
       ~sessions=[
         idleOne(sessionOf("a", "integrator")),
         idleOne(sessionOf("b", "integrator")),
@@ -263,7 +290,9 @@ describe("transcript and decision inputs", () => {
       ~now=6. *. slice,
     )
     let last = rounds[rounds->Array.length - 1]->Option.getOrThrow
-    expect(last.unattended *. 60000.)->toEqual(last.span.to -. last.span.from)
+    expect(Math.abs(last.unattended *. 60000. -. 6. *. slice) < 0.000001)->toEqual(true)
+    expect(last.unattended > 0.)->toEqual(true)
+    expect(last.unattended == 3. *. 6. *. minute)->toEqual(false)
   })
 
   test(
@@ -281,13 +310,27 @@ describe("transcript and decision inputs", () => {
     },
   )
 
+  test("an unreported seat stops counting at the open seat limit", () => {
+    let limit = Delegation.seatOpenSeconds->Int.toFloat *. 1000.
+    let records = [Figures.Seat({name: "s", tooling: false, at: slice, session: "own"})]
+    expect(Figures.seatsOf(records, ~session="own", ~now=2. *. limit))->toEqual([
+      (slice, slice +. limit),
+    ])
+    expect(Figures.seatsOf(records, ~session="own", ~now=2. *. slice))->toEqual([
+      (slice, 2. *. slice),
+    ])
+    let closed = Array.concat(records, [Figures.Seated({name: "s", at: 3. *. limit})])
+    expect(Figures.seatsOf(closed, ~session="own", ~now=4. *. limit))->toEqual([
+      (slice, 3. *. limit),
+    ])
+  })
   test("a queued notice is no stretch of a session's turn", () => {
     expect(
       Rounds.timestamps(`{"type":"queue-operation","timestamp":"2026-11-03T00:00:00.000Z"}`),
     )->toEqual([])
   })
-  test("the command filters registered threads and writes exactly what it prints", () => {
-    let started = Date.now() -. 2. *. slice
+  test("the command reads historical registrations and excludes time before registration", () => {
+    let started = Date.now() -. 6. *. slice
     tree(
       root.contents,
       [
@@ -300,16 +343,44 @@ describe("transcript and decision inputs", () => {
           ]),
         ),
         ("threads/trial/charter.md", "1. Ready.\n   after: none\n"),
+        (
+          "own.jsonl",
+          line(started) ++
+          line(started +. slice) ++
+          line(started +. 2. *. slice) ++
+          line(started +. 3. *. slice),
+        ),
+        (
+          "runs/registrations.jsonl",
+          `{"name":"own","role":"integrator","thread":"trial","transcript":"${Node.join([
+              root.contents,
+              "own.jsonl",
+            ])}","at":${Float.toString(started +. 2. *. slice)}}\n` ++
+          `{"name":"waiting","role":"supervisor","thread":"trial","at":${Float.toString(
+              started,
+            )}}\n` ++
+          `{"name":"own","role":"integrator","thread":"trial","at":${Float.toString(
+              started +. 4. *. slice,
+            )},"transcript":"/missing.jsonl"}\n`,
+        ),
         ("threads/trial/decisions.md", "## Legacy\nAnswer: open\n"),
         (
           "runs/sessions/own.json",
-          "{\"name\":\"own\",\"role\":\"integrator\",\"thread\":\"trial\"}",
+          "{\"name\":\"own\",\"role\":\"integrator\",\"thread\":\"elsewhere\"}",
         ),
         (
           "runs/sessions/other.json",
           "{\"name\":\"other\",\"role\":\"advisor\",\"thread\":\"elsewhere\"}",
         ),
       ],
+    )
+    Ledger.append(
+      Node.join([root.contents, "threads/trial/figures.jsonl"]),
+      Ledger.line([
+        ("kind", JSON.String("green")),
+        ("step", JSON.String("1")),
+        ("at", JSON.Number(started +. 6. *. slice)),
+      ]),
     )
     let env = Node.envCopy(Node.env)
     env->Dict.set("THREADS_HOME", Node.join([root.contents, "threads"]))
@@ -319,7 +390,20 @@ describe("transcript and decision inputs", () => {
     expect(result.status->Nullable.toOption)->toEqual(Some(0))
     let text = Node.readFileSync(Node.join([root.contents, "threads/trial/rounds.txt"]))
     expect(result.stdout->Nullable.getOr(""))->toEqual(text)
-    expect(text->String.includes("integrator own:"))->toEqual(true)
+    expect(
+      text->String.includes(
+        `integrator own: job 0.00, review 0.00, turn ${Rounds.minutes(
+            minute,
+          )}, decision 0.00, nothing 0.00, ready ${Rounds.minutes(3. *. minute)} minutes`,
+      ),
+    )->toEqual(true)
+    expect(text->String.split("integrator own:")->Array.length)->toEqual(3)
+    expect(text->String.includes("supervisor waiting:"))->toEqual(true)
+    expect(text->String.includes("supervisor waiting has no transcript"))->toEqual(true)
+    expect(text->String.includes("running:"))->toEqual(false)
+    expect(
+      text->String.includes(`thread trial: ready ${Rounds.minutes(5. *. minute)} minutes`),
+    )->toEqual(true)
     expect(text->String.includes("advisor other:"))->toEqual(false)
     expect(text->String.includes("thread trial: ready"))->toEqual(true)
     expect(text->String.includes("untimed decision blocks: 1\n"))->toEqual(true)

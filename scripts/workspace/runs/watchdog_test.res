@@ -352,6 +352,26 @@ describe("idle integrators", () => {
         ->String.split("\n")
         ->Array.filter(line => line->String.includes("idle to=supervisor integrator i"))
       expect(lines->Array.length)->toEqual(1)
+      let limit = Delegation.seatOpenSeconds->Int.toFloat *. 1000.
+      let owner = {...integrator, transcript: Some(transcript)}
+      let seatAt = now -. limit
+      let seat = at =>
+        Ledger.line([
+          ("kind", JSON.String("seat")),
+          ("name", JSON.String("open")),
+          ("session", JSON.String("s")),
+          ("at", JSON.Number(at)),
+        ])
+      let owed = () =>
+        Watchdog.idleOwed(~sessions=[owner], ~jobs=[], ~said=[], ~now)->Array.filter(
+          one => one.key->String.startsWith("idle:i:"),
+        )
+      Node.writeFileSync(Figures.recordsFile("t"), seat(seatAt +. 1.))
+      expect(owed()->Array.length)->toEqual(0)
+      Node.writeFileSync(Figures.recordsFile("t"), seat(seatAt))
+      expect(owed()->Array.length)->toEqual(1)
+      Node.writeFileSync(Figures.recordsFile("t"), seat(seatAt -. 1.))
+      expect(owed()->Array.length)->toEqual(1)
       let directory = Node.join([root, "s", "subagents"])
       Node.mkdirAll(directory)
       Node.writeFileSync(Node.join([directory, "seat.jsonl"]), "")

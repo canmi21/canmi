@@ -157,7 +157,7 @@ let stop = (id, ~by) =>
 
 let usage =
   "usage: mise run //:job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command>\n" ++
-  "       mise run //:job read <id> | stop <id> [--by <who>] | list | table [--since <yyyy-mm-dd>] | events\n" ++
+  "       mise run //:job read <id> | stop <id> [--by <who>] | list | table [--by-class] [--since <yyyy-mm-dd>] | events\n" ++
   "       mise run //:job register <role> <name> [--thread <name>] [--transcript <file>] | unregister <name>\n" ++ "       mise run //:job watchdog | install [--dry-run]"
 
 let defaultBy = () => Node.env->Dict.get("MONOFLAKE_ROLE")->Option.getOr("session")
@@ -334,6 +334,8 @@ let main = (argv: array<string>) =>
   | ["stop", id] => stop(id, ~by=defaultBy())
   | ["stop", id, "--by", by] => stop(id, ~by)
   | ["list"] => listed()
+  | _ if argv[0] == Some("table") && argv[1] == Some("--by-class") =>
+    Classes.run(argv->Array.slice(~start=2))
   | ["table"] => tabled(None)
   | ["table", "--since", day] => tabled(Some(day))
   | ["events"] =>

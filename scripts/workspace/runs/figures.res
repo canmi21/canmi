@@ -72,7 +72,7 @@ let spans = (found: array<record>, ~now) =>
     }
   )
 
-/** Each seat a session recorded, from its dispatch to its report or `now`. */
+/** An unreported seat stops counting at the open seat limit. */
 let seatsOf = (found: array<record>, ~session, ~now) =>
   found->Array.filterMap(one =>
     switch one {
@@ -83,7 +83,10 @@ let seatsOf = (found: array<record>, ~session, ~now) =>
         | _ => None
         }
       )
-      Some((at, closed->Option.getOr(now)))
+      Some((
+        at,
+        closed->Option.getOr(Math.min(now, at +. Delegation.seatOpenSeconds->Int.toFloat *. 1000.)),
+      ))
     | _ => None
     }
   )

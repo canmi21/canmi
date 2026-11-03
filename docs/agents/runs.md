@@ -25,7 +25,9 @@ silent. **`mise run //:job run -- <command>` waits and exits with its status**, 
   of the session and the `--by` name that started it, `job-stop-own`, as a process is killed only by
   a pid its agent recorded. A seat starts its jobs `--by <its lane>` and stops them the same way. `list` shows the last ones.
 - **`mise run //:job table [--since <yyyy-mm-dd>]`** is duration times count by command, the top one the
-  bottleneck. Timing comes free of the ledger, and nothing else is timed specially.
+  bottleneck. Timing comes free of the ledger, and nothing else is timed specially; `--by-class`
+  gathers it by class, with Claude seats, reviews, landings, recurring work and pieces past the limit
+  from `Delegation.pieceMinutes`, `job-classes`.
 
 ## The watchdog reports what nobody is looking at
 

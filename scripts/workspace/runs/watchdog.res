@@ -264,7 +264,8 @@ let idleOwed = (~sessions, ~jobs, ~said, ~now) =>
       let steps = Charter.steps(thread)
       let open_ = records->Array.filterMap(one =>
         switch one {
-        | Seat({name, at, session: ?Some(session)}) =>
+        | Seat({name, at, session: ?Some(session)})
+          if now >= at && now -. at < Delegation.seatOpenSeconds->Int.toFloat *. 1000. =>
           records->Array.some(
             other =>
               switch other {
