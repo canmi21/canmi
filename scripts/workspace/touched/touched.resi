@@ -14,8 +14,18 @@ type touched =
  */
 let of_: (~paths: array<string>, ~blocks: array<(string, string)>, ~full: bool) => touched
 
-/** The changed paths of a repository's working copy and its commits not yet at its origin. */
+/**
+ * The changed paths of a repository's working copy and its commits not yet at its origin, a file
+ * its workspace.toml lists in `[land] bumped` left out where its diff changes only the versions of
+ * the repository's own packages, so a bump touches no block of its own.
+ */
 let changed: string => array<string>
+
+/**
+ * Whether a diff of a bumped file changes only own versions: package.json's top-level `version`,
+ * or Cargo.lock's `version = ` under a `[[package]]` named among `members`; any other line is not.
+ */
+let versionsOnly: (~file: string, ~diff: string, ~members: array<string>) => bool
 
 /** Each package under a repository's `code/`, by its name less its scope, and its directory. */
 let blocksOf: string => array<(string, string)>

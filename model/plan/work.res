@@ -420,6 +420,13 @@ let items: array<item> = [
     holds: Owes("the cause found and the pair reproduced in a test, then open fixed or refusing"),
   },
   {
+    id: "protocol-switch-lines",
+    says: "The shared protocol runner, scripts/protocol/protocol_runner.res:270-274, prints one line per switch naming the property it broke, where today a spec's one `passed` line stands for its main model and every switch alike, as step 10's run 20261103-062838-a8c9 needed reading from the code",
+    repos: ["workspace"],
+    after: [],
+    holds: Owes("a line per switch job in the runner's output, its property named"),
+  },
+  {
     id: "green-to-push-measured",
     says: "`job table --by-class` gives a step's time from its local green to its push, which needs a record of the local green and of which landing is the step's own; until then it prints that it is not measured, as a step's green is recorded after its own landing",
     repos: ["workspace"],

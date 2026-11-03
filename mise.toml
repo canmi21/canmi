@@ -59,6 +59,12 @@ description = "Push the workspace's main, every repository's with --all, or one'
 depends = ["build"]
 run = "node scripts/workspace/repos.res.mjs push"
 
+# One landing through the verbs, stopping at its first failure, docs/commits.md.
+[tasks.land]
+description = "Land a repository's working copy: fmt, bump, check, commit, push: `land <name> -m <subject> [--trailer <line>]... [--paths <path>...] [--thread <name>] [--dry-run]`"
+depends = ["build"]
+run = "node scripts/workspace/land/land.res.mjs"
+
 [tasks.fmt]
 description = "Format the workspace, every repository with --all, or one: `fmt [name | --all] [--dry-run]`"
 depends = ["build"]

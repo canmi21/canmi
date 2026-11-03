@@ -18,6 +18,8 @@ let of_ = (~paths, ~blocks, ~full) => {
   }
 }
 
+let versionsOnly = (~file as _, ~diff as _, ~members as _) => false
+
 let changed = repo => {
   let result = Node.spawnSync(
     "jj",
