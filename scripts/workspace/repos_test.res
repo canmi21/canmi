@@ -182,14 +182,98 @@ describe("a repository's check parts", () => {
     expect(refusedParts(["own", "names"]))->toEqual(None)
   })
 
-  test("--all with parts is refused before any repository is read", () => {
+  testAsync("--all with parts is refused before any repository is read", async () => {
     let why = try {
-      Repos.dispatch("verify", None, ~dry=true, ~everything=true, ~parts=["names"])->ignore
+      (await Repos.dispatch("verify", None, ~dry=true, ~everything=true, ~parts=["names"]))->ignore
       None
     } catch {
     | Registry.Refused(why) => Some(why)
     }
     expect(why)->toEqual(Some("--all and check parts cannot be combined"))
+  })
+})
+
+describe("a full check's order", () => {
+  let part = Check.Script(() => 0)
+  let shared = ["names", "comments", "tasks", "lines", "shape"]->Array.map(name => (name, part))
+  let steps = Repos.planned(shared, ["rust", "format"])
+  let walk = async failing => {
+    let ran = []
+    let result = await Repos.walked(steps, async step => {
+      let name = Repos.stepName(step)
+      ran->Array.push(name)
+      failing->Array.includes(name) ? (1, `error: ${name} failed`) : (0, `${name} passed`)
+    })
+    (result, ran)
+  }
+
+  test("runs the form parts, then the own format, then verify, then the other rules", () => {
+    expect(steps->Array.map(Repos.stepName))->toEqual([
+      "shape",
+      "lines",
+      "comments",
+      "verify:format",
+      "verify",
+      "names",
+      "tasks",
+    ])
+    expect(Repos.planned(shared, ["rust"])->Array.map(Repos.stepName))->toEqual([
+      "shape",
+      "lines",
+      "comments",
+      "verify",
+      "names",
+      "tasks",
+    ])
+  })
+
+  testAsync(
+    "a failed form part stops the repository before its verify, reported failed",
+    async () => {
+      let ((status, said), ran) = await walk(["lines"])
+      expect(status)->toBe(1)
+      expect(ran)->toEqual(["shape", "lines"])
+      expect(said)->toBe("error: lines failed")
+      let ((status, _), ran) = await walk(["verify:format"])
+      expect(status)->toBe(1)
+      expect(ran->Array.includes("verify"))->toBe(false)
+    },
+  )
+
+  testAsync(
+    "form parts that pass run the verify, and the rules go on past its failure",
+    async () => {
+      let ((status, said), ran) = await walk([])
+      expect((status, said))->toEqual((0, ""))
+      expect(ran)->toEqual(steps->Array.map(Repos.stepName))
+      let ((status, said), ran) = await walk(["verify", "names"])
+      expect(status)->toBe(1)
+      expect(ran)->toEqual(steps->Array.map(Repos.stepName))
+      expect(said)->toBe("error: verify failed\nerror: names failed")
+    },
+  )
+
+  test("a part run here keeps what it logged beside its status", () => {
+    let (status, said) = Repos.heard(
+      () => {
+        Console.log("  error: one finding")
+        1
+      },
+    )
+    expect((status, said))->toEqual((1, "  error: one finding"))
+  })
+
+  test("a failed summary ends with each failed repository's causes", () => {
+    let causes = [("apps/rdm", ["error: a", "error: b"]), ("canmi/lib", []), ("seam", ["x"])]
+    let lines = Repos.summaryLines("verify", [], ["apps/rdm", "seam"], ~causes)
+    let tail = ["apps/rdm:", "  error: a", "  error: b", "seam:", "  x"]
+    expect(lines->Array.slice(~start=-6))->toEqual(["failed: apps/rdm, seam", ...tail])
+    expect(Repos.summaryLines("verify", [], []))->toEqual([])
+  })
+
+  test("--verbose is taken and passed on", () => {
+    expect(Repos.parse(["verify", "apps/rdm", "--verbose"]).verbose)->toBe(true)
+    expect(Repos.parse(["verify", "apps/rdm"]).verbose)->toBe(false)
   })
 })
 

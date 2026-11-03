@@ -289,22 +289,30 @@ let inWorkSaid = (lines: array<string>) =>
         ...lines->Array.map(line => `  ! ${line->String.slice(~start=0, ~end=96)}`),
       ]
 
-let summary = (verb, skipped, failed, ~paused=[], ~inWork=[]) =>
-  if skipped != [] || failed != [] || paused != [] || inWork != [] {
-    Console.log("\n" ++ String.repeat("-", 72))
-    if skipped != [] {
-      Console.log(
-        `warning: no ${verb} task of their own, so passed over: ${skipped->Array.join(", ")}`,
-      )
-    }
-    if paused != [] {
-      Console.log(`paused, so passed over: ${paused->Array.join(", ")}`)
-    }
-    inWorkSaid(inWork)->Array.forEach(line => Console.log(line))
-    if failed != [] {
-      Console.log(`failed: ${failed->Array.join(", ")}`)
-    }
-  }
+/** Each failed repository's symptom lines under its label, the last a failed check prints. */
+let causesSaid = (causes: array<(string, array<string>)>) =>
+  causes->Array.flatMap(((place, lines)) =>
+    lines == [] ? [] : [`${place}:`, ...lines->Array.map(line => `  ${line}`)]
+  )
+
+let summaryLines = (verb, skipped, failed, ~paused=[], ~inWork=[], ~causes=[]) =>
+  skipped == [] && failed == [] && paused == [] && inWork == []
+    ? []
+    : Array.flat([
+        ["\n" ++ String.repeat("-", 72)],
+        skipped == []
+          ? []
+          : [`warning: no ${verb} task of their own, so passed over: ${skipped->Array.join(", ")}`],
+        paused == [] ? [] : [`paused, so passed over: ${paused->Array.join(", ")}`],
+        inWorkSaid(inWork),
+        failed == [] ? [] : [`failed: ${failed->Array.join(", ")}`],
+        causesSaid(causes),
+      ])
+
+let summary = (verb, skipped, failed, ~paused=[], ~inWork=[], ~causes=[]) =>
+  summaryLines(verb, skipped, failed, ~paused, ~inWork, ~causes)->Array.forEach(line =>
+    Console.log(line)
+  )
 
 /** Each `verify:<part>` task a repository's mise.toml declares inline, in the order declared. */
 let verifyParts = repo => {
@@ -358,9 +366,6 @@ let rulesLine = (parts, shared: array<(string, Check.part)>) =>
     parts == [] ? "" : " " ++ shared->Array.map(((name, _)) => name)->Array.join(" ")
   )
 
-/**
- * fmt, clean or verify, the workspace's half here and each repository's own task, past a failure.
- */
 /** The repositories `--all` reaches, each one a deferred item pauses passed over and named. */
 let active = (name, ~everything, paused) =>
   Registry.selected(name, ~everything)->Array.filter(repo =>
@@ -372,82 +377,209 @@ let active = (name, ~everything, paused) =>
     }
   )
 
-let dispatch = (verb, name, ~dry, ~everything, ~parts) => {
-  if everything && parts != [] {
-    Registry.fail("--all and check parts cannot be combined")
-  }
-  let skipped = []
-  let failed = []
-  let paused = []
-  let listed = Node.join([Node.mkdtempSync(Node.join([Node.tmpdir(), "in-work-"])), "listed"])
-  Node.env->Dict.set(Delegation.inWorkFile, listed)
-  active(name, ~everything, paused)->Array.forEach(repo => {
-    let place = Registry.label(repo)
-    let shared = repo != root && verb == "verify" ? checkParts(repo, parts) : []
-    let before = stamps(verb, ~dry, ~parts) ? Stamp.snapshot(repo) : ""
-    let own = if repo == root {
-      Console.log(`\n=== workspace ${verb}${dry ? " --dry-run" : ""} ===`)
-      switch verb {
-      | "fmt" => fmt(~dry)
-      | "clean" => clean(~dry)
-      | _ if dry =>
-        Check.validate(parts)
-        Console.log(`would run check workspace${parts == [] ? "" : " " ++ parts->Array.join(" ")}`)
-        0
-      | _ => Check.run(parts)
-      }
-    } else if verb == "verify" && !runsOwn(parts) {
-      namedVerifyParts(repo, parts)->Array.reduce(0, (failed, part) => {
-        let path = task(repo, `verify:${part}`)
-        Console.log(dry ? `would run ${path}` : `\n=== ${path} ===`)
-        failed + (dry ? 0 : Node.run(~cwd=root, "mise", ["run", path]))
-      })
-    } else if !declares(repo, verb) {
-      skipped->Array.push(place)
-      0
-    } else if dry && verb == "verify" {
-      Console.log(`would run ${task(repo, verb)}`)
-      0
-    } else {
-      let flags = dry ? ["--dry-run"] : []
-      Console.log(`\n=== ${[task(repo, verb), ...flags]->Array.join(" ")} ===`)
-      Node.run(~cwd=root, "mise", ["run", task(repo, verb), ...flags])
-    }
-    // Below the workspace, verify is the repository's own then the workspace's rules,
-    // or the parts named.
-    let held = if repo == root || verb != "verify" {
-      0
-    } else if parts != [] && shared == [] {
-      0
-    } else if dry {
-      Console.log(rulesLine(parts, shared))
-      0
-    } else if parts == [] {
-      Check.repository(repo)
-    } else {
-      shared->Array.reduce(0, (failed, (name, part)) => {
-        Console.log(`\n=== ${place} ${name}, the workspace's ===`)
-        Check.outcome(part) + failed
-      })
-    }
-    if own != 0 || held != 0 {
-      failed->Array.push(place)
-    } else if before != "" {
-      Stamp.write(repo, before)
-    }
-  })
-  let inWork = Node.existsSync(listed) ? inWorkOf(Node.readFileSync(listed)) : []
-  Node.rmSync(Node.dirname(listed), {recursive: true, force: true})
-  summary(verb, skipped, failed, ~paused, ~inWork)
-  failed == [] ? 0 : 1
-}
-
 /** The lines of a failed verify worth repeating under the summary, which a long log buries. */
 let marked = /\berror\b|panicked|FAILED/
 let symptom = output => {
   let all = output->String.split("\n")
   let flagged = all->Array.filter(line => marked->RegExp.test(line))
   (flagged == [] ? all : flagged)->Array.slice(~start=0, ~end=10)
+}
+
+type consoleObject
+@val external consoleObject: consoleObject = "console"
+@get external logger: consoleObject => string => unit = "log"
+@set external setLogger: (consoleObject, string => unit) => unit = "log"
+
+/** A part run in this process, what it logged shown as it goes and kept beside its status. */
+let heard = run => {
+  let shown = consoleObject->logger
+  let seen = []
+  consoleObject->setLogger(text => {
+    shown(text)
+    seen->Array.push(text)
+  })
+  let status = try run() catch {
+  | error =>
+    consoleObject->setLogger(shown)
+    throw(error)
+  }
+  consoleObject->setLogger(shown)
+  (status, seen->Array.join("\n"))
+}
+
+/** The form layer's parts, in the order a full check runs them, docs/agents/checking.md. */
+let formParts = ["shape", "lines", "comments"]
+
+type step =
+  | Gate(string, Check.part)
+  | OwnGate(string)
+  | Verify
+  | Rule(string, Check.part)
+
+let stepName = step =>
+  switch step {
+  | Gate(name, _) | Rule(name, _) => name
+  | OwnGate(name) => `verify:${name}`
+  | Verify => "verify"
+  }
+
+/** A full check's steps over a repository, its form parts and own format first as gates. */
+let planned = (shared: array<(string, Check.part)>, owned) =>
+  Array.flat([
+    formParts
+    ->Array.filterMap(name => shared->Array.find(((one, _)) => one == name))
+    ->Array.map(((name, part)) => Gate(name, part)),
+    owned->Array.includes("format") ? [OwnGate("format")] : [],
+    [Verify],
+    shared
+    ->Array.filter(((name, _)) => !(formParts->Array.includes(name)))
+    ->Array.map(((name, part)) => Rule(name, part)),
+  ])
+
+/** Each step in order, on past a failure but a gate's, with what each failing step printed. */
+let walked = async (steps, run) => {
+  let said = []
+  let stopped = ref(false)
+  for index in 0 to steps->Array.length - 1 {
+    if !stopped.contents {
+      let step = steps->Array.getUnsafe(index)
+      let (status, out) = await run(step)
+      if status != 0 {
+        said->Array.push(out)
+        switch step {
+        | Gate(_) | OwnGate(_) => stopped := true
+        | _ => ()
+        }
+      }
+    }
+  }
+  (said == [] ? 0 : 1, said->Array.join("\n"))
+}
+
+/** One repository's full check, its deferred items shown only when asked. */
+let checked = async (repo, ~skipped, ~verbose) => {
+  let place = Registry.label(repo)
+  let run = async step =>
+    switch step {
+    | Gate(name, part) | Rule(name, part) =>
+      Console.log(`\n=== ${place} ${name}, the workspace's ===`)
+      heard(() => Check.outcome(part))
+    | OwnGate(name) =>
+      let path = task(repo, `verify:${name}`)
+      Console.log(`\n=== ${path} ===`)
+      await Node.stream(~cwd=root, "mise", ["run", path])
+    | Verify if !declares(repo, "verify") =>
+      skipped->Array.push(place)
+      (0, "")
+    | Verify =>
+      Console.log(`\n=== ${task(repo, "verify")} ===`)
+      await Node.stream(~cwd=root, "mise", ["run", task(repo, "verify")])
+    }
+  let result = await walked(planned(checkParts(repo, []), verifyParts(repo)), run)
+  let waiting = Array.concat(Waiting.shown(~repo=Some(place)), Repo_plan.waiting(~repo=Some(place)))
+  if verbose && waiting != [] {
+    Console.log("")
+    waiting->Array.forEach(line => Console.log(line))
+  }
+  result
+}
+
+/** A verb over one repository other than a full check below the workspace, as it ran before. */
+let dispatched = async (repo, verb, ~dry, ~parts, ~skipped) => {
+  let place = Registry.label(repo)
+  let shared = repo != root && verb == "verify" ? checkParts(repo, parts) : []
+  let said = []
+  let kept = ((status, out)) => {
+    if status != 0 {
+      said->Array.push(out)
+    }
+    status
+  }
+  let own = if repo == root {
+    Console.log(`\n=== workspace ${verb}${dry ? " --dry-run" : ""} ===`)
+    switch verb {
+    | "fmt" => fmt(~dry)
+    | "clean" => clean(~dry)
+    | _ if dry =>
+      Check.validate(parts)
+      Console.log(`would run check workspace${parts == [] ? "" : " " ++ parts->Array.join(" ")}`)
+      0
+    | _ => kept(heard(() => Check.run(parts)))
+    }
+  } else if verb == "verify" && !runsOwn(parts) {
+    let chosen = namedVerifyParts(repo, parts)
+    let failures = ref(0)
+    for index in 0 to chosen->Array.length - 1 {
+      let path = task(repo, `verify:${chosen->Array.getUnsafe(index)}`)
+      Console.log(dry ? `would run ${path}` : `\n=== ${path} ===`)
+      if !dry {
+        failures := failures.contents + kept(await Node.stream(~cwd=root, "mise", ["run", path]))
+      }
+    }
+    failures.contents
+  } else if !declares(repo, verb) {
+    skipped->Array.push(place)
+    0
+  } else if dry && verb == "verify" {
+    Console.log(`would run ${task(repo, verb)}`)
+    0
+  } else {
+    let flags = dry ? ["--dry-run"] : []
+    Console.log(`\n=== ${[task(repo, verb), ...flags]->Array.join(" ")} ===`)
+    Node.run(~cwd=root, "mise", ["run", task(repo, verb), ...flags])
+  }
+  // Below the workspace, the parts named, or what a dry run would run.
+  let held = if repo == root || verb != "verify" || (parts != [] && shared == []) {
+    0
+  } else if dry {
+    Console.log(rulesLine(parts, shared))
+    0
+  } else {
+    shared->Array.reduce(0, (failed, (name, part)) => {
+      Console.log(`\n=== ${place} ${name}, the workspace's ===`)
+      kept(heard(() => Check.outcome(part))) + failed
+    })
+  }
+  (own != 0 || held != 0 ? 1 : 0, said->Array.join("\n"))
+}
+
+/** fmt, clean or verify, the workspace's half here and each repository's own, past a failure. */
+let dispatch = async (verb, name, ~dry, ~everything, ~parts, ~verbose=false, ~ahead=() => ()) => {
+  if everything && parts != [] {
+    Registry.fail("--all and check parts cannot be combined")
+  }
+  let skipped = []
+  let failed = []
+  let causes = []
+  let paused = []
+  let listed = Node.join([Node.mkdtempSync(Node.join([Node.tmpdir(), "in-work-"])), "listed"])
+  Node.env->Dict.set(Delegation.inWorkFile, listed)
+  let chosen = active(name, ~everything, paused)
+  for index in 0 to chosen->Array.length - 1 {
+    let repo = chosen->Array.getUnsafe(index)
+    let place = Registry.label(repo)
+    let before = stamps(verb, ~dry, ~parts) ? Stamp.snapshot(repo) : ""
+    let (status, said) = if repo != root && verb == "verify" && parts == [] && !dry {
+      await checked(repo, ~skipped, ~verbose)
+    } else {
+      await dispatched(repo, verb, ~dry, ~parts, ~skipped)
+    }
+    if status != 0 {
+      failed->Array.push(place)
+      let lines = said->String.split("\n")->Array.filter(line => line->String.trim != "")
+      causes->Array.push((
+        place,
+        symptom(lines->Array.join("\n"))->Array.filter(line => line != ""),
+      ))
+    } else if before != "" {
+      Stamp.write(repo, before)
+    }
+  }
+  let inWork = Node.existsSync(listed) ? inWorkOf(Node.readFileSync(listed)) : []
+  Node.rmSync(Node.dirname(listed), {recursive: true, force: true})
+  ahead()
+  summary(verb, skipped, failed, ~paused, ~inWork, ~causes)
+  failed == [] ? 0 : 1
 }
 
 let snapshot = Stamp.snapshot
@@ -599,18 +731,19 @@ type request = {
   dry: bool,
   major: bool,
   json: bool,
+  verbose: bool,
   everything: bool,
   parts: array<string>,
   passed: array<string>,
 }
 
-let usage = "usage: repos list | clone | pull | push | fmt | update | clean | verify | publish  [name | --all] [part ...] [--dry-run]"
+let usage = "usage: repos list | clone | pull | push | fmt | update | clean | verify | publish  [name | --all] [part ...] [--dry-run] [--verbose]"
 let across = ["update", "fmt", "clean", "verify", "pull", "push"]
 
 /** What was typed, or why it is refused. A name means that repository, and nothing is dropped. */
 let parse = (argv: array<string>): request => {
   let flag = names => argv->Array.some(arg => names->Array.includes(arg))
-  let known = ["-n", "--dry-run", "--major", "-a", "--all", "--pending", "--json"]
+  let known = ["-n", "--dry-run", "--major", "-a", "--all", "--pending", "--json", "--verbose"]
   let rest = argv->Array.filter(arg => !(arg->String.startsWith("-")))
   let verb = rest[0]->Option.getOr("")
   let name = rest[1]
@@ -620,6 +753,7 @@ let parse = (argv: array<string>): request => {
     dry: flag(["-n", "--dry-run"]),
     major: flag(["--major"]),
     json: flag(["--json"]),
+    verbose: flag(["--verbose"]),
     everything: flag(["-a", "--all"]),
     parts: [],
     passed: [],
@@ -732,6 +866,14 @@ let jsonUpdate = async (name, ~everything, ~major) => {
   failed.contents ? 1 : 0
 }
 
+/** The update reminder, said before a check's summary so its causes stay the last lines. */
+let reminded = () => {
+  let line = Reminder.line()
+  if line != "" {
+    Console.log(line)
+  }
+}
+
 let execute = async argv => {
   let request = parse(argv)
   let {name, dry, everything} = request
@@ -740,11 +882,20 @@ let execute = async argv => {
   | "clone" => clone(name, ~dry)
   | "pull" => pull(name, ~dry, ~everything)
   | "push" => Outgoing.push(name, ~dry, ~everything)
-  | "fmt" | "clean" => dispatch(request.verb, name, ~dry, ~everything, ~parts=[])
+  | "fmt" | "clean" => await dispatch(request.verb, name, ~dry, ~everything, ~parts=[])
   | "verify" if request.parts->Array.includes("--pending") =>
     Check.pending()->Array.forEach(line => Console.log(line))
     0
-  | "verify" => dispatch("verify", name, ~dry, ~everything, ~parts=request.parts)
+  | "verify" =>
+    await dispatch(
+      "verify",
+      name,
+      ~dry,
+      ~everything,
+      ~parts=request.parts,
+      ~verbose=request.verbose,
+      ~ahead=reminded,
+    )
   | "update" =>
     request.json
       ? await jsonUpdate(name, ~everything, ~major=request.major)
@@ -762,20 +913,14 @@ let main = async argv => {
   }
   try {
     let code = await execute(argv)
-    if remind {
-      let line = Reminder.line()
-      if line != "" {
-        Console.log(line)
-      }
+    if request.verb == "pull" {
+      reminded()
     }
     code
   } catch {
   | error =>
     if remind {
-      let line = Reminder.line()
-      if line != "" {
-        Console.log(line)
-      }
+      reminded()
     }
     throw(error)
   }
