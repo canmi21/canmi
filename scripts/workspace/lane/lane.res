@@ -120,7 +120,13 @@ let openPlan = (
     Ok(
       all->Array.flatMap(one => {
         let there = destination(~root, ~name, one)
-        let generated = one == "monoflake/platform" && target != one
+        // Platform's libraries are generated before the lane is handed over, target or beside.
+        let generated = one == "monoflake/platform"
+        let log = Node.join([
+          Lane_state.lanes(root),
+          name,
+          `${one->String.replaceAll("/", "-")}-install.log`,
+        ])
         Array.flat([
           switch reason(one) {
           | Some((from, line)) => [
@@ -136,21 +142,22 @@ let openPlan = (
               args: ["workspace", "add", "--name", name, "-r", "main", there],
             }),
           ],
-          hasPackage(one)
-            ? [
-                Background({
-                  cwd: there,
-                  command: generated
-                    ? "pnpm install --frozen-lockfile && rescript build && mise run generate"
-                    : "pnpm install --frozen-lockfile",
-                  log: Node.join([
-                    Lane_state.lanes(root),
-                    name,
-                    `${one->String.replaceAll("/", "-")}-install.log`,
-                  ]),
-                }),
-              ]
-            : [],
+          switch (hasPackage(one), generated) {
+          | (false, _) => []
+          | (true, true) => [
+              Run({
+                cwd: there,
+                program: "sh",
+                args: [
+                  "-c",
+                  `(pnpm install --frozen-lockfile && rescript build && mise run generate) > '${log}' 2>&1`,
+                ],
+              }),
+            ]
+          | (true, false) => [
+              Background({cwd: there, command: "pnpm install --frozen-lockfile", log}),
+            ]
+          },
         ])
       }),
     )

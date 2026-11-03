@@ -86,6 +86,7 @@ let table = [
   neutral("BINDING", "BINDING", Foundation, ""),
   // A platform's salt master, from which deploy derives each organization's salt, b8f35.
   neutral("SALT_MASTER", "SALT", Foundation, "MASTER"),
+  neutral("SALT_TEST_MASTER", "SALT", Test, "MASTER"),
 ]
 
 /** Names a secrets file or GitHub holds, beside each one's name after rotation, docs/naming.md. */

@@ -51,6 +51,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   continuing there; see [lanes.md](agents/lanes.md).
 - **A lane a seat will use is never rebased from outside; open a fresh one.** A lane rebased from
   outside goes stale, and its seat then works on the old tree without knowing.
+- **A commit seat lanes fork from is never rewritten; a fix goes in a new commit.** Folding a fix
+  into it left the seat lanes stale, and `jj workspace update-stale` there discarded every file the
+  seats had not yet snapshotted; refresh a seat lane only after `jj st` has snapshotted it.
 - **A lane's sibling runs its own `generate` before anything builds against it.**
 - **A seat stops every process it started before it reports, and says so.** Load made to test a
   flake, `sh -c 'while :; do :; done'` among it, outlives the seat under launchd and slows every

@@ -36,7 +36,7 @@ let repositoriesOf = plan =>
   ->Result.getOr([])
   ->Array.filterMap(step =>
     switch step {
-    | Lane.Run({cwd}) => Some(cwd->String.replace("/base/repos/", ""))
+    | Lane.Run({cwd, program: "jj"}) => Some(cwd->String.replace("/base/repos/", ""))
     | _ => None
     }
   )
@@ -45,7 +45,7 @@ let found = (lane, rel): Lane_state.found => {lane, rel, path: `/base/lanes/${la
 
 describe("opening a lane", () => {
   test(
-    "adds a jj workspace on main for the target and each sibling, and installs in the background",
+    "adds a jj workspace on main for the target and each sibling, and prepares platform before handing it",
     () => {
       let plan = open_(
         ~hasPackage=one => one == "monoflake/platform",
@@ -67,10 +67,13 @@ describe("opening a lane", () => {
               "/base/lanes/wave/monoflake/platform",
             ],
           }),
-          Background({
+          Run({
             cwd: "/base/lanes/wave/monoflake/platform",
-            command: "pnpm install --frozen-lockfile",
-            log: "/base/lanes/wave/monoflake-platform-install.log",
+            program: "sh",
+            args: [
+              "-c",
+              "(pnpm install --frozen-lockfile && rescript build && mise run generate) > '/base/lanes/wave/monoflake-platform-install.log' 2>&1",
+            ],
           }),
           MakeDir("/base/lanes/wave/monoflake"),
           Run({
@@ -141,6 +144,7 @@ describe("opening a lane with its boundary", () => {
         step =>
           switch step {
           | Lane.Background({cwd, command}) => Some((cwd, command))
+          | Lane.Run({cwd, program: "sh", args: [_, command]}) => Some((cwd, command))
           | _ => None
           },
       )
@@ -148,7 +152,7 @@ describe("opening a lane with its boundary", () => {
       ("/base/lanes/w/monoflake/driver", "pnpm install --frozen-lockfile"),
       (
         "/base/lanes/w/monoflake/platform",
-        "pnpm install --frozen-lockfile && rescript build && mise run generate",
+        "(pnpm install --frozen-lockfile && rescript build && mise run generate) > '/base/lanes/w/monoflake-platform-install.log' 2>&1",
       ),
     ])
   })
