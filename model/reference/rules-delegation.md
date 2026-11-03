@@ -2,7 +2,7 @@
 
 # Rules
 
-40 rules, 5 pending a check.
+41 rules, 6 pending a check.
 
 ## Delegation
 
@@ -145,6 +145,13 @@ A message goes only to `main` or `team-lead`, the names a subagent has for its p
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
 - held by: hook `hooks/gates/messages/send_local`
+
+### piece-within-minutes
+
+Normally each piece of work, a seat or an integrator's own task, is at most `pieceMinutes` of agent time; allowed past that while starting, it warns and never blocks, and the figure comes down as the speed is tuned.
+
+- doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
+- held by: pending, owed: a check reading `mise run //:job table --by-class`, once it lands
 
 ### idle-reported
 

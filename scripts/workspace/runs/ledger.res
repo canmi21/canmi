@@ -144,8 +144,71 @@ let markRead = (~id, ~at) =>
   write([("kind", JSON.String("read")), ("id", JSON.String(id)), ("at", JSON.Number(at))])
 
 /** A registered session's file, its turn read from its transcript's growth. */
-let registerSession = (~role, ~name, ~transcript, ~thread=None) => {
+/** A session's place in a thread, kept once written, as its current record holds only the last. */
+type registration = {
+  name: string,
+  role: string,
+  thread: string,
+  transcript: option<string>,
+  at: float,
+}
+
+let registrationsFile = () => Node.join([home(), "registrations.jsonl"])
+
+/** Who belonged to a thread and since when, a transcript filling in once the hook names it. */
+let registrationsOf = (thread): array<registration> => {
+  let found: array<registration> = []
+  if Node.existsSync(registrationsFile()) {
+    Node.readFileSync(registrationsFile())
+    ->String.split("\n")
+    ->Array.forEach(text =>
+      Payload.parse(text)->Option.forEach(fields =>
+        if fields->Payload.text("thread") == Some(thread) {
+          let one = {
+            name: textOf(fields, "name"),
+            role: textOf(fields, "role"),
+            thread,
+            transcript: fields->Payload.text("transcript"),
+            at: numberOf(fields, "at")->Option.getOr(0.),
+          }
+          switch found->Array.findIndex(
+            known =>
+              known.name == one.name &&
+                (known.transcript == None ||
+                one.transcript == None ||
+                known.transcript == one.transcript),
+          ) {
+          | -1 => found->Array.push(one)
+          | at =>
+            let known = found->Array.getUnsafe(at)
+            found->Array.setUnsafe(
+              at,
+              {...known, transcript: known.transcript->Option.orElse(one.transcript)},
+            )
+          }
+        }
+      )
+    )
+  }
+  found
+}
+
+let registerSession = (~role, ~name, ~transcript, ~thread=None, ~at=Date.now()) => {
   Node.mkdirAll(sessions())
+  thread->Option.forEach(thread =>
+    append(
+      registrationsFile(),
+      line(
+        [
+          ("name", JSON.String(name)),
+          ("role", JSON.String(role)),
+          ("thread", JSON.String(thread)),
+          ...transcript->Option.mapOr([], file => [("transcript", JSON.String(file))]),
+          ("at", JSON.Number(at)),
+        ],
+      ),
+    )
+  )
   Node.writeFileSync(
     Node.join([sessions(), `${name}.json`]),
     line(

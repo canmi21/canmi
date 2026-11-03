@@ -234,6 +234,37 @@ let idleSupervisorSeconds = 300
 /** A turn's lines this close are one stretch of work, as a model answers within a minute. */
 let turnGapSeconds = 60
 
+/**
+ * Each piece of work, a seat or an integrator's own task, normally takes at most this many minutes
+ * of agent time, allowed past while starting, and the figure comes down as the speed is tuned.
+ */
+let pieceMinutes = 10
+
+/**
+ * A seat dispatched and never reported stops counting as work after this long, about twice the
+ * longest seat of thread trial, 462 s, so one forgotten or dead does not silence `idle`.
+ */
+let seatOpenSeconds = 900
+
+/**
+ * What a job's command is, the first that matches, for `job table --by-class`. A class never run
+ * shows an empty row.
+ */
+let jobClasses = [
+  ("Codex seat", "codex exec"),
+  ("conform", "\\bconform\\b"),
+  ("lane check", "lane check"),
+  ("lane handed", "lane handed"),
+  ("check", "mise run (//:)?check\\b"),
+  ("built", "mise run (//:)?built\\b"),
+  ("build", "mise run (//:)?build\\b"),
+  ("push", "mise run (//:)?push\\b"),
+  ("Release", "mise run (//:)?(release|publish)\\b"),
+  ("ring", "mise run (//:)?ring\\b"),
+  ("nudge", "mise run (//:)?nudge\\b"),
+  ("roll", "mise run (//:)?roll\\b"),
+]
+
 /** A round is split in slices this long, fine beside rounds of minutes and cheap to count. */
 let roundSliceSeconds = 10
 
@@ -479,6 +510,12 @@ let rules: array<Rule.t> = [
     says: "A message goes only to `main` or `team-lead`, the names a subagent has for its parent, a session named in `~/.claude/sessions/*.json` whose pid lives, a socket of `/tmp/cc-socks`, or a subagent of this session; a `to` carrying a listing's ` [ref]` is refused, as a ref may name another machine; anything else is refused, saying what was checked and to try again, as a session just opened writes its record a moment later",
     doc: "docs/agents/delegation.md",
     held: Hook("hooks/gates/messages/send_local"),
+  },
+  {
+    name: "piece-within-minutes",
+    says: "Normally each piece of work, a seat or an integrator's own task, is at most `pieceMinutes` of agent time; allowed past that while starting, it warns and never blocks, and the figure comes down as the speed is tuned",
+    doc: "docs/agents/delegation.md",
+    held: Pending("a check reading `mise run //:job table --by-class`, once it lands"),
   },
   {
     name: "idle-reported",

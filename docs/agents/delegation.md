@@ -156,6 +156,9 @@ is the order of its landings. A thread's charter, decision queue, ledger and sta
 
 **Work without a dependency runs in parallel by default, and running in series names what it depends
 on.** A wait expected past about two minutes asks at its start who can do something else meanwhile.
+**A piece of work is normally within `Delegation.pieceMinutes` of agent time**, a piece being one unit
+handed out, a seat or an integrator's own task, so a stall shows soon and work is split small; it warns
+and never blocks, allowed past that while starting.
 
 **A subagent type is defined only where it truly differs in tools, model or permissions.**
 

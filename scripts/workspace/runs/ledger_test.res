@@ -7,6 +7,54 @@ let start = (id, ~at=0., ~command="c") =>
 let end_ = (id, ~at, ~status=0) =>
   `{"kind":"end","id":"${id}","status":${Int.toString(status)},"at":${Float.toString(at)}}`
 
+describe("a session's registrations", () => {
+  test("are kept per thread once written, its transcript filling in", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "registrations-"]))
+    let saved = Node.env->Dict.get("RUNS_HOME")
+    Node.env->Dict.set("RUNS_HOME", root)
+    Ledger.registerSession(
+      ~role="integrator",
+      ~name="i",
+      ~transcript=None,
+      ~thread=Some("a"),
+      ~at=1.,
+    )
+    Ledger.registerSession(
+      ~role="integrator",
+      ~name="i",
+      ~transcript=Some("/t.jsonl"),
+      ~thread=Some("a"),
+      ~at=2.,
+    )
+    Ledger.registerSession(
+      ~role="integrator",
+      ~name="i",
+      ~transcript=Some("/t.jsonl"),
+      ~thread=Some("b"),
+      ~at=3.,
+    )
+    Ledger.registerSession(
+      ~role="integrator",
+      ~name="i",
+      ~transcript=Some("/u.jsonl"),
+      ~thread=Some("a"),
+      ~at=4.,
+    )
+    let found = Ledger.registrationsOf("a")
+    expect(found->Array.map(one => (one.transcript, one.at)))->toEqual([
+      (Some("/t.jsonl"), 1.),
+      (Some("/u.jsonl"), 4.),
+    ])
+    expect(Ledger.registrationsOf("b")->Array.length)->toEqual(1)
+    expect(Ledger.registrationsOf("none"))->toEqual([])
+    switch saved {
+    | Some(value) => Node.env->Dict.set("RUNS_HOME", value)
+    | None => Node.env->Dict.delete("RUNS_HOME")
+    }
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+})
+
 describe("the ledger", () => {
   test("folds a start, an end and a read, passing over an unreadable line", () => {
     let jobs = Ledger.fold(
