@@ -48,10 +48,33 @@ let session = message =>
 let afterCompaction = "Your context was compacted, and a summary keeps the work but drops rules. Before acting, read again: AGENTS.md's Start here and Core rules; your role's file in docs/agents/ (advisor.md, integrator.md) or the brief you were given; docs/voice.md, whose rules a summary loses most often (simplified Chinese to the author with English nouns, AskUserQuestion fields in Chinese, every time in US Eastern with UTC beside it, never a bare id); and docs/agents/agent-protocol.md, \"A long command never holds the conversation\". Then your memory's note of work in progress, where your role keeps one. The list is kept in docs/agents/agent-protocol.md, \"After a compaction\"."
 
 /** The context a session starts with, the compaction note first where the start is one. */
-let opening = (payload: Payload.t) =>
-  [payload->Payload.text("source") == Some("compact") ? afterCompaction : "", Reminder.line()]
+let opening = (payload: Payload.t) => {
+  let compact = payload->Payload.text("source") == Some("compact")
+  let identity = compact
+    ? try {
+        payload
+        ->Payload.text("transcript_path")
+        ->Option.flatMap(transcript =>
+          Watchdog.registered()->Array.find(session => session.transcript == Some(transcript))
+        )
+        ->Option.mapOr("", session => {
+          let who = `You are ${session.role} ${session.name}`
+          switch session.thread {
+          | Some(thread) =>
+            `${who} of thread ${thread}; its files are in ${Figures.directory(
+                thread,
+              )}; read status.md, then your role's file.`
+          | None => `${who}.`
+          }
+        })
+      } catch {
+      | _ => ""
+      }
+    : ""
+  [compact ? afterCompaction : "", identity, Reminder.line()]
   ->Array.filter(part => part != "")
   ->Array.join("\n\n")
+}
 
 /** The gates that hold a command by what it does, for one a job is given to run later. */
 let lineGates = [
@@ -111,32 +134,36 @@ let handle = (payload: Payload.t): int =>
     0
   | Some("PreToolUse") =>
     // The message first, as it is cheap and the commonest refusal; jj fix only once all pass.
-    switch Commit.refuse(payload) {
+    switch Send_local.refuse(payload) {
     | 0 =>
-      switch Push.refuse(payload) {
+      switch Commit.refuse(payload) {
       | 0 =>
-        switch Background.refuse(payload) {
+        switch Push.refuse(payload) {
         | 0 =>
-          switch Rmvar.refuse(payload) {
+          switch Background.refuse(payload) {
           | 0 =>
-            switch Kill_named.refuse(payload) {
+            switch Rmvar.refuse(payload) {
             | 0 =>
-              switch Seat.refuse(payload) {
+              switch Kill_named.refuse(payload) {
               | 0 =>
-                switch Codex_usage.refuse(payload) {
+                switch Seat.refuse(payload) {
                 | 0 =>
-                  switch Verified.handle(payload) {
+                  switch Codex_usage.refuse(payload) {
                   | 0 =>
-                    switch Form.handle(payload) {
+                    switch Verified.handle(payload) {
                     | 0 =>
-                      switch Lose.handle(payload) {
+                      switch Form.handle(payload) {
                       | 0 =>
-                        switch Trash.refuse(payload) {
+                        switch Lose.handle(payload) {
                         | 0 =>
-                          switch refusedInJob(payload) {
+                          switch Trash.refuse(payload) {
                           | 0 =>
-                            Commit.fix(payload)
-                            0
+                            switch refusedInJob(payload) {
+                            | 0 =>
+                              Commit.fix(payload)
+                              0
+                            | refused => refused
+                            }
                           | refused => refused
                           }
                         | refused => refused

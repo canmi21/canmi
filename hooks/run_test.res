@@ -37,6 +37,114 @@ let post = cwd =>
   })->Option.getOr("{}")
 
 describe("the shared entrypoint", () => {
+  let isolated = run => {
+    let directory = Node.mkdtempSync(Node.join([Node.tmpdir(), "compact-role-"]))
+    let keys = ["RUNS_HOME", "THREADS_HOME", "XDG_CACHE_HOME"]
+    let previous = keys->Array.map(key => (key, Node.env->Dict.get(key)))
+    keys->Array.forEach(key => Node.env->Dict.set(key, directory))
+    let clean = () => {
+      previous->Array.forEach(((key, value)) =>
+        switch value {
+        | Some(value) => Node.env->Dict.set(key, value)
+        | None => Node.env->Dict.delete(key)
+        }
+      )
+      Node.rmSync(directory, {recursive: true, force: true})
+    }
+    try {
+      run(directory)
+      clean()
+    } catch {
+    | error =>
+      clean()
+      throw(error)
+    }
+  }
+  let compact = (~source="compact", ~transcript="/registered.jsonl") =>
+    dict{
+      "hook_event_name": JSON.String("SessionStart"),
+      "source": JSON.String(source),
+      "transcript_path": JSON.String(transcript),
+    }
+
+  test("a registered transcript recovers its role and thread files after compaction", () => {
+    isolated(
+      _ => {
+        Ledger.registerSession(~role="advisor", ~name="other", ~transcript=Some("/other.jsonl"))
+        Ledger.registerSession(
+          ~role="supervisor",
+          ~name="flow",
+          ~transcript=Some("/registered.jsonl"),
+          ~thread=Some("trial"),
+        )
+        let identity = `You are supervisor flow of thread trial; its files are in ${Figures.directory(
+            "trial",
+          )}; read status.md, then your role's file.`
+        expect(Run.opening(compact()))->toBe(`${Run.afterCompaction}\n\n${identity}`)
+        let (status, stdout, stderr) = invoke(JSON.stringify(JSON.Object(compact())))
+        expect(status)->toBe(0)
+        expect(stderr)->toBe("")
+        expect(
+          Payload.parse(stdout)
+          ->Option.flatMap(fields => fields->Payload.object("hookSpecificOutput"))
+          ->Option.flatMap(fields => fields->Payload.text("additionalContext")),
+        )->toEqual(Some(`${Run.afterCompaction}\n\n${identity}`))
+      },
+    )
+  })
+
+  test("a registered session without a thread recovers its role and name alone", () => {
+    isolated(
+      _ => {
+        Ledger.registerSession(
+          ~role="integrator",
+          ~name="base",
+          ~transcript=Some("/registered.jsonl"),
+        )
+        expect(Run.opening(compact()))->toBe(`${Run.afterCompaction}\n\nYou are integrator base.`)
+        expect(Run.opening(compact(~source="startup")))->toBe("")
+      },
+    )
+  })
+
+  test("an unregistered or missing transcript keeps the existing compaction text", () => {
+    isolated(
+      _ => {
+        Ledger.registerSession(~role="seat", ~name="blind", ~transcript=None)
+        expect(Run.opening(compact()))->toBe(Run.afterCompaction)
+        expect(Run.opening(dict{"source": JSON.String("compact")}))->toBe(Run.afterCompaction)
+      },
+    )
+  })
+
+  test("a broken registry leaves the existing context and reminder unchanged", () => {
+    isolated(
+      _ => {
+        let cache = Reminder.directory()
+        Node.mkdirAll(cache)
+        Node.writeFileSync(
+          Node.join([cache, "summary.json"]),
+          JSON.stringifyAny({
+            "items": [
+              {
+                "item": Reminder.item(~repository="workspace", "action", "sample", "1", "2"),
+                "firstSeen": "2026-01-01",
+              },
+            ],
+          })->Option.getOr("{}"),
+        )
+        let expected = `${Run.afterCompaction}\n\n${Reminder.line()}`
+        expect(Reminder.line() != "")->toBe(true)
+        Node.mkdirAll(Ledger.sessions())
+        Node.writeFileSync(Node.join([Ledger.sessions(), "broken.json"]), "{broken")
+        expect(Run.opening(compact()))->toBe(expected)
+        Node.rmSync(Ledger.sessions(), {recursive: true, force: true})
+        Node.writeFileSync(Ledger.sessions(), "not a directory")
+        expect(Run.opening(compact()))->toBe(expected)
+      },
+    )
+  })
+
   test("a session started by a compaction is told what to read again", () => {
     let (status, stdout, _) = invoke(
       JSON.stringifyAny({

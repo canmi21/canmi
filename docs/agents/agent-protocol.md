@@ -428,7 +428,9 @@ acts**. `AGENTS.md` is loaded again by the harness; the rest is the reread list 
 hook gives a session whose start is a compaction, `afterCompaction` in `hooks/run.res`: AGENTS.md's
 Start here and Core rules, the role's file in this directory or the brief, this file's section on a
 long command, and [voice.md](../voice.md) for the rules a summary loses most often, then the
-memory's note of work in progress where the role keeps one. The author usually announces a
+memory's note of work in progress where the role keeps one. **A registered session is also told its
+role, its name, its thread and that thread's files**, read from the session registry, and picks up
+from `status.md`, [threads.md](threads.md). The author usually announces a
 compaction, and the agent then saves its work in progress; an automatic one gets the same list from
 the hook.
 
