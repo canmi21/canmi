@@ -31,6 +31,20 @@ type spec = {
 let directory = "model/protocol"
 let path = `${directory}/specs.json`
 
+let chosen = (specs: array<spec>, names: array<string>): array<spec> =>
+  if names->Array.length == 0 {
+    specs
+  } else {
+    names->Array.map(name =>
+      switch specs->Array.find(spec => spec.name == name) {
+      | Some(spec) => spec
+      | None =>
+        let available = specs->Array.map(spec => spec.name)->Array.join(", ")
+        throw(Refused(`unknown spec ${name}, expected one of ${available}`))
+      }
+    )
+  }
+
 let refuse = (where, what) => throw(Refused(`${path} ${where}: ${what}`))
 
 let text = (fields: dict<JSON.t>, where, key) =>

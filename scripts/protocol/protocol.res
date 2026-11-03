@@ -1,6 +1,6 @@
 /**
- * The shared TLC runner's entry, `node scripts/protocol/protocol.res.mjs [--full] [--write]`. The
- * repository is the current directory, so a task runs it from the root, WORKSPACE only finding it.
+ * `node scripts/protocol/protocol.res.mjs [--full] [--write] [<spec>...]`.
+ * Run from the repository root with WORKSPACE only locating the shared runner.
  */
 @send external onError: (Node.child, @as("error") _, JsExn.t => unit) => unit = "on"
 
@@ -79,8 +79,12 @@ let main = () => {
   let args = Node.args()
   let known = ["--full", "--write"]
   args->Array.forEach(arg =>
-    if !(known->Array.includes(arg)) {
-      throw(Protocol_manifest.Refused(`unknown argument ${arg}, expected --full or --write`))
+    if arg->String.startsWith("--") && !(known->Array.includes(arg)) {
+      throw(
+        Protocol_manifest.Refused(
+          `unknown argument ${arg}, expected [--full] [--write] [<spec>...]`,
+        ),
+      )
     }
   )
   let root = Node.cwd()
@@ -88,7 +92,8 @@ let main = () => {
   if !Node.existsSync(manifest) {
     throw(Protocol_manifest.Refused(`${Protocol_manifest.path} is not in ${root}`))
   }
-  let specs = Protocol_manifest.parse(Node.readFileSync(manifest))
+  let names = args->Array.filter(arg => !(arg->String.startsWith("--")))
+  let specs = Protocol_manifest.chosen(Protocol_manifest.parse(Node.readFileSync(manifest)), names)
   let tools = jar()
   let home = Protocol_runner.homedir()
   let env: Protocol_runner.env = {
