@@ -118,6 +118,11 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 
 ## Remotes, and what cannot be taken back
 
+- **Docker is not quit under running containers.** At 02:15 UTC on 2026-11-03 Docker was quit by
+  `osascript` with both machine containers running, and a "VM stopped unexpectedly" dialog followed,
+  the cause not proven. Whoever next runs `local up` first reads whether the volumes
+  `machine-local-state` and `machine-local-nix` came through whole, and says so.
+
 - **An outward step asked is done alone.** Perform only the requested external action; leave
   separate settings changes or archiving to the requester.
 - **A push that publishes the author's own code to a registry is asked for first.** Pushes that

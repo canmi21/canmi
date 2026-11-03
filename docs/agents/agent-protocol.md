@@ -324,8 +324,12 @@ Four consequences:
   the networks and volumes it made removed with them. Every image built locally for the test is
   removed once the test has used it, and so is any image pulled that is large -- past a few hundred
   megabytes -- or used once. One or two small pulled images that the next test will want again, a
-  pinned `postgres` say, may stay. Docker Desktop is quit again if the agent started it. Before the
-  reply ends, `docker ps -a` lists nothing of the test's and `docker images` nothing it built.
+  pinned `postgres` say, may stay. **Docker Desktop stays running in the background**, the Mac's 64 GB
+  being room for it: whoever needs it and finds it stopped starts it, and nobody quits it after a test.
+  monoflake/machine's `machine-local` and `machine-builder` stay up between runs as well, as the local
+  loop's start-up is the cost. If Docker is ever quit, `mise run local down` and the builder's down
+  come first. Before the reply ends, `docker ps -a` lists nothing of the test's and `docker images`
+  nothing it built.
 - **Stopping a supervisor does not reap what it spawned, and the leftovers are silent.** web's `base
   down` kills its tmux session and leaves `workerd` behind, past the two the API and the CDN need.
   They break nothing. They take memory and CPU from everything else, so what they produce is not an
