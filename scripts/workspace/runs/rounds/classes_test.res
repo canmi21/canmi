@@ -245,16 +245,12 @@ describe("class table", () => {
         let lines = Classes.pushesOf(named, ~since=2000.)
         expect(lines)->toEqual([{thread: "a", step: "2", seconds: Some(60.)}])
         let text = Classes.shown(~timings=[], ~landings=[], ~pushes=lines)
-        expect(text)->toContain(
-          "green to push, by the next landing recorded after each green, approximate:",
-        )
-        expect(text)->toContain("a step 2: 1.0 minutes")
-        expect(text)->negated->toContain("a step 1")
-        expect(text)->negated->toContain("b step")
-        let open_ = Classes.pushesOf([("d", [green("4", 10.)])], ~since=0.)
-        expect(Classes.shown(~timings=[], ~landings=[], ~pushes=open_))->toContain(
-          "d step 4: not pushed yet",
-        )
+        expect(text)->toContain(Classes.greenToPushUnmeasured)
+        expect(text)->negated->toContain("a step 2:")
+        expect(text)->negated->toContain("minutes\na step")
+        expect(Classes.shown(~timings=[], ~landings=[], ~pushes=[]))
+        ->negated
+        ->toContain("green to push")
       },
     )
   })

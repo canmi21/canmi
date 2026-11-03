@@ -307,7 +307,8 @@ describe("idle integrators", () => {
       ~now=600000.,
       ~moved=path => Some(path == "/sessions/j.jsonl" ? 599000. : 0.),
     )
-    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-unassigned:i:0"])
+    // j only takes turns, holding no step, so the advisor's line waits.
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
   })
 
   test("writes idle to the real event file and reads seat move times", () => {
@@ -408,12 +409,13 @@ describe("an integrator with no step free for it", () => {
     ~steps=steps,
     ~said=[],
     ~moved=_ => Some(0.),
+    ~jobs=[],
   ) =>
     Watchdog.aboutIdle(
       ~thread="t",
       ~ready,
       ~sessions,
-      ~jobs=[],
+      ~jobs,
       ~now,
       ~alive=_ => true,
       ~moved,
@@ -431,11 +433,21 @@ describe("an integrator with no step free for it", () => {
     )
   })
 
+  test("a turn alone holds no step, so a ready step another only chats beside is free", () => {
+    let found = unassigned(
+      ~ready=held,
+      ~sessions=[integrator, other],
+      ~moved=path => Some(path == "/sessions/j.jsonl" ? 299000. : 0.),
+    )
+    expect(found->Array.map(one => one.key))->toEqual(["idle:i:0"])
+  })
+
   test("tells it where the one ready step is held by another busy integrator", () => {
     let found = unassigned(
       ~ready=held,
       ~sessions=[integrator, other],
       ~moved=path => Some(path == "/sessions/j.jsonl" ? 299000. : 0.),
+      ~jobs=[{...job(), session: "j", started: 290000.}],
     )
     expect(found->Array.map(one => one.key))->toEqual(["idle:i:0", "idle-unassigned:i:0"])
     expect(

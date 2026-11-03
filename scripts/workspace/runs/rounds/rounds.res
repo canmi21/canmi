@@ -369,7 +369,14 @@ let roundsOf = (~records, ~sessions: array<activity>, ~steps, ~decisions, ~now):
         {session: activity.session, minutes: total.contents}
       }),
       unattended: unattended.contents,
-      reviews: coveredIn(sessions->Array.flatMap(activity => activity.reviews), span),
+      reviews: coveredIn(
+        sessions->Array.flatMap(activity =>
+          activity.reviews->Array.map(
+            review => {...review, from: Math.max(review.from, activity.at)},
+          )
+        ),
+        span,
+      ),
     }
   })
 }

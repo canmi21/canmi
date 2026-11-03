@@ -177,19 +177,22 @@ let aboutIdle = (
       seats(one),
       one.transcript->Option.flatMap(moved)->Option.mapOr([], last => [last]),
     )
-    let busy =
+    // Holding a step is a live job or a seat; a turn alone keeps it from idle and holds no step.
+    let holding =
       own->Array.some(job =>
         job.ended == None && alive(job.pid) && Ledger.runsUntil(job, ~now) >= now
       ) ||
       one.transcript->Option.mapOr(false, path => openSeats->Array.includes(sessionId(path))) ||
-      times->Array.some(last => now -. last < limit)
+      seats(one)->Array.some(last => now -. last < limit)
+    let busy = holding || times->Array.some(last => now -. last < limit)
     let last =
       own->Array.reduce(0., (last, job) =>
         Math.max(last, Math.max(job.started, job.ended->Option.getOr(0.)))
       )
-    (one, busy, times->Array.reduce(last, Math.max))
+    (one, busy, times->Array.reduce(last, Math.max), holding)
   })
-  let busyNumber = activity->Array.filter(((_, busy, _)) => busy)->Array.length
+  let holdingNumber = activity->Array.filter(((_, _, _, holding)) => holding)->Array.length
+  let busyNumber = activity->Array.filter(((_, busy, _, _)) => busy)->Array.length
   let busyCount = busyNumber->Int.toString
   let total = integrators->Array.length->Int.toString
   let existing =
@@ -199,7 +202,7 @@ let aboutIdle = (
           let first = ready->Array.reduce(now, (first, (_, since)) => Math.min(first, since))
           let ids = ready->Array.map(((step, _)) => step.id)->Array.join(", ")
           activity
-          ->Array.flatMap(((one, busy, last)) => {
+          ->Array.flatMap(((one, busy, last, _)) => {
             let idleFrom = Math.max(first, last)
             let since = Float.toString(idleFrom)
             let waiting = now -. idleFrom
@@ -239,8 +242,8 @@ let aboutIdle = (
         }
   // No step is free for an integrator idle this long, so only the advisor can act.
   let unassigned =
-    (steps != [] || ready != []) && ready->Array.length <= busyNumber
-      ? activity->Array.filterMap(((one, busy, last)) => {
+    (steps != [] || ready != []) && ready->Array.length <= holdingNumber
+      ? activity->Array.filterMap(((one, busy, last, _)) => {
           let waiting = now -. last
           busy || waiting < limit
             ? None

@@ -152,6 +152,9 @@ let pushesOf = (named: array<(string, array<Figures.record>)>, ~since) =>
     )
   )
 
+/** Why green to push prints no figure, plan item green-to-push-measured. */
+let greenToPushUnmeasured = "green to push: not measured, as a step's green is recorded after its own landing and nothing records when it went green locally or which landing is its own"
+
 let shown = (~timings, ~landings, ~pushes=[]) => {
   let number = value => value->Float.toFixed(~digits=1)
   let lines = ["class | runs | total seconds | median | longest | recurring | one-off"]
@@ -182,16 +185,10 @@ let shown = (~timings, ~landings, ~pushes=[]) => {
   lines->Array.push(
     "recurring against one-off is a first read, by a normalized command, a retry of one fault reading as recurring",
   )
+
+  // A step's green follows its own landing, so the next landing is another's, and none is printed.
   if pushes != [] {
-    lines->Array.push("green to push, by the next landing recorded after each green, approximate:")
-    pushes->Array.forEach(one =>
-      lines->Array.push(
-        `${one.thread} step ${one.step}: ${switch one.seconds {
-          | Some(seconds) => `${number(seconds /. 60.)} minutes`
-          | None => "not pushed yet"
-          }}`,
-      )
-    )
+    lines->Array.push(greenToPushUnmeasured)
   }
   lines->Array.push(
     `pieces past ${Int.toString(

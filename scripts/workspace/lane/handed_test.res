@@ -27,13 +27,18 @@ describe("the lengths of a lane's files", () => {
 })
 
 describe("the rules a lane's diff is read against", () => {
-  test("single-writer refuses what only the integrator changes", () => {
+  test("single-writer refuses what only the integrator changes, to a seat and not to it", () => {
     let touched = ["model/rules/code.res", "docs/code.md", "AGENTS.md", "src/a.res"]
+    let saved = Node.env->Dict.get("MONOFLAKE_ROLE")
+    Node.env->Dict.set("MONOFLAKE_ROLE", "implementer")
     expect(Handed.single(touched)->files)->toEqual([
       "model/rules/code.res",
       "docs/code.md",
       "AGENTS.md",
     ])
+    Node.env->Dict.delete("MONOFLAKE_ROLE")
+    expect(Handed.single(touched))->toEqual([])
+    saved->Option.forEach(value => Node.env->Dict.set("MONOFLAKE_ROLE", value))
   })
 
   test("lockfile-derived refuses a lockfile at any depth", () => {

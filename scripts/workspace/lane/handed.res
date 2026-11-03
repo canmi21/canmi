@@ -57,9 +57,12 @@ let sizes = (~lines, files) => {
 
 /** The files that only the integrator changes, `single-writer`. */
 let single = files =>
-  files
-  ->Array.filter(file => Delegation.singleWriter->Array.some(under(file, _)))
-  ->Array.map(file => {file, why: "only the integrator changes it, single-writer"})
+  // The integrator runs with no role, and lands what only it may change.
+  Node.env->Dict.get("MONOFLAKE_ROLE") == None
+    ? []
+    : files
+      ->Array.filter(file => Delegation.singleWriter->Array.some(under(file, _)))
+      ->Array.map(file => {file, why: "only the integrator changes it, single-writer"})
 
 /** The lockfiles a lane changed, which are written again at the merge, `lockfile-derived`. */
 let locked = files =>
