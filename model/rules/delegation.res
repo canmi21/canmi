@@ -252,7 +252,9 @@ let seatOpenSeconds = 900
  */
 let jobClasses = [
   ("Codex seat", "codex exec"),
-  ("conform", "\\bconform\\b"),
+  ("conform dry run", "mise run (//:)?conform\\b.*--dry-run"),
+  ("conform one kind", "mise run (//:)?conform\\b.*--kind"),
+  ("conform", "mise run (//:)?conform\\b"),
   ("lane check", "lane check"),
   ("lane handed", "lane handed"),
   ("check", "mise run (//:)?check\\b"),
@@ -513,7 +515,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "job-classes",
-    says: "`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews from subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed",
+    says: "`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews by the wall clock of their subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed",
     doc: "docs/agents/runs.md",
     held: Check("scripts"),
   },
@@ -521,17 +523,17 @@ let rules: array<Rule.t> = [
     name: "piece-within-minutes",
     says: "Normally each piece of work, a seat or an integrator's own task, is at most `pieceMinutes` of agent time; allowed past that while starting, it warns and never blocks, and the figure comes down as the speed is tuned",
     doc: "docs/agents/delegation.md",
-    held: Pending("a check reading `mise run //:job table --by-class`, once it lands"),
+    held: Pending("a check reading the list of `mise run //:job table --by-class`, warning alone"),
   },
   {
     name: "idle-reported",
-    says: "The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor when that integrator stays idle `idleSupervisorSeconds` past that with ready steps outnumbering busy integrators, as a supervisor's transcript moves by every Monitor notice; a turn is its own assistant or api-request line; a charter's unresolved reference or unread file is said",
+    says: "The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor when that integrator stays idle `idleSupervisorSeconds` past that with ready steps outnumbering busy integrators, as a supervisor's transcript moves by every Monitor notice; an unreported seat counts up to `seatOpenSeconds`; a turn is its own assistant or api-request line; a charter's unresolved reference or unread file is said",
     doc: "docs/agents/runs.md",
     held: Check("scripts"),
   },
   {
     name: "round-figures",
-    says: "`mise run //:thread rounds <name>` splits each round's time per session, in slices of `roundSliceSeconds`, a job or seat first, then a review, a turn within `turnGapSeconds`, a decision asked and not answered, ready steps outnumbering busy integrators, and nothing",
+    says: "`mise run //:thread rounds <name>` splits each round's time per session from its registration, an ended thread having no running round, in slices of `roundSliceSeconds`, a job or seat first, by its wall clock and an unreported one up to `seatOpenSeconds`, then a review, a turn within `turnGapSeconds` or a request in flight, a decision asked and not answered, ready steps outnumbering each integrator's jobs and seats, and nothing",
     doc: "docs/agents/threads.md",
     held: Check("scripts"),
   },

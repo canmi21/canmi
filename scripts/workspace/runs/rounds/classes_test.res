@@ -28,6 +28,20 @@ let timed = (~since=0., ~activity=[], ~records=[], jobs) =>
 let shown = timings => Classes.shown(~timings, ~landings=[])
 
 describe("class table", () => {
+  test("conform's class tells real runs from dry runs, one kind and its build", () => {
+    [
+      ("mise run conform root@okra --app a", "conform"),
+      ("mise run conform root@okra --kind databases", "conform one kind"),
+      ("mise run conform root@okra --dry-run", "conform dry run"),
+      ("mise run built conform", "built"),
+      ("mise run accept conform --from a", "other"),
+      ("sh -c 'cd lane && mise run conform x'", "conform"),
+    ]->Array.forEach(
+      ((command, class_)) =>
+        expect((command, Classes.classOf(command)))->toEqual((command, class_)),
+    )
+  })
+
   let root = temporaryRoot("classes-")
   test("classes follow model order and the first match wins", () => {
     expect(Classes.names())->toEqual(
@@ -44,7 +58,7 @@ describe("class table", () => {
     expect(Classes.rows([], [])->Array.map(row => row.kind))->toEqual(Classes.names())
   })
   test("empty classes show dashes and timing sorts the bottleneck first", () => {
-    let values = timed([job(), job(~command="conform", ~seconds=30., ())])
+    let values = timed([job(), job(~command="mise run conform root@okra", ~seconds=30., ())])
     expect((Classes.rows(values, [])->Array.getUnsafe(0)).kind)->toBe("conform")
     expect(shown(values))->toContain("review | - | - | - | - | - | -")
     expect(shown(values))->toContain("build | 1 | 10.0 | 10.0 | 10.0 | 0 | 1")

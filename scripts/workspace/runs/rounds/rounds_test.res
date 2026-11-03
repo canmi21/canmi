@@ -334,6 +334,20 @@ describe("transcript and decision inputs", () => {
       (slice, 3. *. limit),
     ])
   })
+  test("a model's long answer is part of a turn, and a subagent's time is its wall clock", () => {
+    let at = seconds => Date.fromTime(seconds *. 1000.)->Date.toISOString
+    let line = (kind, seconds) => `{"type":"${kind}","timestamp":"${at(seconds)}"}`
+    let answered = [line("api-request", 0.), line("assistant", 200.), line("user", 800.)]
+    expect(Rounds.turnsIn(answered->Array.join("\n")))->toEqual([
+      {from: 0., to: 200000.},
+      {from: 800000., to: 800000.},
+    ])
+    expect(
+      Rounds.whole([line("assistant", 0.), line("assistant", 946.)]->Array.join("\n")),
+    )->toEqual([{from: 0., to: 946000.}])
+    expect(Rounds.whole(""))->toEqual([])
+  })
+
   test("a queued notice is no stretch of a session's turn", () => {
     expect(
       Rounds.timestamps(`{"type":"queue-operation","timestamp":"2026-11-03T00:00:00.000Z"}`),

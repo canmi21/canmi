@@ -56,7 +56,7 @@ let add = (name, fields) => Ledger.append(recordsFile(name), Ledger.line(fields)
 
 type span = {tooling: bool, from: float, to: float}
 
-/** Each seat's time, one still open running until `now`. */
+/** Each seat's time, one still open running until `now`, at most `seatOpenSeconds`. */
 let spans = (found: array<record>, ~now) =>
   found->Array.filterMap(one =>
     switch one {
@@ -67,7 +67,13 @@ let spans = (found: array<record>, ~now) =>
         | _ => None
         }
       )
-      Some({tooling, from: at, to: closed->Option.getOr(now)})
+      Some({
+        tooling,
+        from: at,
+        to: closed->Option.getOr(
+          Math.min(now, at +. Delegation.seatOpenSeconds->Int.toFloat *. 1000.),
+        ),
+      })
     | _ => None
     }
   )

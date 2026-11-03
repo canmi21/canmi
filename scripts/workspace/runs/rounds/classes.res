@@ -212,10 +212,7 @@ let activityOf = (sessions: array<Watchdog.session>) => {
               kind,
               who: session.name,
               description: file,
-              spans: Rounds.read(path)->Option.mapOr(
-                [],
-                text => Rounds.timestamps(text)->Rounds.stretches,
-              ),
+              spans: Rounds.read(path)->Option.mapOr([], Rounds.whole),
             })
           }
         },

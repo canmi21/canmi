@@ -65,6 +65,43 @@ let statedTime = text =>
     ? timeOf(text->String.replaceRegExp(/\.$/, ""))
     : None
 
+/** A subagent's time, first line to last, a wall clock as a Codex seat's job has it. */
+let whole = text => {
+  let times = timestamps(text)
+  times == []
+    ? []
+    : [
+        {
+          from: times->Array.reduce(Float.Constants.positiveInfinity, Math.min),
+          to: times->Array.reduce(0., Math.max),
+        },
+      ]
+}
+
+/** A session's own turns, a request in flight joining what follows however long the model took. */
+let turnsIn = text => {
+  let spans = []
+  let current = ref(None)
+  let inFlight = ref(false)
+  text
+  ->String.split("\n")
+  ->Array.forEach(line =>
+    timestamps(line)[0]->Option.forEach(at => {
+      switch current.contents {
+      | Some(span)
+        if inFlight.contents || at -. span.to <= Delegation.turnGapSeconds->Int.toFloat *. 1000. =>
+        current := Some({...span, to: Math.max(span.to, at)})
+      | previous =>
+        previous->Option.forEach(span => spans->Array.push(span))
+        current := Some({from: at, to: at})
+      }
+      inFlight := line->String.includes("\"type\":\"api-request\"")
+    })
+  )
+  current.contents->Option.forEach(span => spans->Array.push(span))
+  spans
+}
+
 let decisionsOf = text => {
   let timed = []
   let untimed = ref(0)
@@ -115,14 +152,14 @@ let activityOf = (
   ~at=0.,
 ) => {
   let missing = []
-  let activity = file =>
+  let activity = (file, ~spansOf) =>
     switch read(file) {
-    | Some(text) => timestamps(text)->stretches
+    | Some(text) => spansOf(text)
     | None =>
       missing->Array.push(file)
       []
     }
-  let turns = session.transcript->Option.mapOr([], activity)
+  let turns = session.transcript->Option.mapOr([], activity(_, ~spansOf=turnsIn))
   if session.transcript == None {
     missing->Array.push(`${session.role} ${session.name} has no transcript`)
   }
@@ -138,7 +175,9 @@ let activityOf = (
         read(withoutSuffix(path) ++ ".meta.json")
         ->Option.flatMap(Payload.parse)
         ->Option.flatMap(fields => fields->Payload.text("agentType")) == Some("reviewer")
-      activity(path)->Array.forEach(span => (reviewer ? reviews : seats)->Array.push(span))
+      activity(path, ~spansOf=whole)->Array.forEach(
+        span => (reviewer ? reviews : seats)->Array.push(span),
+      )
     })
   })
   let id = session.transcript->Option.map(path => Node.basename(path)->withoutSuffix)

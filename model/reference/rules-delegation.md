@@ -148,7 +148,7 @@ A message goes only to `main` or `team-lead`, the names a subagent has for its p
 
 ### job-classes
 
-`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews from subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed.
+`mise run //:job table --by-class` reads every timing gathered in passing by `jobClasses`, Claude seats and reviews by the wall clock of their subagent files, landings from `jj log`, a class not run showing an empty row, recurring told from one-off as a first read, and pieces past `pieceMinutes` listed.
 
 - doc: [docs/agents/runs.md](../../docs/agents/runs.md)
 - held by: check part `scripts`
@@ -158,18 +158,18 @@ A message goes only to `main` or `team-lead`, the names a subagent has for its p
 Normally each piece of work, a seat or an integrator's own task, is at most `pieceMinutes` of agent time; allowed past that while starting, it warns and never blocks, and the figure comes down as the speed is tuned.
 
 - doc: [docs/agents/delegation.md](../../docs/agents/delegation.md)
-- held by: pending, owed: a check reading `mise run //:job table --by-class`, once it lands
+- held by: pending, owed: a check reading the list of `mise run //:job table --by-class`, warning alone
 
 ### idle-reported
 
-The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor when that integrator stays idle `idleSupervisorSeconds` past that with ready steps outnumbering busy integrators, as a supervisor's transcript moves by every Monitor notice; a turn is its own assistant or api-request line; a charter's unresolved reference or unread file is said.
+The watchdog says `idle` to the supervisor for an integrator of a thread with no running job, no seat and no turn for `idleSeconds` while a step is ready by the charter's `after`, once a stretch, and to the advisor when that integrator stays idle `idleSupervisorSeconds` past that with ready steps outnumbering busy integrators, as a supervisor's transcript moves by every Monitor notice; an unreported seat counts up to `seatOpenSeconds`; a turn is its own assistant or api-request line; a charter's unresolved reference or unread file is said.
 
 - doc: [docs/agents/runs.md](../../docs/agents/runs.md)
 - held by: check part `scripts`
 
 ### round-figures
 
-`mise run //:thread rounds <name>` splits each round's time per session, in slices of `roundSliceSeconds`, a job or seat first, then a review, a turn within `turnGapSeconds`, a decision asked and not answered, ready steps outnumbering busy integrators, and nothing.
+`mise run //:thread rounds <name>` splits each round's time per session from its registration, an ended thread having no running round, in slices of `roundSliceSeconds`, a job or seat first, by its wall clock and an unreported one up to `seatOpenSeconds`, then a review, a turn within `turnGapSeconds` or a request in flight, a decision asked and not answered, ready steps outnumbering each integrator's jobs and seats, and nothing.
 
 - doc: [docs/agents/threads.md](../../docs/agents/threads.md)
 - held by: check part `scripts`
