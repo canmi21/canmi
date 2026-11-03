@@ -1,5 +1,8 @@
 open Testing
 
+/** No CI asked, so a look here never reaches the network. */
+let quiet = (~now as _) => []
+
 let home = Node.mkdtempSync(Node.join([Node.cwd(), ".runs-home-"]))
 let threads = Node.mkdtempSync(Node.join([Node.tmpdir(), "threads-home-"]))
 
@@ -182,9 +185,9 @@ describe("one look of the watchdog", () => {
       tries := tries.contents + 1
       false
     }
-    Watchdog.look(~now=later, ~notify=failing)->ignore
-    Watchdog.look(~now=later, ~notify=_ => true)->ignore
-    Watchdog.look(~now=later, ~notify=failing)->ignore
+    Watchdog.look(~now=later, ~notify=failing, ~ci=quiet)->ignore
+    Watchdog.look(~now=later, ~notify=_ => true, ~ci=quiet)->ignore
+    Watchdog.look(~now=later, ~notify=failing, ~ci=quiet)->ignore
     expect(tries.contents)->toEqual(1)
     let events = Node.readFileSync(Ledger.events())
     expect(events->String.includes("figures to=advisor thread real"))->toEqual(true)
@@ -194,8 +197,8 @@ describe("one look of the watchdog", () => {
 
   test("says a session it cannot watch, once", () => {
     Ledger.registerSession(~role="integrator", ~name="blind", ~transcript=None)
-    Watchdog.look(~notify=_ => true)->ignore
-    Watchdog.look(~notify=_ => true)->ignore
+    Watchdog.look(~notify=_ => true, ~ci=quiet)->ignore
+    Watchdog.look(~notify=_ => true, ~ci=quiet)->ignore
     let said =
       Node.readFileSync(Ledger.events())
       ->String.split("\n")

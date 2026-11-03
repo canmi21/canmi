@@ -6,6 +6,94 @@ type session = {name: string, role: string, transcript: option<string>, thread: 
 
 type finding = {key: string, says: string, notify: bool}
 
+type ciRun = {repository: string, workflow: string, id: string, sha: string, conclusion: string}
+
+let ciOwed = (~runs: array<ciRun>, ~said: array<string>): array<finding> => {
+  let latest = Dict.make()
+  runs->Array.filterMap(run => {
+    let workflows = latest->Dict.get(run.repository)->Option.getOr([])
+    if workflows->Array.includes(run.workflow) {
+      None
+    } else {
+      latest->Dict.set(run.repository, Array.concat(workflows, [run.workflow]))
+      let key = `ci ${run.id}`
+      run.conclusion == "failure" && !(said->Array.includes(key))
+        ? Some({
+            key,
+            says: `ci to=supervisor,advisor ${run.repository} ${run.workflow} failed at ${run.sha->String.slice(
+                ~start=0,
+                ~end=8,
+              )}, run ${run.id}`,
+            notify: false,
+          })
+        : None
+    }
+  })
+}
+
+let ciLookDue = (~stamp, ~now) => {
+  let last = try {
+    Node.readFileSync(stamp)->Float.fromString
+  } catch {
+  | _ => None
+  }
+  if last->Option.mapOr(false, last => now -. last < 60000.) {
+    false
+  } else {
+    Node.mkdirAll(Node.dirname(stamp))
+    Node.writeFileSync(stamp, Float.toString(now))
+    true
+  }
+}
+
+type ciResult = {databaseId: float, workflowName: string, headSha: string, conclusion: string}
+
+@scope("JSON") @val external parseCiRuns: string => array<ciResult> = "parse"
+
+let ciRuns = (~now: float): array<ciRun> => {
+  let stamp = Node.join([Node.dirname(Ledger.seen()), "ci-looked"])
+  if !ciLookDue(~stamp, ~now) {
+    []
+  } else {
+    Array.concat(
+      ["canmi21/canmi"],
+      Registry.registry()->Array.map(((_, (owner, repository))) => `${owner}/${repository}`),
+    )->Array.flatMap(repository => {
+      try {
+        let result = Node.spawnSync(
+          "gh",
+          [
+            "run",
+            "list",
+            "-R",
+            repository,
+            "--branch",
+            "main",
+            "-L",
+            "10",
+            "--json",
+            "databaseId,workflowName,headSha,conclusion",
+          ],
+          {encoding: "utf8"},
+        )
+        if result.status->Nullable.toOption == Some(0) {
+          parseCiRuns(result.stdout->Nullable.toOption->Option.getOr("[]"))->Array.map(run => {
+            repository,
+            workflow: run.workflowName,
+            id: Float.toString(run.databaseId),
+            sha: run.headSha,
+            conclusion: run.conclusion,
+          })
+        } else {
+          []
+        }
+      } catch {
+      | _ => []
+      }
+    })
+  }
+}
+
 let at = time => Date.fromTime(time)->Date.toISOString
 let short = command => command->String.slice(~start=0, ~end=72)
 let whole = value => value->Float.toFixed(~digits=0)
@@ -422,7 +510,7 @@ let contextsWritten = (reads: array<(session, Context.outcome)>, ~now) => {
 }
 
 /** One look, its events written and each marked said, how many it wrote returned. */
-let look = (~now=Date.now(), ~notify=notified) => {
+let look = (~now=Date.now(), ~notify=notified, ~ci=ciRuns) => {
   Node.mkdirAll(Ledger.home())
   let said = Node.existsSync(Ledger.seen())
     ? Node.readFileSync(Ledger.seen())->String.split("\n")
@@ -441,6 +529,7 @@ let look = (~now=Date.now(), ~notify=notified) => {
     ),
     figuresOwed(~said, ~now),
     idleOwed(~sessions, ~jobs, ~said, ~now),
+    ciOwed(~runs=ci(~now), ~said),
   ])
   contextsWritten(reads, ~now)
   found->Array.forEach(one => {

@@ -1,5 +1,69 @@
 open Testing
 
+@module("node:fs") external makeTemporaryDirectory: string => string = "mkdtempSync"
+@module("node:os") external temporaryDirectory: unit => string = "tmpdir"
+
+describe("CI runs", () => {
+  let failed: Watchdog.ciRun = {
+    repository: "monoflake/driver",
+    workflow: "check",
+    id: "123",
+    sha: "0123456789abcdef",
+    conclusion: "failure",
+  }
+
+  test("says a failed latest CI run once", () => {
+    let found = Watchdog.ciOwed(~runs=[failed, {...failed, id: "122"}], ~said=[])
+    expect(found)->toEqual([
+      {
+        key: "ci 123",
+        says: "ci to=supervisor,advisor monoflake/driver check failed at 01234567, run 123",
+        notify: false,
+      },
+    ])
+  })
+
+  test("passes over an older failure after a successful latest CI run", () => {
+    expect(
+      Watchdog.ciOwed(~runs=[{...failed, id: "124", conclusion: "success"}, failed], ~said=[]),
+    )->toEqual([])
+  })
+
+  test("passes over a CI run already said", () => {
+    expect(Watchdog.ciOwed(~runs=[failed], ~said=["ci 123"]))->toEqual([])
+  })
+
+  test("keeps CI workflows and repositories apart", () => {
+    let found = Watchdog.ciOwed(
+      ~runs=[
+        {...failed, conclusion: "success"},
+        {...failed, workflow: "release", id: "124"},
+        {...failed, repository: "canmi21/canmi", id: "125"},
+      ],
+      ~said=[],
+    )
+    expect(found->Array.map(one => one.key))->toEqual(["ci 124", "ci 125"])
+  })
+
+  test("skips CI polling until its stamp is a minute old", () => {
+    let directory = makeTemporaryDirectory(Node.join([temporaryDirectory(), "watchdog-ci-"]))
+    let stamp = Node.join([directory, "ci-looked"])
+    try {
+      expect(Watchdog.ciLookDue(~stamp, ~now=1000.))->toEqual(true)
+      expect(Node.readFileSync(stamp))->toEqual("1000")
+      expect(Watchdog.ciLookDue(~stamp, ~now=60999.))->toEqual(false)
+      expect(Node.readFileSync(stamp))->toEqual("1000")
+      expect(Watchdog.ciLookDue(~stamp, ~now=61000.))->toEqual(true)
+      expect(Node.readFileSync(stamp))->toEqual("61000")
+    } catch {
+    | error =>
+      Node.rmSync(directory, {recursive: true, force: true})
+      throw(error)
+    }
+    Node.rmSync(directory, {recursive: true, force: true})
+  })
+})
+
 let job = (
   ~id="a",
   ~pid=1,
@@ -363,8 +427,8 @@ describe("idle integrators", () => {
       )
       let last = Watchdog.moved(transcript)->Option.getOrThrow
       let now = last +. 300000.
-      Watchdog.look(~now, ~notify=_ => true)->ignore
-      Watchdog.look(~now, ~notify=_ => true)->ignore
+      Watchdog.look(~now, ~notify=_ => true, ~ci=(~now as _) => [])->ignore
+      Watchdog.look(~now, ~notify=_ => true, ~ci=(~now as _) => [])->ignore
       let lines =
         Node.readFileSync(Ledger.events())
         ->String.split("\n")
