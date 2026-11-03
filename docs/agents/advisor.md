@@ -70,6 +70,14 @@ that text into what follows, so the text is:
 
 The same text is saved beside the agent's memory note of work in progress.
 
+**An advisor is replaced, never left to compaction, at about 70 to 80 percent of its context window**,
+`advisor-replaced` in [model/rules/delegation.res](../../model/rules/delegation.res), of which the
+watchdog tells it. The author opens a new window, and the two talk directly: the old advisor gives it
+its handover text and the thread files; the new one reads them and says back the open decisions, what
+is in flight and what the author has settled lately; the old one corrects it until it can carry the
+work. **Only then does command pass**: the old one tells the supervisor and the author the new name,
+stops directing, and stays reachable for questions until the next checkpoint.
+
 **A stuck step is found by the watchdog, never by the author**, [runs.md](runs.md): a supervisor silent
 past its limit reaches the advisor, and the author by a notification. It never just waits on what it
 handed down: it reads the thread's status and the repositories' main heads, and asks if nothing moved.

@@ -146,7 +146,7 @@ let stop = (id, ~by) =>
 let usage =
   "usage: mise run //:job start|run [--by <who>] [--limit <seconds>] [--quiet] -- <command>\n" ++
   "       mise run //:job read <id> | stop <id> [--by <who>] | list | table [--since <yyyy-mm-dd>] | events\n" ++
-  "       mise run //:job register <role> <name> [--transcript <file>] | unregister <name>\n" ++ "       mise run //:job watchdog | install [--dry-run]"
+  "       mise run //:job register <role> <name> [--thread <name>] [--transcript <file>] | unregister <name>\n" ++ "       mise run //:job watchdog | install [--dry-run]"
 
 let defaultBy = () => Node.env->Dict.get("MONOFLAKE_ROLE")->Option.getOr("session")
 
@@ -210,13 +210,13 @@ let begin = (argv, ~wait) => {
   }
 }
 
-let register = (role, name, ~transcript) =>
-  if !(Delegation.silentTurns->Array.some(((known, _, _)) => known == role)) {
-    let roles = Delegation.silentTurns->Array.map(((known, _, _)) => known)->Array.join(", ")
+let register = (role, name, ~transcript, ~thread=None) =>
+  if !(Delegation.registeredRoles->Array.includes(role)) {
+    let roles = Delegation.registeredRoles->Array.join(", ")
     Console.error(`${role} has no limit; the roles are ${roles}`)
     2
   } else {
-    Ledger.registerSession(~role, ~name, ~transcript)
+    Ledger.registerSession(~role, ~name, ~transcript, ~thread)
     Console.log(
       `${role} ${name} registered${transcript == None
           ? "; the hook names its transcript, and where none runs the watchdog says it cannot watch it"
@@ -332,6 +332,11 @@ let main = (argv: array<string>) =>
     0
   | ["register", role, name] => register(role, name, ~transcript=None)
   | ["register", role, name, "--transcript", file] => register(role, name, ~transcript=Some(file))
+  | ["register", role, name, "--thread", thread] =>
+    register(role, name, ~transcript=None, ~thread=Some(thread))
+  | ["register", role, name, "--thread", thread, "--transcript", file]
+  | ["register", role, name, "--transcript", file, "--thread", thread] =>
+    register(role, name, ~transcript=Some(file), ~thread=Some(thread))
   | ["unregister", name] => unregister(name)
   | ["watchdog"] =>
     Console.log(`${Int.toString(Watchdog.look())} events written to ${Ledger.events()}`)

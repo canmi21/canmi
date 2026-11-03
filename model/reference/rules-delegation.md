@@ -2,7 +2,7 @@
 
 # Rules
 
-35 rules, 5 pending a check.
+36 rules, 5 pending a check.
 
 ## Delegation
 
@@ -123,6 +123,13 @@ The watchdog, run by launchd each `watchdogSeconds` with no model in it, writes 
 `job stop` stops only a job of the session and the `--by` name that started it, refusing any other and saying whose it is, as `kill-by-recorded-pid` has it.
 
 - doc: [docs/agents/runs.md](../../docs/agents/runs.md)
+- held by: check part `scripts`
+
+### advisor-replaced
+
+An advisor is replaced, never left to compaction, between `advisorReplacedFrom` and `advisorReplacedBy` of `contextWindowTokens`, and the watchdog says so to it once it is past the first.
+
+- doc: [docs/agents/advisor.md](../../docs/agents/advisor.md)
 - held by: check part `scripts`
 
 ### thread-figures

@@ -57,6 +57,8 @@ describe("the hook's view of the ledger", () => {
     expect(Watchdog.registered()[0]->Option.flatMap(one => one.transcript))->toEqual(
       Some("/t.jsonl"),
     )
+    Run_ledger.observe(payload("mise run //:job register integrator infra --thread trial"))
+    expect(Watchdog.registered()[0]->Option.flatMap(one => one.thread))->toEqual(Some("trial"))
     Node.rmSync(Ledger.sessions(), {recursive: true, force: true})
   })
 })

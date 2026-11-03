@@ -2,7 +2,7 @@
  * Reads the run ledger and the registered sessions and writes one event line for each thing nobody
  * is looking at, docs/agents/runs.md. Run by launchd each minute, it holds no model.
  */
-type session = {name: string, role: string, transcript: option<string>}
+type session = {name: string, role: string, transcript: option<string>, thread: option<string>}
 
 type finding = {key: string, says: string, notify: bool}
 
@@ -119,6 +119,7 @@ let sessionFrom = (text: string): option<session> =>
     name: Ledger.textOf(fields, "name"),
     role: Ledger.textOf(fields, "role"),
     transcript: fields->Payload.text("transcript"),
+    thread: fields->Payload.text("thread"),
   })
 
 /** The registered sessions, one file each, an unreadable one passed over. */

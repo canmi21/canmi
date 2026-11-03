@@ -144,7 +144,7 @@ let markRead = (~id, ~at) =>
   write([("kind", JSON.String("read")), ("id", JSON.String(id)), ("at", JSON.Number(at))])
 
 /** A registered session's file, its turn read from its transcript's growth. */
-let registerSession = (~role, ~name, ~transcript) => {
+let registerSession = (~role, ~name, ~transcript, ~thread=None) => {
   Node.mkdirAll(sessions())
   Node.writeFileSync(
     Node.join([sessions(), `${name}.json`]),
@@ -152,7 +152,10 @@ let registerSession = (~role, ~name, ~transcript) => {
       [
         ("name", JSON.String(name)),
         ("role", JSON.String(role)),
-        ...transcript->Option.mapOr([], file => [("transcript", JSON.String(file))]),
+        ...Array.concat(
+          transcript->Option.mapOr([], file => [("transcript", JSON.String(file))]),
+          thread->Option.mapOr([], name => [("thread", JSON.String(name))]),
+        ),
       ],
     ),
   )

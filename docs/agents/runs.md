@@ -40,7 +40,7 @@ whose path `mise run //:job events` prints, said once:
 - **`figures`**: a thread's, [threads.md](threads.md), "Staying on course".
 
 **A session with no transcript to read is said once, `unwatched`, rather than passed over in silence.**
-**A session registers once**, `mise run //:job register <role> <name>`, a hook naming its transcript,
+**A session registers once**, `mise run //:job register <role> <name> [--thread <name>]`, a hook naming its transcript,
 whose growth is its turn; `--transcript <file>` names it where no hook runs. `mise run //:job unregister
 <name>` ends that. A Codex seat is started by `mise run //:job start`, its silence being a job's.
 

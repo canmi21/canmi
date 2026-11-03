@@ -2,7 +2,8 @@
  * What a tool call tells the run ledger, docs/agents/runs.md. An output read is a job's result
  * read, and a registering command names the session's transcript, whose growth is its turn.
  */
-let registering = /\bmise\s+run\s+(?:\/\/:)?job\s+register\s+([a-z]+)\s+([A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-]|\s+--transcript)/
+let registering = /\bmise\s+run\s+(?:\/\/:)?job\s+register\s+([a-z]+)\s+([A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-])/
+let namedThread = /--thread\s+([a-z][a-z0-9-]*)/
 
 /** The output paths of the ledger a call's text names. */
 let outputsIn = (text: string) => {
@@ -50,8 +51,13 @@ let observe = (payload: Payload.t, ~at=Date.now()) => {
   | (Some(found), Some(transcript)) =>
     switch (found[1]->Option.flatMap(x => x), found[2]->Option.flatMap(x => x)) {
     | (Some(role), Some(name))
-      if Delegation.silentTurns->Array.some(((known, _, _)) => known == role) =>
-      Ledger.registerSession(~role, ~name, ~transcript=Some(transcript))
+      if Delegation.registeredRoles->Array.includes(role) &&
+        !(Payload.command(payload)->String.includes("--transcript")) =>
+      let thread =
+        RegExp.exec(namedThread, Payload.command(payload))->Option.flatMap(found =>
+          found[1]->Option.flatMap(x => x)
+        )
+      Ledger.registerSession(~role, ~name, ~transcript=Some(transcript), ~thread)
     | _ => ()
     }
   | _ => ()

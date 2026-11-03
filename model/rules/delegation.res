@@ -219,6 +219,17 @@ let silentTurns = [
 ]
 let notifiesAuthor = "supervisor"
 
+/** Who registers, the advisor with no limit on its turns, as its turns wait on the author. */
+let registeredRoles = ["advisor", "seat", "integrator", "supervisor"]
+
+/**
+ * The window a session's context is measured against, a starting value to be tuned, and the share
+ * of it past which an advisor is replaced rather than left to compaction, `advisor-replaced`.
+ */
+let contextWindowTokens = 1000000
+let advisorReplacedFrom = 0.7
+let advisorReplacedBy = 0.8
+
 /**
  * The share of a thread's seat time that is tooling past which its figures warn, about a fifth by
  * the author's word, and how often the figures are said. They warn and never block.
@@ -431,6 +442,12 @@ let rules: array<Rule.t> = [
     name: "job-stop-own",
     says: "`job stop` stops only a job of the session and the `--by` name that started it, refusing any other and saying whose it is, as `kill-by-recorded-pid` has it",
     doc: "docs/agents/runs.md",
+    held: Check("scripts"),
+  },
+  {
+    name: "advisor-replaced",
+    says: "An advisor is replaced, never left to compaction, between `advisorReplacedFrom` and `advisorReplacedBy` of `contextWindowTokens`, and the watchdog says so to it once it is past the first",
+    doc: "docs/agents/advisor.md",
     held: Check("scripts"),
   },
   {

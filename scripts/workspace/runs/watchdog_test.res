@@ -69,7 +69,12 @@ describe("the watchdog", () => {
   })
 
   test("says a silent session to its superior, and notifies for a supervisor alone", () => {
-    let session = (role): Watchdog.session => {name: "n", role, transcript: Some("/t")}
+    let session = (role): Watchdog.session => {
+      name: "n",
+      role,
+      transcript: Some("/t"),
+      thread: None,
+    }
     let moved = _ => Some(0.)
     let found = role =>
       Watchdog.aboutSession(session(role), ~now=1800. *. 1000., ~moved)->Array.map(
