@@ -169,3 +169,31 @@ parts = [false]
     Node.rmSync(root, {recursive: true, force: true})
   })
 })
+
+describe("a crate's blocks and uses", () => {
+  test("reads Cargo.toml beside package.json, build dependencies among its uses", () => {
+    let root = Node.mkdtempSync(Node.join([Node.tmpdir(), "touched-cargo-"]))
+    let write = (directory, file, text) => {
+      Node.mkdirAll(Node.join([root, directory]))
+      Node.writeFileSync(Node.join([root, directory, file]), text)
+    }
+    write("code/libs/envelope", "package.json", `{"name": "@monoflake/envelope"}`)
+    write(
+      "code/libs/envelope",
+      "Cargo.toml",
+      "[package]\nname = \"envelope\"\n\n[build-dependencies]\nenvelope-generator = { path = \"../../tools/envelope-generator\" }\nserde = \"1\"\n",
+    )
+    write(
+      "code/tools/envelope-generator",
+      "Cargo.toml",
+      "[package]\nname = \"envelope-generator\"\n",
+    )
+    let uses = Touched.usesOf(root)->Array.toSorted(((a, _), (b, _)) => String.compare(a, b))
+    expect(uses)->toEqual([("envelope", ["envelope-generator"]), ("envelope-generator", [])])
+    expect(Touched.withDependents(["envelope-generator"], ~uses))->toEqual([
+      "envelope",
+      "envelope-generator",
+    ])
+    Node.rmSync(root, {recursive: true, force: true})
+  })
+})

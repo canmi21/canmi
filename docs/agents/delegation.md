@@ -196,22 +196,24 @@ role named does it directly.
 nothing, so is no seat; the integrator, where it
 needs the code read to integrate, may send a reader too.
 
-## The point is the user testing while the top level builds
+## A round ends with a verified result, and the user judges what only a person can
 
-**The user is the fastest test this project has.** They click in two seconds what a browser round
-trip costs minutes, they are already looking at the thing, and they are the only party who knows
-what "feels wrong" means. So the loop is not _finish, verify, report_. It is: hand back something
-clickable, and go on working while it is being clicked.
+**An agent verifies what a program can and states the result with the evidence it read**, by the
+author's word of 2026-11-03, "No commands for the author to repeat what is verified": a command
+handed to the user that repeats what an agent already ran and read is useless. **The user tests what
+only a person can judge**, a page's feel, what "feels wrong" means, and is handed something to run
+only there, or when they ask. So the loop is not _finish, hand over commands, wait_. It is: verify,
+state the result and its evidence, and go on working.
 
 Two obligations follow, and they are what actually saves the time.
 
-**Never end a turn without something for the user to do.** A turn that ends in "still working"
-spends their attention and returns nothing to spend it on.
+**Never end a turn without a result the user can read**: what was verified, by what, and what is
+left. A turn that ends in "still working" spends their attention and returns nothing to spend it on.
 
-**Never hold a turn to confirm what they would confirm faster.** This is the existing rule in
-[agent-protocol.md](agent-protocol.md), "Checking your own work", and delegation does not soften it
--- it makes it load-bearing, because the cycles saved by not confirming are the cycles the next wave
-is dispatched in.
+**Never hold a turn to confirm what they would confirm faster**, where a person's judgment is the
+test. This is the existing rule in [agent-protocol.md](agent-protocol.md), "Checking your own work",
+and delegation does not soften it -- it makes it load-bearing, because the cycles saved are the
+cycles the next wave is dispatched in.
 
 **And an honest limit, so this is not sold as more than it is.** Parallelism pays only where there
 are two or more independent concerns. A request with one causal chain stays serial however many
@@ -221,7 +223,7 @@ hold the whole task at the end of it.
 
 The wall-clock lever is elsewhere, and half of it is the user's. **A batch of requests in one
 message becomes a wave of agents; one request at a time stays a queue however it is executed.** The
-other half is the overlap: wave N is being clicked while wave N+1 is being dispatched. A top level
+other half is the overlap: wave N is being judged while wave N+1 is being dispatched. A top level
 that goes quiet for ten minutes has failed at this even if every agent in it succeeded.
 
 ## A returning implementer is an event, not an instruction

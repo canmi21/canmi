@@ -93,10 +93,11 @@ wave. Where no role is named, one session holds both. **The roles and what each 
 "Decision rights"**: one advisor, a supervisor for each thread, two integrators, seats, an on-call
 reviewer and an auditor at each checkpoint; a watchdog program reports what nobody is reading,
 [docs/agents/runs.md](docs/agents/runs.md). The implementers edit, each in a lane of its
-own, owning a declared set of files and touching nothing else. Testing belongs to the user -- they
-are faster than any verification loop -- so a round of work ends with something the user can try
-by hand, a page to click or a curl to run, and where there is nothing to try, with a rehearsal that
-passed. See [docs/agents/delegation.md](docs/agents/delegation.md).
+own, owning a declared set of files and touching nothing else. **A round of work ends with its
+verified result stated and the evidence an agent read**, never with commands for the user to repeat
+what an agent already ran and read; the user is handed something to run only where a person's
+judgment is what is tested, a page's feel, or when they ask. See
+[docs/agents/delegation.md](docs/agents/delegation.md).
 
 **Long commands** -- anything that may run past a few seconds starts by `mise run //:job start --
 <command>`, in the ledger the watchdog reads, and is looked at every few seconds to a few tens, `mise

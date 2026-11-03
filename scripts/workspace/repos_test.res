@@ -436,3 +436,21 @@ describe("what a check's blocks in work fail", () => {
     expect(Repos.inWorkSaid([]))->toEqual([])
   })
 })
+
+describe("a failed check's causes", () => {
+  test("name a rule's x finding and node's failed test before any warning", () => {
+    let output =
+      [
+        "=== monoflake/cloud names, the workspace's ===",
+        "  x docs/Planted_Name.md: Planted_Name.md breaks the naming rule",
+        "  scripts/flakes.res:71: err holds err, written error",
+        "✖ a dry run runs nothing (2.4ms)",
+      ]->Array.join("\n")
+    let causes = Repos.symptom(output)
+    expect(
+      causes->Array.includes("  x docs/Planted_Name.md: Planted_Name.md breaks the naming rule"),
+    )->toEqual(true)
+    expect(causes->Array.includes("✖ a dry run runs nothing (2.4ms)"))->toEqual(true)
+    expect(causes->Array.includes("=== monoflake/cloud names, the workspace's ==="))->toEqual(false)
+  })
+})

@@ -37,6 +37,10 @@ and evidence; no layer ranks across goals.
 label on the work. Its test belongs to the author and the advisor; the supervisor and everyone below
 do not change it.
 
+**No charter carries a step for the author to try what an agent verified**, by the author's word of
+2026-11-03: a step's green is a result an agent ran and read, stated with its evidence, and the
+author is handed something to run only where a person's judgment is what is tested.
+
 **A charter names the specification of any step touching order, concurrency or a crash, or says
 why none is needed**, by the author's word of 2026-11-03: a TLA+ specification whose traces the
 code's own tests replay, so a change to either fails the other, RFC w0w82.

@@ -36,23 +36,65 @@ let changed = repo => {
 }
 
 /** Each package under `code/` by its name, its scope dropped, and its directory. */
+/** A JSON object's keys under `key`, none where it is no object. */
+let keysAt = (fields, key) =>
+  fields
+  ->Dict.get(key)
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.mapOr([], table => table->Dict.keysToArray)
+
+/** A directory's manifests read: its package's name, scope dropped, and every dependency named. */
+let manifestOf = directory => {
+  let package = Node.join([directory, "package.json"])
+  let crate = Node.join([directory, "Cargo.toml"])
+  let node = Node.existsSync(package)
+    ? JSON.parseOrThrow(Node.readFileSync(package))->JSON.Decode.object
+    : None
+  let cargo = Node.existsSync(crate)
+    ? Toml.parse(Node.readFileSync(crate))->JSON.Decode.object
+    : None
+  let unscoped = name => name->String.replaceRegExp(/^@[^\/]+\//, "")
+  let name = switch node
+  ->Option.flatMap(fields => fields->Dict.get("name"))
+  ->Option.flatMap(JSON.Decode.string) {
+  | Some(name) => Some(unscoped(name))
+  | None =>
+    cargo
+    ->Option.flatMap(fields => fields->Dict.get("package"))
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(package => package->Dict.get("name"))
+    ->Option.flatMap(JSON.Decode.string)
+  }
+  let used = Array.concat(
+    node->Option.mapOr([], fields =>
+      Array.concat(keysAt(fields, "dependencies"), keysAt(fields, "devDependencies"))->Array.map(
+        unscoped,
+      )
+    ),
+    cargo->Option.mapOr([], fields =>
+      ["dependencies", "build-dependencies", "dev-dependencies"]->Array.flatMap(key =>
+        keysAt(fields, key)
+      )
+    ),
+  )
+  (name, used)
+}
+
 let blocksOf = repo => {
   let code = Node.join([repo, "code"])
   let found = []
   let rec walk = (directory, depth) =>
     if depth <= 3 {
-      let manifest = Node.join([directory, "package.json"])
-      if directory != code && Node.existsSync(manifest) {
-        switch JSON.parseOrThrow(Node.readFileSync(manifest))
-        ->JSON.Decode.object
-        ->Option.flatMap(fields => fields->Dict.get("name"))
-        ->Option.flatMap(JSON.Decode.string) {
-        | Some(name) =>
-          let short = name->String.replaceRegExp(/^@[^\/]+\//, "")
+      let manifested =
+        Node.existsSync(Node.join([directory, "package.json"])) ||
+        Node.existsSync(Node.join([directory, "Cargo.toml"]))
+      if directory != code && manifested {
+        switch manifestOf(directory) {
+        | (Some(name), _) =>
           let relative =
             directory->String.slice(~start=String.length(repo) + 1, ~end=String.length(directory))
-          found->Array.push((short, relative))
-        | None => ()
+          found->Array.push((name, relative))
+        | (None, _) => ()
         }
       } else {
         Node.entries(directory)->Array.forEach(entry => {
@@ -75,24 +117,18 @@ let takesBlocks = repo => {
   Node.existsSync(config) && Node.readFileSync(config)->String.includes(`flag "--blocks`)
 }
 
-/** Each block by its name and the blocks it uses, its `@`-scoped dependencies of the same scope. */
-let usesOf = repo =>
-  blocksOf(repo)->Array.map(((name, directory)) => {
-    let fields =
-      JSON.parseOrThrow(Node.readFileSync(Node.join([repo, directory, "package.json"])))
-      ->JSON.Decode.object
-      ->Option.getOr(dict{})
-    let named = key =>
-      fields
-      ->Dict.get(key)
-      ->Option.flatMap(JSON.Decode.object)
-      ->Option.mapOr([], deps => deps->Dict.keysToArray)
-    let used =
-      Array.concat(named("dependencies"), named("devDependencies"))
-      ->Array.filter(dep => dep->String.startsWith("@monoflake/"))
-      ->Array.map(dep => dep->String.replaceRegExp(/^@[^\/]+\//, ""))
-    (name, used)
+/**
+ * Each block by its name and the blocks it uses, read from package.json's dependencies and
+ * Cargo.toml's, build and dev ones included, kept to the repository's own blocks.
+ */
+let usesOf = repo => {
+  let blocks = blocksOf(repo)
+  let names = blocks->Array.map(((name, _)) => name)
+  blocks->Array.map(((name, directory)) => {
+    let (_, used) = manifestOf(Node.join([repo, directory]))
+    (name, used->Array.filter(one => one != name && names->Array.includes(one)))
   })
+}
 
 let withDependents = (names, ~uses) => {
   let held = Set.fromArray(names)
