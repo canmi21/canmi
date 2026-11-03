@@ -75,12 +75,46 @@ let takesBlocks = repo => {
   Node.existsSync(config) && Node.readFileSync(config)->String.includes(`flag "--blocks`)
 }
 
+/** Each block by its name and the blocks it uses, its `@`-scoped dependencies of the same scope. */
+let usesOf = repo =>
+  blocksOf(repo)->Array.map(((name, directory)) => {
+    let fields =
+      JSON.parseOrThrow(Node.readFileSync(Node.join([repo, directory, "package.json"])))
+      ->JSON.Decode.object
+      ->Option.getOr(dict{})
+    let named = key =>
+      fields
+      ->Dict.get(key)
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.mapOr([], deps => deps->Dict.keysToArray)
+    let used =
+      Array.concat(named("dependencies"), named("devDependencies"))
+      ->Array.filter(dep => dep->String.startsWith("@monoflake/"))
+      ->Array.map(dep => dep->String.replaceRegExp(/^@[^\/]+\//, ""))
+    (name, used)
+  })
+
+let withDependents = (names, ~uses) => {
+  let held = Set.fromArray(names)
+  let grew = ref(true)
+  while grew.contents {
+    grew := false
+    uses->Array.forEach(((name, used)) =>
+      if !(held->Set.has(name)) && used->Array.some(one => held->Set.has(one)) {
+        held->Set.add(name)
+        grew := true
+      }
+    )
+  }
+  uses->Array.filterMap(((name, _)) => held->Set.has(name) ? Some(name) : None)
+}
+
 let arguments = repo =>
   if !takesBlocks(repo) {
     []
   } else {
     switch of_(~paths=changed(repo), ~blocks=blocksOf(repo), ~full=false) {
     | Every | Blocks([]) => []
-    | Blocks(names) => ["--blocks", names->Array.join(",")]
+    | Blocks(names) => ["--blocks", withDependents(names, ~uses=usesOf(repo))->Array.join(",")]
     }
   }

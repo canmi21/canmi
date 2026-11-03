@@ -44,3 +44,25 @@ describe("the blocks of a repository and what its verify is handed", () => {
     Node.rmSync(root, {recursive: true, force: true})
   })
 })
+
+describe("a changed library's dependents", () => {
+  let uses = [
+    ("keys", []),
+    ("envelope", []),
+    ("storage", ["envelope", "keys"]),
+    ("gateway", ["envelope"]),
+    ("deploy", ["storage"]),
+  ]
+  test("brings every block using it, at any depth", () => {
+    expect(Touched.withDependents(["keys"], ~uses))->toEqual(["keys", "storage", "deploy"])
+    expect(Touched.withDependents(["envelope"], ~uses))->toEqual([
+      "envelope",
+      "storage",
+      "gateway",
+      "deploy",
+    ])
+  })
+  test("leaves a block no other uses alone", () => {
+    expect(Touched.withDependents(["gateway"], ~uses))->toEqual(["gateway"])
+  })
+})

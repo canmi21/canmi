@@ -20,8 +20,14 @@ let changed: string => array<string>
 /** Each package under a repository's `code/`, by its name less its scope, and its directory. */
 let blocksOf: string => array<(string, string)>
 
+/** Each block by its name and the blocks it uses, its same-scoped dependencies. */
+let usesOf: string => array<(string, array<string>)>
+
+/** The blocks named and every block using one of them, at any depth, in the order `uses` gives. */
+let withDependents: (array<string>, ~uses: array<(string, array<string>)>) => array<string>
+
 /**
- * What a repository's verify is handed, `--blocks` and the blocks its change touches where its
- * mise.toml declares the flag, and nothing where it runs every block.
+ * What a repository's verify is handed, `--blocks`, the blocks its change touches and their
+ * dependents, where its mise.toml declares the flag, and nothing where it runs every block.
  */
 let arguments: string => array<string>

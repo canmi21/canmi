@@ -81,8 +81,10 @@ the names now exist. A value pasted into a chat is in a transcript, and that is 
 
 **A secret no person holds, random bytes a program makes, the agent generates and enters itself**:
 made in a 0700 directory under its scratchpad, entered by `--from`, never printed, and the file
-removed with `rm`. The test platform's `salt-master`, the salt master of RFC b8f35, is one, entered
-so on 2026-11-03 into monoflake/cloud's `platforms/test/secrets.json`.
+removed with `rm`, or piped straight in by `--value-stdin` and never written to a file. The test
+platform's salt master of RFC b8f35, `SALT_TEST_MASTER`, is one, entered on 2026-11-03 into
+monoflake/cloud's `secrets/test/secrets.json`, the Mac's layer, since a platform's own
+`platforms/<p>/secrets.json` is decrypted by its machines too.
 
 ### Three things that will bite
 
