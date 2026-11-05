@@ -89,6 +89,7 @@ let abbreviationsExempt = [
   "DbConfig",
   "params_from_iter",
   "URLSearchParams",
+  "searchParams",
 ]
 
 let doc = "docs/naming.md"
