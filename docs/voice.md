@@ -168,5 +168,8 @@ agents and stored time, [code.md](code.md), "Time is stored and run in UTC".
   user-visible changes hard to revert, or involves a real trade-off the user should weigh.
 - Avoid stacking multiple `AskUserQuestion` calls in succession. Pick the highest-impact question,
   ask it, act on the answer.
+- **A question asked once and left unanswered is not asked again.** The user raises it when they
+  want it settled; repeating it at the end of each reply is noise. And what the user has not
+  answered or mentioned is never taken as allowed: it stays as it was until they say.
 - **A question's every field is in the user's language**, the question, each label and each
   description, simplified Chinese with English technical nouns, as the rest of the conversation is.
