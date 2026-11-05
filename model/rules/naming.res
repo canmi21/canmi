@@ -20,6 +20,9 @@ let assigned = [
 /** A leading mark a framework finds a file by, kept as written: SvelteKit's `+page.svelte`. */
 let marks = ["+"]
 
+/** A directory a tool writes whole and names the files of, drizzle-kit's migrations and journal. */
+let toolWritten = ["drizzle"]
+
 /** No instruction file but AGENTS.md, since one would stop Claude Code reading it. */
 let refused = ["CLAUDE.md"]
 
