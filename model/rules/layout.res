@@ -37,7 +37,7 @@ let vendor = "vendor"
 let vendored = path => path->String.split("/")->Array.includes(vendor)
 
 /** A repository kept as it was until it is pushed and deleted, which no rule over prose reads. */
-let archives = ["console"]
+let archives: array<string> = []
 
 let doc = "docs/repos.md"
 let rules: array<Rule.t> = [

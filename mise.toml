@@ -15,10 +15,10 @@ config_roots = [
 	"repos/monoflake/machine*",
 	"repos/monoflake/runtime*",
 	"repos/monoflake/egress*",
+	"repos/monoflake/console*",
 	"repos/apps/rdm*",
 	"repos/apps/cue*",
 	"repos/apps/still*",
-	"repos/console*",
 ]
 
 [env]

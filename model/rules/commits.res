@@ -23,10 +23,10 @@ let since = [
   ("monoflake/machine", "root()"),
   ("monoflake/runtime", "root()"),
   ("monoflake/egress", "root()"),
+  ("monoflake/console", "root()"),
   ("apps/rdm", "ecaa6b03"),
   ("apps/cue", "5655f8a0"),
   ("apps/still", "18ed09a1"),
-  ("console", "fb308466"),
 ]
 
 /** Past forms with no `ed` ending, and the words ending in `ed` or `s` that are imperative. */

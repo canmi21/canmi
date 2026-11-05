@@ -135,16 +135,7 @@ let items: array<item> = [
   {
     id: "paused",
     says: "only the workspace and monoflake are worked on, so every other repository is passed over by every verb run with --all but pull and push",
-    repos: [
-      "canmi/web",
-      "canmi/lib",
-      "canmi/rfcs",
-      "seam",
-      "apps/rdm",
-      "apps/cue",
-      "apps/still",
-      "console",
-    ],
+    repos: ["canmi/web", "canmi/lib", "canmi/rfcs", "seam", "apps/rdm", "apps/cue", "apps/still"],
     after: [],
     holds: Owes("the author's word"),
     waits: Author,
@@ -482,14 +473,5 @@ let items: array<item> = [
     repos: ["workspace"],
     after: [],
     holds: Owes("the check, and Codex's tool names verified"),
-  },
-  {
-    id: "console-copy",
-    says: "the local copy of console and its registry entry are removed",
-    repos: ["console"],
-    after: [],
-    holds: Owes("the author's word"),
-    waits: Author,
-    waives: ["rules-in-docs"],
   },
 ]
