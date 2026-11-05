@@ -1,6 +1,10 @@
 /** Every name the workspace tracks against model/rules/naming.res; no CLAUDE.md anywhere. */
 let fits = (segment, ~file) => {
   let bare = segment->String.startsWith(".") ? segment->String.slice(~start=1) : segment
+  let bare =
+    file && Naming.marks->Array.some(mark => bare->String.startsWith(mark))
+      ? bare->String.slice(~start=1)
+      : bare
   let underscored = file && Naming.underscored->Array.some(suffix => bare->String.endsWith(suffix))
   Naming.assigned->Array.includes(segment) ||
     Naming.shape->RegExp.test(underscored ? bare->String.replaceAll("_", "-") : bare)

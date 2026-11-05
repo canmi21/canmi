@@ -19,6 +19,7 @@ let owners = [
   (".jsonc", Formats("oxfmt")),
   (".md", Formats("oxfmt")),
   (".svelte", Formats("oxfmt")),
+  (".html", Formats("oxfmt")),
   (".rs", Formats("rustfmt")),
   (".res", Formats("rescript format")),
   (".resi", Formats("rescript format")),
@@ -28,6 +29,8 @@ let owners = [
   (".py", Unformatted),
   (".lock", Unformatted),
   (".txt", Unformatted),
+  // An image a drawing program writes, its layout no formatter's.
+  (".svg", Unformatted),
   // TLA+ has no formatter mise pins, and .cfg here is TLC's configuration, TLC's parser its form.
   (".tla", Unformatted),
   (".cfg", Unformatted),

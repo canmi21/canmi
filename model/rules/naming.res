@@ -17,6 +17,9 @@ let assigned = [
   "Dockerfile",
 ]
 
+/** A leading mark a framework finds a file by, kept as written: SvelteKit's `+page.svelte`. */
+let marks = ["+"]
+
 /** No instruction file but AGENTS.md, since one would stop Claude Code reading it. */
 let refused = ["CLAUDE.md"]
 
