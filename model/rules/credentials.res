@@ -87,6 +87,9 @@ let table = [
   // A platform's salt master, from which deploy derives each organization's salt, b8f35.
   neutral("SALT_MASTER", "SALT", Foundation, "MASTER"),
   neutral("SALT_TEST_MASTER", "SALT", Test, "MASTER"),
+  // The console's sign-in, WorkOS's key and the session's signing key, in monoflake/console.
+  vendor("WORKOS_API_KEY", "WORKOS", Foundation, "API_KEY"),
+  neutral("SESSION_SECRET", "SESSION", Foundation, "SECRET"),
 ]
 
 /** Names a secrets file or GitHub holds, beside each one's name after rotation, docs/naming.md. */
