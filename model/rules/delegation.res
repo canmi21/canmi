@@ -601,7 +601,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "long-command-background",
-    says: "A foreground shell command never runs past `foregroundSeconds`: one that waits in a loop that sleeps, asks for a timeout past it, or runs a task of `longTasks`, a task given a flag of `longTaskFlags` or a command of `longCommands`, the plan a flag of `shortFlags` asks aside, is refused; it runs in the background or under Monitor and is looked at again every few seconds to a few tens, the watcher's stall of `stallSeconds` naming a hang",
+    says: "A foreground shell command never runs past `foregroundSeconds`: one that waits in a loop that sleeps, asks for a timeout past it, or runs a task of `longTasks`, a task given a flag of `longTaskFlags` or a command of `longCommands`, the plan a flag of `shortFlags` asks aside, is refused; it runs in the background or under Monitor and is looked at again every few seconds to a few tens, the watcher's stall of `stallSeconds` naming a hang; a push, `push` or `land`, runs in the foreground by the user's word",
     doc: "docs/agents/agent-protocol.md",
     held: Hook("hooks/gates/background"),
   },
