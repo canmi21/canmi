@@ -14,6 +14,8 @@ engine.`, `A refined download manager.`, `A tiny self-hosted cloud.` -- or a lin
   one place", "every site" -- reads as written by a machine.
 - **No feature list, no stack, no third person.** "The author's" is a spec's phrase; a description
   is the author's own.
+- **A private repository may have none**, by the author's word: nobody browses to it. One it does
+  have follows the rule above.
 - **A package's registry description** -- `description` in a `package.json` or a `Cargo.toml` --
   follows the same rule, and is the same line its repository's README gives it.
 

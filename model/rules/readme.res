@@ -9,7 +9,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "description-short",
-    says: "A repository's description is one sentence of four to eight words, ending in a full stop",
+    says: "A repository's description is one sentence of four to eight words, ending in a full stop; a private one may have none",
     doc,
     held: Check("description"),
   },

@@ -1,8 +1,9 @@
-/** A repository's forge description against model/rules/readme.res, one short sentence. */
+/** A repository's forge description against model/rules/readme.res, one short sentence, which a
+ private repository may go without. */
 let fewest = 4
 let most = 8
 
-type described = {repo: string, description: option<string>}
+type described = {repo: string, description: option<string>, isPrivate: bool}
 
 let sentenceBreak = /[.!?]\s+\S/
 
@@ -27,23 +28,32 @@ let problem = (text: string) => {
   }
 }
 
-/** Each description that breaks the rule, named by its repository. */
+/** Each description that breaks the rule, named by its repository; a private one may have none. */
 let problems = (described: array<described>) =>
-  described->Array.filterMap(({repo, description}) =>
-    problem(description->Option.getOr(""))->Option.map(says => `${repo}: description ${says}`)
-  )
+  described->Array.filterMap(({repo, description, isPrivate}) => {
+    let text = description->Option.getOr("")
+    if isPrivate && text->String.trim == "" {
+      None
+    } else {
+      problem(text)->Option.map(says => `${repo}: description ${says}`)
+    }
+  })
 
-@scope("JSON") @val external parse: string => {"description": Nullable.t<string>} = "parse"
+@scope("JSON") @val
+external parse: string => {"description": Nullable.t<string>, "visibility": string} = "parse"
 
-/** The description the forge holds for `user/repo`, or an error where it could not be read. */
-let read = (~user, ~repo): result<option<string>, string> => {
+/** The description the forge holds for `user/repo` and whether it is private, or an error. */
+let read = (~user, ~repo): result<(option<string>, bool), string> => {
   let ran = Node.spawnSync(
     "gh",
-    ["repo", "view", `${user}/${repo}`, "--json", "description"],
+    ["repo", "view", `${user}/${repo}`, "--json", "description,visibility"],
     {encoding: "utf8", maxBuffer: 268435456},
   )
   if ran.status == Nullable.make(0) {
-    try Ok(parse(ran.stdout->Nullable.getOr(""))["description"]->Nullable.toOption) catch {
+    try {
+      let answer = parse(ran.stdout->Nullable.getOr(""))
+      Ok((answer["description"]->Nullable.toOption, answer["visibility"] == "PRIVATE"))
+    } catch {
     | _ => Error("an answer it cannot read")
     }
   } else {
@@ -57,7 +67,7 @@ let main = (): array<string> => {
   ->Array.filter(((path, _)) => Waiting.pauser(~repo=path)->Option.isNone)
   ->Array.flatMap(((path, (user, repo))) =>
     switch read(~user, ~repo) {
-    | Ok(description) => problems([{repo: path, description}])
+    | Ok((description, isPrivate)) => problems([{repo: path, description, isPrivate}])
     | Error(why) => [`${path}: description could not be read from the forge, ${why}`]
     }
   )

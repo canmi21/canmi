@@ -15,7 +15,7 @@ The workspace keeps one LICENSE, at its root.
 
 ### description-short
 
-A repository's description is one sentence of four to eight words, ending in a full stop.
+A repository's description is one sentence of four to eight words, ending in a full stop; a private one may have none.
 
 - doc: [docs/readme.md](../../docs/readme.md)
 - held by: check part `description`

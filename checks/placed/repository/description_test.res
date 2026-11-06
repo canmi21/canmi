@@ -1,6 +1,7 @@
 open Testing
 
-let check = (repo, description) => Description.problems([{repo, description}])
+let check = (~isPrivate=false, repo, description) =>
+  Description.problems([{repo, description, isPrivate}])
 
 describe("a repository's forge description", () => {
   test("passes one sentence of four to eight words ending in a full stop", () => {
@@ -23,5 +24,13 @@ describe("a repository's forge description", () => {
       `a: description "A tool. Also a library." is more than one sentence`,
     ])
     expect(check("a", None))->toEqual(["a: description has no description"])
+  })
+
+  test("lets a private repository go without one, and holds one it has to the rule", () => {
+    expect(check(~isPrivate=true, "a", None))->toEqual([])
+    expect(check(~isPrivate=true, "a", Some("")))->toEqual([])
+    expect(check(~isPrivate=true, "a", Some("Too short here.")))->toEqual([
+      `a: description "Too short here." has 3 words, not 4 to 8`,
+    ])
   })
 })
