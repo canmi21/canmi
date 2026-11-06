@@ -205,6 +205,11 @@ only a person can judge**, a page's feel, what "feels wrong" means, and is hande
 only there, or when they ask. So the loop is not _finish, hand over commands, wait_. It is: verify,
 state the result and its evidence, and go on working.
 
+**A page's look and behavior the author tests in their own browser**, by their word of 2026-11-06:
+an agent shaping a page with them makes the change and stops, driving no browser to check it, since
+the author tests it anyway and an agent's clicks meanwhile disturb theirs. What they find wrong they
+say. A build or a type check still runs where a change could break one.
+
 Two obligations follow, and they are what actually saves the time.
 
 **Never end a turn without a result the user can read**: what was verified, by what, and what is
