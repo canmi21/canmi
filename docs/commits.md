@@ -160,6 +160,9 @@ situations, told apart by what the user is doing rather than by how much has cha
   they are adjusting how something looks or behaves and have not said it is right, every attempt is
   not a commit: a dozen commits of a dozen tries record nothing anybody will look for. When they
   move on to the next request, the one before is settled -- commit it then, and it may be pushed.
+  **This holds where a push deploys too**, as the console's does: the change being shaped waits
+  unpushed, the user's turning to the next thing is their approval of it, and the agent judges the
+  moment itself and never asks when to push.
   **A wave is the other mode**: its commit is local and may come before acceptance, and a fix
   acceptance asks for is squashed into it before the push, [checking.md](agents/checking.md),
   "Acceptance comes before the push".
