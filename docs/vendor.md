@@ -7,16 +7,20 @@ every project.
 ## Where it sits
 
 A project's vendored code lives under `vendor/<name>/`, one directory per upstream, and nowhere
-else. The directory's `README.md` points here and says what each entry is. Inside each entry the
-layout is the upstream's own, so that a diff between two upstream versions applies to it as a patch,
-and each entry carries two files of its own:
+else. Inside each entry the layout is the upstream's own, so that a diff between two upstream
+versions applies to it as a patch, and the entry carries the upstream's `LICENSE` unchanged where
+the upstream ships one. What may be copied is decided by that file and not by anything written here;
+an upstream that ships none, as a brand's own marks, is held to the terms it publishes, named in the
+record.
 
-- `LICENSE`, the upstream's, unchanged. What may be copied is decided by that file and not by
-  anything written here.
-- `VENDOR.md`, saying which upstream, which tag and commit, what was taken and what was not, how it
-  is consumed, what checks run over it and which command prints what they report, and how it is
-  upgraded. The report itself is the command's, not copied here -- see
-  [agent-protocol.md](agents/agent-protocol.md), "A number a command prints is cited, not copied".
+**Each entry is recorded in a `VENDOR.md`, and a project keeps its records in one of two ways,
+never both:** a `VENDOR.md` inside each entry, or one `vendor/VENDOR.md` with a section per entry
+and none inside them. Which is the project's choice, and once it keeps one at `vendor/` every entry
+is recorded there. A record says which upstream, which tag and commit or, where there is none, the
+date taken and the digest of what was downloaded, what was taken and what was not, how it is
+consumed, what checks run over it and which command prints what they report, and how it is
+upgraded. The report itself is the command's, not copied here -- see
+[agent-protocol.md](agents/agent-protocol.md), "A number a command prints is cited, not copied".
 
 ## How it is taken
 
@@ -48,8 +52,8 @@ among its pnpm workspace packages. The filter also stops the upstream's own pins
 something this repository is behind on: SvelteKit holds cookie at 0.6 deliberately.
 
 **The upstream's checks run over it.** Where the upstream ships tests beside its source, they are
-kept and run under a config of their own from the vendor directory, and `VENDOR.md` says which
-command runs them and which are excluded, and why.
+kept and run under a config of their own from the vendor directory, and the entry's record says
+which command runs them and which are excluded, and why.
 
 **They are not a condition of `verify`.** Upstream's tests carry upstream's judgment, which of them
 to skip included, and a count of them carries that judgment into ours unread: a count cannot see a
@@ -61,7 +65,8 @@ case; its `spec/suite.md` has the states.
 
 ## Upgrading
 
-Take the new tag the way the first one was taken, replace the entry's files, update `VENDOR.md`'s
-version, commit and what was taken, and read the upstream diff for the files the binding package
-names. Where the project keeps a list of the upstream's tests, the upgrade updates it, and its diff
-is the account of which tests moved. An upgrade is one commit saying which tag it moved to.
+Take the new tag the way the first one was taken, replace the entry's files, update the entry's
+record with its version, commit and what was taken, and read the upstream diff for the files the
+binding package names. Where the project keeps a list of the upstream's
+tests, the upgrade updates it, and its diff is the account of which tests moved. An upgrade is one
+commit saying which tag it moved to.
