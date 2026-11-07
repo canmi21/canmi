@@ -75,6 +75,7 @@ let publicDomains = [
   "nixos.org",
   "rust-lang.org",
   "tailscale.com",
+  "tanstack.com",
 ]
 
 /** Where a Cloudflare resource made with a place may be put, as `cloudflare-placed` says. */
