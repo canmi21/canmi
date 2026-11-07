@@ -15,7 +15,6 @@ let assigned = [
   "Cargo.toml",
   "Cargo.lock",
   "Dockerfile",
-  "_headers",
 ]
 
 /** A leading mark a framework finds a file by, kept as written: SvelteKit's `+page.svelte`. */
