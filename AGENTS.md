@@ -185,7 +185,8 @@ but `pull` and `push`, and `--dry-run` to any of them to be told what it would d
 naming it. `check` then runs the workspace's rules over the repository, and its pass is what a
 commit there waits on. What such a task owes the verb, `--dry-run` first, is in [docs/repos.md](docs/repos.md).
 The workspace's own half runs in the dispatcher, `scripts/workspace/repos.res`: its check is
-`checks/check.res`, and `mise run check workspace words names` runs only the parts named. `audit`
+`checks/check.res`, and `mise run check workspace words names` runs only the parts named, a part
+reading the forge run only by `--full` or `audit`, [docs/repos.md](docs/repos.md). `audit`
 is `check` with every warning counted as a failure, which is not what routine work runs. `update`
 moves within declared bounds and keeps a repository's move only where its own verify still passes;
 crossing a range is `update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes

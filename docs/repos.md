@@ -314,7 +314,10 @@ to mean all of them, and the one holding the others is the easiest to forget.
 `verify` cannot be tasks of those names -- those are the loops -- so they are functions in
 `scripts/workspace/repos.res`, the loop over verbs, rather than hidden tasks beside it. Its verify
 is `check workspace`, `checks/check.res`, whose parts are named after the name: `mise run check
-workspace words names` runs those two, and `--pending` lists the rules no check holds yet.
+workspace words names` runs those two, and `--pending` lists the rules no check holds yet. A part
+that reads a forge over the network, `description`, runs only in a full check, `--full` or `audit`,
+or where named, as it changes seldom and fails as often by the line as by the change; a routine
+check says it passed it over.
 
 **Everything that changes something takes `--dry-run`, or `-n`.** The flag may go anywhere after
 the verb, because mise appends it last: `mise run push rdm --dry-run`. `pull` skips the fetch and

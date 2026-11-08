@@ -219,6 +219,12 @@ let planned = () => {
 
 let parts: array<(string, part)> = Array.concat(others, [("plan", Script(planned))])
 
+/**
+ * The parts reading a forge over the network, seldom changed and failing by the line as often as
+ * by the change, run by a full check alone, `--full` or an audit, or where named.
+ */
+let fullOnly = ["description"]
+
 let known = parts->Array.map(((name, _)) => name)
 
 let written = (path, ~at=root) =>
@@ -413,12 +419,21 @@ let validate = (named: array<string>) =>
     }
   )
 
-let run = (named: array<string>): int => {
+let run = (given: array<string>): int => {
+  let full = given->Array.includes("--full") || Node.envIs("AUDIT", "1")
+  let named = given->Array.filter(arg => arg != "--full")
   validate(named)
   Registry.paths()->Array.forEach(path =>
     Waiting.skipped(path)->Option.forEach(why => Console.log(`repos/${path}: ${why}, passed over`))
   )
-  let chosen = name => named->Array.length == 0 || named->Array.includes(name)
+  let chosen = name =>
+    named->Array.includes(name) ||
+      (named->Array.length == 0 && (full || !(fullOnly->Array.includes(name))))
+  if named->Array.length == 0 && !full {
+    fullOnly->Array.forEach(name =>
+      Console.log(`workspace ${name}: read by a full check alone, check workspace --full`)
+    )
+  }
   let failed = Array.concat(
     chosen("rules")
       ? {

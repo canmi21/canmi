@@ -788,7 +788,17 @@ let across = ["update", "fmt", "clean", "verify", "pull", "push"]
 /** What was typed, or why it is refused. A name means that repository, and nothing is dropped. */
 let parse = (argv: array<string>): request => {
   let flag = names => argv->Array.some(arg => names->Array.includes(arg))
-  let known = ["-n", "--dry-run", "--major", "-a", "--all", "--pending", "--json", "--verbose"]
+  let known = [
+    "-n",
+    "--dry-run",
+    "--major",
+    "-a",
+    "--all",
+    "--pending",
+    "--full",
+    "--json",
+    "--verbose",
+  ]
   let rest = argv->Array.filter(arg => !(arg->String.startsWith("-")))
   let verb = rest[0]->Option.getOr("")
   let name = rest[1]
@@ -827,6 +837,9 @@ let parse = (argv: array<string>): request => {
     if flag(["--pending"]) && !owned {
       Registry.fail("--pending belongs to the workspace's own check: check workspace --pending")
     }
+    if flag(["--full"]) && !(verb == "verify" && (name == None || name == Some("workspace"))) {
+      Registry.fail("--full belongs to the workspace's own check: check workspace --full")
+    }
     let extra = rest->Array.slice(~start=2)
     if extra != [] && verb != "verify" {
       Registry.fail(`one name at most; ${extra->Array.join(" ")} would have been ignored`)
@@ -840,7 +853,8 @@ let parse = (argv: array<string>): request => {
     if request.everything && !(across->Array.includes(verb)) {
       Registry.fail(`--all belongs to the verbs that run across repositories; ${verb} is not one`)
     }
-    {...request, parts: Array.concat(extra, flag(["--pending"]) ? ["--pending"] : [])}
+    let flags = ["--pending", "--full"]->Array.filter(one => flag([one]))
+    {...request, parts: Array.concat(extra, flags)}
   }
 }
 

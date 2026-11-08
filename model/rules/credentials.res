@@ -92,6 +92,8 @@ let table = [
   neutral("SESSION_SECRET", "SESSION", Foundation, "SECRET"),
   // The photo behind an organization's sign-in card, Unsplash's access key, in monoflake/console.
   vendor("UNSPLASH_ACCESS_KEY", "UNSPLASH", Foundation, "ACCESS_KEY"),
+  // The key the console seals each person's authenticator secret with, in monoflake/console.
+  neutral("MFA_ENCRYPTION_KEY", "MFA", Foundation, "ENCRYPTION_KEY"),
 ]
 
 /** Names a secrets file or GitHub holds, beside each one's name after rotation, docs/naming.md. */
