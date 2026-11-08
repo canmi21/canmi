@@ -110,10 +110,10 @@ let onset = (~root, rule, path, ~at=?) =>
   | _ => None
   }
 
-/** A tree's findings over what version control keeps, its vendored source passed over. */
+/** A tree's findings over what version control keeps, `Layout.unshaped` passed over. */
 let measured = (tree: Lines.tree): array<Form_layer.finding> =>
   located(
-    tree.paths->Array.filter(path => !Layout.vendored(path)),
+    tree.paths->Array.filter(path => !Layout.unshaped(path)),
     ~cargo=tree.bytes("Cargo.toml")->Option.map(Node.chunkText),
   )->Array.map(((rule, path, says)): Form_layer.finding => {
     rule,

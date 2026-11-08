@@ -45,7 +45,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   notice said "ended: status 0, 29.4 s" for job 20261103-053145-c4a7 while the ledger held only its
   start; the watcher's own later line, "status 1, 28.3 s", matched the ledger. The cause, outside the
   workspace's tools, is unconfirmed; `mise run //:job read <id>` decides.
-- **`fmt` names its repository, and a formatter run by hand names its files.**
+- **`fmt` names its repository, and a formatter run by hand names its files.** Only the files that
+  repository's `fmt` covers: on 2026-11-08 `oxfmt src/lib` in monoflake/console, which formats
+  `*.md` alone, rewrote thirteen untouched files and they were restored from the parent.
 - **A write across repositories first looks for another session.** Inspect `jj op log` for other
   sessions' operations and `pgrep -fl claude`; skip and name any repository in use.
 - **Two processes never build one ReScript tree at once.** Include sibling trees a task builds. Wait

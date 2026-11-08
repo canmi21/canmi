@@ -85,7 +85,7 @@ let directory = (~root, path, ~holds: array<string> => bool, ~at=?) =>
     holds(
       read(~root, ["file", "list", "-r", commit, `root:${quoted(path)}`])
       ->Option.mapOr([], lines)
-      ->Array.filter(file => !Layout.vendored(file)),
+      ->Array.filter(file => !Layout.unshaped(file)),
     )
   )
 

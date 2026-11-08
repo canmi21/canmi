@@ -36,6 +36,13 @@ let retired = "spec"
 let vendor = "vendor"
 let vendored = path => path->String.split("/")->Array.includes(vendor)
 
+/** A tool's migrations, named as it draws them and only appended to once shipped. */
+let migrations = ["drizzle"]
+let appended = path => path->String.split("/")->Array.some(part => migrations->Array.includes(part))
+
+/** What the shape of a tree is not measured over, another's files or a tool's migrations. */
+let unshaped = path => vendored(path) || appended(path)
+
 /** A repository kept as it was until it is pushed and deleted, which no rule over prose reads. */
 let archives: array<string> = []
 

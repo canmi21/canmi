@@ -418,7 +418,9 @@ first whether it still fits, and only then how the tree is cut below it. The roo
 count because what tools ask to find there is no part of the tree; **what sits at the root is
 configuration**, so a root `Cargo.toml` is a virtual manifest and no source file sits beside it. The
 shape part of `check` holds all three over the files version control keeps, so what is built or
-installed is never counted.
+installed is never counted. **Vendored source and a tool's migrations are passed over**,
+`Layout.unshaped`: a migration keeps the name its tool draws and only grows once shipped, so it can
+neither be nested nor merged.
 
 ## `each` is the verb for everything else
 
