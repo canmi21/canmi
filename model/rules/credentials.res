@@ -90,6 +90,8 @@ let table = [
   // The console's sign-in, WorkOS's key and the session's signing key, in monoflake/console.
   vendor("WORKOS_API_KEY", "WORKOS", Foundation, "API_KEY"),
   neutral("SESSION_SECRET", "SESSION", Foundation, "SECRET"),
+  // The photo behind an organization's sign-in card, Unsplash's access key, in monoflake/console.
+  vendor("UNSPLASH_ACCESS_KEY", "UNSPLASH", Foundation, "ACCESS_KEY"),
 ]
 
 /** Names a secrets file or GitHub holds, beside each one's name after rotation, docs/naming.md. */
