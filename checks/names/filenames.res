@@ -5,6 +5,10 @@ let fits = (segment, ~file) => {
     file && Naming.marks->Array.some(mark => bare->String.startsWith(mark))
       ? bare->String.slice(~start=1)
       : bare
+  let bare =
+    !file && Naming.routed->RegExp.test(bare)
+      ? bare->String.replaceRegExp(Naming.routeWrapping, "")
+      : bare
   let underscored = file && Naming.underscored->Array.some(suffix => bare->String.endsWith(suffix))
   Naming.assigned->Array.includes(segment) ||
     Naming.shape->RegExp.test(underscored ? bare->String.replaceAll("_", "-") : bare)

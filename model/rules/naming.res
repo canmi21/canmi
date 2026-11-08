@@ -20,6 +20,12 @@ let assigned = [
 /** A leading mark a framework finds a file by, kept as written: SvelteKit's `+page.svelte`. */
 let marks = ["+"]
 
+/** A directory a router reads as a parameter or a group, as `[step]`, `[...rest]` or `(app)`. */
+let routed = /^(?:\[\[?(?:\.\.\.)?[a-z0-9-]+\]\]?|\([a-z0-9-]+\))$/
+
+/** What `routed` wraps a name in, taken off before the name is held to `shape`. */
+let routeWrapping = /[\[\]().]/g
+
 /** A directory a tool writes whole and names the files of, drizzle-kit's migrations and journal. */
 let toolWritten = ["drizzle"]
 

@@ -83,7 +83,9 @@ identifier and cannot contain a hyphen.
 
 Some frameworks assign meaning to a filename. Follow the framework -- a renamed file simply
 stops working. `Naming.assigned` lists the ones this repository holds; Next.js's
-`[slug]/page.tsx` is another.
+`[slug]/page.tsx` is another. A router's parameter or group directory, SvelteKit's `[step]`,
+`[...rest]` or `(app)`, passes by `Naming.routed`, the name inside its brackets still held to
+`shape`.
 
 ### Docker's files take Docker's plain names
 
