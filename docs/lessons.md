@@ -122,6 +122,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **A shell script's test on the host's PATH never proves its package's inputs.** Review every
   command against the package's runtime inputs, and include a second run in live tests of stateful
   behavior.
+- **A dev server's 500 while code is being edited is a hot reload's, and a reload clears it.**
+  Reload the page and go on; only a 500 that stays after a reload, or comes while nothing is being
+  edited, is looked into.
 
 ## Remotes, and what cannot be taken back
 
