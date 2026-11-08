@@ -127,6 +127,10 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **A dev server's 500 while code is being edited is a hot reload's, and a reload clears it.**
   Reload the page and go on; only a 500 that stays after a reload, or comes while nothing is being
   edited, is looked into.
+- **A route file moved while the dev server runs crashes its page in the browser until touched.**
+  On 2026-11-08 moving a console page's `+page.svelte` aside and writing a new one threw
+  `HierarchyRequestError` on every load, the build and its types clean; `touch` on the two files
+  cleared it, so a crash just after a move is met by a touch before it is looked into.
 - **The browser MCP works in tabs of the one window the author shares, never a window of its own.**
   An isolated context opens a new window, so a page is opened as a new tab there, and a signed-out
   state is tested with curl, as signing out in a tab signs the author out too.
