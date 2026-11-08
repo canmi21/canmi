@@ -171,5 +171,9 @@ agents and stored time, [code.md](code.md), "Time is stored and run in UTC".
 - **A question asked once and left unanswered is not asked again.** The user raises it when they
   want it settled; repeating it at the end of each reply is noise. And what the user has not
   answered or mentioned is never taken as allowed: it stays as it was until they say.
+- **The author sets the pace of a review.** A page or a piece of work is done when the author says
+  so, never when an agent's last change landed; an agent does not announce a piece finished, does
+  not ask what is next after each answer, and does not run on to the next item. It reads the
+  author's tone and how fast they move between topics, and stops where they would.
 - **A question's every field is in the user's language**, the question, each label and each
   description, simplified Chinese with English technical nouns, as the rest of the conversation is.
