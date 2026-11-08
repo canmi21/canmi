@@ -35,6 +35,14 @@ describe("a command that holds the conversation", () => {
     expect(Background.refuse(payload("ls")))->toEqual(0)
   })
 
+  test("runs a landing in the background and a push in the foreground, by the user's word", () => {
+    expect(Background.refuse(payload("mise run land monoflake/console -m x")))->toEqual(2)
+    expect(
+      Background.refuse(payload(~background=true, "mise run land monoflake/console -m x")),
+    )->toEqual(0)
+    expect(Background.refuse(payload("mise run push monoflake/console")))->toEqual(0)
+  })
+
   test("is passed when Monitor runs it, and refused when Bash does", () => {
     let command = "until grep -q 'exited with code' out.log; do sleep 3; done; cat out.log"
     expect(Background.refuse(payload(~tool="Monitor", command)))->toEqual(0)

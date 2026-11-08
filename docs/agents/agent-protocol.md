@@ -267,8 +267,9 @@ wrong, and one refusing more than once in a session is reported with how its mes
 
 **Anything that may run past `foregroundSeconds`, could hang, or waits for a condition runs in the
 background or under Monitor**, and the conversation goes on, in every session and every implementer
-it spawns. **A push runs in the foreground, by the user's word**: `mise run push` and `mise run land`
-finish in seconds to a few tens, and the user waits on their result rather than on a notice. **`mise run //:job start -- <command>` is the way in**, which records it where the watchdog
+it spawns. **A push runs in the foreground and a landing in the background, by the user's word**: `mise run
+push` finishes in seconds and the user waits on its result, while `mise run land` formats, checks and
+pushes for ten seconds or more, so it goes by `//:job run` in the background and its notice is read. **`mise run //:job start -- <command>` is the way in**, which records it where the watchdog
 reads, [runs.md](runs.md). **The agent looks at the job every few seconds to a few tens of seconds**, sooner the
 shorter the job, each look an instant read of the output that asks whether it moved since the last.
 **To look, it reads the output file, or runs `mise run //:watch <id>` under Monitor**, which wakes its
