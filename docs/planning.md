@@ -29,10 +29,12 @@ keep it from waiting, and never runs ahead of what it will ask for.
   contract: the facet or command the page calls, in the console's Valibot contracts, with sample
   answers the page runs on meanwhile, which the real one is then made to answer the same. The
   console settles the contracts of the next page or two ahead of the one it draws, so the
-  background always holds one.
+  background always holds one. Which a need is is the console session's to judge, and the
+  background is the backend's, [agents/backend.md](agents/backend.md).
 - **Everything else is held, not dropped.** The rest of the plan keeps its items at a lower
   priority and is worked only once nothing above waits: a contract first, then what the pages in
-  hand still lack beneath them, then the rest. An item a contract reaches moves up with it.
+  hand still lack beneath them, then the rest. An item a contract reaches moves up with it, and how
+  held work is taken up again is talked over with the author when a page first calls the backend.
 
 **What is not done is one of three, and each has one home.**
 

@@ -89,8 +89,8 @@ quotes, judged as a command where the shell would run it; and any spelling the h
 Each role has one file beside this one, and reading it is enough to recover what the role does and
 where it stops: [advisor](advisor.md), [integrator](integrator.md), [implementer](seats/implementer.md),
 [reviewer](seats/reviewer.md), [refactorer](seats/refactorer.md), [reader](seats/reader.md), which holds the scout, and
-[scribe](seats/scribe.md), those of seats under [seats/](seats/), and [supervisor](supervisor.md) and
-[auditor](auditor.md).
+[scribe](seats/scribe.md), those of seats under [seats/](seats/), [supervisor](supervisor.md),
+[auditor](auditor.md) and [backend](backend.md).
 
 **The top level is split by what it decides**. Where an advisor is named, the paraphrase, the
 judgment and the decisions belong to the user and the advisor; the sequence, who owns which file,
@@ -109,6 +109,8 @@ it then means that session.
 - **The reviewer**, [seats/reviewer.md](seats/reviewer.md): on call for authorization and protocol
   changes, directed by nobody; it reports to the supervisor, a severe finding copied to the advisor.
 - **The auditor**, [auditor.md](auditor.md): a fresh session at each checkpoint, asking questions.
+- **The backend, one**, [backend.md](backend.md): builds what the console's session hands down as a
+  contract, in platform, driver, machine and cloud.
 - **The watchdog is a program, no agent**, [runs.md](runs.md).
 
 **Where a thread has no supervisor named, the advisor's word reaches the integrator directly**, as a
