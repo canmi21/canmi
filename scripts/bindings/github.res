@@ -1,9 +1,29 @@
 /** GitHub requests belong to scripts/bindings/github.res. */
 let maxBuffer = 67108864
+let signedIn: ref<option<option<string>>> = ref(None)
+
+/** gh's own token where the environment names none, asked once, as anonymous reads are capped. */
+let fromGh = () =>
+  switch signedIn.contents {
+  | Some(known) => known
+  | None =>
+    let said = Node.spawnSync("gh", ["auth", "token"], {encoding: "utf8"})
+    let token = switch (said.status->Nullable.toOption, said.stdout->Nullable.toOption) {
+    | (Some(0), Some(out)) if out->String.trim != "" => Some(out->String.trim)
+    | _ => None
+    }
+    signedIn := Some(token)
+    token
+  }
+
 let token = () =>
   switch Node.env->Dict.get("GH_TOKEN") {
   | Some(token) => Some(token)
-  | None => Node.env->Dict.get("GITHUB_TOKEN")
+  | None =>
+    switch Node.env->Dict.get("GITHUB_TOKEN") {
+    | Some(token) => Some(token)
+    | None => fromGh()
+    }
   }
 
 /**

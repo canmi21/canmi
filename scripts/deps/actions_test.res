@@ -156,8 +156,11 @@ describe("the actions mover", () => {
     let path = Node.env->Dict.get("PATH")->Option.getOr("")
     // The mover only reports under CI, so its writes are tested as off CI.
     let ci = Node.env->Dict.get("CI")
+    // An update's shared answers would stand in for the fake gh, so the mover runs without them.
+    let answers = Node.env->Dict.get(Actions.answersVariable)
     Node.env->Dict.set("PATH", Node.join([root.contents, "bin"]) ++ ":" ++ path)
     Node.env->Dict.delete("CI")
+    Node.env->Dict.delete(Actions.answersVariable)
     let result = Node.spawnSync(
       "node",
       [script, ...dry ? ["--dry-run"] : []],
@@ -165,6 +168,7 @@ describe("the actions mover", () => {
     )
     Node.env->Dict.set("PATH", path)
     ci->Option.forEach(value => Node.env->Dict.set("CI", value))
+    answers->Option.forEach(value => Node.env->Dict.set(Actions.answersVariable, value))
     expect(result.status)->toEqual(Nullable.make(0))
     (
       Node.readFileSync(Node.join([root.contents, "calls"])),
