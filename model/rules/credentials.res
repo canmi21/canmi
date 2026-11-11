@@ -89,6 +89,8 @@ let table = [
   neutral("SALT_TEST_MASTER", "SALT", Test, "MASTER"),
   // The console's sign-in, WorkOS's key and the session's signing key, in monoflake/console.
   vendor("WORKOS_API_KEY", "WORKOS", Foundation, "API_KEY"),
+  // WorkOS's production environment, which the deployed console signs in through.
+  vendor("WORKOS_PRODUCTION_API_KEY", "WORKOS", Production, "API_KEY"),
   neutral("SESSION_SECRET", "SESSION", Foundation, "SECRET"),
   // The photo behind an organization's sign-in card, Unsplash's access key, in monoflake/console.
   vendor("UNSPLASH_ACCESS_KEY", "UNSPLASH", Foundation, "ACCESS_KEY"),

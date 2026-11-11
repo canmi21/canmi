@@ -221,7 +221,7 @@ project still works.
 | A thread's files, its target test and figures, staying on course                                        | [docs/agents/threads.md](docs/agents/threads.md)               |
 | The run ledger and the watchdog                                                                         | [docs/agents/runs.md](docs/agents/runs.md)                     |
 | Voice and communication                                                                                 | [docs/voice.md](docs/voice.md)                                 |
-| Planning: the loop first, a short roadmap here, every open question and decided work an RFC             | [docs/planning.md](docs/planning.md)                           |
+| Planning: the loop first, monoflake pulled by its console, every open question and decided work an RFC  | [docs/planning.md](docs/planning.md)                           |
 | READMEs, repository descriptions and license years                                                      | [docs/readme.md](docs/readme.md)                               |
 | Why a decision was made: RFCs, drafts, and a rule citing one by id                                      | [docs/rfcs.md](docs/rfcs.md)                                   |
 | Commit conventions, when to commit and push, and their enforcement                                      | [docs/commits.md](docs/commits.md)                             |
