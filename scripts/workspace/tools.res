@@ -2,12 +2,6 @@
  * The pinned toolchain against each publisher's stable channel, `tools check|outdated|up`, and the
  * files an outside build reads written from the pins. See docs/toolchain/versions.md.
  */
-type response
-@val external fetch: (string, {"headers": Dict.t<string>}) => promise<response> = "fetch"
-@get external ok: response => bool = "ok"
-@send external json: response => promise<JSON.t> = "json"
-@send external body: response => promise<string> = "text"
-
 let installLine = /^Would install (\S+)@(\S+)\s*$/gm
 let bumpLine = /^Would bump (\S+)@(\S+) in (.+?)\s*$/gm
 let rustVersion = /^\[pkg\.rust\]\nversion = "(\d+\.\d+\.\d+)/m
@@ -73,10 +67,24 @@ let compareVersions = (a: string, b: string) => {
   at(0)
 }
 
-let get = async url => {
-  let response = await fetch(url, {"headers": Dict.fromArray([("User-Agent", "workspace-tools")])})
-  response->ok ? Some(await response->json) : None
-}
+/** What `url` answers as JSON, a stalled or failed read asked again, as `Net.retried` does. */
+let get = async url =>
+  switch await Net.retried(async () =>
+    switch await Net.fetch(
+      url,
+      {headers: dict{"User-Agent": "workspace-tools"}, signal: Net.timeout(Net.patience)},
+    ) {
+    | response if response->Net.ok =>
+      try Ok(JSON.parseOrThrow(await response->Net.responseText)) catch {
+      | JsExn(_) => Error(`${url} is not JSON`)
+      }
+    | response => Error(`${url} answered ${response->Net.status->Int.toString}`)
+    | exception JsExn(_) => Error(`${url} not reached`)
+    }
+  ) {
+  | Ok(document) => Some(document)
+  | Error(_) => None
+  }
 
 /**
  * What an outside build would resolve as `tool`'s current release, of `line` where one is named.
@@ -145,11 +153,20 @@ let ask = async (tool, line: option<string>): option<string> =>
       }
     | Some(("rust", _)) =>
       // The whole manifest, the version wanted inside [pkg.rust] and the first one cargo's.
-      let response = await fetch(
-        "https://static.rust-lang.org/dist/channel-rust-stable.toml",
-        {"headers": Dict.fromArray([("User-Agent", "workspace-tools")])},
-      )
-      let text = await response->body
+      let manifest = "https://static.rust-lang.org/dist/channel-rust-stable.toml"
+      let text = switch await Net.retried(async () =>
+        switch await Net.fetch(
+          manifest,
+          {headers: dict{"User-Agent": "workspace-tools"}, signal: Net.timeout(Net.patience)},
+        ) {
+        | response if response->Net.ok => Ok(await response->Net.responseText)
+        | _ => Error(manifest)
+        | exception JsExn(_) => Error(manifest)
+        }
+      ) {
+      | Ok(text) => text
+      | Error(_) => ""
+      }
       rustVersion
       ->RegExp.exec(text)
       ->Option.flatMap(result => result->RegExp.Result.matches->Array.get(0))
@@ -349,37 +366,28 @@ type row = {
   newest: option<string>,
 }
 
+/** How many publishers' channels are asked at once. */
+let asking = 6
+
 let survey = async (name, everything): array<row> => {
-  let rows = []
-  let rec walk = async places =>
-    switch places {
-    | list{} => ()
-    | list{where, ...rest} =>
-      let pins = pinned(where)
-      let rec each = async tools =>
-        switch tools {
-        | list{} => ()
-        | list{(tool, version), ...more} =>
-          let line = switch series(version) {
-          | Some(line) => await stable(tool, ~line)
-          | None => None
-          }
-          let newest = await stable(tool)
-          rows->Array.push({
-            where,
-            tool,
-            version,
-            pin: pins->Dict.get(tool)->Option.getOr(""),
-            line,
-            newest,
-          })
-          await each(more)
-        }
-      await each(List.fromArray(installed(where)))
-      await walk(rest)
+  let wanted = configured(name, everything)->Array.flatMap(where => {
+    let pins = pinned(where)
+    installed(where)->Array.map(((tool, version)) => (
+      where,
+      tool,
+      version,
+      pins->Dict.get(tool)->Option.getOr(""),
+    ))
+  })
+  // Each channel is asked concurrently, bounded, and the rows keep the order the places give.
+  await Net.bounded(wanted, ~limit=asking, async ((where, tool, version, pin)) => {
+    let line = switch series(version) {
+    | Some(line) => await stable(tool, ~line)
+    | None => None
     }
-  await walk(List.fromArray(configured(name, everything)))
-  rows
+    let newest = await stable(tool)
+    {where, tool, version, pin, line, newest}
+  })
 }
 
 /** One line per tool that is not where it should be; ahead is asked before across a pin. */
@@ -577,8 +585,11 @@ let refusal = (bump: bump, ~where, ~installed: option<string>, ~stable: option<s
   }
 
 /** The bumps `mise upgrade --bump` proposes in `where`, each with why update leaves it. */
-let bumps = async (where, ~skip=[]) => {
-  let said = Node.output(~cwd=where, "mise", ["upgrade", "--bump", "--dry-run"])
+let bumps = async (where, ~skip=[], ~said=?) => {
+  let said = switch said {
+  | Some(said) => said
+  | None => Node.output(~cwd=where, "mise", ["upgrade", "--bump", "--dry-run"])
+  }
   let home = Node.env->Dict.get("HOME")->Option.getOr("")
   let have = installed(where)->Dict.fromArray
   let found = []
@@ -606,8 +617,8 @@ let bumps = async (where, ~skip=[]) => {
  * Crosses the pins update takes in `where` with `mise upgrade --bump`, or says each with `dry`;
  * each taken as (tool, pin, version), and each left with its reason.
  */
-let cross = async (where, ~dry, ~skip=[]) => {
-  let found = await bumps(where, ~skip)
+let cross = async (where, ~dry, ~skip=[], ~said=?) => {
+  let found = await bumps(where, ~skip, ~said?)
   let taken = found->Array.filterMap(((bump, why)) => why == None ? Some(bump) : None)
   let pins = pinned(where)
   if taken->Array.length > 0 {
@@ -666,14 +677,15 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
       | list{} => ()
       | list{where, ...rest} =>
         let before = installed(where)->Dict.fromArray
-        let ran = Node.spawnSync(
+        // mise waits on its versions service in each run, so the bump is asked beside the upgrade.
+        let asked = Node.captured(~cwd=where, "mise", ["upgrade", "--bump", "--dry-run"])
+        let (status, stdout, stderr) = await Node.captured(
+          ~cwd=where,
           "mise",
           Array.concat(["upgrade", "--local"], dry ? ["--dry-run"] : []),
-          {cwd: where, encoding: "utf8", maxBuffer: 268435456},
         )
-        let stdout = ran.stdout->Nullable.getOr("")
         // mise's advice to bump is dropped, as the bump below is judged against stable.
-        [stdout, ran.stderr->Nullable.getOr("")]->Array.forEach(stream =>
+        [stdout, stderr]->Array.forEach(stream =>
           stream
           ->String.split("\n")
           ->Array.forEach(line =>
@@ -686,11 +698,12 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
             }
           )
         )
-        if ran.status != Nullable.make(0) {
+        if status != 0 {
           Registry.fail(`mise upgrade failed in ${Registry.label(where)}`)
         }
         // A pin is crossed too, onto the newest stable release, `--bump` keeping its precision.
-        let (taken, left) = await cross(where, ~dry, ~skip=["rust"])
+        let (_, said, _) = await asked
+        let (taken, left) = await cross(where, ~dry, ~skip=["rust"], ~said)
         taken->Array.forEach(bump => crossed->Array.push((where, bump.tool)))
         left->Array.forEach(row => waiting->Array.push((Registry.label(where), row)))
         let after = dry

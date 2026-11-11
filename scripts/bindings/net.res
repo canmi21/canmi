@@ -91,10 +91,52 @@ let readBytesOf = path =>
 
 type response
 type headers
-type init = {headers: Dict.t<string>, method?: string}
+type signal
+/** A signal that aborts a request still open after `ms`. */
+@val @scope("AbortSignal") external timeout: int => signal = "timeout"
+type init = {headers: Dict.t<string>, method?: string, signal?: signal}
 @val external fetch: (string, init) => promise<response> = "fetch"
 @get external ok: response => bool = "ok"
 @get external status: response => int = "status"
 @get external responseHeaders: response => headers = "headers"
 @send external header: (headers, string) => Nullable.t<string> = "get"
 @send external responseText: response => promise<string> = "text"
+
+/** How long one network read waits before its connection is taken as stalled, in milliseconds. */
+let patience = 5000
+
+/** How many times a read that failed or stalled is asked again, on a fresh connection each time. */
+let retries = 2
+
+/**
+ * `attempt` until it answers `Ok`, asked once and then up to `retries` more times, stopping early
+ * at a failure `again` says asking would not change.
+ */
+let retried = async (
+  ~retries=retries,
+  ~again=_ => true,
+  attempt: unit => promise<result<'a, string>>,
+) => {
+  let rec ask = async left =>
+    switch await attempt() {
+    | Ok(answer) => Ok(answer)
+    | Error(why) => left > 0 && again(why) ? await ask(left - 1) : Error(why)
+    }
+  await ask(retries)
+}
+
+/** `each` over `items` with at most `limit` running at once, the answers in `items`' order. */
+let bounded = async (items: array<'a>, ~limit: int, each: 'a => promise<'b>): array<'b> => {
+  let answers: array<option<'b>> = items->Array.map(_ => None)
+  let next = ref(0)
+  let rec work = async () =>
+    if next.contents < items->Array.length {
+      let at = next.contents
+      next := at + 1
+      answers->Array.setUnsafe(at, Some(await each(items->Array.getUnsafe(at))))
+      await work()
+    }
+  let workers = Math.Int.max(1, Math.Int.min(limit, items->Array.length))
+  let _ = await Promise.all(Array.fromInitializer(~length=workers, _ => work()))
+  answers->Array.map(answer => answer->Option.getOrThrow)
+}

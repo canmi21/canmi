@@ -144,34 +144,118 @@ let plan = (releases: array<release>, current, ~across, ~now): plan => {
   {move, waiting, beyond}
 }
 
-/** What `gh api` answers for `path`, parsed, or None where it failed. */
-@scope("JSON") @val external parse: string => 'a = "parse"
-let api = path => {
-  let answer = Node.spawnSync("gh", ["api", path], {encoding: "utf8", maxBuffer: 268435456})
-  answer.status == Nullable.make(0) ? Some(parse(answer.stdout->Nullable.getOr(""))) : None
+/** What `gh api` answers for `path` once, given `Net.patience`, or why it did not. */
+@module("node:child_process")
+external execFile: (
+  string,
+  array<string>,
+  {"timeout": int, "maxBuffer": int, "encoding": string},
+  (Nullable.t<JsExn.t>, string, string) => unit,
+) => unit = "execFile"
+let ghOnce = path =>
+  Promise.make((resolve, _) =>
+    execFile(
+      "gh",
+      ["api", path],
+      {"timeout": Net.patience, "maxBuffer": 268435456, "encoding": "utf8"},
+      (error, stdout, stderr) => resolve(error->Nullable.isNullable ? Ok(stdout) : Error(stderr)),
+    )
+  )
+
+/** Whether GitHub refused a path for good, a 4xx, which asking again would not change. */
+let refused = (stderr: string) => /HTTP 4\d\d/->RegExp.test(stderr)
+
+/** The environment variable naming the directory one `update` run keeps GitHub's answers in. */
+let answersVariable = "UPDATE_ANSWERS"
+
+/** A file name for `path`'s answer in that directory. */
+let answerFile = path => path->String.replaceRegExp(/[^\w.-]/g, "_") ++ ".json"
+
+/**
+ * An asker of `gh api` paths, each asked once per process and, where `directory` is given, once
+ * per `update` run across its repositories; a stalled or failed read is asked again on a fresh
+ * connection, and only an answer that came is kept.
+ */
+let asker = (~directory: option<string>, ~once=ghOnce) => {
+  let known: Map.t<string, promise<option<string>>> = Map.make()
+  path =>
+    switch known->Map.get(path) {
+    | Some(answer) => answer
+    | None =>
+      let kept = directory->Option.map(directory => Node.join([directory, answerFile(path)]))
+      let answer = switch kept {
+      | Some(file) if Node.existsSync(file) => Promise.resolve(Some(Node.readFileSync(file)))
+      | _ =>
+        Net.retried(~again=why => !refused(why), () => once(path))->Promise.thenResolve(result =>
+          switch result {
+          | Ok(text) =>
+            kept->Option.forEach(file =>
+              try Node.writeFileSync(file, text) catch {
+              | _ => ()
+              }
+            )
+            Some(text)
+          | Error(_) => None
+          }
+        )
+      }
+      known->Map.set(path, answer)
+      answer
+    }
 }
+
+/**
+ * Runs `work`, one `update`, with a directory its movers keep GitHub's answers in, so an action
+ * several repositories pin is asked once, the directory removed when the work ends.
+ */
+let answering = async work => {
+  let answers = Node.mkdtempSync(Node.join([Node.tmpdir(), "update-answers-"]))
+  Node.env->Dict.set(answersVariable, answers)
+  let forget = () => {
+    Node.env->Dict.delete(answersVariable)
+    Node.rmSync(answers, {recursive: true, force: true})
+  }
+  switch await work() {
+  | code =>
+    forget()
+    code
+  | exception error =>
+    forget()
+    throw(error)
+  }
+}
+
+/** What GitHub answers for `path`, parsed, or None where it could not be read. */
+@scope("JSON") @val external parse: string => 'a = "parse"
+let ask = asker(~directory=Node.env->Dict.get(answersVariable))
+let api = async path => (await ask(path))->Option.map(text => parse(text))
 
 type target = {@as("type") kind: string, sha: string}
 type tip = {sha: string}
 type pointer = {@as("object") target: target}
 
 /** The commit a tag names, an annotated tag followed to the commit it points at. */
-let commitOf = (repository, tag) => {
-  let rec follow = (target: target) =>
+let commitOf = async (repository, tag) => {
+  let rec follow = async (target: target) =>
     switch target.kind {
     | "commit" => Some(target.sha)
     | "tag" =>
-      api(`repos/${repository}/git/tags/${target.sha}`)->Option.flatMap((pointer: pointer) =>
-        follow(pointer.target)
-      )
+      switch await api(`repos/${repository}/git/tags/${target.sha}`) {
+      | Some(pointer: pointer) => await follow(pointer.target)
+      | None => None
+      }
     | _ => None
     }
-  api(`repos/${repository}/git/ref/tags/${tag}`)->Option.flatMap((pointer: pointer) =>
-    follow(pointer.target)
-  )
+  switch await api(`repos/${repository}/git/ref/tags/${tag}`) {
+  | Some(pointer: pointer) => await follow(pointer.target)
+  | None => None
+  }
 }
 
-let main = () => {
+/** How many of a repository's actions are asked about at once. */
+let asking = 4
+
+let main = async () => {
   let args = Node.args()
   // In CI it reports alone, as GitHub refuses a workflow change pushed by its token, docs/ci.md.
   let ci = Node.envIs("CI", "true")
@@ -202,34 +286,44 @@ let main = () => {
     Node.exit(0)
   }
   let now = Date.now()
-  let known = Map.make()
-  let releasesOf = repository =>
-    switch known->Map.get(repository) {
-    | Some(releases) => releases
-    | None =>
-      let releases = api(`repos/${repository}/releases?per_page=100`)
-      known->Map.set(repository, releases)
-      releases
-    }
+  let releasesOf = repository => api(`repos/${repository}/releases?per_page=100`)
+  let headOf = (head: head) => api(`repos/${head.repository}/commits/${head.branch}`)
+  let sorted = files->Array.toSorted(String.compare)
+  // Every release list and head the files name is asked first, a few at once, the walk below
+  // then reading the answers in its own order.
+  let texts = sorted->Array.map(file => Node.readFileSync(Node.join([github, file])))
+  let wanted =
+    Array.concat(
+      texts->Array.flatMap(text =>
+        pins(text)->Array.map(pin => `repos/${pin.repository}/releases?per_page=100`)
+      ),
+      texts->Array.flatMap(text =>
+        heads(text)->Array.map(head => `repos/${head.repository}/commits/${head.branch}`)
+      ),
+    )
+    ->Set.fromArray
+    ->Set.values
+    ->Iterator.toArray
+  let _ = await Net.bounded(wanted, ~limit=asking, ask)
   let failed = ref(false)
   let wrote = ref(false)
-  files
-  ->Array.toSorted(String.compare)
-  ->Array.forEach(file => {
+  for at in 0 to sorted->Array.length - 1 {
+    let file = sorted->Array.getUnsafe(at)
     let path = Node.join([github, file])
-    let lines = Node.readFileSync(path)->String.split("\n")
+    let lines = texts->Array.getUnsafe(at)->String.split("\n")
     let changed = ref(false)
-    pins(lines->Array.join("\n"))->Array.forEach(pin => {
+    let found = pins(lines->Array.join("\n"))
+    for index in 0 to found->Array.length - 1 {
+      let pin = found->Array.getUnsafe(index)
       let name = `${file} ${pin.repository}`
-      switch releasesOf(pin.repository) {
+      switch await releasesOf(pin.repository) {
       | None =>
         log(`actions: ${name} ${pin.current}, its releases could not be read`)
         failed := true
       | Some(releases) =>
         let {move, waiting, beyond} = plan(releases, pin.current, ~across, ~now)
-        beyond->Option.forEach(
-          tag =>
-            items->Array.push(Reminder.item("major", name, pin.current, spelled(tag, pin.current))),
+        beyond->Option.forEach(tag =>
+          items->Array.push(Reminder.item("major", name, pin.current, spelled(tag, pin.current)))
         )
         let notes =
           [
@@ -251,7 +345,7 @@ let main = () => {
               version,
             ),
           )
-          switch pin.commit ? commitOf(pin.repository, tag) : Some("") {
+          switch pin.commit ? await commitOf(pin.repository, tag) : Some("") {
           | None =>
             log(`actions: ${name} ${tag}, its commit could not be read`)
             failed := true
@@ -262,11 +356,13 @@ let main = () => {
           }
         }
       }
-    })
-    heads(lines->Array.join("\n"))->Array.forEach(head => {
+    }
+    let branches = heads(lines->Array.join("\n"))
+    for index in 0 to branches->Array.length - 1 {
+      let head = branches->Array.getUnsafe(index)
       let name = `${file} ${head.repository}@${head.branch}`
       let short = commit => commit->String.slice(~start=0, ~end=12)
-      switch api(`repos/${head.repository}/commits/${head.branch}`) {
+      switch await headOf(head) {
       | None =>
         log(`actions: ${name} ${short(head.current)}, its head could not be read`)
         failed := true
@@ -278,12 +374,12 @@ let main = () => {
         lines->Array.setUnsafe(head.index, head.write(tip.sha))
         changed := true
       }
-    })
+    }
     if changed.contents && !dry {
       Node.writeFileSync(path, lines->Array.join("\n"))
       wrote := true
     }
-  })
+  }
 
   // A pin moved raises the version of what is released from it, monoflake/driver's RFC 8c0rg.
   if wrote.contents && Node.existsSync(Node.join([github, "release", "bump.res"])) {
@@ -296,5 +392,5 @@ let main = () => {
 }
 
 if Node.isMain {
-  main()
+  main()->ignore
 }

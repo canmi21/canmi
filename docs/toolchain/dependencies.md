@@ -22,7 +22,10 @@ npm's `latest` instead, its pin rewritten once that version is as old as `releas
 `--dry-run` saying the move and writing nothing; `actions` for its workflows' actions;
 `images` for its Dockerfiles' base images; `releases`, a list of the `manifest.toml` files whose
 locks are moved -- and the dispatcher runs each from the repository's root after its own `update`
-task, `--dry-run` and `--major` handed on, the whole kept only where its verify passes. The
+task, `--dry-run` and `--major` handed on, the whole kept only where its verify passes. A network
+read a mover makes waits five seconds before its connection is taken as stalled and asked again,
+twice at most, `Net.retried` in `scripts/bindings/net.res`, and one `update` run asks GitHub about
+each action once, its movers sharing the answers through a directory the run removes when it ends. The
 repository's own task keeps what is its alone, a flake's inputs or a Dockerfile's runtime version,
 and a repository whose movers are all declared has none. A new repository takes a mover with one
 line rather than a copy of the call.

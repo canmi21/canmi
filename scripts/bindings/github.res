@@ -6,21 +6,26 @@ let token = () =>
   | None => Node.env->Dict.get("GITHUB_TOKEN")
   }
 
-/** A JSON document from GitHub, with the token where the environment holds one. */
+/**
+ * A JSON document from GitHub, with the token where the environment holds one, each try given
+ * `Net.patience` and a stalled or failed one asked again, as `Net.retried` does.
+ */
 let json = async url => {
   let headers = dict{"accept": "application/vnd.github+json", "user-agent": "workspace-release"}
   if url->String.startsWith("https://api.github.com/") {
     token()->Option.forEach(token => headers->Dict.set("authorization", `Bearer ${token}`))
   }
-  switch await Net.fetch(url, {headers: headers}) {
-  | response if response->Net.ok =>
-    let body = await response->Net.responseText
-    try Ok(JSON.parseOrThrow(body)) catch {
-    | JsExn(_) => Error(`${url} is not JSON`)
+  await Net.retried(async () =>
+    switch await Net.fetch(url, {headers, signal: Net.timeout(Net.patience)}) {
+    | response if response->Net.ok =>
+      let body = await response->Net.responseText
+      try Ok(JSON.parseOrThrow(body)) catch {
+      | JsExn(_) => Error(`${url} is not JSON`)
+      }
+    | response => Error(`${url} answered ${response->Net.status->Int.toString}`)
+    | exception JsExn(e) => Error(`${url}: ${e->JsExn.message->Option.getOr("not reached")}`)
     }
-  | response => Error(`${url} answered ${response->Net.status->Int.toString}`)
-  | exception JsExn(e) => Error(`${url}: ${e->JsExn.message->Option.getOr("not reached")}`)
-  }
+  )
 }
 
 /** Every release from GitHub in pages of one hundred. */

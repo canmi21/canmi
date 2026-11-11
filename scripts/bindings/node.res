@@ -121,6 +121,39 @@ type envOptions = {cwd?: string, env?: Dict.t<string>, stdio?: string}
 @module("node:child_process")
 external spawnWithEnv: (string, array<string>, envOptions) => spawned = "spawnSync"
 
+type captureOptions = {cwd?: string, maxBuffer: int, encoding: string}
+@module("node:child_process")
+external execFileThen: (
+  string,
+  array<string>,
+  captureOptions,
+  (Nullable.t<JsExn.t>, string, string) => unit,
+) => unit = "execFile"
+@get external exitCodeOf: JsExn.t => JSON.t = "code"
+
+/** A command's status, stdout and stderr, run without holding the event loop. */
+let captured = (~cwd=?, command, commandArgs) =>
+  Promise.make((resolve, _) =>
+    execFileThen(command, commandArgs, {?cwd, maxBuffer: 268435456, encoding: "utf8"}, (
+      error,
+      stdout,
+      stderr,
+    ) =>
+      resolve((
+        switch error->Nullable.toOption {
+        | None => 0
+        | Some(error) =>
+          switch error->exitCodeOf {
+          | Number(code) => code->Float.toInt
+          | _ => 1
+          }
+        },
+        stdout,
+        stderr,
+      ))
+    )
+  )
+
 type child
 type stream
 type piped = {cwd: string, stdio: array<string>, env?: Dict.t<string>}

@@ -958,7 +958,7 @@ let execute = async argv => {
   | "update" =>
     request.json
       ? await jsonUpdate(name, ~everything, ~major=request.major)
-      : await update(name, ~dry, ~major=request.major, ~everything)
+      : await Actions.answering(() => update(name, ~dry, ~major=request.major, ~everything))
   | "publish" => publish(name, request.passed)
   | _ => Registry.fail(usage)
   }

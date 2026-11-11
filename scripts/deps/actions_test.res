@@ -190,3 +190,78 @@ describe("the actions mover", () => {
     expect(run(~driver=true, ~head=moved, ~dry=true, ()))->toEqual((asked, workflow))
   })
 })
+
+describe("GitHub's answers in one update", () => {
+  let root = temporaryRoot("actions-answers-")
+
+  // A stand-in for `gh api`, answering from `said` by path and counting each ask.
+  let counting = (said: Dict.t<array<result<string, string>>>) => {
+    let asked = Dict.make()
+    let once = async path => {
+      let count = asked->Dict.get(path)->Option.getOr(0)
+      asked->Dict.set(path, count + 1)
+      let answers = said->Dict.get(path)->Option.getOr([])
+      answers[count]->Option.getOr(Error("no answer"))
+    }
+    (once, asked)
+  }
+
+  testAsync(
+    "asks an action once across repositories, the second reading the first's answer",
+    async () => {
+      let (once, asked) = counting(dict{"repos/actions/checkout/releases": [Ok(`[]`)]})
+      let workspace = Actions.asker(~directory=Some(root.contents), ~once)
+      let driver = Actions.asker(~directory=Some(root.contents), ~once)
+      expect(await workspace("repos/actions/checkout/releases"))->toEqual(Some(`[]`))
+      expect(await driver("repos/actions/checkout/releases"))->toEqual(Some(`[]`))
+      expect(await driver("repos/actions/checkout/releases"))->toEqual(Some(`[]`))
+      expect(asked->Dict.get("repos/actions/checkout/releases"))->toEqual(Some(1))
+    },
+  )
+
+  testAsync(
+    "asks a stalled read again on a fresh try and keeps only an answer that came",
+    async () => {
+      let (once, asked) = counting(
+        dict{
+          "repos/jdx/mise-action/releases": [Error("timed out"), Ok(`[{"tag_name": "v5.2.7"}]`)],
+          "repos/gone/away/releases": [Error("timed out"), Error("timed out"), Error("timed out")],
+        },
+      )
+      let ask = Actions.asker(~directory=Some(root.contents), ~once)
+      expect(await ask("repos/jdx/mise-action/releases"))->toEqual(Some(`[{"tag_name": "v5.2.7"}]`))
+      expect(asked->Dict.get("repos/jdx/mise-action/releases"))->toEqual(Some(2))
+      expect(await ask("repos/gone/away/releases"))->toEqual(None)
+      expect(asked->Dict.get("repos/gone/away/releases"))->toEqual(Some(1 + Net.retries))
+      expect(
+        Node.existsSync(Node.join([root.contents, Actions.answerFile("repos/gone/away/releases")])),
+      )->toBe(false)
+    },
+  )
+
+  testAsync("does not ask again what GitHub refused for good", async () => {
+    let (once, asked) = counting(
+      dict{"repos/a/b/git/ref/tags/v9": [Error("gh: Not Found (HTTP 404)"), Ok(`{}`)]},
+    )
+    let ask = Actions.asker(~directory=None, ~once)
+    expect(await ask("repos/a/b/git/ref/tags/v9"))->toEqual(None)
+    expect(asked->Dict.get("repos/a/b/git/ref/tags/v9"))->toEqual(Some(1))
+  })
+})
+
+describe("one update's answers", () => {
+  testAsync("are kept in a directory named for the run and removed when it ends", async () => {
+    let seen = ref(None)
+    let code = await Actions.answering(
+      async () => {
+        seen := Node.env->Dict.get(Actions.answersVariable)
+        7
+      },
+    )
+    expect(code)->toBe(7)
+    let directory = seen.contents->Option.getOr("")
+    expect(directory->String.includes("update-answers-"))->toBe(true)
+    expect(Node.existsSync(directory))->toBe(false)
+    expect(Node.env->Dict.get(Actions.answersVariable))->toBe(None)
+  })
+})
