@@ -171,7 +171,7 @@ let machine = async () => {
   }
   Console.log(Reminder.encode(items))
 }
-let human = () => {
+let human = async () => {
   let args = Node.args()
   let dry =
     args->Array.includes("--dry-run") ||
@@ -186,6 +186,13 @@ let human = () => {
   if own != [] {
     Console.log(`$ mise upgrade ${own->Array.join(" ")}${dry ? " --dry-run" : ""}`)
     Node.run("mise", Array.concat(Array.concat(["upgrade"], own), n))->ignore
+    // A pin is crossed too, onto its tool's newest stable release, the npm prereleases below apart.
+    let prereleases =
+      declared->Array.filterMap(tool => npmPrerelease(tool) ? Some(Pair.first(tool)) : None)
+    let (_, left) = await Tools.cross(Node.cwd(), ~dry, ~skip=["rust", ...prereleases])
+    left->Array.forEach(((bump: Tools.bump, why)) =>
+      Console.log(`${bump.tool} ${bump.version}: ${why}`)
+    )
     Console.log("")
   }
 
@@ -268,5 +275,13 @@ if Node.isMain {
     machine()->Promise.thenResolve(_ => Node.exit(0))->Promise.catch(_ => Node.exit(1))->ignore
   } else {
     human()
+    ->Promise.catch(error => {
+      switch error {
+      | Registry.Refused(why) => Console.error(`error: ${why}`)
+      | _ => Console.error("error: update failed")
+      }
+      Node.exit(1)
+    })
+    ->ignore
   }
 }

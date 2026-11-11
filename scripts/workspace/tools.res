@@ -9,7 +9,7 @@ type response
 @send external body: response => promise<string> = "text"
 
 let installLine = /^Would install (\S+)@(\S+)\s*$/gm
-let ownerLine = /^Would bump (\S+)@\S+ in (.+?)\s*$/gm
+let bumpLine = /^Would bump (\S+)@(\S+) in (.+?)\s*$/gm
 let rustVersion = /^\[pkg\.rust\]\nversion = "(\d+\.\d+\.\d+)/m
 let rustcVersion = /rustc (\d+\.\d+\.\d+)/
 let digitsOnly = /^\d+$/
@@ -473,13 +473,7 @@ let machineRows = (rows: array<row>) =>
     targets->Array.filterMap(version =>
       compareVersions(version, from) > 0
         ? Some(
-            Reminder.item(
-              ~repository=Registry.label(row.where),
-              allows(row.pin, version) || row.pin == "stable" ? "tool" : "major",
-              row.tool,
-              from,
-              version,
-            ),
+            Reminder.item(~repository=Registry.label(row.where), "tool", row.tool, from, version),
           )
         : None
     )
@@ -535,43 +529,115 @@ let machine = async where => {
   )
 }
 
-/**
- * What `mise upgrade --bump` would take in this directory, against its own line's stable release.
- */
-let beyond = async where => {
-  let said = Node.output(~cwd=where, "mise", ["upgrade", "--bump", "--dry-run"])
+/** A pin `mise upgrade --bump` would cross, its file, the pin it writes and what it installs. */
+type bump = {owner: string, tool: string, pin: string, version: string}
+
+/** Each bump `said` proposes, its file made whole from `~` against `home`. */
+let proposals = (said: string, ~home: string): array<bump> => {
   let installs = pairs(installLine, said)->Dict.fromArray
   let found = []
-  let rec each = async owners =>
-    switch owners {
-    | list{} => ()
-    | list{(tool, owner), ...rest} =>
-      switch installs->Dict.get(tool) {
-      | Some(version) =>
+  bumpLine->RegExp.setLastIndex(0)
+  let rec next = () =>
+    switch bumpLine->RegExp.exec(said) {
+    | Some(result) =>
+      switch result->RegExp.Result.matches {
+      | [Some(tool), Some(pin), Some(owner)] =>
         let owner =
-          owner->String.startsWith("~")
-            ? Node.join([
-                Node.env->Dict.get("HOME")->Option.getOr(""),
-                owner->String.slice(~start=1),
-              ])
-            : owner
-
-        // A pin of the workspace's, seen from a repository below it, is the workspace's row.
-        if where == Registry.root || owner->String.startsWith(where) {
-          let shown =
-            owner->String.startsWith(Registry.root) ? Node.relative(Registry.root, owner) : owner
-          let current = switch series(version) {
-          | Some(line) => await stable(tool, ~line)
-          | None => None
-          }
-          found->Array.push((shown, tool, version, current))
+          owner->String.startsWith("~") ? Node.join([home, owner->String.slice(~start=1)]) : owner
+        switch installs->Dict.get(tool) {
+        | Some(version) => found->Array.push({owner, tool, pin, version})
+        | None => ()
         }
-      | None => ()
+      | _ => ()
+      }
+      next()
+    | None => ()
+    }
+  next()
+  found
+}
+
+/**
+ * Why update leaves a bump in `where` alone, none where it takes it: a pin of the directory's own
+ * mise.toml, onto a version newer than the one installed and no further than its stable release.
+ */
+let refusal = (bump: bump, ~where, ~installed: option<string>, ~stable: option<string>) =>
+  if bump.owner != Node.join([where, "mise.toml"]) {
+    Some("a pin of another file")
+  } else if installed->Option.mapOr(false, was => compareVersions(bump.version, was) <= 0) {
+    Some("no newer than what is installed")
+  } else {
+    switch stable {
+    | Some(current) if compareVersions(bump.version, current) > 0 =>
+      Some(`ahead of stable ${current}; a prerelease line, not taken`)
+    | None if bump.version->String.includes("-") =>
+      Some("a prerelease with no stable channel to compare, not taken")
+    | _ => None
+    }
+  }
+
+/** The bumps `mise upgrade --bump` proposes in `where`, each with why update leaves it. */
+let bumps = async (where, ~skip=[]) => {
+  let said = Node.output(~cwd=where, "mise", ["upgrade", "--bump", "--dry-run"])
+  let home = Node.env->Dict.get("HOME")->Option.getOr("")
+  let have = installed(where)->Dict.fromArray
+  let found = []
+  let rec each = async remaining =>
+    switch remaining {
+    | list{} => ()
+    | list{bump, ...rest} =>
+      if !(skip->Array.includes(bump.tool)) {
+        let stable = switch series(bump.version) {
+        | Some(line) => await stable(bump.tool, ~line)
+        | None => None
+        }
+        found->Array.push((
+          bump,
+          refusal(bump, ~where, ~installed=have->Dict.get(bump.tool), ~stable),
+        ))
       }
       await each(rest)
     }
-  await each(List.fromArray(pairs(ownerLine, said)))
+  await each(List.fromArray(proposals(said, ~home)))
   found
+}
+
+/**
+ * Crosses the pins update takes in `where` with `mise upgrade --bump`, or says each with `dry`;
+ * each taken as (tool, pin, version), and each left with its reason.
+ */
+let cross = async (where, ~dry, ~skip=[]) => {
+  let found = await bumps(where, ~skip)
+  let taken = found->Array.filterMap(((bump, why)) => why == None ? Some(bump) : None)
+  let pins = pinned(where)
+  if taken->Array.length > 0 {
+    let names = taken->Array.map(bump => bump.tool)
+    Console.log(`$ mise upgrade --bump ${names->Array.join(" ")}${dry ? " --dry-run" : ""}`)
+    let ran = Node.spawnSync(
+      "mise",
+      Array.concat(Array.concat(["upgrade", "--bump"], names), dry ? ["--dry-run"] : []),
+      {cwd: where, encoding: "utf8", maxBuffer: 268435456},
+    )
+    if ran.status != Nullable.make(0) {
+      Registry.fail(`mise upgrade --bump failed in ${Registry.label(where)}`)
+    }
+  }
+  taken->Array.forEach(bump =>
+    Console.log(
+      `${Registry.label(where)->String.padEnd(14, " ")} ${bump.tool->String.padEnd(10, " ")} ${dry
+          ? "would bump"
+          : "bumped"} "${pins
+        ->Dict.get(bump.tool)
+        ->Option.getOr("?")}" -> "${bump.pin}", ${bump.version}`,
+    )
+  )
+  let left = found->Array.filterMap(((bump, why)) =>
+    switch why {
+    | Some(why) if why != "a pin of another file" => Some((bump, why))
+    | _ => None
+    }
+  )
+  (taken, left)
 }
 
 let up = async (~name=?, ~everything=false, ~dry=false) => {
@@ -593,6 +659,7 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
       }
     }
     let moved = []
+    let crossed = []
     let waiting = []
     let rec each = async remaining =>
       switch remaining {
@@ -605,7 +672,7 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
           {cwd: where, encoding: "utf8", maxBuffer: 268435456},
         )
         let stdout = ran.stdout->Nullable.getOr("")
-        // mise's advice to bump is dropped, as it reads every published version and no stable tag.
+        // mise's advice to bump is dropped, as the bump below is judged against stable.
         [stdout, ran.stderr->Nullable.getOr("")]->Array.forEach(stream =>
           stream
           ->String.split("\n")
@@ -622,11 +689,10 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
         if ran.status != Nullable.make(0) {
           Registry.fail(`mise upgrade failed in ${Registry.label(where)}`)
         }
-        (await beyond(where))->Array.forEach(row =>
-          if !(waiting->Array.some(one => one == row)) {
-            waiting->Array.push(row)
-          }
-        )
+        // A pin is crossed too, onto the newest stable release, `--bump` keeping its precision.
+        let (taken, left) = await cross(where, ~dry, ~skip=["rust"])
+        taken->Array.forEach(bump => crossed->Array.push((where, bump.tool)))
+        left->Array.forEach(row => waiting->Array.push((Registry.label(where), row)))
         let after = dry
           ? {
               let would = before->Dict.copy
@@ -635,6 +701,7 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
                   would->Dict.set(tool, version)
                 }
               )
+              taken->Array.forEach(bump => would->Dict.set(bump.tool, bump.version))
               would
             }
           : installed(where)->Dict.fromArray
@@ -687,28 +754,28 @@ let up = async (~name=?, ~everything=false, ~dry=false) => {
       Console.log("everything is current within its pins")
     }
     if waiting->Array.length > 0 {
-      Console.log("\nBeyond the pins, and what channel each is actually on:\n")
-      waiting->Array.forEach(((owner, tool, version, current)) => {
-        let verdict = switch current {
-        | None => "no stable channel to compare"
-        | Some(current) if compareVersions(version, current) > 0 =>
-          `ahead of stable ${current}; a prerelease line, do not take it`
-        | Some(_) => "stable; edit [tools] to cross the pin"
-        }
+      Console.log("\nPins update leaves where they are:\n")
+      waiting->Array.forEach(((place, (bump, why))) =>
         Console.log(
-          `${owner->String.padEnd(24, " ")} ${tool->String.padEnd(
+          `${place->String.padEnd(14, " ")} ${bump.tool->String.padEnd(
               10,
               " ",
-            )} ${version->String.padEnd(12, " ")} ${verdict}`,
+            )} ${bump.version->String.padEnd(12, " ")} ${why}`,
         )
-      })
+      )
     }
-    let (lines, _, _, _) = report(await survey(name, everything))
+    // A dry run's pins still read as before, so a row it would bump is not said again here.
+    let rows =
+      (await survey(name, everything))->Array.filter(row =>
+        !(crossed->Array.some(((where, tool)) => where == row.where && tool == row.tool))
+      )
+    let (lines, _, _, _) = report(rows)
     if lines->Array.length > 0 {
       Console.log("\n" ++ String.repeat("-", 72))
       Console.log("Against each publisher's stable channel:\n")
       lines->Array.forEach(line => Console.log(line))
-      Console.log("\n  a pin is crossed by editing [tools]; nothing here does it for you")
+      Console.log("
+  a pin left here is one update does not take, its reason said above")
     }
     0
   }

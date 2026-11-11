@@ -3,9 +3,10 @@
 ### Dependencies move the way tools do
 
 `mise run update` runs every repository's own `update` task, the workspace's included, and a name
-narrows it to one. A dependency moves inside the range its manifest asks for, exactly as a tool
-moves inside its pin; crossing a range rewrites the manifest, which is a decision with a diff and a
-commit message behind it, exactly as crossing a pin is. So an `update` moves inside and names the
+narrows it to one. A dependency moves inside the range its manifest asks for; crossing a range rewrites the manifest,
+which is a decision with a diff and a commit message behind it. A tool differs: `update` crosses its
+pin onto the newest stable release itself, [versions.md](versions.md), its verify deciding what is
+kept. So an `update` moves inside and names the
 rest, and `--major` is what takes it -- handed on to a repository that supports it, refused by one
 that does not.
 

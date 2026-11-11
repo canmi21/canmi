@@ -61,14 +61,15 @@ The test is what would break if two checkouts disagreed. Two node versions build
 bundles, so node is pinned. Two tmux versions are two people's preferences and nothing a build can
 see, so tmux is installed by Homebrew and named nowhere in `[tools]`.
 
-### A tool is pinned to its major, and crossing one is a decision
+### A tool is pinned to its major, and update crosses it
 
 `[tools]` names a major -- `node = "26"`, `pnpm = "11"` -- rather than `latest`; `Toolchain.pin` is
-the shape, and the pins part holds this repository's `[tools]` to it. Inside that number `mise run
-tools up` moves freely; outside it nothing moves until the number is edited, so crossing a major
-arrives as a diff with a commit message rather than as a surprise on a machine. A major is where a
-lockfile format or a runtime behavior changes, which is exactly the class of change worth stopping
-for.
+the shape, and the pins part holds this repository's `[tools]` to it. Inside that number `mise
+upgrade` moves freely, and past it `mise run update` bumps the pin to the tool's newest stable
+release, as `mise upgrade --bump` does, keeping its precision: `jj = "0.46"` becomes `"0.47"`, `node =
+"26"` the newest major. Crossing a major still arrives as a diff in `[tools]`, kept only where the
+repository's verify passes and landed with a commit of its own, as a major is where a lockfile format
+or a runtime behavior changes.
 
 Below 1.0 the minor is the breaking release, so jj is pinned at `0.46` rather than `0`. The distance
 from jj 0.45 to 0.46 is the distance from node 26 to 27, and a pin that could not see it would be a
@@ -85,29 +86,29 @@ no command here will take. A report names only versions the pin permits as avail
 **`update` runs `rustup update`.** rust is the one tool `mise upgrade` cannot move -- mise's rust is
 a symlink to rustup's toolchain rather than an install of its own.
 
-**mise will not tell you a new major exists.** With a pin in place `mise outdated` reports nothing
-outside it -- it answers "are you current within what you asked for", which is a different question.
-So `mise run update` asks the other one itself, against `mise ls-remote`, and prints what is waiting
-without taking it:
+**A bump is taken only onto a stable release of the repository's own pin.** `mise upgrade --bump`
+reads every published version, so `update` asks it first, `--dry-run`, and takes a bump only where
+the pin is in the directory's own `mise.toml`, the version is newer than the one installed, and it is
+no further than the publisher's stable release. A prerelease line, a prerelease with no channel to
+compare, and an npm tool pinned at a prerelease, which follows npm's `latest` instead,
+[dependencies.md](dependencies.md), are left and said with the reason. `--dry-run` says each bump
+and writes nothing:
 
 ```
-workspace      oxlint     1.81.0 -> 1.82.0
-
-Beyond the pins, and what channel each is actually on:
-
-mise.toml                jj         0.45.1       stable; edit [tools] to cross the pin
+$ mise upgrade --bump jj --dry-run
+workspace      jj         would bump "0.46" -> "0.47", 0.47.1
+workspace      jj         would move 0.46.0 -> 0.47.1
+workspace      oxlint     would move 1.90.0 -> 1.93.0
 
 ------------------------------------------------------------------------
 Against each publisher's stable channel:
 
-workspace      jj         0.44.0       -> 0.45.1 across a pin
-workspace      pnpm       11.24.0      -> 11.26.0 held back by the pin "11.24"
-workspace      rust       stable       holds 1.98.0, the channel is 1.98.1
+workspace      shfmt      3.14.1       no stable channel to compare
 
-  a pin is crossed by editing [tools]; nothing here does it for you
+  a pin left here is one update does not take, its reason said above
 ```
 
-Three verdicts and three different actions: cross a pin, widen one, or let `update` run again. **The
+What is left says why: a pin narrower than its line to widen, a release past stable not to take, or a tool with no channel to compare. **The
 notice goes last, after the upgrade output, and nowhere else.** It is the only part a person has to
 act on, and an install log is long enough to bury it. `verify` stays offline and does not carry this
 check.
@@ -121,8 +122,7 @@ so `latest` is never reported as the stable release.
 in [model/rules/toolchain.res](../../model/rules/toolchain.res). `mise run pull` and `mise run check`
 start, at most once a day and detached, `mise run update --all --dry-run --json`, keeping its
 summary under `$XDG_CACHE_HOME/monoflake/update/` with the day each item was first seen. Reported
-are an action pin, which the bot does not move ([ci.md](../ci.md), "Scheduled updates"), a move only
-`--major` takes, a tool the Mac has not installed at its pinned version, and any move within the
+are an action pin, which the bot does not move ([ci.md](../ci.md), "Scheduled updates"), a dependency's move only `--major` takes, a tool's pin being crossed by update itself, a tool the Mac has not installed at its pinned version, and any move within the
 bounds still waiting two days after it first appeared, which means the scheduled update keeps
 failing. A move within the bounds younger than that is not reported, since tonight's run takes it.
 The line comes at the end of `pull` and `check`, counts per kind and `mise run update --dry-run` for

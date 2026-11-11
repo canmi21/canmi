@@ -338,13 +338,14 @@ describe("an update's movers", () => {
       line: Some("11.26.0"),
       newest: Some("12.0.0"),
     }
+    // update crosses a pin onto a stable release itself, so neither is left for a reminder's major.
     expect(Tools.machineRows([row]))->toEqual([
-      Reminder.item(~repository="workspace", "major", "pnpm", "11.24.0", "11.26.0"),
-      Reminder.item(~repository="workspace", "major", "pnpm", "11.24.0", "12.0.0"),
+      Reminder.item(~repository="workspace", "tool", "pnpm", "11.24.0", "11.26.0"),
+      Reminder.item(~repository="workspace", "tool", "pnpm", "11.24.0", "12.0.0"),
     ])
     expect(Tools.machineRows([{...row, pin: "11"}])->Array.map(item => item.kind))->toEqual([
       "tool",
-      "major",
+      "tool",
     ])
     expect(Tools.machineRows([{...row, version: "12.0.0", line: Some("11.26.0")}]))->toEqual([])
   })
@@ -454,3 +455,64 @@ describe("a failed check's causes", () => {
     expect(causes->Array.includes("=== monoflake/cloud names, the workspace's ==="))->toEqual(false)
   })
 })
+
+// A tool pin crossed by update, Tools.proposals and Tools.refusal.
+module Bumps = {
+  let where = "/Users/a/workspace"
+  let own = "/Users/a/workspace/mise.toml"
+
+  let said =
+    [
+      "Would schedule jj@0.46.0 for pruning after 1h",
+      "Would install pnpm@12.18.0",
+      "Would install jj@0.47.1",
+      "Would install node@27.1.0",
+      "Would install shellcheck@0.12.0-rc.1",
+      "Would bump jj@0.47 in ~/workspace/mise.toml",
+      "Would bump node@27 in /Users/a/workspace/repos/x/mise.toml",
+      "Would bump shellcheck@0.12 in /Users/a/workspace/mise.toml",
+      "Would bump stray@2 in /Users/a/workspace/mise.toml",
+    ]->Array.join("\n")
+
+  describe("a pin's bump", () => {
+    test("is read with the pin it writes and the version it installs, its file made whole", () => {
+      expect(Tools.proposals(said, ~home="/Users/a"))->toEqual([
+        {owner: own, tool: "jj", pin: "0.47", version: "0.47.1"},
+        {owner: "/Users/a/workspace/repos/x/mise.toml", tool: "node", pin: "27", version: "27.1.0"},
+        {owner: own, tool: "shellcheck", pin: "0.12", version: "0.12.0-rc.1"},
+      ])
+      expect(Tools.proposals("nothing to do", ~home="/Users/a"))->toEqual([])
+    })
+
+    let jj: Tools.bump = {owner: own, tool: "jj", pin: "0.47", version: "0.47.1"}
+
+    test("is taken onto a stable release of the directory's own pin", () => {
+      expect(Tools.refusal(jj, ~where, ~installed=Some("0.46.0"), ~stable=Some("0.47.1")))->toBe(
+        None,
+      )
+      expect(Tools.refusal(jj, ~where, ~installed=Some("0.46.0"), ~stable=None))->toBe(None)
+    })
+
+    test("is left where it is another file's, no newer, or past stable", () => {
+      let other = {...jj, owner: "/Users/a/workspace/repos/x/mise.toml"}
+      expect(Tools.refusal(other, ~where, ~installed=Some("0.46.0"), ~stable=Some("0.47.1")))->toBe(
+        Some("a pin of another file"),
+      )
+      expect(Tools.refusal(jj, ~where, ~installed=Some("0.47.1"), ~stable=Some("0.47.1")))->toBe(
+        Some("no newer than what is installed"),
+      )
+      let cf: Tools.bump = {owner: own, tool: "npm:cf", pin: "0.15", version: "0.15.0"}
+      expect(Tools.refusal(cf, ~where, ~installed=Some("1.0.0-beta.29"), ~stable=None))->toBe(
+        Some("no newer than what is installed"),
+      )
+      let ahead = {...jj, version: "0.48.0"}
+      expect(Tools.refusal(ahead, ~where, ~installed=Some("0.46.0"), ~stable=Some("0.47.1")))->toBe(
+        Some("ahead of stable 0.47.1; a prerelease line, not taken"),
+      )
+      let rc: Tools.bump = {owner: own, tool: "shellcheck", pin: "0.12", version: "0.12.0-rc.1"}
+      expect(Tools.refusal(rc, ~where, ~installed=Some("0.11.0"), ~stable=None))->toBe(
+        Some("a prerelease with no stable channel to compare, not taken"),
+      )
+    })
+  })
+}

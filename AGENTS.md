@@ -189,7 +189,7 @@ The workspace's own half runs in the dispatcher, `scripts/workspace/repos.res`: 
 reading the forge run only by `--full` or `audit`, [docs/repos.md](docs/repos.md). `audit`
 is `check` with every warning counted as a failure, which is not what routine work runs. `update`
 moves within declared bounds and keeps a repository's move only where its own verify still passes;
-crossing a range is `update --major`, crossing a tool pin is an edit to `[tools]`. `clean` removes
+crossing a range is `update --major`, and a tool's pin `update` crosses itself, onto its newest stable release, keeping the pin's precision. `clean` removes
 what a tool wrote and can write again; dependencies and local state are not caches. `mise run
 repos list|clone` reads the registry against the disk, and `mise run tools` the toolchain against
 its pins. See [docs/toolchain.md](docs/toolchain.md).
