@@ -13,7 +13,10 @@ shell and tool. canmi/web still loads its file globally, the deferred item
 `web-secrets-tasks`.
 
 The private key lives at `~/.config/sops/age/keys.txt`, outside the repo, and belongs in a password
-manager as well. Losing it costs a round of credential rotation, not the repo.
+manager as well. Losing it costs a round of credential rotation for a credential a vendor issues
+again, but a key that seals data, as the console's `CONSOLE_PRODUCTION_SEALING_KEY`, is issued by
+nobody: a Worker keeps a secret write-only, so `secrets.json` is its one readable copy, and losing
+both loses what it sealed.
 
 Committing the ciphertext rather than gitignoring a plaintext `.env` is what makes a fresh machine
 reproducible: restore one key, clone, and every credential the project needs is already there. A

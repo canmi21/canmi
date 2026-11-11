@@ -1,7 +1,6 @@
 /**
- * The platform a credential belongs to, the foundation being the default and never written; a
- * key both a deployment and its local development read is the foundation's too, development's own
- * marked `Development`.
+ * The platform a credential belongs to, the foundation being the default and never written, and a
+ * key local development holds apart from production's marked `Development`.
  */
 type platform =
   | Foundation
@@ -92,18 +91,15 @@ let table = [
   // A platform's salt master, from which deploy derives each organization's salt, b8f35.
   neutral("SALT_MASTER", "SALT", Foundation, "MASTER"),
   neutral("SALT_TEST_MASTER", "SALT", Test, "MASTER"),
-  // The console's sign-in, WorkOS's key and the session's signing key, in monoflake/console.
+  // The console's sign-in, WorkOS's staging key, in monoflake/console.
   vendor("WORKOS_API_KEY", "WORKOS", Foundation, "API_KEY"),
   // The console's sealing keys, one an environment reads as SEALING_KEY, by the author's word.
   neutral("CONSOLE_PRODUCTION_SEALING_KEY", "CONSOLE", Production, "SEALING_KEY"),
   neutral("CONSOLE_DEVELOPMENT_SEALING_KEY", "CONSOLE", Development, "SEALING_KEY"),
   // WorkOS's production environment, which the deployed console signs in through.
   vendor("WORKOS_PRODUCTION_API_KEY", "WORKOS", Production, "API_KEY"),
-  neutral("SESSION_SECRET", "SESSION", Foundation, "SECRET"),
   // The photo behind an organization's sign-in card, Unsplash's access key, in monoflake/console.
   vendor("UNSPLASH_ACCESS_KEY", "UNSPLASH", Foundation, "ACCESS_KEY"),
-  // The key the console seals each person's authenticator secret with, in monoflake/console.
-  neutral("MFA_ENCRYPTION_KEY", "MFA", Foundation, "ENCRYPTION_KEY"),
 ]
 
 /** Names a secrets file or GitHub holds, beside each one's name after rotation, docs/naming.md. */
