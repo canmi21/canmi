@@ -297,7 +297,9 @@ See [dependencies.md](toolchain/dependencies.md), "Dependency policy".
 so it has nothing to fail; the run goes on and ends with a warning listing who was passed over. A
 failure is a declared task that ran and failed, and only that makes the run red. One repository at
 a time, on past a failure, so each log reads whole and one red repository does not hide what the
-others would have said.
+others would have said; `update` over several runs in waves instead, the workspace first and then
+each repository once the siblings whose checkouts its build reaches into have finished, a few at
+once, each repository's log printed whole as it ends, `scripts/workspace/update/waves.res`.
 
 **A name is strict.** It means that repository and nothing else, in every half of every verb:
 nothing in the workspace or in a sibling is read for change, written or upgraded under it. What the

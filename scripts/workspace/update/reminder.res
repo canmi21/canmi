@@ -144,7 +144,10 @@ let start = () =>
       let log = openLog(Node.join([cache, "update.log"]))
       let child = spawn(
         "node",
-        [Node.join([Registry.root, "scripts", "workspace", "reminder.res.mjs"]), "collect"],
+        [
+          Node.join([Registry.root, "scripts", "workspace", "update", "reminder.res.mjs"]),
+          "collect",
+        ],
         {cwd: Registry.root, detached: true, stdio: ("ignore", log, log)},
       )
       child->onError(_ => ())

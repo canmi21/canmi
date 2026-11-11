@@ -655,14 +655,13 @@ let settled = (repo, ~code, ~before, ~paths) =>
  * Each repository's own update and the movers its `[update]` declares, kept only where its verify
  * still passes. See docs/toolchain/dependencies.md.
  */
-let update = async (name, ~dry, ~major, ~everything) => {
+/** The update of each of `chosen` in turn, what it came to kept apart from what it says. */
+let updateEach = async (chosen, ~dry, ~major): Waves.outcome => {
   let skipped = []
   let failed = []
   let reverted = []
   let held = []
-  let paused = []
   let flags = Array.concat(dry ? ["--dry-run"] : [], major ? ["--major"] : [])
-  let chosen = active(name, ~everything, paused)
   for index in 0 to chosen->Array.length - 1 {
     let repo = chosen->Array.getUnsafe(index)
     let place = Registry.label(repo)
@@ -718,29 +717,26 @@ let update = async (name, ~dry, ~major, ~everything) => {
       }
     }
   }
-  summary("update", skipped, failed, ~paused)
-  held
-  ->Array.filter(((place, _)) =>
-    !(failed->Array.includes(place)) && !(reverted->Array.some(((back, _, _)) => back == place))
-  )
-  ->Array.forEach(((place, sources)) =>
-    Console.log(
-      `warning: ${place} holds back its pins from ${sources->Array.join(
-          ", ",
-        )}, whose releases were not read; the rest that moved is kept`,
-    )
-  )
-  if reverted != [] {
-    Console.log(
-      "\nReverted, because verify failed with what moved; these files are back as they were:\n",
-    )
-    reverted->Array.forEach(((place, shown, paths)) => {
-      Console.log(`  ${place}: ${paths->Array.join(", ")}`)
-      shown->Array.forEach(line => Console.log(`      ${line}`))
-    })
-    Console.log("\n  the full log is above; the next `update` tries the same bounds again")
+  {skipped, failed, reverted, held}
+}
+
+/** `update` over what `name` chooses, in waves where it is more than one, a wave's child alone. */
+let update = async (name, ~dry, ~major, ~everything) => {
+  let paused = []
+  let chosen = active(name, ~everything, paused)
+  let flags = Array.concat(dry ? ["--dry-run"] : [], major ? ["--major"] : [])
+  let outcome = switch (Node.env->Dict.get(Waves.outcomeVariable), chosen->Array.length > 1) {
+  | (Some(_), _) | (None, false) => await updateEach(chosen, ~dry, ~major)
+  | (None, true) =>
+    await Waves.run(chosen, ~root, ~flags, ~here=one => updateEach(one, ~dry, ~major))
   }
-  failed == [] && reverted == [] ? 0 : 1
+  switch Node.env->Dict.get(Waves.outcomeVariable) {
+  | Some(file) => Waves.keep(file, outcome)
+  | None =>
+    summary("update", outcome.skipped, outcome.failed, ~paused)
+    Waves.told(outcome)
+  }
+  outcome.failed == [] && outcome.reverted == [] ? 0 : 1
 }
 
 /** One repository's publish, the one verb a missing name refuses; what follows goes on unread. */
