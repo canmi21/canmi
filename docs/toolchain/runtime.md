@@ -57,3 +57,25 @@ The reason is not tidiness. A tool that drifts to the next port starts a second 
 and a second instance of something that writes to a project's data means two processes fetching and
 overwriting in the same directory. The port collision is the cheapest mutex available -- the
 operating system provides it for free, and it fails loudly at the only moment anyone can act on it.
+
+## Cloudflare is worked through cf, Wrangler kept where a project still needs it
+
+**An account's resources are worked through Cloudflare's `cf`, by the author's word**: a D1
+database's export, query, creation and listing, an R2 bucket and its objects, a Worker's versions and
+deployments read, its secrets listed, DNS, zones and tokens. `cf` signs in on its own, apart from
+Wrangler's login, names a resource by its id rather than a configuration's name, and reads no
+`wrangler.jsonc`, so a D1 migrations directory is passed as `--dir`. A project pins it under its
+`mise.toml`'s `[tools]` as `"npm:cf"` at npm's newest, its update following npm's `latest`,
+[dependencies.md](dependencies.md).
+
+**Wrangler stays where a project still needs it, and is never removed while it does.** SvelteKit's
+Cloudflare adapter reads `wrangler.jsonc` and Wrangler's platform proxy, and `cf dev`, `cf build`
+and `cf deploy` read only a `cloudflare.config.ts`, so a SvelteKit project keeps Wrangler for its
+development server, its local D1 in `.wrangler/state`, which `cf`'s own local state is not, its
+build, its deploy with the migrations it applies, `wrangler types`, and the two commands `cf`
+lacks, `secret put` and `tail`. A project moves to `cloudflare.config.ts` by `cf migrate` only once
+everything it builds with reads one.
+
+**What the local command line does to the platform is retired, not moved.** A script that installs
+or deploys monoflake's driver through Wrangler stays as it is until the console operates the
+platform through its online API, which replaces it.

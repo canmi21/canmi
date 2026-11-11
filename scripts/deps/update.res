@@ -16,6 +16,133 @@ let cargoItems = (output, major) =>
     }
   })
 
+let toolLine = /^"?([^"=\s]+)"?\s*=\s*(.*)$/
+let quotedPin = /^"([^"]*)"/
+let prerelease = /^\d+(\.\d+)*-/
+
+/** The tools a mise.toml's `[tools]` declares, a name quoted or bare, each with its plain pin. */
+let toolsOf = (text: string): array<(string, string)> => {
+  let found = []
+  let inside = ref(false)
+  text
+  ->String.split("\n")
+  ->Array.forEach(raw => {
+    let line = raw->String.trim
+    if line->String.startsWith("[") {
+      inside := line->String.startsWith("[tools]")
+    } else if inside.contents && !(line->String.startsWith("#")) {
+      switch Actions.groups(toolLine, line) {
+      | Some([name, value]) =>
+        let pin = switch Actions.groups(quotedPin, value) {
+        | Some([pin]) => pin
+        | _ => ""
+        }
+        found->Array.push((name, pin))
+      | _ => ()
+      }
+    }
+  })
+  found
+}
+
+/** Whether a tool is an npm package pinned at a prerelease, which mise's own upgrade never sees. */
+let npmPrerelease = ((name, pin)) => name->String.startsWith("npm:") && prerelease->RegExp.test(pin)
+
+/** npm's `latest` and when it was published, as `pnpm view` answers both in JSON. */
+let viewOf = (answer: string): (string, option<float>) =>
+  switch JSON.parseOrThrow(answer == "" ? "{}" : answer) {
+  | Object(fields) =>
+    let latest = switch fields->Dict.get("dist-tags.latest") {
+    | Some(String(latest)) => latest
+    | _ => ""
+    }
+    let published = switch fields->Dict.get("time") {
+    | Some(Object(times)) =>
+      switch times->Dict.get(latest) {
+      | Some(String(at)) => Some(Date.fromString(at)->Date.getTime)
+      | _ => None
+      }
+    | _ => None
+    }
+    (latest, published)
+  | _ => ("", None)
+  | exception _ => ("", None)
+  }
+
+/** -1, 0 or 1 as SemVer orders two versions, a prerelease's parts among themselves too. */
+let semver = (a: string, b: string): int => {
+  let split = version =>
+    switch version->String.indexOf("-") {
+    | -1 => (version, None)
+    | dash => (
+        version->String.slice(~start=0, ~end=dash),
+        Some(version->String.slice(~start=dash + 1)),
+      )
+    }
+  let ((core, pre), (other, otherPre)) = (split(a), split(b))
+  let part = (x, y) =>
+    switch (Int.fromString(x), Int.fromString(y)) {
+    | (Some(p), Some(q)) if Outdated.digits->RegExp.test(x) && Outdated.digits->RegExp.test(y) =>
+      p == q ? 0 : p < q ? -1 : 1
+    | _ if Outdated.digits->RegExp.test(x) => -1
+    | _ if Outdated.digits->RegExp.test(y) => 1
+    | _ => x == y ? 0 : x < y ? -1 : 1
+    }
+  let rec parts = (x, y, index) =>
+    switch (x[index], y[index]) {
+    | (None, None) => 0
+    | (None, Some(_)) => -1
+    | (Some(_), None) => 1
+    | (Some(p), Some(q)) =>
+      let found = part(p, q)
+      found == 0 ? parts(x, y, index + 1) : found
+    }
+  switch Outdated.compare(core, other) {
+  | 0 =>
+    switch (pre, otherPre) {
+    | (None, None) => 0
+    | (None, Some(_)) => 1
+    | (Some(_), None) => -1
+    | (Some(x), Some(y)) => parts(x->String.split("."), y->String.split("."), 0)
+    }
+  | found => found
+  }
+}
+
+type move = Moves(string) | Young(string) | Stays
+
+/** Where a prerelease pin moves, to npm's newer latest once it is as old as a package must be. */
+let npmMove = (~pin, ~latest, ~published: option<float>, ~now: float) =>
+  if latest == "" || semver(latest, pin) <= 0 {
+    Stays
+  } else {
+    switch published {
+    | Some(at) if now -. at >= Int.toFloat(Toolchain.releaseAge) *. 60000. => Moves(latest)
+    | _ => Young(latest)
+    }
+  }
+
+/** `text` with the tool `name` in `[tools]` pinned at `to`, every other line as it was. */
+let repinned = (text: string, name: string, to: string): string => {
+  let inside = ref(false)
+  text
+  ->String.split("\n")
+  ->Array.map(line => {
+    let trimmed = line->String.trim
+    if trimmed->String.startsWith("[") {
+      inside := trimmed->String.startsWith("[tools]")
+      line
+    } else {
+      switch inside.contents ? Actions.groups(toolLine, trimmed) : None {
+      | Some([found, _]) if found == name =>
+        line->String.replaceRegExp(/=(\s*)"[^"]*"/, `=$1"${to}"`)
+      | _ => line
+      }
+    }
+  })
+  ->Array.join("\n")
+}
+
 /**
  * A repository's `update`, its tools, crates and packages within their bounds, and with `--major`
  * across them for what outdated.res calls behind. See docs/toolchain/dependencies.md.
@@ -52,38 +179,34 @@ let human = () => {
     Node.envIs("usage_dry_run", "true")
   let major = args->Array.includes("--major") || Node.envOn("usage_major")
   let n = dry ? ["--dry-run"] : []
-  let toolName = /^([a-z0-9-]*) *=/
-
-  /* The tools this repository declares. */
-  let ownTools = () => {
-    let names = []
-    let inside = ref(false)
-    Node.readFileSync("mise.toml")
-    ->String.split("\n")
-    ->Array.forEach(line =>
-      if line->String.startsWith("[") {
-        inside := line->String.startsWith("[tools]")
-      } else if inside.contents {
-        switch toolName->RegExp.exec(line) {
-        | Some(result) =>
-          switch result->RegExp.Result.matches {
-          | [Some(name)] => names->Array.push(name)
-          | _ => ()
-          }
-        | None => ()
-        }
-      }
-    )
-    names
-  }
+  let declared = Node.existsSync("mise.toml") ? toolsOf(Node.readFileSync("mise.toml")) : []
 
   // A bare mise upgrade moves every tool it sees, the workspace's too, so it is given names alone.
-  let own = ownTools()
+  let own = declared->Array.filterMap(tool => npmPrerelease(tool) ? None : Some(Pair.first(tool)))
   if own != [] {
     Console.log(`$ mise upgrade ${own->Array.join(" ")}${dry ? " --dry-run" : ""}`)
     Node.run("mise", Array.concat(Array.concat(["upgrade"], own), n))->ignore
     Console.log("")
   }
+
+  // mise skips prereleases, so an npm tool pinned at one follows npm's latest instead.
+  declared
+  ->Array.filter(npmPrerelease)
+  ->Array.forEach(((name, pin)) => {
+    let package = name->String.slice(~start=4)
+    let answer = Node.output("pnpm", ["view", package, "dist-tags.latest", "time", "--json"])
+    let (latest, published) = viewOf(answer)
+    switch npmMove(~pin, ~latest, ~published, ~now=Date.now()) {
+    | Stays if latest == "" => Console.log(`${name} ${pin}: npm answered no latest`)
+    | Stays => Console.log(`${name} ${pin} stays, npm's latest is ${latest}`)
+    | Young(to) => Console.log(`${name} ${pin} -> ${to} waits out the release age`)
+    | Moves(to) =>
+      Console.log(`${name} ${pin} -> ${to}${dry ? ", a dry run writing nothing" : ""}`)
+      if !dry {
+        Node.writeFileSync("mise.toml", repinned(Node.readFileSync("mise.toml"), name, to))
+      }
+    }
+  })
   if Node.existsSync("Cargo.toml") {
     let before = Node.existsSync("Cargo.lock") ? Some(Node.readFileSync("Cargo.lock")) : None
     if major {

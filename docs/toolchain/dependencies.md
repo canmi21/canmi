@@ -15,7 +15,10 @@ repository's `update` is the whole of how it moves, and what it owes is the cont
 
 **What the workspace moves alike in many repositories is declared, not called.** A repository's
 `workspace.toml` names under `[update]` the workspace's movers it takes -- `packages` for its own
-tools, crates and npm packages, `scripts/deps/update.res`; `actions` for its workflows' actions;
+tools, crates and npm packages, `scripts/deps/update.res`; a tool is read by its name quoted or bare, as
+`"npm:cf"`, and an npm tool pinned at a prerelease, which mise's own upgrade never sees, follows
+npm's `latest` instead, its pin rewritten once that version is as old as `release-age` asks,
+`--dry-run` saying the move and writing nothing; `actions` for its workflows' actions;
 `images` for its Dockerfiles' base images; `releases`, a list of the `manifest.toml` files whose
 locks are moved -- and the dispatcher runs each from the repository's root after its own `update`
 task, `--dry-run` and `--major` handed on, the whole kept only where its verify passes. The
@@ -96,7 +99,9 @@ and how, not to build a record of it.
 
 **Out of date is judged by the newest copy the workspace holds, not by each package's.** `update
 --dry-run` asks pnpm what is outdated and what every package holds directly, and calls a package
-behind only when its newest copy anywhere here is older than the registry's latest. One already on
+behind only when its newest copy anywhere here is older than the registry's latest. A package is counted by the
+name it installs, so an alias, as the console's `@typescript/native` for TypeScript 7, counts as
+`typescript` at each version held. One already on
 the latest somewhere while another package keeps an older major is not behind: it is two majors at
 once, which is reported apart, as a warning.
 

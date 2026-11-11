@@ -85,10 +85,9 @@ let sorted = (values: array<string>) => values->Array.toSorted(byName)
 let keys = map => map->Map.keys->Iterator.toArray
 let byVersion = (map: Map.t<string, Set.t<string>>) => map->keys->Array.toSorted(order)
 
-/** Package name -> version -> the repository's packages that hold it directly. */
-let held = root => {
+/** Package name -> version -> the packages that hold it directly, from `pnpm list --json`. */
+let heldOf = (listed: string): held => {
   let versions: held = Map.make()
-  let listed = run(root, "pnpm", ["list", "-r", "--depth", "0", "--json"])
   let projects = switch JSON.parseOrThrow(listed == "" ? "[]" : listed) {
   | Array(projects) => projects
   | _ => []
@@ -106,15 +105,19 @@ let held = root => {
           entries
           ->Dict.toArray
           ->Array.forEach(
-            ((name, info)) => {
-              let version = switch info {
-              | Object(info) =>
-                switch info->Dict.get("version") {
-                | Some(String(version)) => version
+            ((key, info)) => {
+              let text = field =>
+                switch info {
+                | Object(info) =>
+                  switch info->Dict.get(field) {
+                  | Some(String(value)) => value
+                  | _ => ""
+                  }
                 | _ => ""
                 }
-              | _ => ""
-              }
+              let version = text("version")
+              // An alias, as `@typescript/native` for typescript, counts as the package it names.
+              let name = text("from") == "" ? key : text("from")
               if version != "" && !(local->RegExp.test(version)) {
                 let found = versions->Map.get(name)->Option.getOr(Map.make())
                 versions->Map.set(name, found)
@@ -132,6 +135,9 @@ let held = root => {
   )
   versions
 }
+
+/** What the repository at `root` holds, by `heldOf`. */
+let held = root => heldOf(run(root, "pnpm", ["list", "-r", "--depth", "0", "--json"]))
 
 type outdated = {current: string, latest: string, dependents: array<string>}
 
@@ -166,9 +172,8 @@ let machine = root => {
   }
 }
 
-/** `pnpm outdated`'s answer, by package. */
-let outdatedOf = root => {
-  let answer = run(root, "pnpm", ["outdated", "-r", "--format", "json"])
+/** `pnpm outdated --format json`'s answer, by package. */
+let outdatedFrom = (answer: string) =>
   switch JSON.parseOrThrow(answer == "" ? "{}" : answer) {
   | Object(entries) =>
     entries
@@ -202,14 +207,20 @@ let outdatedOf = root => {
     ->Map.fromArray
   | _ => Map.make()
   }
-}
 
-/** The report, as lines, or with `names` only the names `update --major` should move. */
-let report = (root: string, names: bool): array<string> => {
-  let versions = held(root)
-  let path = Node.join([root, "versions.toml"])
-  let several = allowed(Node.existsSync(path) ? Node.readFileSync(path) : "")
-  let outdated = outdatedOf(root)
+/** What the repository at `root` has out of date, by `outdatedFrom`. */
+let outdatedOf = root => outdatedFrom(run(root, "pnpm", ["outdated", "-r", "--format", "json"]))
+
+/**
+ * The report of what `versions` holds against `outdated`, `several` allowed at two majors, as
+ * lines, or with `names` only the names `update --major` should move.
+ */
+let reportOf = (
+  versions: held,
+  outdated: Map.t<string, outdated>,
+  several: Map.t<string, string>,
+  names: bool,
+): array<string> => {
   let behind = []
   let split = []
   outdated
@@ -317,6 +328,13 @@ let report = (root: string, names: bool): array<string> => {
     )
     lines
   }
+}
+
+/** The report for the repository at `root`, by `reportOf`. */
+let report = (root: string, names: bool): array<string> => {
+  let path = Node.join([root, "versions.toml"])
+  let several = allowed(Node.existsSync(path) ? Node.readFileSync(path) : "")
+  reportOf(held(root), outdatedOf(root), several, names)
 }
 
 /** The task `outdated [--names]`, run from the repository's root. */
