@@ -1,6 +1,11 @@
-/** The platform a credential belongs to, the foundation being the default and never written. */
+/**
+ * The platform a credential belongs to, the foundation being the default and never written; a
+ * key both a deployment and its local development read is the foundation's too, development's own
+ * marked `Development`.
+ */
 type platform =
   | Foundation
+  | Development
   | Test
   | Production
   | Organization(string)
@@ -33,7 +38,7 @@ let neutral = (variable, subject, platform, purpose) => {
 }
 
 /** The words a name may not carry in the foundation, since the foundation is the default. */
-let platformWords = ["TEST", "PRODUCTION"]
+let platformWords = ["DEVELOPMENT", "TEST", "PRODUCTION"]
 
 /** The names GitHub or the runner supplies, which no file of ours holds. */
 let supplied = ["GITHUB_TOKEN"]
@@ -89,6 +94,9 @@ let table = [
   neutral("SALT_TEST_MASTER", "SALT", Test, "MASTER"),
   // The console's sign-in, WorkOS's key and the session's signing key, in monoflake/console.
   vendor("WORKOS_API_KEY", "WORKOS", Foundation, "API_KEY"),
+  // The console's sealing keys, one an environment reads as SEALING_KEY, by the author's word.
+  neutral("CONSOLE_PRODUCTION_SEALING_KEY", "CONSOLE", Production, "SEALING_KEY"),
+  neutral("CONSOLE_DEVELOPMENT_SEALING_KEY", "CONSOLE", Development, "SEALING_KEY"),
   // WorkOS's production environment, which the deployed console signs in through.
   vendor("WORKOS_PRODUCTION_API_KEY", "WORKOS", Production, "API_KEY"),
   neutral("SESSION_SECRET", "SESSION", Foundation, "SECRET"),
@@ -125,6 +133,7 @@ let short = variable => words(variable)->Array.map(String.toLowerCase)->Array.jo
 let platformWord = platform =>
   switch platform {
   | Foundation => []
+  | Development => ["DEVELOPMENT"]
   | Test => ["TEST"]
   | Production => ["PRODUCTION"]
   | Organization(word) => [word]
