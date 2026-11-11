@@ -733,7 +733,8 @@ let update = async (name, ~dry, ~major, ~everything) => {
   switch Node.env->Dict.get(Waves.outcomeVariable) {
   | Some(file) => Waves.keep(file, outcome)
   | None =>
-    summary("update", outcome.skipped, outcome.failed, ~paused)
+    // A paused repository is passed over unsaid, by the author's word: update reports only its own.
+    summary("update", outcome.skipped, outcome.failed)
     Waves.told(outcome)
   }
   outcome.failed == [] && outcome.reverted == [] ? 0 : 1

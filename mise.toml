@@ -36,7 +36,7 @@ JJ_CONFIG = "{{env.HOME}}/.config/jj/config.toml:{{config_root}}/jujutsu.toml"
 node = "26"
 rust = "stable"
 pnpm = "12"
-jj = "0.46" # pre-1.0, where a minor is the breaking release
+jj = "0.47" # pre-1.0, where a minor is the breaking release
 oxlint = "1"
 # What the workflows part of check lints each workflow with, and what it reads a step's shell with.
 actionlint = "1"
