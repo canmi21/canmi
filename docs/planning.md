@@ -19,9 +19,9 @@ only a question not yet decided is a draft RFC -- RFC 8q1af, and [rfcs.md](rfcs.
 its pages take the longest and are made with the author watching, so the rest of monoflake works to
 keep it from waiting, and never runs ahead of what it will ask for.
 
-- **The line is the author's.** Which capability is built next, as deploying an app through the
-  control to Cloudflare, is the author's to name, and it says which pages the console takes up and
-  which line the platform, the drivers and cloud build down. An agent never picks a line from the
+- **The direction is the author's, worked back from the pages.** The author leads by choosing what
+  the console draws next, and what the platform, the drivers and cloud build is worked backward from
+  what those pages need. No line is named ahead of the pages, and an agent never picks one from the
   plan.
 - **What the console asks for comes first.** A function a page needs that the console's session
   can write in passing, a table, a query or a facet, is written there. One that reaches another
@@ -31,8 +31,8 @@ keep it from waiting, and never runs ahead of what it will ask for.
   console settles the contracts of the next page or two ahead of the one it draws, so the
   background always holds one.
 - **Everything else is held, not dropped.** The rest of the plan keeps its items at a lower
-  priority and is worked only once nothing above waits: a contract first, then what the author's
-  line still lacks beneath it, then the rest. An item a contract reaches moves up with it.
+  priority and is worked only once nothing above waits: a contract first, then what the pages in
+  hand still lack beneath them, then the rest. An item a contract reaches moves up with it.
 
 **What is not done is one of three, and each has one home.**
 
