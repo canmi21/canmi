@@ -24,9 +24,9 @@ keep it from waiting, and never runs ahead of what it will ask for.
   what those pages need. No line is named ahead of the pages, and an agent never picks one from the
   plan.
 - **What the console asks for comes first.** A function a page needs that the console's session
-  can write in passing, a table, a query or a facet, is written there. One that reaches another
-  repository, the control or a driver, is handed to a session working in the background as a
-  contract: the facet or command the page calls, in the console's Valibot contracts, with sample
+  can write in passing, a table, a query or a facet, is written there. Anything done without a
+  browser may instead be handed to a session working in the background, and what reaches another
+  repository, the control or a driver, goes as a contract: the facet or command the page calls, in the console's Valibot contracts, with sample
   answers the page runs on meanwhile, which the real one is then made to answer the same. The
   console settles the contracts of the next page or two ahead of the one it draws, so the
   background always holds one. Which a need is is the console session's to judge, and the

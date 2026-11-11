@@ -6,14 +6,20 @@ rest of monoflake, [planning.md](../planning.md), "Monoflake's work is pulled by
 
 **It builds what the console hands down and nothing it was not handed.** The console's session is
 the one the author draws pages with, and it judges each need: what it writes in passing, what it
-first researches and talks over with the author, and what it hands here. What comes here is a
-contract, a facet or a command in the console's Valibot contracts with the sample answers the page
-runs on meanwhile, and the work is done once the real one answers those samples through the
-control and the drivers it reaches.
+first researches and talks over with the author, and what it hands here. Anything done without a
+browser may come here, in any repository: logic and tests in the console, and a contract for what
+reaches past it, a facet or a command in the console's Valibot contracts with the sample answers
+the page runs on meanwhile, done once the real one answers those samples through the control and
+the drivers it reaches.
 
-**Its repositories are platform, driver, machine and cloud, and never the console.** It commits and
-lands in them as any session does. A change the console must take, a contract's shape or its
-samples, is told back to the console's session, which makes it there.
+**The browser is the console session's alone.** This session drives no Chrome: what only a look at
+a page settles is told back, and the console's session looks at it with the author.
+
+**In the console it works in a lane of its own**, `mise run lane open monoflake/console <name>`,
+[lanes.md](lanes.md), never in the main checkout the console's session edits, and hands the lane
+back by `lane handed` with a message. The console's session takes it and lands it, as a push there
+deploys and what shows is the author's to see. In platform, driver, machine and cloud it commits
+and lands itself as any session does.
 
 **Held work waits for a word.** It picks nothing from the plan of its own accord. What a contract
 reaches in the held items, or in what the platform half built before, is raised with the console's

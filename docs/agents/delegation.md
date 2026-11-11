@@ -109,8 +109,8 @@ it then means that session.
 - **The reviewer**, [seats/reviewer.md](seats/reviewer.md): on call for authorization and protocol
   changes, directed by nobody; it reports to the supervisor, a severe finding copied to the advisor.
 - **The auditor**, [auditor.md](auditor.md): a fresh session at each checkpoint, asking questions.
-- **The backend, one**, [backend.md](backend.md): builds what the console's session hands down as a
-  contract, in platform, driver, machine and cloud.
+- **The backend, one**, [backend.md](backend.md): builds what the console's session hands down,
+  anything done without a browser, in the console through a lane and in the rest directly.
 - **The watchdog is a program, no agent**, [runs.md](runs.md).
 
 **Where a thread has no supervisor named, the advisor's word reaches the integrator directly**, as a
