@@ -131,7 +131,7 @@ let push = (name, ~dry, ~everything) => {
       )
       let flags = dry ? ["--dry-run"] : []
       if Node.run(~cwd=repo, "jj", ["git", "push", "--bookmark", "main", ...flags]) != 0 {
-        Registry.fail(`jj git push failed in ${place}`)
+        Registry.fail(Push_state.refused(place))
       }
     }
   })

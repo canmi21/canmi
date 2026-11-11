@@ -2,7 +2,7 @@
 
 # Rules
 
-43 rules, 6 pending a check.
+44 rules, 6 pending a check.
 
 ## Delegation
 
@@ -212,6 +212,13 @@ A landing that changes the hooks under `.codex/` is followed at once by a remind
 ### long-command-background
 
 A foreground shell command never runs past `foregroundSeconds`: one that waits in a loop that sleeps, asks for a timeout past it, or runs a task of `longTasks`, a task given a flag of `longTaskFlags` or a command of `longCommands`, the plan a flag of `shortFlags` asks aside, is refused; it runs in the background or under Monitor and is looked at again every few seconds to a few tens, the watcher's stall of `stallSeconds` naming a hang; a push, `push`, runs in the foreground by the user's word, and a landing, `land`, in the background by a later word of theirs.
+
+- doc: [docs/agents/agent-protocol.md](../../docs/agents/agent-protocol.md)
+- held by: hook `hooks/gates/background`
+
+### monitor-job-watched
+
+A Monitor on one job runs `mise run //:watch <id>`, which ends with the job; one following the job's output file with `tail -f` or `-F` is refused, as it runs on until the monitor expires.
 
 - doc: [docs/agents/agent-protocol.md](../../docs/agents/agent-protocol.md)
 - held by: hook `hooks/gates/background`

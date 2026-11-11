@@ -11,4 +11,4 @@
 - [Voice](rules-voice.md), 4 rules
 - [Readme](rules-readme.md), 2 rules
 - [Planning](rules-planning.md), 6 rules
-- [Delegation](rules-delegation.md), 43 rules
+- [Delegation](rules-delegation.md), 44 rules

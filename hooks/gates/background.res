@@ -258,9 +258,15 @@ let monitored = (payload: Payload.t) =>
     ->Payload.object("tool_input")
     ->Option.mapOr(false, input => input->Dict.get("timeout_ms")->Option.isSome)
 
+/** A tail following a job's output file, which runs on past the job until its monitor expires. */
+let followsJob = command =>
+  /\btail\b[^|;&]*\s-[A-Za-z]*[fF]/->RegExp.test(command) && /runs\/outputs\//->RegExp.test(command)
+
 /** Why a foreground call would hold the conversation, or nothing where it would not. */
 let held = (payload: Payload.t) =>
-  if background(payload) || monitored(payload) {
+  if monitored(payload) && followsJob(Payload.command(payload)) {
+    Some("it follows a job's output with tail, which runs on after the job ends")
+  } else if background(payload) || monitored(payload) {
     None
   } else if polls(Payload.command(payload)) {
     Some("it waits in a loop that sleeps")

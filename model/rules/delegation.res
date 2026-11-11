@@ -607,6 +607,12 @@ let rules: array<Rule.t> = [
     held: Hook("hooks/gates/background"),
   },
   {
+    name: "monitor-job-watched",
+    says: "A Monitor on one job runs `mise run //:watch <id>`, which ends with the job; one following the job's output file with `tail -f` or `-F` is refused, as it runs on until the monitor expires",
+    doc: "docs/agents/agent-protocol.md",
+    held: Hook("hooks/gates/background"),
+  },
+  {
     name: "implementer-lane",
     says: "An implementer writes inside its own lane alone, a temporary directory aside, by an Edit, a Write or a Codex patch; a write elsewhere is refused and reported, never worked around",
     doc: "docs/agents/seats/implementer.md",

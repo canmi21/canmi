@@ -21,7 +21,7 @@ let parse: array<string> => result<asked, string>
 
 /**
  * One step of a landing: the repository's format, its bump, its check (form, format, the rule
- * parts, then the touched parts), the commit, main moved to it, the push's dry run then the push,
+ * parts, then the touched parts), the commit, main moved to it, the push,
  * and the landing recorded in its thread where one is given.
  */
 type step =
@@ -30,7 +30,6 @@ type step =
   | Check
   | Commit
   | Bookmark
-  | PushDry
   | Push
   | Record
 

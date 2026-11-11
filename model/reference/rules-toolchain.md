@@ -204,7 +204,7 @@ pull and check report, once a day and silent otherwise, only what the scheduled 
 
 ### push-behind-main
 
-A push that finds main moved fetches, names the commits that came in and stops with the steps to rebase onto it, check again and push, escalating nothing.
+A push fetches nothing; one that finds main moved, as last fetched or refused by jj, stops with the steps to fetch, rebase onto it, check again and push, escalating nothing.
 
 - doc: [docs/agents/pushing.md](../../docs/agents/pushing.md)
 - held by: check part `scripts`

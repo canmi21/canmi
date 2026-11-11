@@ -118,7 +118,6 @@ describe("landing a working copy", () => {
     expect(Land.command(workspace, Format))->toEqual(("mise", ["run", "fmt"]))
     expect(Land.command(workspace, Bump))->toEqual(("mise", ["run", "bump"]))
     expect(Land.command(workspace, Check))->toEqual(("mise", ["run", "check"]))
-    expect(Land.command(workspace, PushDry))->toEqual(("mise", ["run", "push", "--dry-run"]))
     expect(Land.command(workspace, Push))->toEqual(("mise", ["run", "push"]))
     expect(Land.command(workspace, Bookmark))->toEqual((
       "jj",

@@ -299,7 +299,7 @@ let rules: array<Rule.t> = [
   },
   {
     name: "push-behind-main",
-    says: "A push that finds main moved fetches, names the commits that came in and stops with the steps to rebase onto it, check again and push, escalating nothing",
+    says: "A push fetches nothing; one that finds main moved, as last fetched or refused by jj, stops with the steps to fetch, rebase onto it, check again and push, escalating nothing",
     doc: pushing,
     held: Check("scripts"),
   },

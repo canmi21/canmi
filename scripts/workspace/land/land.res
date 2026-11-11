@@ -78,11 +78,10 @@ type step =
   | Check
   | Commit
   | Bookmark
-  | PushDry
   | Push
   | Record
 
-let steps = [Format, Bump, Check, Commit, Bookmark, PushDry, Push, Record]
+let steps = [Format, Bump, Check, Commit, Bookmark, Push, Record]
 
 let directory = asked => asked.repository == "workspace" ? "." : `repos/${asked.repository}`
 
@@ -99,7 +98,6 @@ let command = (asked, step) => {
     let inside = path => directory(asked) == "." ? path : `${directory(asked)}/${path}`
     ("jj", [...repository, "commit", "-m", message(asked), ...asked.paths->Array.map(inside)])
   | Bookmark => ("jj", [...repository, "bookmark", "move", "main", "--to", "@-"])
-  | PushDry => ("mise", ["run", "push", ...name, "--dry-run"])
   | Push => verb("push")
   | Record =>
     switch asked.thread {
@@ -119,7 +117,6 @@ let label = step =>
   | Check => "check"
   | Commit => "commit"
   | Bookmark => "bookmark"
-  | PushDry => "push-dry"
   | Push => "push"
   | Record => "record"
   }

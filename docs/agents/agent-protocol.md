@@ -276,7 +276,8 @@ shorter the job, each look an instant read of the output that asks whether it mo
 session only at the job's end, with its status and summary, at failures, gathered rather than a line
 each, and at a stall of `stallSeconds`, said once. Progress stays in the file for `job read`, as the
 watchdog covers liveness, and it ends on the ledger's end for a job, an end line for a bare file, or
-at `watchBoundSeconds`. A job that stopped, or a wait
+at `watchBoundSeconds`. **A Monitor never follows a job's output file with `tail -f`**,
+`monitor-job-watched`: the tail runs on after the job ends, until the monitor expires. A job that stopped, or a wait
 nothing will meet, is reported at that look, never found later by the user, and a result still
 pending is said so. A user watching a spinner cannot tell a working job from a hung one.
 

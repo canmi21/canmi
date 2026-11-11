@@ -35,6 +35,21 @@ describe("a command that holds the conversation", () => {
     expect(Background.refuse(payload("ls")))->toEqual(0)
   })
 
+  test("refuses a Monitor following a job's output with tail, and passes the watcher", () => {
+    let log = "/Users/a/.local/state/workspace/runs/outputs/20261111-093552-c53b.log"
+    expect(
+      Background.refuse(payload(~tool="Monitor", `tail -n +1 -f ${log} | grep --line-buffered x`)),
+    )->toEqual(2)
+    expect(Background.refuse(payload(~tool="Monitor", `tail -F ${log}`)))->toEqual(2)
+    expect(
+      Background.refuse(payload(~tool="Monitor", "mise run //:watch 20261111-093552-c53b")),
+    )->toEqual(0)
+    expect(
+      Background.refuse(payload(~tool="Monitor", "tail -n 0 -F /Users/a/.local/state/runs/events")),
+    )->toEqual(0)
+    expect(Background.refuse(payload(`tail -5 ${log}`)))->toEqual(0)
+  })
+
   test("runs a landing in the background and a push in the foreground, by the user's word", () => {
     expect(Background.refuse(payload("mise run land monoflake/console -m x")))->toEqual(2)
     expect(

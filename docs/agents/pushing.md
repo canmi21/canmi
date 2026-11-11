@@ -24,9 +24,11 @@ verb alone. See [lessons.md](../lessons.md).
 
 **A push that finds the remote's main moved is expected, and nothing to escalate**,
 `push-behind-main`. CI commits to main itself, most often the scheduled update moving tools and
-dependencies every day, [ci.md](../ci.md). `mise run push` fetches first and, finding main moved, names each commit that came in and stops
-with the steps, and a dry run says the same; the pusher reads those commits, rebases its own onto
-`main@origin` and moves `main` to its last, runs the check again, and pushes.
+dependencies every day, [ci.md](../ci.md). `mise run push` fetches nothing, so a land makes one round trip to the forge: where
+`main@origin` as last fetched already holds commits main lacks, it names them and stops with the
+steps, and where main moved since, jj refuses the push and the verb says to fetch, read what came
+in, rebase onto `main@origin`, check again and push. A land runs no dry push before its push, as
+the push passes the same gates first.
 
 **A wave worked in roles also waits on the full check passing, a reviewer having read the wave, and
 the wave accepted**, `push-gated`, [checking.md](checking.md), "Acceptance comes before the push". A
