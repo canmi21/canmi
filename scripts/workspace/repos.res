@@ -3,7 +3,7 @@
  * workspace's own half of fmt, clean, update and verify. See docs/repos.md.
  */
 /** The update verifies before the landing rolls, leaving versions to the check after it. */
-let updateParts = () => ["rules", ...Check.known->Array.filter(name => name != "versions")]
+let updateParts = () => ["rules", ...Check.routine->Array.filter(name => name != "versions")]
 
 let root = Registry.root
 let repos = Registry.repos

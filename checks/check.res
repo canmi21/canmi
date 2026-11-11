@@ -227,6 +227,9 @@ let fullOnly = ["description"]
 
 let known = parts->Array.map(((name, _)) => name)
 
+/** The parts a check runs unless it is full, every one but those it alone reads. */
+let routine = known->Array.filter(name => !(fullOnly->Array.includes(name)))
+
 let written = (path, ~at=root) =>
   ["", ".res", ".py"]->Array.some(suffix => Node.existsSync(Node.join([at, path ++ suffix])))
 

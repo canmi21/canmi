@@ -316,10 +316,11 @@ describe("bump arguments", () => {
 })
 
 describe("the update before rolling", () => {
-  test("keeps every check part except versions", () => {
+  test("keeps every check part except versions and those a full check alone reads", () => {
     expect(Repos.updateParts()->Array.includes("versions"))->toBe(false)
+    expect(Repos.updateParts()->Array.includes("description"))->toBe(false)
     expect(Repos.updateParts())->toEqual(
-      ["rules", ...Check.known->Array.filter(name => name != "versions")],
+      ["rules", ...Check.routine->Array.filter(name => name != "versions")],
     )
     expect(Check.known->Array.includes("versions"))->toBe(true)
   })
