@@ -98,6 +98,13 @@ let table = [
   neutral("CONSOLE_DEVELOPMENT_SEALING_KEY", "CONSOLE", Development, "SEALING_KEY"),
   // WorkOS's production environment, which the deployed console signs in through.
   vendor("WORKOS_PRODUCTION_API_KEY", "WORKOS", Production, "API_KEY"),
+  // The console's Cloudflare OAuth client, which a person links their Cloudflare account through.
+  vendor(
+    "CLOUDFLARE_PRODUCTION_OAUTH_CLIENT_SECRET",
+    "CLOUDFLARE",
+    Production,
+    "OAUTH_CLIENT_SECRET",
+  ),
   // The photo behind an organization's sign-in card, Unsplash's access key, in monoflake/console.
   vendor("UNSPLASH_ACCESS_KEY", "UNSPLASH", Foundation, "ACCESS_KEY"),
 ]
