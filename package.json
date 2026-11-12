@@ -1,6 +1,6 @@
 {
 	"name": "workspace",
-	"version": "0.1.138",
+	"version": "0.1.139",
 	"private": true,
 	"type": "module",
 	"dependencies": {
@@ -12,11 +12,11 @@
 		"yaml": "^2.9.1"
 	},
 	"devDependencies": {
-		"@types/node": "26.6.5",
-		"oxfmt": "^0.74.0",
+		"@types/node": "26.6.6",
+		"oxfmt": "^0.78.0",
 		"rescript": "^12.3.1",
 		"svelte": "^5.57.3",
 		"typescript": "7.0.2",
-		"vitest": "5.0.5"
+		"vitest": "5.1.0"
 	}
 }
