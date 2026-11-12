@@ -233,7 +233,9 @@ let reportOf = (
       ->Map.get(name)
       ->Option.getOr(Map.fromArray([(entry.current, Set.fromArray(entry.dependents))]))
     if compare(newest(present->keys), entry.latest) >= 0 {
-      split->Array.push((name, present))
+      if present->keys->Array.map(major)->Set.fromArray->Set.size > 1 {
+        split->Array.push((name, present))
+      }
     } else {
       let who =
         present

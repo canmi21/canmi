@@ -85,8 +85,9 @@ with `jj restore` and names the repository and the lines that failed under the s
 `update` is put back the same way, since it may have stopped halfway through a rewrite. None of that
 needs to know what a resolver is, which is why it is not a repository's to repeat. By path rather
 than `jj op restore`, so an edit somebody made elsewhere in the working copy while it ran survives.
-What it does not restore is an installed tree: a pnpm repository's `node_modules` follows the
-restored lockfile at its next install. The whole lockfile goes back rather than one family, because
+A restored pnpm lockfile is installed again where it lies, since the next run reads what
+`node_modules` holds and would take a newer copy left there for one already moved, by
+`scripts/workspace/update/reinstall.res`. The whole lockfile goes back rather than one family, because
 which family broke is a question only a bisection answers.
 
 A reverted lockfile makes the same repair and forgets it on purpose. The next `mise run update`

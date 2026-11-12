@@ -634,6 +634,7 @@ let restore = (repo, before, paths) => {
   let literal = path =>
     `root-file:"${path->String.replaceAll("\\", "\\\\")->String.replaceAll("\"", "\\\"")}"`
   jj(~cwd=repo, ["restore", "--from", before, ...paths->Array.map(literal)])->ignore
+  Reinstall.after(repo, paths)
 }
 
 /**

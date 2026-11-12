@@ -66,4 +66,17 @@ describe("an aliased package", () => {
     expect(lines->String.includes("because two compilers"))->toBe(true)
     expect(lines->String.includes("warning"))->toBe(false)
   })
+
+  test("is not called several majors when one copy sits at its latest", () => {
+    let one = `[{"name": "driver", "devDependencies": {"wrangler": {"version": "4.160.0"}}}]`
+    let behind = `{"wrangler": {"current": "4.156.0", "latest": "4.160.0", "dependentPackages": []}}`
+    let lines =
+      Outdated.reportOf(
+        Outdated.heldOf(one),
+        Outdated.outdatedFrom(behind),
+        Map.make(),
+        false,
+      )->Array.join("\n")
+    expect(lines->String.includes("several majors"))->toBe(false)
+  })
 })
