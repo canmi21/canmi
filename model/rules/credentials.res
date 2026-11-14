@@ -117,9 +117,7 @@ let table = [
   vendor("ORACLE_MANAGEMENT_ENDPOINT", "ORACLE", Foundation, "MANAGEMENT_ENDPOINT"),
   vendor("ORACLE_REGION", "ORACLE", Foundation, "REGION"),
   // The console vault's keys, each environment's read as the purpose alone, RFC 3knhu.
-  neutral("VAULT_PRODUCTION_KEY_ENCRYPTION_KEYS", "VAULT", Production, "KEY_ENCRYPTION_KEYS"),
   neutral("VAULT_PRODUCTION_TOKEN_KEY", "VAULT", Production, "TOKEN_KEY"),
-  neutral("VAULT_DEVELOPMENT_KEY_ENCRYPTION_KEYS", "VAULT", Development, "KEY_ENCRYPTION_KEYS"),
   neutral("VAULT_DEVELOPMENT_TOKEN_KEY", "VAULT", Development, "TOKEN_KEY"),
   neutral("VAULT_DEVELOPMENT_LOCAL_MASTER", "VAULT", Development, "LOCAL_MASTER"),
 ]
