@@ -253,7 +253,11 @@ escape.
   `tests/` directories, `*_test.*` files, Markdown and license files, and the settings of the
   linter, the formatter and the ignore files; what it declares under `[versions.counts]` in
   `workspace.toml`; and the packages it depends on by path. A repository's root is a package too,
-  counting only the files in no subpackage. A version moved in a manifest is no change of it.
+  counting only the files in no subpackage, **unless its manifest is a `package.json` that is
+  private and carries no version**: that root only holds a workspace, and no version is counted or
+  written there. A version moved in a manifest is no change of it.
+- **A package moved to another path keeps its version** where its name stood elsewhere at the base,
+  and a manifest whose name is new starts at the version it is written with.
 - **A lockfile move raises each binary or Worker built from it, and the root, and no library.**
 
 **Versions roll at landing on a main line, by `mise run bump`, and never in a lane**: it refuses a
