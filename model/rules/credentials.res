@@ -107,6 +107,20 @@ let table = [
   ),
   // The photo behind an organization's sign-in card, Unsplash's access key, in monoflake/console.
   vendor("UNSPLASH_ACCESS_KEY", "UNSPLASH", Foundation, "ACCESS_KEY"),
+  // The console vault's identity at Oracle, which may only use the one HSM key, RFC 3knhu.
+  vendor("ORACLE_TENANCY", "ORACLE", Foundation, "TENANCY"),
+  vendor("ORACLE_USER", "ORACLE", Foundation, "USER"),
+  vendor("ORACLE_KEY", "ORACLE", Foundation, "KEY"),
+  vendor("ORACLE_FINGERPRINT", "ORACLE", Foundation, "FINGERPRINT"),
+  vendor("ORACLE_PRIVATE_KEY", "ORACLE", Foundation, "PRIVATE_KEY"),
+  vendor("ORACLE_CRYPTO_ENDPOINT", "ORACLE", Foundation, "CRYPTO_ENDPOINT"),
+  vendor("ORACLE_REGION", "ORACLE", Foundation, "REGION"),
+  // The console vault's keys, each environment's read as the purpose alone, RFC 3knhu.
+  neutral("VAULT_PRODUCTION_KEY_ENCRYPTION_KEYS", "VAULT", Production, "KEY_ENCRYPTION_KEYS"),
+  neutral("VAULT_PRODUCTION_TOKEN_KEY", "VAULT", Production, "TOKEN_KEY"),
+  neutral("VAULT_DEVELOPMENT_KEY_ENCRYPTION_KEYS", "VAULT", Development, "KEY_ENCRYPTION_KEYS"),
+  neutral("VAULT_DEVELOPMENT_TOKEN_KEY", "VAULT", Development, "TOKEN_KEY"),
+  neutral("VAULT_DEVELOPMENT_LOCAL_MASTER", "VAULT", Development, "LOCAL_MASTER"),
 ]
 
 /** Names a secrets file or GitHub holds, beside each one's name after rotation, docs/naming.md. */

@@ -214,6 +214,10 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   word or move a line so a check cannot see it; fix what it asks, or use `SKIP=<gate>` or a rule's
   `exempts`, or take the rule to the integrator or the author.
 - **A contradiction is quoted before it is filed.** Put both clauses in full side by side.
+- **A client of a vendor is proven by one live call before it is called done.** A published test
+  vector proves the signing and nothing else. On 2026-11-14 the vault's Oracle client passed
+  Oracle's own vector yet called `generateDataKey`, a path that does not exist, while the vendor's
+  CLI run with `--debug` showed `generateDataEncryptionKey` at once.
 - **A field absent from one answer is not absent from the service.** Search the whole API schema
   for it before saying it does not exist. On 2026-11-14 an R2 bucket was called id-less from the
   list answer alone, while another endpoint of the same bucket gives `bucketId`.
