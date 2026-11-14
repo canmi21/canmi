@@ -48,6 +48,11 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
 - **`fmt` names its repository, and a formatter run by hand names its files.** Only the files that
   repository's `fmt` covers: on 2026-11-08 `oxfmt src/lib` in monoflake/console, which formats
   `*.md` alone, rewrote thirteen untouched files and they were restored from the parent.
+- **A hook acts where its command ran, never in the session's directory.** On 2026-11-14 the commit
+  hook ran a bare `jj fix` in the session's cwd, a lane of monoflake/console, for a commit made in
+  the workspace; it rewrote 27 unpushed console commits, laying out generated files the moved
+  `.prettierignore` no longer named, and `jj op revert` restored them. The hook now follows `cd`
+  and fixes `mutable() & (@ | @-)` alone, [lint-format.md](toolchain/lint-format.md).
 - **A write across repositories first looks for another session.** Inspect `jj op log` for other
   sessions' operations and `pgrep -fl claude`; skip and name any repository in use.
 - **Two processes never build one ReScript tree at once.** Include sibling trees a task builds. Wait

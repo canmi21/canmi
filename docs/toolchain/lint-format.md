@@ -69,6 +69,12 @@ Because `jj fix` repairs history rather than guarding a commit, formatting can n
 "too late" here. A badly formatted commit from last week is one `jj fix -s` away from
 correct.
 
+**The commit hook fixes the commit it wrote and its working copy, in the repository the command
+ran in**: `mutable() & (@ | @-)`, wherever a `cd` before the jj command led, never the session's own
+directory. oxfmt reads the ignore files on disk, not those of the revision it formats, so a bare
+`jj fix` over every mutable revision lays out generated files wherever an older revision keeps them
+at another path.
+
 **`mise run fmt` formats every file, touched or not.** `jj fix` visits only the files a revision
 changed unless told `--include-unchanged-files`, and the commit hook leaves it at that, so a commit
 costs no more than its own files. `fmt` passes the flag. Without it a formatter upgrade leaves every

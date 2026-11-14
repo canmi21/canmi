@@ -32,18 +32,29 @@ let refuse = (payload: Payload.t): int => {
 
 /** Runs jj fix over what the command describes, once every gate passed. */
 let fix = (payload: Payload.t) => {
-  let found = messages(Payload.command(payload))
-  if found != [] {
-    let cwd = Payload.cwd(payload)
-    let root = Payload.jj(~cwd, ["workspace", "root"])->String.trim
-    if root != "" {
-      // jj's repository config is not versioned, so the workspace's jujutsu.toml is named here,
-      // wherever below it the commit is made.
-      let home = Node.env->Dict.get("HOME")->Option.getOr("")
-      let env = Node.envCopy(Node.env)
-      env->Dict.set("JJ_CONFIG", `${home}/.config/jj/config.toml:${Registry.root}/jujutsu.toml`)
-      // A broken formatter is not a reason to refuse work, so its failure is passed over.
-      Node.spawnWithEnv("jj", ["fix"], {cwd, env, stdio: "ignore"})->ignore
-    }
+  let command = Payload.command(payload)
+  if messages(command) != [] {
+    // Where each describing jj runs, past any `cd` before it, so a session's cwd never decides.
+    let places =
+      Jj_command.placed(command, ~cwd=Payload.cwd(payload), Commits.describing)->Array.reduce([], (
+        seen,
+        at,
+      ) => seen->Array.includes(at) ? seen : seen->Array.concat([at]))
+    // jj's repository config is not versioned, so the workspace's jujutsu.toml is named here,
+    // wherever below it the commit is made.
+    let home = Node.env->Dict.get("HOME")->Option.getOr("")
+    let env = Node.envCopy(Node.env)
+    env->Dict.set("JJ_CONFIG", `${home}/.config/jj/config.toml:${Registry.root}/jujutsu.toml`)
+    places->Array.forEach(cwd =>
+      if Payload.jj(~cwd, ["workspace", "root"])->String.trim != "" {
+        // The commit just written and its working copy alone, as the ignore files on disk fit them.
+        // A broken formatter is not a reason to refuse work, so its failure is passed over.
+        Node.spawnWithEnv(
+          "jj",
+          ["fix", "-s", "mutable() & (@ | @-)"],
+          {cwd, env, stdio: "ignore"},
+        )->ignore
+      }
+    )
   }
 }
