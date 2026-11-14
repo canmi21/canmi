@@ -192,18 +192,34 @@ let judged = (~root, ~minors=[], ~at=?) => {
         current(path),
       ))
     let changedPaths = changes->Array.map(((path, _, _)) => path)
+    let earlier = ref(None)
+    let atBase = () =>
+      switch earlier.contents {
+      | Some(found) => found
+      | None =>
+        let found =
+          Packages.found(
+            ~fallback=Node.basename(root),
+            ~read=path => Landing.at(~root, ~base, path),
+            Landing.tracked(~root, ~top=base),
+          )->Pair.first
+        earlier := Some(found)
+        found
+      }
     let baseOf = (package: Packages.t) => {
       let moved = package.manifests->Array.filter(({path}) => changedPaths->Array.includes(path))
       if moved == [] {
         Some(package.version)
       } else {
-        // A manifest absent at the base, of a package holding no other, is a new package.
+        // A manifest absent at the base is a new package, unless its name stood elsewhere there.
         let was =
           package.manifests->Array.filterMap(({path, kind}) =>
             Landing.at(~root, ~base, path)->Option.map(text => {Packages.path, kind, text})
           )
         was == []
-          ? None
+          ? atBase()
+            ->Array.find(other => other.name == package.name)
+            ->Option.map(other => other.version)
           : was
             ->Array.filterMap(manifest =>
               Packages.versionOf(manifest)->Result.mapOr(None, v => Some(v))

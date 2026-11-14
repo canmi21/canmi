@@ -245,9 +245,9 @@ describe("a manifest", () => {
       "{\n\t\"name\": \"a\",\n\t\"version\": \"0.1.0\",\n\t\"private\": true\n}\n",
     )
     let bare = "{\n\t\"name\": \"a\",\n\t\"private\": true\n}\n"
-    expect(Packages.written({path: "package.json", kind: Node, text: bare}, (0, 1, 0)))->toBe(
-      node->String.replace("0.0.0", "0.1.0"),
-    )
+    expect(
+      Packages.written({path: "apps/a/package.json", kind: Node, text: bare}, (0, 1, 0)),
+    )->toBe(node->String.replace("0.0.0", "0.1.0"))
   })
 
   test("a crate's lock follows it, and a registry's crate of one name does not", () => {
@@ -276,6 +276,35 @@ describe("a manifest", () => {
       ("", 1),
       ("code/a", 2),
     ])
+  })
+
+  test("a private root without a version holds a workspace and is no package", () => {
+    let found = files =>
+      Packages.found(~fallback="r", ~read=path => files->Dict.get(path), files->Dict.keysToArray)
+      ->Pair.first
+      ->Array.map(p => p.directory)
+    let beside = "{\"name\": \"@x/x\", \"version\": \"0.1.0\"}"
+    expect(
+      found(
+        dict{"package.json": "{\"name\": \"r\", \"private\": true}", "apps/x/package.json": beside},
+      ),
+    )->toEqual(["apps/x"])
+    expect(
+      found(
+        dict{
+          "package.json": "{\"name\": \"r\", \"private\": true, \"version\": \"0.1.0\"}",
+          "apps/x/package.json": beside,
+        },
+      ),
+    )->toEqual(["", "apps/x"])
+    expect(
+      found(
+        dict{
+          "package.json": "{\"name\": \"r\", \"private\": false}",
+          "apps/x/package.json": beside,
+        },
+      ),
+    )->toEqual(["", "apps/x"])
   })
 })
 

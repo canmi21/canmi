@@ -464,4 +464,54 @@ describe("a landing", () => {
     landed(root, "chore: roll")
     expect(Versions.outgoing(~root))->toEqual([])
   })
+
+  // A main line holding a root that is only a pnpm workspace, beside `manifests`.
+  let workspace = (root, manifests) => {
+    Node.env->Dict.set("JJ_USER", "test")
+    Node.env->Dict.set("JJ_EMAIL", "test@localhost")
+    jj(root, ["git", "init", "--colocate"])->ignore
+    tree(root, [("mise.toml", "[tools]\n"), ...manifests])
+    landed(root, "chore: begin")
+  }
+
+  let bare = "{\n\t\"name\": \"w\",\n\t\"private\": true\n}\n"
+  let app = (~name="@x/x", ~version="0.1.0") =>
+    `{\n\t"name": "${name}",\n\t"version": "${version}",\n\t"private": true\n}\n`
+
+  test("passes over a private root without a version, and rolls the app beside it", () => {
+    let root = root.contents
+    workspace(
+      root,
+      [("package.json", bare), ("apps/x/package.json", app()), ("apps/x/a.ts", "1\n")],
+    )
+    tree(root, [("apps/x/a.ts", "2\n"), ("mise.toml", "[tools]\nnode = \"24\"\n")])
+    expect(versions(root))->toEqual([("@x/x", "0.1.1")])
+    bumped(root)
+    expect(Node.readFileSync(Node.join([root, "package.json"])))->toBe(bare)
+  })
+
+  test("a change at a workspace root alone rolls nothing", () => {
+    let root = root.contents
+    workspace(
+      root,
+      [("package.json", bare), ("apps/x/package.json", app()), ("apps/x/a.ts", "1\n")],
+    )
+    tree(root, [("mise.toml", "[tools]\nnode = \"24\"\n"), ("package.json", bare ++ "\n")])
+    expect(Bump.moving(Roll.planned(~root)))->toEqual([])
+  })
+
+  test("a package moved under the root continues the version its name had", () => {
+    let root = root.contents
+    workspace(root, [("package.json", app(~name="@x/c", ~version="0.1.5")), ("a.ts", "1\n")])
+    tree(
+      root,
+      [
+        ("package.json", bare),
+        ("apps/c/package.json", app(~name="@x/c", ~version="0.1.5")),
+        ("apps/c/a.ts", "1\n"),
+        ("pkgs/p/package.json", app(~name="@x/p")),
+      ],
+    )
+    expect(versions(root))->toEqual([("@x/c", "0.1.6"), ("@x/p", "0.1.0")])
+  })
 })

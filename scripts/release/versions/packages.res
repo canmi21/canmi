@@ -68,6 +68,16 @@ let written = ({kind, text}, version) => {
   }
 }
 
+/** A root package.json private and without a version, which holds a workspace and is no package. */
+let holdsWorkspace = ({path, kind, text}) =>
+  path == "package.json" &&
+  kind == Node &&
+  nodeText(text, "version")->Option.isNone &&
+  switch parsed(text)->Option.flatMap(fields => fields->Dict.get("private")) {
+  | Some(Boolean(true)) => true
+  | _ => false
+  }
+
 /** Fixtures and vendored source hold a manifest that is no package of ours. */
 let foreign = ["docs", "tests", "vendor", "node_modules"]
 
@@ -107,6 +117,7 @@ let found = (~fallback, ~read, tracked) => {
         )
       )
     )
+    ->Array.filter(manifest => !holdsWorkspace(manifest))
   let directoryOf = path =>
     path->String.includes("/")
       ? path->String.split("/")->Array.slice(~start=0, ~end=-1)->Array.join("/")
