@@ -16,7 +16,7 @@ let extendable = [".oxlintrc.json"]
 let widest = 16
 
 /** Nor lies deeper, a top-level directory's first subdirectory or a package's counted 1. */
-let deepest = 5
+let deepest = 10
 
 /** The verbs a repository's task takes `--dry-run` on, `verb-contract`; `verify` takes nothing. */
 let dryRunVerbs = ["fmt", "clean", "update"]

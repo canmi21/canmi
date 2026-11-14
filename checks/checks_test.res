@@ -11,8 +11,11 @@ describe("the shape of a tree", () => {
   })
 
   test("counts depth from a top-level directory, and again from a package's root", () => {
-    let deep = "a/1/2/3/4/5/6/file.md"
-    expect(Shape.problems([deep], ~cargo=None))->toEqual([`a/1/2/3/4/5/6/: 6 deep, past 5`])
+    let past = Layout.deepest + 1
+    let path = Array.fromInitializer(~length=past, at => Int.toString(at + 1))->Array.join("/")
+    let deep = `a/${path}/file.md`
+    let said = `a/${path}/: ${Int.toString(past)} deep, past ${Int.toString(Layout.deepest)}`
+    expect(Shape.problems([deep], ~cargo=None))->toEqual([said])
     expect(Shape.problems([deep, "a/1/2/package.json"], ~cargo=None))->toEqual([])
   })
 
