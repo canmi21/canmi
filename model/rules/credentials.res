@@ -114,6 +114,7 @@ let table = [
   vendor("ORACLE_FINGERPRINT", "ORACLE", Foundation, "FINGERPRINT"),
   vendor("ORACLE_PRIVATE_KEY", "ORACLE", Foundation, "PRIVATE_KEY"),
   vendor("ORACLE_CRYPTO_ENDPOINT", "ORACLE", Foundation, "CRYPTO_ENDPOINT"),
+  vendor("ORACLE_MANAGEMENT_ENDPOINT", "ORACLE", Foundation, "MANAGEMENT_ENDPOINT"),
   vendor("ORACLE_REGION", "ORACLE", Foundation, "REGION"),
   // The console vault's keys, each environment's read as the purpose alone, RFC 3knhu.
   neutral("VAULT_PRODUCTION_KEY_ENCRYPTION_KEYS", "VAULT", Production, "KEY_ENCRYPTION_KEYS"),
