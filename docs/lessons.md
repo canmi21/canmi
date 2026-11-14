@@ -214,6 +214,9 @@ For private notes and work in progress, see [agent-protocol.md](agents/agent-pro
   word or move a line so a check cannot see it; fix what it asks, or use `SKIP=<gate>` or a rule's
   `exempts`, or take the rule to the integrator or the author.
 - **A contradiction is quoted before it is filed.** Put both clauses in full side by side.
+- **A field absent from one answer is not absent from the service.** Search the whole API schema
+  for it before saying it does not exist. On 2026-11-14 an R2 bucket was called id-less from the
+  list answer alone, while another endpoint of the same bucket gives `bucketId`.
 - **The author's shorthand is understood, never offered back as a name.** Expand vendor names in
   every file and proposal.
 - **A record holding a secret is read by naming the fields wanted, never by masking the rest.**
