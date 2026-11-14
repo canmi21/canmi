@@ -4,6 +4,16 @@ Code taken from another project and kept in a repository here is vendored: copie
 one named version, and left as its authors wrote it. This is the arrangement for every such copy, in
 every project.
 
+## A package is installed, and only what no channel carries is vendored
+
+What a registry distributes, npm for JavaScript and crates.io for Rust, is installed from it and
+never vendored, by the author's word: the package carries its version, its updates and its license
+where the toolchain already reads them, and `mise run update` moves it. A copy is kept only of
+what has no fixed channel of distribution, as a brand's own mark, an app's icon given by hand, or
+a list kept in a repository with no release, and of a package unfit to install for a reason its
+record states. A package of drawings alone, as an icon set, follows its newest channel, a
+prerelease included where that is the newest, as nothing it changes but a look can break.
+
 ## Where it sits
 
 A project's vendored code lives under `vendor/<name>/`, one directory per upstream, and nowhere
