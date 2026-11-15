@@ -118,6 +118,12 @@ past that. **A cache that can be written again is cleared by its own tool's clea
 closed are removed with `rm` inside the workspace, as `AGENTS.md` has it. **The pnpm global store is
 never touched.**
 
+**An integrator spawns an implementer only from inside that implementer's lane**, by the author's
+word of 2026-11-15: a seat inherits its spawner's working directory, and `implementer-lane` judges
+every write against that directory and not the lane its brief names, so a seat spawned from another
+lane is refused its own files. A seat refused so stops and reports, as its seat file has it, and
+never writes by a shell's redirect, which the hook does not see.
+
 ## File ownership partitions files, and that is all it partitions
 
 The section above is the whole of the concurrency control for editing. Five things sit outside
