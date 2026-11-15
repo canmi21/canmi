@@ -162,7 +162,9 @@ situations, told apart by what the user is doing rather than by how much has cha
   move on to the next request, the one before is settled -- commit it then, and it may be pushed.
   **This holds where a push deploys too**, as the console's does: the change being shaped waits
   unpushed, the user's turning to the next thing is their approval of it, and the agent judges the
-  moment itself and never asks when to push.
+  moment itself and never asks when to push. **It holds for an integrator too**, whenever the user
+  shapes a page with it live: no commit, no version bump and no check run to make one until the
+  user moves on, a stop hook's reminder notwithstanding, since uncommitted work is what it allows.
   **A wave is the other mode**: its commit is local and may come before acceptance, and a fix
   acceptance asks for is squashed into it before the push, [checking.md](agents/checking.md),
   "Acceptance comes before the push".
