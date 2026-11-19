@@ -67,6 +67,25 @@ describe("an aliased package", () => {
     expect(lines->String.includes("warning"))->toBe(false)
   })
 
+  test("names a package pnpm lists by its copies once, so update --major can pass it", () => {
+    let copies = `{
+      "wrangler@4.156.0 (dev)": {"current": "4.156.0", "latest": "4.164.0",
+        "dependentPackages": [{"name": "gateway"}]},
+      "wrangler@4.160.0": {"current": "4.160.0", "latest": "4.164.0",
+        "dependentPackages": [{"name": "reference"}]},
+      "@scope/tool@1.0.0 (dev)": {"current": "1.0.0", "latest": "2.0.0", "dependentPackages": []}
+    }`
+    let outdated = Outdated.outdatedFrom(copies)
+    expect(outdated->Outdated.keys->Outdated.sorted)->toEqual(["@scope/tool", "wrangler"])
+    let wrangler = outdated->Map.get("wrangler")->Option.getOrThrow
+    expect(wrangler.current)->toBe("4.156.0")
+    expect(wrangler.dependents->Outdated.sorted)->toEqual(["gateway", "reference"])
+    expect(Outdated.reportOf(Map.make(), outdated, Map.make(), true)->Outdated.sorted)->toEqual([
+      "@scope/tool",
+      "wrangler",
+    ])
+  })
+
   test("is not called several majors when one copy sits at its latest", () => {
     let one = `[{"name": "driver", "devDependencies": {"wrangler": {"version": "4.160.0"}}}]`
     let behind = `{"wrangler": {"current": "4.156.0", "latest": "4.160.0", "dependentPackages": []}}`

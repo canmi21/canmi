@@ -172,7 +172,21 @@ let machine = root => {
   }
 }
 
-/** `pnpm outdated --format json`'s answer, by package. */
+/** The package a key of pnpm's names, its copy's `@version` and ` (dev)` left off. */
+let packageOf = key =>
+  key->String.replaceRegExp(/ \([a-z]+\)$/, "")->String.replaceRegExp(/(.)@[^@\/]+$/, "$1")
+
+/** Two copies of one package as one entry, its oldest current and every dependent of both. */
+let merged = (one: outdated, other: outdated): outdated => {
+  current: compare(one.current, other.current) <= 0 ? one.current : other.current,
+  latest: compare(one.latest, other.latest) >= 0 ? one.latest : other.latest,
+  dependents: Array.concat(one.dependents, other.dependents)
+  ->Set.fromArray
+  ->Set.values
+  ->Iterator.toArray,
+}
+
+/** `pnpm outdated --format json`'s answer, by package, each package's copies one entry. */
 let outdatedFrom = (answer: string) =>
   switch JSON.parseOrThrow(answer == "" ? "{}" : answer) {
   | Object(entries) =>
@@ -200,11 +214,17 @@ let outdatedFrom = (answer: string) =>
           )
         | _ => []
         }
-        Some((name, {current: text("current"), latest: text("latest"), dependents}))
+        Some((packageOf(name), {current: text("current"), latest: text("latest"), dependents}))
       | _ => None
       }
     )
-    ->Map.fromArray
+    ->Array.reduce(Map.make(), (packages, (name, entry)) => {
+      packages->Map.set(
+        name,
+        packages->Map.get(name)->Option.mapOr(entry, before => merged(before, entry)),
+      )
+      packages
+    })
   | _ => Map.make()
   }
 
